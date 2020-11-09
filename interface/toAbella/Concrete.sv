@@ -13,23 +13,10 @@ nonterminal Context;
 nonterminal Term;
 nonterminal Exp;
 nonterminal ExpList;
-nonterminal LPSig;
-nonterminal SigHeader;
-nonterminal SigPreamble;
-nonterminal SigBody;
-nonterminal LPMod;
-nonterminal ModHeader;
-nonterminal ModPreamble;
-nonterminal ModBody;
-nonterminal LPEnd;
 nonterminal IdList;
 nonterminal PTy;
 nonterminal ATy;
 nonterminal Ty;
-nonterminal ClauseName;
-nonterminal Clause;
-nonterminal ClauseHead;
-nonterminal ClauseBody;
 nonterminal Defs;
 nonterminal Def;
 nonterminal Perm;
@@ -75,8 +62,6 @@ nonterminal OptSemi;
 nonterminal SearchWitness;
 nonterminal SearchWitnessList;
 nonterminal ExistsBinds;
-nonterminal DepthSpec;
-nonterminal DepthSpecOne;
 
 
 concrete productions top::Hyp
@@ -111,38 +96,7 @@ concrete productions top::PAId
 { }
 
 
-concrete productions top::ContextedTerm
-| c::Context '|-' t::Term
-{ }
-| t::Term
-{ }
-
-
-concrete productions top::FocusedTerm
-| c::Context ',' '[' t::Term ']' '|-' body::Term
-{ }
-| '[' t::Term ']' '|-' body::Term
-{ }
-
-
-concrete productions top::Context
-| c::Context ',' t::Term
-{ }
-| t::Term
-{ }
-
-
 concrete productions top::Term
-| t1::Term '=>' t2::Term
-{ }
-| t1::Term '<=' t2::Term
-{ }
-| t1::Term '&' t2::Term
-{ }
-| t1::Term '::' t2::Term
-{ }
-| a::AId '\' t::Term
-{ }
 | e::Exp el::ExpList
 { }
 | e::Exp
@@ -162,63 +116,6 @@ concrete productions top::ExpList
 | e::Exp
 { }
 | a::AId '\' t::Term
-{ }
-
-
-concrete productions top::LPSig
-| h::SigHeader p::SigPreamble b::SigBody e::LPEnd
-{ }
-
-
-concrete productions top::SigHeader
-| 'sig' x::Id_t '.'
-{ }
-
-
-concrete productions top::SigPreamble
-| 'accum_sig' il::IdList '.' s::SigPreamble
-{ }
-|
-{ }
-
-
-concrete productions top::SigBody
-| 'kind' il::IdList k::Knd '.' rest::SigBody
-{ }
-| 'type' il::IdList t::Ty '.' rest::SigBody
-{ }
-|
-{ }
-
-
-concrete productions top::LPMod
-| h::ModHeader p::ModPreamble b::ModBody e::LPEnd
-{ }
-
-
-concrete productions top::ModHeader
-| 'module' name::Id_t '.'
-{ }
-
-
-concrete productions top::ModPreamble
-| 'accumulate' il::IdList '.' rest::ModPreamble
-{ }
-|
-{ }
-
-
-concrete productions top::ModBody
-| cn::ClauseName c::Clause rest::ModBody
-{ }
-|
-{ }
-
-
-concrete productions top::LPEnd
-| 'end'
-{ }
-|
 { }
 
 
@@ -252,40 +149,6 @@ concrete productions top::Ty
 { }
 
 
-concrete productions top::ClauseName
-| '%:' i::Id_t ':' n::Id_t --I really have no idea what this is
-{ }
-|
-{ }
-
-
-concrete productions top::Clause
-| h::ClauseHead '.'
-{ }
-| h::ClauseHead ':-' b::ClauseBody '.'
-{ }
-| h::ClauseHead '<=' b::ClauseBody '.'
-{ }
-
-
-concrete productions top::ClauseHead
-| '(' c::ClauseHead ')'
-{ }
-| p::PAId el::ExpList
-{ }
-| p::PAId
-{ }
-
-
-concrete productions top::ClauseBody
-| t::Term ',' rest::ClauseBody
-{ }
-| '(' t::Term ',' rest::ClauseBody ')'
-{ }
-| t::Term
-{ }
-
-
 concrete productions top::Defs
 | d::Def ';' rest::Defs
 { }
@@ -312,6 +175,8 @@ concrete productions top::PermIds
 { }
 
 
+{-This appears to be useless, but it might end up benig useful in
+  ProofGeneral, so I'll hold onto it in a comment.
 concrete productions top::AnyCommand
 | c::PureTopCommand
 { }
@@ -319,6 +184,7 @@ concrete productions top::AnyCommand
 { }
 | c::CommonCommand
 { }
+-}
 
 
 concrete productions top::Command
@@ -401,21 +267,11 @@ concrete productions top::PureCommand
 { }
 | 'backchain' md::MaybeDepth c::Clearable 'with' w::Withs '.'
 { }
-| h::HHint 'cut' '(' t::Term ')' 'from' c1::Clearable 'with' c2::Clearable '.'
-{ }
-| h::HHint 'cut' c1::Clearable 'with' c2::Clearable '.'
-{ }
-| h::HHint 'cut' c::Clearable '.'
-{ }
-| h::HHint 'inst' c::Clearable 'with' w::Withs '.'
-{ }
 | h::HHint 'case' hy::Hyp '.'
 { }
 | h::HHint 'case' hy::Hyp '(' 'keep' ')' '.'
 { }
 | h::HHint 'assert' md::MaybeDepth m::Metaterm '.'
-{ }
-| h::HHint 'monotone' c::Clearable 'with' t::Term '.'
 { }
 | 'exists' ew::EWitnesses '.'
 { }
@@ -540,8 +396,6 @@ concrete productions top::SolSel
 { }
 | '(' m::Metaterm ')'
 { }
-| o::Objseq
-{ }
 | t::Term r::Restriction
 { }-}
 {-
@@ -581,8 +435,6 @@ concrete productions top::SubMetaterm
 { }
 | '(' m::SubMetaterm ')'
 { }
-| o::Objseq
-{ }
 | t::Term s::Stars
 { }
 | t::Term p::Pluses
@@ -590,13 +442,6 @@ concrete productions top::SubMetaterm
 | t::Term a::Ats
 { }
 | t::Term h::Hashes
-{ }
-
-
-concrete productions top::Objseq
-| '{' c::ContextedTerm '}' r::Restriction
-{ }
-| '{' ft::FocusedTerm '}' r::Restriction
 { }
 
 
@@ -770,7 +615,7 @@ concrete productions top::SearchWitness
 { }
 | 'forall' '[' il::IdList ']' sw::SearchWitness
 { }
-| 'exists' '[' il::IdList ']' sw::SearchWitness
+| 'exists' '[' eb::ExistsBinds ']' sw::SearchWitness
 { }
 | 'unfold' '(' i::Id_t ',' n::Number_t swl::SearchWitnessList ')'
 { }
@@ -793,19 +638,5 @@ concrete productions top::ExistsBinds
 |
 { }
 | w::Withs
-{ }
-
-
-concrete productions top::DepthSpec
-| d::DepthSpecOne
-{ }
-| d::DepthSpecOne ';' rest::DepthSpec
-{ }
-
-
-concrete productions top::DepthSpecOne
-| n1::Number_t '[' n2::Number_t ']'
-{ }
-| n::Number_t
 { }
 
