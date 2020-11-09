@@ -1,0 +1,7 @@
+#/bin/bash
+
+GRAMMAR=toAbella
+
+silver --clean -I .. $GRAMMAR
+
+

@@ -1,0 +1,8 @@
+
+# Generated Silver files
+*.jar
+build.xml
+*.copperdump.html
+
+# Emacs autosave
+*~
