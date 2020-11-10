@@ -2,6 +2,6 @@
 
 GRAMMAR=toAbella
 
-silver --clean -I .. $GRAMMAR
+silver -I .. $GRAMMAR $@
 
 

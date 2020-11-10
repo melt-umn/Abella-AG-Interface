@@ -18,15 +18,13 @@ terminal Query_t          'Query'          lexer classes {COMMAND};
 terminal Quit_t           'Quit'           lexer classes {COMMAND};
 terminal Set_t            'Set'            lexer classes {COMMAND};
 terminal Show_t           'Show'           lexer classes {COMMAND};
-terminal Specification_t  'Specification'  lexer classes {COMMAND};
 terminal SSplit_t         'Split'          lexer classes {COMMAND};
 terminal Theorem_t        'Theorem'        lexer classes {COMMAND};
 terminal TType_t          'Type'           lexer classes {COMMAND};
 
 
-terminal Abbrev_t  'abbrev'       lexer classes {LATER};
-terminal Abort_t  'abort'  lexer classes {TACTIC};
-terminal Accumulate_t  'accumulate'       lexer classes {LATER};
+terminal Abbrev_t      'abbrev'       lexer classes {LATER};
+terminal Abort_t       'abort'  lexer classes {TACTIC};
 terminal All_t  'all'       lexer classes {LATER};
 terminal Apply_t  'apply' lexer classes {TACTIC};
 terminal As_t  'as'       lexer classes {LATER};
@@ -57,6 +55,7 @@ terminal Split_t  'split'  lexer classes {TACTIC};
 terminal SplitStar_t  'split*'  lexer classes {TACTIC};
 terminal To_t  'to'       lexer classes {LATER};
 terminal True_t  'true'  lexer classes {LOGIC};
+terminal Type_t  'type'  lexer classes {LOGIC};
 terminal Unabbrev_t  'unabbrev'       lexer classes {LATER};
 terminal Undo_t  'undo'  lexer classes {TACTIC};
 terminal Unfold_t  'unfold'  lexer classes {TACTIC};
@@ -85,6 +84,8 @@ terminal And_t         '/\'     lexer classes {TOKEN}, precedence=6, association
 terminal LBracket_t    '['   lexer classes {TOKEN};
 terminal RBracket_t    ']'   lexer classes {TOKEN};
 terminal Underscore_t  '_'  lexer classes {TOKEN};
+
+terminal OptSemi_t  /;?/  lexer classes{TOKEN};
 
 
 terminal Id_t  /[-A-Za-z^=`'?$][-A-Za-z^=`'?$0-9_*@+#!~\/]*/;
