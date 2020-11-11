@@ -1,4 +1,7 @@
-grammar toAbella;
+grammar toAbella:concreteSyntax;
+
+
+imports toAbella:abstractSyntax;
 
 
 lexer class COMMAND dominates Id_t;
