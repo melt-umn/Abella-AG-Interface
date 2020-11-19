@@ -2,9 +2,9 @@
 We want to encode Silver grammars into Abella so we can reason about
 their properties.  There are several pieces in this encoding,
 essentially all of which interact with each other:
-* We need to translate nonterminals into Abella kinds.
-* We need to translate productions into Abella types of the
-  appropriate kinds.
+* We need to translate nonterminals into Abella types
+* We need to translate productions into Abella constructors of the
+  appropriate types.
 * We need to encode equations into definitional clauses for relations,
   which requires encoding Silver expressions into logical expressions
   in Abella.
@@ -22,7 +22,7 @@ can't override the names.
 
 # Encoding Nonterminals and Productions
 
-For each nonterminal the program declares, we create a kind in Abella:
+For each nonterminal the program declares, we create a type in Abella:
 ```
 Kind nt_<Nonterminal Name>   type.
 ```
@@ -72,13 +72,13 @@ Type prod_b   nt_A -> nt_B.
 
 # Encoding Decorated Trees
 
-Each nonterminal gets its own kind of node.  For example, if we have
+Each nonterminal gets its own type of node.  For example, if we have
 nonterminals
 ```
 nonterminal Foo;
 nonterminal Bar;
 ```
-we will have node kinds
+we will have node types
 ```
 Kind node_Foo.
 Kind node_Bar.
@@ -86,7 +86,7 @@ Kind node_Bar.
 I think we can leave these without constructors in the encoded
 language components.
 
-We create a kind for trees of nodes holding attribute values:
+We create a type for trees of nodes holding attribute values:
 ```
 Kind node_tree   type.
 ```
@@ -132,7 +132,7 @@ production.
 For each occurs declaration, we create an accessor relation on a node
 with the appropriate result type.  A wrinkle in this is that we may or
 may not have a value on a particular decorated tree.  To handle this,
-we introduce a new kind with two constructors:
+we introduce a new type with two constructors:
 ```
 Kind attrVal   type -> type.
 Type attr_ex   A -> attr_val A.
@@ -219,7 +219,7 @@ decorating it.
 Abella doesn't have many built-in types.  Therefore we need to encode
 our own.
 
-**Boolean**:  We can create a kind for Booleans and two constants for
+**Boolean**:  We can create a type for Booleans and two constants for
 true and false:
 ```
 Kind Bool   type.
@@ -480,7 +480,7 @@ Regardless of how we handle matching on nonterminal types, we can
 match on primitive types.  We have a relation for matching
 against a single pattern.
 
-We create a pattern kind for the patterns of each primitive type, with
+We create a pattern type for the patterns of each primitive type, with
 a pattern for each constructor and a separate variable pattern
 constructor.  For Booleans, this would look like this:
 ```
@@ -504,12 +504,12 @@ Define match_bool : bool -> bool_Pattern ->
 ```
 
 We can do some general things for matching.  We first create a general
-kind for the bound variables resulting from matching a particular
-pattern for any kind of pattern.  This kind is
+type for the bound variables resulting from matching a particular
+pattern for any type of pattern.  This type is
 ```
 Kind pattern_match_var_result   type.
 ```
-We will have a constructor for this kind for each kind which we can
+We will have a constructor for this type for each type which we can
 get from matching.  For example, the constructor for Booleans is
 ```
 Type pmvr_bool   bool -> pattern_match_var_result.
@@ -532,7 +532,7 @@ Define match_pattern_list : TermTy -> list PattTy ->
 This takes
 * the term to match
 * the list of patterns to match the term against
-* the matching relation for the term kind
+* the matching relation for the term type
 * the index into the list for the pattern which matched
 * the list of terms which matched variables
 
@@ -598,7 +598,7 @@ user, and that removes the encoding from what the user wrote and would
 like to reason about.
 
 Compiled pattern matching, which matches on a single level of
-constructors at once, creates its own pattern kind as for the
+constructors at once, creates its own pattern type as for the
 primitive types.  The constructors of this type correspond to the
 productions, but without any subpatterns.  This is because we don't
 need another level of matching, and we know exactly how many children
@@ -610,7 +610,7 @@ abstract production p
 top::Nt ::= t::Nt i::Integer
 { }
 ```
-would produce the following pattern kind and constructor:
+would produce the following pattern type and constructor:
 ```
 Kind nt_Nt_Pattern   type.
 Type prod_p_nt_Nt_Pattern   nt_Nt_Pattern.
@@ -691,7 +691,7 @@ they currently are.  This finds a match if a match exists; Silver may
 not, depending on forwarding.  However, I'm not sure Silver's current
 semantics are the intended ones, so I'll write this up anyway.
 
-To keep track of the matching, we create a kind with two constructors:
+To keep track of the matching, we create a type with two constructors:
 ```
 Kind match_forwards   type.
 Type mf_prod   nat -> list match_forwards -> match_forwards.
