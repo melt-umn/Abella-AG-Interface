@@ -88,7 +88,9 @@ terminal Underscore_t  '_'       lexer classes {TOKEN};
 terminal OptSemi_t     /;?/      lexer classes {TOKEN};
 
 
-terminal Id_t  /[-A-Za-z^=`'?$][-A-Za-z^=`'?$0-9_*@+#!~\/]*/;
+--Identifiers in Abella can also start with a dollar sign
+--To prevent overwriting encoded things, we'll disallow that
+terminal Id_t  /[-A-Za-z^=`'?][-A-Za-z^=`'?$0-9_*@+#!~\/]*/;
 terminal QString_t  /"[^"]*"/;
 terminal Number_t  /[0-9]+/;
 

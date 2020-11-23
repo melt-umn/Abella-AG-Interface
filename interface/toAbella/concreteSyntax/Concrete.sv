@@ -8,6 +8,18 @@ synthesized attribute count::Integer;
 
 
 
+--split an AttrAccess_t into the tree name and attr name
+function split_AttrAccess_t
+Pair<String String> ::= a::AttrAccess_t
+{
+  local lexeme::String = a.lexeme;
+  local dotLoc::Integer = indexOf(".", a.lexeme);
+  return pair(substring(0, dotLoc, lexeme),
+              substring(dotLoc + 1, length(lexeme), lexeme));
+}
+
+
+
 
 
 nonterminal Command_c with ast<ProofCommand>;
@@ -59,6 +71,10 @@ concrete productions top::PureCommand_c
   { top.ast = caseTactic(h.ast, hy.ast, false); }
 | h::HHint_c 'case' hy::Hyp_c '(' 'keep' ')' '.'
   { top.ast = caseTactic(h.ast, hy.ast, true); }
+| h::HHint_c 'case' a::AttrAccess_t '.'
+  { local treeName::String = case split_AttrAccess_t(a) of | pair(trn, _) -> trn end;
+    local attrName::String = case split_AttrAccess_t(a) of | pair(_, atn) -> atn end;
+    top.ast = caseAttrAccess(h.ast, treeName, attrName); }
 | h::HHint_c 'assert' md::MaybeDepth_c m::Metaterm_c '.'
   { top.ast = assertTactic(h.ast, md.ast, m.ast); }
 | 'exists' ew::EWitnesses_c '.'
@@ -246,6 +262,11 @@ concrete productions top::Term_c
   { top.ast = applicationTerm(e.ast, el.ast); }
 | e::Exp_c
   { top.ast = e.ast; }
+| a::AttrAccess_t
+  { local dotLoc::Integer = indexOf(".", a.lexeme);
+    top.ast =
+       attrAccessTerm(substring(0, dotLoc, a.lexeme),
+                      substring(dotLoc + 1, length(a.lexeme), a.lexeme)); }
 
 
 concrete productions top::Exp_c

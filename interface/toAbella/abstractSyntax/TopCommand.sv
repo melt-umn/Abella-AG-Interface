@@ -5,7 +5,8 @@ grammar toAbella:abstractSyntax;
 
 nonterminal TopCommand with
    --pp should always end with a newline
-   pp;
+   pp,
+   translation<TopCommand>, attrOccurrences;
 
 abstract production theoremDeclaration
 top::TopCommand ::= name::String params::[String] body::Metaterm
@@ -26,6 +27,8 @@ top::TopCommand ::= name::String params::[String] body::Metaterm
   top.pp =
       "Theorem " ++ name ++ " " ++ paramsString ++
       " : " ++ body.pp ++ ".\n";
+
+  top.translation = theoremDeclaration(name, params, body.translation);
 }
 
 
@@ -46,6 +49,8 @@ top::TopCommand ::= preds::[Pair<String Type>] defs::Defs
      then error("Definition should not be empty; definitionDeclaration")
      else buildPreds(preds);
   top.pp = "Define " ++ predsString ++ " by " ++ defs.pp ++ ".";
+
+  top.translation = error("Translation not done in definitionDeclaration yet");
 }
 
 
@@ -66,6 +71,8 @@ top::TopCommand ::= preds::[Pair<String Type>] defs::Defs
      then error("CoDefinition should not be empty; codefinitionDeclaration")
      else buildPreds(preds);
   top.pp = "CoDefine " ++ predsString ++ " by " ++ defs.pp ++ ".";
+
+  top.translation = error("Translation not done in codefinitionDeclaration yet");
 }
 
 
@@ -86,6 +93,8 @@ top::TopCommand ::= importFile::String withs::[Pair<String String>]
      then ""
      else " with " ++ buildWiths(withs);
   top.pp = "Import " ++ importFile ++ withString ++ ".\n";
+
+  top.translation = error("Translation not done in importCommand yet");
 }
 
 
@@ -93,6 +102,8 @@ abstract production queryCommand
 top::TopCommand ::= m::Metaterm
 {
   top.pp = "Query " ++ m.pp ++ ".\n";
+
+  top.translation = error("Translation not done in queryCommand yet");
 }
 
 
@@ -112,6 +123,8 @@ top::TopCommand ::= theoremName::String newTheoremNames::[String]
      then ""
      else " as " ++ buildNames(newTheoremNames);
   top.pp = "Split " ++ theoremName ++ namesString ++ ".\n";
+
+  top.translation = error("Translation not done in splitTheorem yet");
 }
 
 
@@ -132,6 +145,8 @@ top::TopCommand ::= names::[String] k::Kind
      then ""
      else " as " ++ buildNames(names);
   top.pp = "Kind " ++ namesString ++ "   " ++ k.pp ++ ".\n";
+
+  top.translation = error("Translation not done in kindDeclaration yet");
 }
 
 
@@ -151,6 +166,8 @@ top::TopCommand ::= names::[String] ty::Type
      then ""
      else " as " ++ buildNames(names);
   top.pp = "Type " ++ namesString ++ "   " ++ ty.pp ++ ".\n";
+
+  top.translation = error("Translation not done in typeDeclaration yet");
 }
 
 
@@ -170,6 +187,8 @@ top::TopCommand ::= tys::[Type]
      then error("Close commands should not be devoid of tyes")
      else buildTypes(tys);
   top.pp = "Close " ++ typesString ++ ".\n";
+
+  top.translation = error("Translation not done in closeCommand yet");
 }
 
 
@@ -177,5 +196,7 @@ abstract production topNoOpCommand
 top::TopCommand ::= n::NoOpCommand
 {
   top.pp = n.pp;
+
+  top.translation = topNoOpCommand(n.translation);
 }
 
