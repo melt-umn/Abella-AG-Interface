@@ -307,12 +307,12 @@ top::Term ::= treename::String attr::String
   top.pp = treename ++ "." ++ attr;
 
   top.translation = nameTerm(accessToAccessName(treename, attr), nothing());
-  --TODO we should try to change this with more analysis (what types attr occurs on)
   top.newPremises := [attrAccessNewPremise(treename, attr), wpdNewPremise(treename)];
 
   local occursOnTypes::[Type] =
         case findAssociated(attr, top.attrOccurrences) of
         | just(tys) -> tys
+        | nothing() -> [] --unknown attribute
         end;
   local possibleTys::[Type] =
         case findAssociatedScopes(treename, top.boundVars) of

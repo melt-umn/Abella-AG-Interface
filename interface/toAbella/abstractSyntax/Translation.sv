@@ -121,7 +121,7 @@ top::NewPremise ::= tree::String attr::String
      | _ -> false
      end;
 
-  --We don't want to add thes name if we can't find a type for it.
+  --We don't want to add the name if we can't find a type for it.
   top.newBindingNames =
      case findty of
      | just(just(_)) -> [pair(accessToAccessName(tree, attr), nothing())]
