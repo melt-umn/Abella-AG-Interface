@@ -13,6 +13,7 @@ AG structure before using Prolog to evaluate the tree.  Thus we do not
 want to try something like this for reasoning, since the semantic
 encoding is separate from the AG structure.
 
+```
 @article{Sierra2006,
   title = "A Prolog Framework for the Rapid Prototyping of Language Processors with Attribute Grammars",
   journal = "Electronic Notes in Theoretical Computer Science",
@@ -26,6 +27,7 @@ encoding is separate from the AG structure.
   author = "José Luis Sierra and Alfredo Fernández-Valmayor",
   keywords = "attribute grammars, language prototyping framework, education in language processors, Prolog"
 }
+```
 
 
 # Compiling circular attribute grammars into Prolog
@@ -56,6 +58,7 @@ tree to be valid under this encoding.  The separation in our encoding
 allows some attributes to have values and others not, as is commonly
 done in modern systems.
 
+```
 @article{Arbab1986,
   author = "Bijan Arbab",
   journal = "IBM Journal of Research and Development",
@@ -66,6 +69,7 @@ done in modern systems.
   pages = "294-309",
   doi = "10.1147/rd.303.0294"
 }
+```
 
 
 # A Semantic Evaluator Generating System in Prolog
@@ -84,6 +88,7 @@ of attribute values is like having a node type.  Attribute equations
 are encoded as Prolog clauses with relations to access the attributes
 off nodes based on their identifier number.
 
+```
 @inproceedings{Henriques1989,
   author = "Henriques, Pedro Rangel",
   editor = "Deransart, P. and Lorho, B. and Ma{\l}uszy{\'{n}}ski, J.",
@@ -95,6 +100,7 @@ off nodes based on their identifier number.
   pages = "201--218",
   doi = "10.1007/3-540-50820-1_49"
 }
+```
 
 
 # Prototyping by using an attribute grammar as a logic program
@@ -125,6 +131,7 @@ where the various sets of arguments are the attribute values for the
 trees and the semantic relations describe how the attribute values are
 related.
 
+```
 @inproceedings{Riedewald1991,
   author = "Riedewald, G{\"u}nter",
   editor = "Alblas, Henk and Melichar, Bo{\v{r}}ivoj",
@@ -136,4 +143,45 @@ related.
   pages = "401--437",
   doi = "10.1007/3-540-54572-7_16"
 }
+```
+
+
+# Attribute grammar based theorem prover
+
+Link:  [Here](https://www.sciencedirect.com/science/article/abs/pii/0950584988901346)
+
+It turns out that the name is more relevant than the paper.  "Theorem
+proving" here is really logical deduction like Prolog (logic
+programming).
+
+From a set of logic rules they create syntax rules which don't use any
+terminal symbols, then use a parser to build a derivation of a goal.
+They evaluate attributes at the same time as they are parsing, so if
+their `FLAG` attribute says there is a failure, the parser tries to
+find an alternative solution.
+
+It can do a couple of things better than standard Prolog:
+* It can recognize contradictions between a current goal and an
+  ancestor goal, meaning the ancestor goal must be true based on
+  excluded middle.  For example, if you are trying to prove `E` and
+  you come across `!E`, one of them must be true.  If `!E` is the last
+  thing to prove, it must be `E` by contradiction.  This allows it to
+  prove more things than standard Prolog.
+* The parser can be extended to not simply do depth-first search and
+  thus avoid infinite loops.
+
+```
+@article{Panayiotopoulos1988,
+  title = "Attribute grammar based theorem prover",
+  journal = "Information and Software Technology",
+  volume = "30",
+  number = "9",
+  pages = "553 - 560",
+  year = "1988",
+  issn = "0950-5849",
+  doi = "10.1016/0950-5849(88)90134-6",
+  author = "T Panayiotopoulos and G Papakonstantinou and G Stamatopoulos",
+  keywords = "software engineering, software tools, attribute grammars, theorem proving",
+}
+```
 
