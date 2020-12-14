@@ -364,7 +364,7 @@ the result to use the result in the next computation, and we would not
 have access to the result without this.
 
 I am going to be imprecise in how I write these rules in a few ways
-which I belive are clearer to read than absolute precision would be:
+which I believe are clearer to read than absolute precision would be:
 * I will use a set of clauses directly to represent mapping over it.
   For example, if we have `encode e el x` and write `el /\ x = btrue`,
   that means mapping over all the clauses in `el` and using
@@ -506,10 +506,10 @@ document.
 
 For each occurs declaration, we need a relation to show that the
 equation for the attribute holds on the root node.  This relation
-needs to be extensible, so we will have defined relations for each
-component and a declared relation for the full relation.  These
-relations relate a syntactic structure and a `node_tree` which holds
-the attribute values for the syntactic structure.
+needs to be extensible, so in Abella we will have defined relations
+for each component and a declared relation for the full relation.
+These relations relate a syntactic structure and a `node_tree` which
+holds the attribute values for the syntactic structure.
 
 The component relation has one or more clauses for each production.
 These clauses encode the appropriate equation(s) in each production.
@@ -531,12 +531,18 @@ production has two children on which it sets an inherited attribute
 The purpose of the equation relations is to ensure that the attributes
 in a decorated tree obey the equations given for them, so we need to
 encode all the equations.  If the equations for inherited attributes
-branch, we need to encode the cartesian production of the clause sets
+branch, we need to encode the Cartesian production of the clause sets
 for all the equations.  If a production does not have an equation for
 a particular inherited attribute, we still create a definitional cause
 for the production in the component relation, but without a body.
-This means that the set of equations is vacuously satsified, since
+This means that the set of equations is vacuously satisfied, since
 there are no equations.
+
+In systems where relations are assumed to be extensible, such as
+Prolog, we don't need to have declared full equation relations and
+defined component equation relations.  We can simply define the
+clauses which go into the component relation in Abella directly as
+clauses of the full relation.
 
 If we have an equation or equations to encode, the precondition is the
 encoding of the equation's expression (`el` in `encode Env e el ex`
@@ -729,7 +735,7 @@ values.
 Unfortunately, this scheme doesn't capture everything I set out to
 capture.  In particular, I was hoping to capture that attributes
 *must* be defined according to their equations if their equations
-*can* be satisified.  For example, if we have `plus(1,2)`, the `val`
+*can* be satisfied.  For example, if we have `plus(1,2)`, the `val`
 attribute for `plus` should be `attr_ex 3`.  Unfortunately, the system
 described above also allows it to be `attr_no` since, with that value,
 the equation is not satisfied.
@@ -774,7 +780,7 @@ What can we do about this?  There are several options:
 ## WPD Nonterminal Relations
 
 We have declared full WPD nonterminal relations for each nonterminal
-type.  As with the node relations, these relatio a syntactic structure
+type.  As with the node relations, these relate a syntactic structure
 and a `node_tree`.  The full relation for the `Exr` nonterminal type
 is
 ```
