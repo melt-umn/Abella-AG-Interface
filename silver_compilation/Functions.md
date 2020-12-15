@@ -97,7 +97,7 @@ results to the encoded function as arguments:
 encode Env f lf funname
 encode Env args la eargs
 ----------------------------------------
-encode Env f(args) [lf /\ la /\ funname eargs x] x
+encode Env (f(args)) [lf /\ la /\ funname eargs x] x
 ```
 Here we are abusing notation; `args` is a sequence of arguments, and
 `eargs` is the encoded sequence.  Encoding the argument sequence is

@@ -8,8 +8,9 @@ essentially all of which interact with each other:
 * We need to encode equations into definitional clauses for relations,
   which requires encoding Silver expressions into logical expressions
   in Abella.
-* We need to define WPD relations for each nonterminal on which we
-  have any attributes, which depends on the attributes included on it.
+* We need to define WPD (well-partially-decorated) relations for each
+  nonterminal on which we have any attributes, which depends on the
+  attributes included on it.
   
 A lot of the ideas in this encoding are not specific to Abella and
 could be used to encode attribute grammars in any relational system.
@@ -473,6 +474,7 @@ encode Env (t1 == t2)
         l1 /\ l2 /\ x1 <> x2 /\ x = bfalse] x
 ```
 
+
 **Decorate:**
 ```
 encode Env t tl tx
@@ -678,38 +680,19 @@ Type wpd_node_Expr   nt_Expr -> node_tree -> prop.
 ```
 
 The component relations combine the equation relations for each
-attribute declared by the component.  For each attribute, either the
-equation relation holds or the attribute's value is undefined.  For
-our running example, this would be:
+attribute declared by the component.  For each attribute, the equation
+holds.  For our running example, this would be:
 ```
 Define wpd_node_Expr__host : nt_Expr -> node_tree -> prop by
   wpd_node_Expr__host Tree (ntr_Expr Node TreeCL) :=
-    (  ctx__Expr Tree (ntr_Expr Node TreeCL)  \/
-       access__ctx__Expr Node attr_no )  )       /\
-    (  val__Expr Tree (ntr_Expr Node TreeCL)  \/
-       access__ia__Nt Node attr_no )  ).
+    ctx__Expr Tree (ntr_Expr Node TreeCL /\
+    val__Expr Tree (ntr_Expr Node TreeCL.
 ```
 Note that we use the full relations, not the component relation.  This
 relation is going to be what ensures all productions from all
 components have these host-introduced attributes obeying their
 equations, so we need to use the full relation which governs all the
 component relations.
-
-I thought about whether these disjunctions should be split across
-separate clauses.  I decided against it because we sometimes don't
-care whether particular attributes are defined or not (e.g. if we're
-proving something about typing, we don't care if evaluation attributes
-are defined).  Splitting them into separate clauses would lead to a
-lot of extra cases getting thrown in which are essentially equal.
-This way you can do case analysis just on whether the attributes in
-which you are interested are defined.
-
-I also thought about whether the disjunct for being undefined should
-explicitly include that the equation relation does not hold.  I don't
-think we actually need that, since any clause in the equation relation
-which actually does something includes a precondition that the
-attribute must have a real value (`attr_ex`).  If there is no
-precondition, we don't care whether the attribute has a value or not.
 
 Most relations built extensibly will replace their declared full
 relation in the composition with a definition with clauses which each
@@ -726,54 +709,7 @@ Define wpd_node_Expr : nt_Expr -> node_tree -> prop by
      wpd_node_Expr__E2   Tree NodeTree.
 ```
 This composition ensures all the attributes from all three components
-are either defined according to their equations or have undefined
-values.
-
-
-### Limitations and Alternatives
-
-Unfortunately, this scheme doesn't capture everything I set out to
-capture.  In particular, I was hoping to capture that attributes
-*must* be defined according to their equations if their equations
-*can* be satisfied.  For example, if we have `plus(1,2)`, the `val`
-attribute for `plus` should be `attr_ex 3`.  Unfortunately, the system
-described above also allows it to be `attr_no` since, with that value,
-the equation is not satisfied.
-
-What can we do about this?  There are several options:
-* We could change our WPD node relation so for each equation we either
-  have the equation hold or no possible way for the equation to hold
-  and a value of `attr_no`.  The "no possible way" is a bit difficult
-  to describe.  I think it would be something like this:
-  ```
-  (exists NewNode,
-      <NewNode has the same values for all known attributes other than
-       attr as Node as> ->
-      attr_Nonterminal Tree (ntr_Nonterminal NewNode Children)) ->
-    false
-  ```
-  This says there is no node where the only value we change is the
-  value of the current attribute where the equation is satisfied.
-* We could drop the use of `attrVal`.  Every attribute would have a
-  value, but some values might not be governed by equations written in
-  Silver.  We would need to add clauses to the equation relations for
-  these cases.  I don't like this idea very much because I think it is
-  helpful to be able to prove theorems about the existence of
-  attributes under certain circumstances (e.g. if an expression is
-  typable, then its forward exists if it is a forwarding equation).
-  The exists/does not exist scheme is also what Silver does, rather
-  than random values.
-* We could move `attr_no` into equations.  For each expression being
-  encoded, if something could fail (e.g. another attribute look-up not
-  getting a real value, division not succeeding, matching failing,
-  etc.) we would add a clause with the failure to go into a clause
-  saying the attribute has an `attr_no` value.  Then the WPD node
-  relation would just be the conjunction of all the equation relations
-  holding, since they would hold whether there was a value or not.  I
-  think this is my preferred solution, since it is no more complicated
-  than the previous idea (which would also require adding clauses for
-  non-success cases), but keeps the dichotomy of attribute values
-  existing or not existing.
+are defined according to their equations.
 
 
 
@@ -809,8 +745,7 @@ Define wpd_Expr__host : nt_Expr -> node_tree -> prop by
 ```
 
 
-
-## Composition
+### Composition
 
 In the composition, we would replace the `wpd_Expr` declared relation
 with a defined relation delegating to each of the component
@@ -838,8 +773,7 @@ relations are smaller (in an inductive sense) than the original
 `wpd_Expr` that delegated to the component relation.
 
 
-
-## Alternative Definition
+### Alternative Definition
 
 An alternative, which does not obviate the need for combining
 definitions in Abella and thus we do not do there, is to take an
