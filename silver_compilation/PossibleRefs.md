@@ -185,3 +185,63 @@ It can do a couple of things better than standard Prolog:
 }
 ```
 
+
+# A formalisation of parameterised reference attribute grammars
+
+Link:  [Here](https://dl.acm.org/doi/abs/10.1145/3136014.3136024)  
+Code Link:  [Here](https://bitbucket.org/scottbuckley/saigacoq-minor/src/master/)  
+(This link is different than the one in the paper.  He moved it.)
+
+This work presents a language which is intended to capture the essence
+of attribute evaluation schemes without worrying about implementation
+details of different systems.  This language is intended to be used
+for two orthogonal purposes:
+1. Prove different caching schemes do not affect attribute values
+2. Model and reason about AG implementations of languages
+
+They show different caching schemes do not affect attribute values by
+providing evaluation rules for different schemes then proving that the
+attributes in any grammar being evaluated have the same values in
+both.
+
+The example in their paper for reasoning about AG implementations of a
+language is to show that two Saiga implementations of name analysis
+for PicoJava are equivalent by showing that the attributes for what
+declaration a name refers to are the same.  They don't give any
+details of how they do the proof, just the broad ideas behind it, but
+it appears they are doing induction on the structure of the tree.
+They do not have higher-order attributes, so the tree structure is
+enough.
+
+They have the Saiga language implemented in Coq.  There they have
+proven the irrelevance of caching.  However, they have not done a
+proof of their property for PicoJava.  They have examples of programs
+running, but those appear to be testing numbers of cache steps, not
+anything related to their property.
+
+I think trying to use the same Coq implementation of Saiga for
+reasoning *about* Saiga evaluation and reasoning about languages
+written *in* Saiga was a mistake.  The implementation of PicoJava uses
+numbered nodes in the tree rather than a tree structure, and
+nonterminal types appear to be identified by number as well.  Without
+a clear tree structure, I'm not sure it is possible to write a proof
+of a language property, and it certainly is extremely difficult.
+
+```
+@inproceedings{Buckley2017,
+  author = {Buckley, Scott J. H. and Sloane, Anthony M.},
+  title = {A Formalisation of Parameterised Reference Attribute Grammars},
+  year = {2017},
+  publisher = {Association for Computing Machinery},
+  address = {New York, NY, USA},
+  url = {https://doi.org/10.1145/3136014.3136024},
+  doi = {10.1145/3136014.3136024},
+  booktitle = {Proceedings of the 10th ACM SIGPLAN International Conference on Software Language Engineering},
+  pages = {139–150},
+  numpages = {12},
+  keywords = {name analysis, attribute grammars, small-step operational semantics},
+  location = {Vancouver, BC, Canada},
+  series = {SLE 2017}
+}
+```
+
