@@ -10,8 +10,129 @@ system we are using.  Therefore these encodings are specific to
 Abella, and might be very different if we encode into a different
 system.
 
+We separate this document into classes of how necessary it is to
+handle these types as primitives, or to handle them at all.
 
-### Float
+
+
+
+
+# Important Primitive Types
+
+Some primitive types are used very often in Silver, so we need to
+encode them.  This section contains not only the `String` type, but
+also the `Boolean` and `Integer` types we discussed in
+[BasicEncoding.md](BasiceEncoding.md).
+
+
+
+## String
+
+I'm not quite sure how to handle strings.  Something that would
+probably work is to encode characters as constants, then use lists
+of characters as strings:
+```
+Kind char   type.
+Type c_a, c_b, c_c, c_d, c_e, c_f, c_g, c_h, c_i, c_j, c_k   char.
+Type c_l, c_m, c_n, c_o, c_p, c_q, c_r, c_s, c_t, c_u, c_v   char.
+Type c_w, c_x, c_y, c_z, c_1, c_2, c_3, c_4, c_5, c_6, c_7   char.
+Type c_8, c_9, c_0, c__   char.
+```
+We can then define operations over these strings with relations.
+
+We could encode all possible characters, since the set is finite, even
+though I didn't do that in the above.  We could encode them as
+`c_<ordinal>`, and rely on the interface to show them to the user as
+actual characters.
+
+We use `String`s in Silver to represent identifier names very often,
+so we very much to have an encoding for them.
+
+
+
+
+
+# Core Types to Encode as Primitives
+
+This section contains types which aren't actually primitive in Silver,
+but which are used as if they were primitive types.  We could encode
+these as we encode nonterminals, but it is simpler to treat them as
+primitives, and thus we want to encode them as such.
+
+
+
+## [A]
+
+Lists are one of two data structures of which I am aware which are
+actually built into Abella.  Therefore it makes sense to use the
+built-in lists to encode any Silver lists.
+
+We can encode `++` with an `append` relation on lists.  We can encode
+other common functions on lists directly:
+```
+encode Env L Ll Lx
+----------------------------------------
+encode Env (null L)
+       [Ll /\ Lx = [] /\ x = btrue,
+        Ll /\ Lx = _::_ /\ x = bfalse] x
+        
+encode Env L Ll Lx
+----------------------------------------
+encode Env (head L) [Ll /\ Lx = A::_ /\ x = A] x
+
+encode Env L Ll Lx
+----------------------------------------
+encode Env (tail l) [Ll /\ Lx = _::A /\ x = A] x
+```
+Other functions we might have can be encoded either directly or as
+relations.
+
+
+
+## Pair<A B>
+
+We need to build our own pairs, which we are using elsewhere as well.
+We can encode pairs as
+```
+Kind pair   type -> type -> type.
+Type pair_c   A -> B -> pair A B.
+```
+We can encode `fst` as follows:
+```
+encode Env p pl px
+----------------------------------------
+encode Env (fst p) [pl /\ px = pair_c A B /\ x = A] x
+```
+We can encode `snd` similarly.  We can also encode `p.fst` and `p.snd`
+in this way.
+
+We will need pairs for local attributes and forwards (discussed in
+[Locals.md](Locals.md) and [Forwards.md](Forwards.md)), so we need to
+include this definition regardless of whether we are going to encode
+Silver pairs or not.
+
+
+
+## Others
+
+We could encode other core types, like `Maybe`, `Either`, etc. as
+primitive types as well, since they don't really get used as
+nonterminal types.  We can figure out what we need as we start
+reasoning about some grammars.
+
+
+
+
+
+# Other Types
+
+This section contains the actual primitive types in Silver which we
+have not yet discussed.  These are the types that are not used very
+often, so it isn't too important that we have an encoding of them.
+
+
+
+## Float
 
 I'm not quite sure how to handle floating-point numbers.  We can't
 encode them for real, as we could do with integers.  We might treat
@@ -52,93 +173,11 @@ interpreters over languages which have floating-point numbers, so this
 may not be something we're really concerned about adding.
 
 
-### String
 
-I'm not quite sure how to handle strings either.  Something that would
-probably work is to encode the most-common characters, then use lists
-of characters as strings:
-```
-Kind char   type.
-Type c_a, c_b, c_c, c_d, c_e, c_f, c_g, c_h, c_i, c_j, c_k   char.
-Type c_l, c_m, c_n, c_o, c_p, c_q, c_r, c_s, c_t, c_u, c_v   char.
-Type c_w, c_x, c_y, c_z, c_1, c_2, c_3, c_4, c_5, c_6, c_7   char.
-Type c_8, c_9, c_0, c__   char.
-```
-We can then define operations over these strings with relations.  We
-could encode all possible characters, since the set is finite, even
-though I didn't do that in the above.
-
-Whether we want to encode these may rely on whether we think we want
-properties about string-typed attributes.  We may not want to encode
-them.
-
-
-### IO
+## IO
 
 I don't know enough about the Silver `IO` primitive type to suggest an
 encoding for it.  However, I also don't think there is a lot one would
 want to prove about this, so I think putting it off is okay for now
 (or forever).
-
-
-### [A]
-
-This isn't actually a primitive type in Silver, but I haven't seen it
-used as if it isn't a primitive type.  Lists are one of two data
-structures of which I am aware which are actually built into Abella.
-Therefore it makes sense to use the built-in lists to encode any
-Silver lists.
-
-We can encode `++` with an `append` relation on lists.  We can encode
-other common functions on lists directly:
-```
-encode Env L Ll Lx
-----------------------------------------
-encode Env (null L)
-       [Ll /\ Lx = [] /\ x = btrue,
-        Ll /\ Lx = _::_ /\ x = bfalse] x
-        
-encode Env L Ll Lx
-----------------------------------------
-encode Env (head L) [Ll /\ Lx = A::_ /\ x = A] x
-
-encode Env L Ll Lx
-----------------------------------------
-encode Env (tail l) [Ll /\ Lx = _::A /\ x = A] x
-```
-Other functions we might have can be encoded either directly or as
-relations.
-
-
-### Pair<A B>
-
-Pairs also aren't actually a primitive type in Silver, but I also
-don't see it being used as if it isn't a primitive type.  We need to
-build our own pairs, which we are using elsewhere as well.  We can
-encode pairs as
-```
-Kind pair   type -> type -> type.
-Type pair_c   A -> B -> pair A B.
-```
-We can encode `fst` as follows:
-```
-encode Env p pl px
-----------------------------------------
-encode Env (fst p) [pl /\ px = pair_c A B /\ x = A] x
-```
-We can encode `snd` similarly.  We can also encode `p.fst` and `p.snd`
-in this way.
-
-We will need pairs for local attributes and forwards (discussed in
-[Locals.md](Locals.md) and [Forwards.md](Forwards.md)), so we need to
-include this definition regardless of whether we are going to encode
-Silver pairs or not.
-
-
-### Others
-
-We could encode other core types, like `Maybe`, `Either`, etc. as
-primitive types as well, since they don't really get used as
-nonterminal types.  We can figure out what we need as we start
-reasoning about some grammars.
 

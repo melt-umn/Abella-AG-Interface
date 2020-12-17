@@ -75,4 +75,19 @@ documents.  I will keep a list here:
   relations from other extensions, so all the inheriteds we don't know
   about end up undefined too, if we add this to the equation relations
   for locals.
+* In [PatternMatching.md](PatternMatching.md), we discuss matching on
+  pairs generically, matching on any types of elements in the pair.
+  In this encoding, I think I have come across a bug with the Abella
+  type system.  If that bug is determined to be a bug and is fixed,
+  we'll either need to find a way to have `pattern_match_var_result`
+  be conditioned on the types contained in it or need to encode
+  `pmvr_pair` and `match_pair` for particular element types.  We might
+  be able to leave `match_pair` generic and pass a version of
+  `pmvr_pair` for specific types as an argument for if we match
+  against a variable.  For example, we might have `pmvr_pair_bool_bool`
+  for when we have matched on a pattern variable representing the
+  Silver type `Pair<Boolean Boolean>` and have `match_pair` take an
+  argument of type `pair A B -> pattern_match_var_result` for which we
+  would give `pmvr_pair_bool_bool` as an argument to create a safe way
+  of passing out pairs of Booleans from matching.
 

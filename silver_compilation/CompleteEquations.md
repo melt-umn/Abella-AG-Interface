@@ -86,11 +86,13 @@ expression to have a value, and that the subexpression fails.
 encode_failure Env c cl
 encode_failure Env th thl
 encode_failure Env el ell
+encode Env c cl_success cx
 ----------------------------------------
 encode_failure
    Env
    (if c then th else el)
-   (cl ++ thl ++ ell)
+   (cl ++ [cl_success /\ cx = btrue  thl] ++
+          [cl_success /\ cx = bfalse ell])
 ```
 
 

@@ -105,9 +105,9 @@ This is best explained by example.  Consider the following Silver
 `case` expression:
 ```
 case x, y of
-| 3, b -> e1
-| a, 3 -> e2
-| a, b -> e3
+| 3, b -> 5
+| a, 3 -> a + 1
+| a, b -> a + b
 end
 ```
 We can encode matching the second match rule under the environment
@@ -115,7 +115,7 @@ We can encode matching the second match rule under the environment
 ```
 match_pattern_list (pair_c X Y) Patts match_int_pairs
                    (succ zero) [A] /\
-e2l /\ e2x = x
+plus A 1 e2x /\ e2x = x
 ```
 Here we have
 * `x` encodes to `X`
@@ -123,7 +123,7 @@ Here we have
 * the patterns from the rules encode to `Patts`
 * `match_int_pairs` matches a pair of integers against a pattern for a
   pair of integers
-* `encode ((a,A)::Env) e2 e2l e2x`
+* `encode ((a,A)::Env) (a + 1) [plus A 1 e2x] e2x`
 * the variable holding the result is `x`
 
 By matching on the list of matched variables being `[A]`, we get the
@@ -137,6 +137,67 @@ means that, for the last match rule, we would match on the list as
 We could also define particular relations for matching on pattern
 lists for each primitive type (e.g. have a `match_bool_list`,
 `match_int_list`, etc.).
+
+
+
+## Matching for Generic Types
+
+In our example above, we had a relation `match_int_pairs` to match on
+pairs of integers.  In reality, we don't need to have separate
+relations for matching on different types of pairs, or on different
+types of lists.
+
+We can define a pattern type for pairs as follows:
+```
+Kind pair_Pattern   type -> type -> type.
+Type pair_pair_Pattern   A -> B -> pair_Pattern A B.
+Type mvar_pair_Pattern   pair_Pattern A B.
+```
+This allows us to put different pattern types inside our patterns for
+pairs, so we can use the same pair pattern encoding for pairs of
+integers, pairs of strings, pairs of integers and strings, and
+anything else.
+
+For matching, we will need a constructor to hold the results for
+matching a variable for a pair pattern:
+```
+Type pmvr_pair   pair A B -> pmvr_pair.
+```
+We can write code that is **not** typesafe with this.  I think that is
+something that they missed when adding schematic polymorphism.  We can
+guarantee all the code we write is typesafe by encoding well-typed
+Silver code.  If this typing bug is fixed, however, I'm not sure how
+we can encode the pattern matches generically.
+
+We can define the pattern matching relation for pairs as follows:
+```
+Define match_pair :
+       (A -> APatt -> list pattern_match_var_result -> prop) ->
+       (B -> BPatt -> list pattern_match_var_result -> prop) ->
+       pair A B -> pair_Pattern APatt BPatt ->
+       list pattern_match_var_result -> prop by
+  match_pair ARel BRel (pair_c A B)
+             (pair_pair_Pattern APatt BPatt) ResultList :=
+     exists AList BList,
+        ARel A APatt AList /\
+        BRel B BPatt BList /\
+        append AList BList ResultList;
+  match_pair ARel BRel Pair mvar_pair_Pattern [pmvr_pair Pair].
+```
+Because our pairs are generic over the type they contain, we take
+matching relations as arguments for the types contained in the pairs.
+When we match a pair constructor, we use these relations to match the
+first and second elements of the pair, then combine the lists of
+variables which are matched in the two matchings.
+
+With this encoding, the `match_int_pairs` relation referenced above
+would be the partial application `match_pair match_int match_int`
+which specializes matching on pairs to specifically matching on pairs
+of integers.
+
+We might need to have a different encoding for matching on pairs and
+lists which contain nonterminals, depending on what we decide the
+correct semantics of Silver pattern matching are.
 
 
 
