@@ -55,6 +55,7 @@ equations come from
 * Accessing an undefined attribute
 * Not matching any pattern in pattern matching
 * A function not returning a value
+* Division by zero
 
 Once a failure is introduced, it may be passed up through other
 constructs to the level of the equation.  For example, if the
@@ -93,6 +94,16 @@ encode_failure
    (if c then th else el)
    (cl ++ [cl_success /\ cx = btrue  thl] ++
           [cl_success /\ cx = bfalse ell])
+```
+
+
+**Division:**
+```
+encode_failure Env t1 l1
+encode_failure Env t2 l2
+encode Env t2 l2_success x2
+----------------------------------------
+encode_failure Env (t1 / t1) (l1 ++ l2 ++ [l2_success /\ x2 = 0])
 ```
 
 
