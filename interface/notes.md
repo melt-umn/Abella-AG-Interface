@@ -46,6 +46,12 @@
   in a proof, we should automatically apply a theorem to show that the
   values they access are equal.  This is part of treating attribute
   accesses as values.
+- We probably want to ban case analysis on operations like addition.
+  There is nothing the user should gain by looking at how arithmetic
+  operations are implemented, since that isn't really how they should
+  be looking at them.  Boolean operations should still allow case
+  analysis, since that gives useful information about the operands
+  being `true` or `false`.
 
 
 
@@ -101,5 +107,10 @@
 
 - What is the difference between `clear H1 H2.` and `clear -> H1 H2`?
   I don't see any difference in result.
+  * Mary doesn't know either, and it isn't used in any examples in the
+    Abella repository.  Perhaps the website?
 - What is `async.`?
+  * Mary doesn't know either, and it isn't used in any examples in the
+    Abella repository.  Once again, perhaps the website has some
+    examples?
 

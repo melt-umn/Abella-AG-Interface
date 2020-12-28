@@ -142,7 +142,7 @@ top::Metaterm ::= b::Binder bindings::[Pair<String Maybe<Type>>] body::Metaterm
                     map(pair(_, nothing()), removeNames), bindings) ++ newNames;
   top.translation =
      bindingMetaterm(b, transNames,
-                     foldr(impliesMetaterm(_, _), body,
+                     foldr(impliesMetaterm(_, _), body.translation,
                      map(\ x::Decorated NewPremise -> x.translation, premisesHere)));
   top.newPremises :=
      map(\ x::Decorated NewPremise -> new(x),
@@ -177,6 +177,262 @@ top::Metaterm ::= b::Binder bindings::[Pair<String Maybe<Type>>] body::Metaterm
                end,
              [], currentScope)
      end;
+}
+
+
+{-
+  Why don't we just put these operations in Term?  Then we could use
+  something like `3+4` directly in the next addition.  That sounds
+  wonderful, but it doesn't really fit the Abella style, and thus it
+  would be really difficult to work with.  We would not have a good
+  way to use properties of the arithmetic operations, which are
+  theorems which need to be applied.
+
+  The translation of the numeric operations will need to be dependent
+  on typing once we had floats.
+-}
+abstract production plusMetaterm
+top::Metaterm ::= t1::Term t2::Term result::Term
+{
+  top.pp = t1.pp ++ " + " ++ t2.pp ++ " = " ++ result.pp;
+
+  top.translation =
+      termMetaterm(
+         buildApplication(nameTerm(integerAdditionName, nothing()),
+                          [t1.translation, t2.translation,
+                           result.translation]),
+         emptyRestriction());
+
+  t1.boundVars = top.boundVars;
+  t2.boundVars = t1.boundVarsOut;
+  result.boundVars = t2.boundVarsOut;
+  top.boundVarsOut = result.boundVarsOut;
+}
+
+
+abstract production minusMetaterm
+top::Metaterm ::= t1::Term t2::Term result::Term
+{
+  top.pp = t1.pp ++ " - " ++ t2.pp ++ " = " ++ result.pp;
+
+  top.translation =
+      termMetaterm(
+         buildApplication(nameTerm(integerSubtractionName, nothing()),
+                          [t1.translation, t2.translation,
+                           result.translation]),
+         emptyRestriction());
+
+  t1.boundVars = top.boundVars;
+  t2.boundVars = t1.boundVarsOut;
+  result.boundVars = t2.boundVarsOut;
+  top.boundVarsOut = result.boundVarsOut;
+}
+
+
+abstract production multiplyMetaterm
+top::Metaterm ::= t1::Term t2::Term result::Term
+{
+  top.pp = t1.pp ++ " * " ++ t2.pp ++ " = " ++ result.pp;
+
+  top.translation =
+      termMetaterm(
+         buildApplication(nameTerm(integerMultiplicationName, nothing()),
+                          [t1.translation, t2.translation,
+                           result.translation]),
+         emptyRestriction());
+
+  t1.boundVars = top.boundVars;
+  t2.boundVars = t1.boundVarsOut;
+  result.boundVars = t2.boundVarsOut;
+  top.boundVarsOut = result.boundVarsOut;
+}
+
+
+abstract production divideMetaterm
+top::Metaterm ::= t1::Term t2::Term result::Term
+{
+  top.pp = t1.pp ++ " / " ++ t2.pp ++ " = " ++ result.pp;
+
+  top.translation =
+      termMetaterm(
+         buildApplication(nameTerm(integerDivisionName, nothing()),
+                          [t1.translation, t2.translation,
+                           result.translation]),
+         emptyRestriction());
+
+  t1.boundVars = top.boundVars;
+  t2.boundVars = t1.boundVarsOut;
+  result.boundVars = t2.boundVarsOut;
+  top.boundVarsOut = result.boundVarsOut;
+}
+
+
+abstract production modulusMetaterm
+top::Metaterm ::= t1::Term t2::Term result::Term
+{
+  top.pp = t1.pp ++ " mod " ++ t2.pp ++ " = " ++ result.pp;
+
+  top.translation =
+      termMetaterm(
+         buildApplication(nameTerm(integerModulusName, nothing()),
+                          [t1.translation, t2.translation,
+                           result.translation]),
+         emptyRestriction());
+
+  t1.boundVars = top.boundVars;
+  t2.boundVars = t1.boundVarsOut;
+  result.boundVars = t2.boundVarsOut;
+  top.boundVarsOut = result.boundVarsOut;
+}
+
+
+abstract production lessMetaterm
+top::Metaterm ::= t1::Term t2::Term result::Term
+{
+  top.pp = t1.pp ++ " < " ++ t2.pp ++ " = " ++ result.pp;
+
+  top.translation =
+      termMetaterm(
+         buildApplication(nameTerm(integerLessName, nothing()),
+                          [t1.translation, t2.translation,
+                           result.translation]),
+         emptyRestriction());
+
+  t1.boundVars = top.boundVars;
+  t2.boundVars = t1.boundVarsOut;
+  result.boundVars = t2.boundVarsOut;
+  top.boundVarsOut = result.boundVarsOut;
+}
+
+
+abstract production lessEqMetaterm
+top::Metaterm ::= t1::Term t2::Term result::Term
+{
+  top.pp = t1.pp ++ " <= " ++ t2.pp ++ " = " ++ result.pp;
+
+  top.translation =
+      termMetaterm(
+         buildApplication(nameTerm(integerLessEqName, nothing()),
+                          [t1.translation, t2.translation,
+                           result.translation]),
+         emptyRestriction());
+
+  t1.boundVars = top.boundVars;
+  t2.boundVars = t1.boundVarsOut;
+  result.boundVars = t2.boundVarsOut;
+  top.boundVarsOut = result.boundVarsOut;
+}
+
+
+abstract production greaterMetaterm
+top::Metaterm ::= t1::Term t2::Term result::Term
+{
+  top.pp = t1.pp ++ " > " ++ t2.pp ++ " = " ++ result.pp;
+
+  top.translation =
+      termMetaterm(
+         buildApplication(nameTerm(integerGreaterName, nothing()),
+                          [t1.translation, t2.translation,
+                           result.translation]),
+         emptyRestriction());
+
+  t1.boundVars = top.boundVars;
+  t2.boundVars = t1.boundVarsOut;
+  result.boundVars = t2.boundVarsOut;
+  top.boundVarsOut = result.boundVarsOut;
+}
+
+
+abstract production greaterEqMetaterm
+top::Metaterm ::= t1::Term t2::Term result::Term
+{
+  top.pp = t1.pp ++ " >= " ++ t2.pp ++ " = " ++ result.pp;
+
+  top.translation =
+      termMetaterm(
+         buildApplication(nameTerm(integerGreaterEqName, nothing()),
+                          [t1.translation, t2.translation,
+                           result.translation]),
+         emptyRestriction());
+
+  t1.boundVars = top.boundVars;
+  t2.boundVars = t1.boundVarsOut;
+  result.boundVars = t2.boundVarsOut;
+  top.boundVarsOut = result.boundVarsOut;
+}
+
+
+abstract production appendMetaterm
+top::Metaterm ::= t1::Term t2::Term result::Term
+{
+  top.pp = t1.pp ++ " ++ " ++ t2.pp ++ " = " ++ result.pp;
+
+  top.translation =
+      termMetaterm(
+         buildApplication(nameTerm(appendName, nothing()),
+                          [t1.translation, t2.translation,
+                           result.translation]),
+         emptyRestriction());
+
+  t1.boundVars = top.boundVars;
+  t2.boundVars = t1.boundVarsOut;
+  result.boundVars = t2.boundVarsOut;
+  top.boundVarsOut = result.boundVarsOut;
+}
+
+
+abstract production orBoolMetaterm
+top::Metaterm ::= t1::Term t2::Term result::Term
+{
+  top.pp = t1.pp ++ " || " ++ t2.pp ++ " = " ++ result.pp;
+
+  top.translation =
+      termMetaterm(
+         buildApplication(nameTerm(orName, nothing()),
+                          [t1.translation, t2.translation,
+                           result.translation]),
+         emptyRestriction());
+
+  t1.boundVars = top.boundVars;
+  t2.boundVars = t1.boundVarsOut;
+  result.boundVars = t2.boundVarsOut;
+  top.boundVarsOut = result.boundVarsOut;
+}
+
+
+abstract production andBoolMetaterm
+top::Metaterm ::= t1::Term t2::Term result::Term
+{
+  top.pp = t1.pp ++ " && " ++ t2.pp ++ " = " ++ result.pp;
+
+  top.translation =
+      termMetaterm(
+         buildApplication(nameTerm(andName, nothing()),
+                          [t1.translation, t2.translation,
+                           result.translation]),
+         emptyRestriction());
+
+  t1.boundVars = top.boundVars;
+  t2.boundVars = t1.boundVarsOut;
+  result.boundVars = t2.boundVarsOut;
+  top.boundVarsOut = result.boundVarsOut;
+}
+
+
+abstract production notBoolMetaterm
+top::Metaterm ::= t::Term result::Term
+{
+  top.pp = "!" ++ t.pp ++ " = " ++ result.pp;
+
+  top.translation =
+      termMetaterm(
+         buildApplication(nameTerm(notName, nothing()),
+                          [t.translation, result.translation]),
+         emptyRestriction());
+
+  t.boundVars = top.boundVars;
+  result.boundVars = t.boundVarsOut;
+  top.boundVarsOut = result.boundVarsOut;
 }
 
 
@@ -282,8 +538,31 @@ top::Term ::= name::String ty::Maybe<Type>
 
   {-
     I don't think we need to check if this name exists because we
-    aren't changing this name into a tree.
+    aren't changing this name into a tree.  We might need to do
+    something for typing.
   -}
+}
+
+
+abstract production consTerm
+top::Term ::= t1::Term t2::Term
+{
+  top.pp = "(" ++ t1.pp ++ ")::(" ++ t2.pp ++ ")";
+
+  top.translation = consTerm(t1.translation, t2.translation);
+
+  top.boundVarsOut = top.boundVars;
+}
+
+
+abstract production nilTerm
+top::Term ::=
+{
+  top.pp = "nil";
+
+  top.translation = nilTerm();
+
+  top.boundVarsOut = [];
 }
 
 
@@ -343,6 +622,53 @@ top::Term ::= treename::String attr::String
         else []
       | _, _ -> []
       end;
+}
+
+
+abstract production intTerm
+top::Term ::= i::Integer
+{
+  top.pp = toString(i);
+
+  top.translation = integerToIntegerTerm(i);
+
+  top.boundVarsOut = top.boundVars;
+}
+
+
+abstract production stringTerm
+top::Term ::= contents::String
+{
+  top.pp = "\"" ++ contents ++ "\"";
+
+  local charOrdinals::[Integer] = stringToChars(contents);
+  local charConstants::[String] = map(ordinalToCharConstructor, charOrdinals);
+  local charTerms::[Term] = map(nameTerm(_, nothing()), charConstants);
+  top.translation = foldl(consTerm, nilTerm(), charTerms);
+
+  top.boundVarsOut = top.boundVars;
+}
+
+
+abstract production trueTerm
+top::Term ::=
+{
+  top.pp = "true";
+
+  top.translation = nameTerm(trueName, nothing());
+
+  top.boundVarsOut = top.boundVars;
+}
+
+
+abstract production falseTerm
+top::Term ::=
+{
+  top.pp = "false";
+
+  top.translation = nameTerm(falseName, nothing());
+
+  top.boundVarsOut = top.boundVars;
 }
 
 

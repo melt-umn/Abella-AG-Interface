@@ -13,6 +13,28 @@ global attributeNotExistsName::String = "$attr_no";
 global nodeTreeName::String = "$node_tree";
 global nodeTreeType::Type = nameType(nodeTreeName);
 
+global natSuccName::String = "$succ";
+global natZeroName::String = "$zero";
+
+global integerAdditionName::String = "$plus_integer";
+global integerSubtractionName::String = "$minus_integer";
+global integerMultiplicationName::String = "$multiply_integer";
+global integerDivisionName::String = "$divide_integer";
+global integerModulusName::String = "$modulus_integer";
+global integerNegateName::String = "$negate_integer";
+global integerLessName::String = "$less_integer";
+global integerLessEqName::String = "$lesseq_integer";
+global integerGreaterName::String = "$greater_integer";
+global integerGreaterEqName::String = "$greatereq_integer";
+
+global appendName::String = "$append";
+
+global orName::String = "$or_bool";
+global andName::String = "$and_bool";
+global notName::String = "$not_bool";
+global trueName::String = "$btrue";
+global falseName::String = "$bfalse";
+
 
 
 
@@ -50,6 +72,36 @@ function wpdTypeName
 String ::= treeTy::Type
 {
   return "$wpd_" ++ treeTy.pp;
+}
+
+
+
+function ordinalToCharConstructor
+String ::= ord::Integer
+{
+  return "c_" ++ toString(ord);
+}
+
+
+
+
+function integerToIntegerTerm
+Term ::= i::Integer
+{
+  return if i >= 0
+         then buildApplication(nameTerm("$posInt", nothing()),
+                               [integerToNatTerm(i)])
+         else buildApplication(nameTerm("$negSuccInt", nothing()),
+                               [integerToNatTerm((i * -1) - 1)]);
+}
+
+function integerToNatTerm
+Term ::= i::Integer
+{
+  return if i == 0
+         then nameTerm(natZeroName, nothing())
+         else buildApplication(nameTerm(natSuccName, nothing()),
+                               [integerToNatTerm(i-1)]);
 }
 
 
@@ -99,9 +151,7 @@ top::NewPremise ::= tree::String attr::String
      | just(just([_])) ->
        -- <accessRel> <treeNode> (<attributeExistsName> <valueName>)
        termMetaterm(
-          applicationTerm(accessRel,
-                          consTermList(treeNode,
-                          singleTermList(valueName))),
+          buildApplication(accessRel, [treeNode, valueName]),
           emptyRestriction())
      | just(just(_)) -> trueMetaterm() --no type, so can't actually translate this
      | _ -> trueMetaterm() --error case, but I think it is caught elsewhere
@@ -142,9 +192,7 @@ top::NewPremise ::= tree::String
      | just(just([_])) ->
        -- <wpdRel> <treeStructure> <treeNode>
        termMetaterm(
-          applicationTerm(wpdRel,
-                          consTermList(treeStructure,
-                          singleTermList(treeNode))),
+          buildApplication(wpdRel, [treeStructure, treeNode]),
           emptyRestriction())
      | just(just(_)) -> trueMetaterm() --no type, so can't actually translate this
      | _ -> trueMetaterm() --error case, but I think it is caught elsewhere

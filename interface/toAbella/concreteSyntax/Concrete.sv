@@ -75,8 +75,16 @@ concrete productions top::PureCommand_c
   { local treeName::String = case split_AttrAccess_t(a) of | pair(trn, _) -> trn end;
     local attrName::String = case split_AttrAccess_t(a) of | pair(_, atn) -> atn end;
     top.ast = caseAttrAccess(h.ast, treeName, attrName); }
-| h::HHint_c 'assert' md::MaybeDepth_c m::Metaterm_c '.'
-  { top.ast = assertTactic(h.ast, md.ast, m.ast); }
+--| h::HHint_c 'assert' md::MaybeDepth_c m::Metaterm_c '.'
+--  { top.ast = assertTactic(h.ast, md.ast, m.ast); }
+{-The above is the original rule.  Once I added Silver things, this
+  became an ambiguity.  By moving the option here (in the following
+  two rules) rather than the MaybeDepth_c nonterminal, we remove the
+  ambiguity.-}
+| h::HHint_c 'assert' d::Depth_c m::Metaterm_c '.'
+  { top.ast = assertTactic(h.ast, just(d.ast), m.ast); }
+| h::HHint_c 'assert' m::Metaterm_c '.'
+  { top.ast = assertTactic(h.ast, nothing(), m.ast); }
 | 'exists' ew::EWitnesses_c '.'
   { top.ast = existsTactic(ew.ast); }
 | 'witness' ew::EWitnesses_c '.'
@@ -216,16 +224,24 @@ nonterminal SubMetaterm_c with ast<Metaterm>;
 -}
 concrete productions top::Metaterm_c
 | t::Term_c
-  { top.ast = termMetaterm(t.ast, emptyRestriction()); }
+  {-This lets us overload `true` and `false` for use as metaterms and
+    Silver Booleans.  If it is simply "true" or "false" where a
+    metaterm is needed, that is the Abella metaterm; otherwise, it
+    must be the Silver Boolean.-}
+  { top.ast = case t.ast of
+              | trueTerm() -> trueMetaterm()
+              | falseTerm() -> falseMetaterm()
+              | _ -> termMetaterm(t.ast, emptyRestriction())
+              end; }
 | s::SubMetaterm_c
   { top.ast = s.ast; }
 
 
 concrete productions top::SubMetaterm_c
-| 'true'
-  { top.ast = trueMetaterm(); }
-| 'false'
-  { top.ast = falseMetaterm(); }
+--| 'true'
+--  { top.ast = trueMetaterm(); }
+--| 'false'
+--  { top.ast = falseMetaterm(); }
 | t1::Term_c '=' t2::Term_c
   { top.ast = eqMetaterm(t1.ast, t2.ast); }
 | b::Binder_c bl::BindingList_c ',' m::Metaterm_c
@@ -246,6 +262,60 @@ concrete productions top::SubMetaterm_c
   { top.ast = termMetaterm(t.ast, a.ast); }
 | t::Term_c h::Hashes_c
   { top.ast = termMetaterm(t.ast, h.ast); }
+--Things for Silver (for special relations)
+| t1::Term_c '+' t2::Term_c '=' t3::Term_c
+  { top.ast = plusMetaterm(t1.ast, t2.ast, t3.ast); }
+| t1::Term_c '-' t2::Term_c '=' t3::Term_c
+  { top.ast = minusMetaterm(t1.ast, t2.ast, t3.ast); }
+| t1::Term_c '*' t2::Term_c '=' t3::Term_c
+  { top.ast = multiplyMetaterm(t1.ast, t2.ast, t3.ast); }
+| t1::Term_c '/' t2::Term_c '=' t3::Term_c
+  { top.ast = divideMetaterm(t1.ast, t2.ast, t3.ast); }
+| t1::Term_c 'mod' t2::Term_c '=' t3::Term_c
+  { top.ast = modulusMetaterm(t1.ast, t2.ast, t3.ast); }
+| t1::Term_c '<' t2::Term_c '=' t3::Term_c
+  { top.ast = lessMetaterm(t1.ast, t2.ast, t3.ast); }
+| t1::Term_c '<=' t2::Term_c '=' t3::Term_c
+  { top.ast = lessEqMetaterm(t1.ast, t2.ast, t3.ast); }
+| t1::Term_c '>' t2::Term_c '=' t3::Term_c
+  { top.ast = greaterMetaterm(t1.ast, t2.ast, t3.ast); }
+| t1::Term_c '>=' t2::Term_c '=' t3::Term_c
+  { top.ast = greaterEqMetaterm(t1.ast, t2.ast, t3.ast); }
+| t1::Term_c '++' t2::Term_c '=' t3::Term_c
+  { top.ast = appendMetaterm(t1.ast, t2.ast, t3.ast); }
+| t1::Term_c '||' t2::Term_c '=' t3::Term_c
+  { top.ast = orBoolMetaterm(t1.ast, t2.ast, t3.ast); }
+| t1::Term_c '&&' t2::Term_c '=' t3::Term_c
+  { top.ast = andBoolMetaterm(t1.ast, t2.ast, t3.ast); }
+| '!' t1::Term_c '=' t2::Term_c
+  { top.ast = notBoolMetaterm(t1.ast, t2.ast); }
+--Symmetry for the same
+| t3::Term_c '=' t1::Term_c '+' t2::Term_c
+  { top.ast = plusMetaterm(t1.ast, t2.ast, t3.ast); }
+| t3::Term_c '=' t1::Term_c '-' t2::Term_c
+  { top.ast = minusMetaterm(t1.ast, t2.ast, t3.ast); }
+| t3::Term_c '=' t1::Term_c '*' t2::Term_c
+  { top.ast = multiplyMetaterm(t1.ast, t2.ast, t3.ast); }
+| t3::Term_c '=' t1::Term_c '/' t2::Term_c
+  { top.ast = divideMetaterm(t1.ast, t2.ast, t3.ast); }
+| t3::Term_c '=' t1::Term_c 'mod' t2::Term_c
+  { top.ast = modulusMetaterm(t1.ast, t2.ast, t3.ast); }
+| t3::Term_c '=' t1::Term_c '<' t2::Term_c
+  { top.ast = lessMetaterm(t1.ast, t2.ast, t3.ast); }
+| t3::Term_c '=' t1::Term_c '<=' t2::Term_c
+  { top.ast = lessEqMetaterm(t1.ast, t2.ast, t3.ast); }
+| t3::Term_c '=' t1::Term_c '>' t2::Term_c
+  { top.ast = greaterMetaterm(t1.ast, t2.ast, t3.ast); }
+| t3::Term_c '=' t1::Term_c '>=' t2::Term_c
+  { top.ast = greaterEqMetaterm(t1.ast, t2.ast, t3.ast); }
+| t3::Term_c '=' t1::Term_c '++' t2::Term_c
+  { top.ast = appendMetaterm(t1.ast, t2.ast, t3.ast); }
+| t3::Term_c '=' t1::Term_c '||' t2::Term_c
+  { top.ast = orBoolMetaterm(t1.ast, t2.ast, t3.ast); }
+| t3::Term_c '=' t1::Term_c '&&' t2::Term_c
+  { top.ast = andBoolMetaterm(t1.ast, t2.ast, t3.ast); }
+| t2::Term_c '=' '!' t1::Term_c
+  { top.ast = notBoolMetaterm(t1.ast, t2.ast); }
 
 
 
@@ -262,11 +332,26 @@ concrete productions top::Term_c
   { top.ast = applicationTerm(e.ast, el.ast); }
 | e::Exp_c
   { top.ast = e.ast; }
+| t1::Term_c '::' t2::Term_c
+  { top.ast = consTerm(t1.ast, t2.ast); }
+| 'nil'
+  { top.ast = nilTerm(); }
+--New for Silver:
 | a::AttrAccess_t
   { local dotLoc::Integer = indexOf(".", a.lexeme);
     top.ast =
        attrAccessTerm(substring(0, dotLoc, a.lexeme),
                       substring(dotLoc + 1, length(a.lexeme), a.lexeme)); }
+| i::Number_t
+  { top.ast = intTerm(toInt(i.lexeme)); }
+| i::SilverNegativeInteger_t
+  { top.ast = intTerm(toInt(i.lexeme)); }
+| s::SilverString_t
+  { top.ast = stringTerm(unescapeString(substring(1, length(s.lexeme)-2, s.lexeme))); }
+| 'true'
+  { top.ast = trueTerm(); }
+| 'false'
+  { top.ast = falseTerm(); }
 
 
 concrete productions top::Exp_c
@@ -689,10 +774,16 @@ concrete productions top::MaybeInst_c
 
 
 concrete productions top::MaybeDepth_c
-| n::Number_t
-  { top.ast = just(toInt(n.lexeme)); }
+| d::Depth_c
+  { top.ast = just(d.ast); }
 |
   { top.ast = nothing(); }
+
+--this is solely a helper to fix a parsing error with MaybeDepth
+nonterminal Depth_c with ast<Integer>;
+concrete productions top::Depth_c
+| n::Number_t
+  { top.ast = toInt(n.lexeme); }
 
 
 
