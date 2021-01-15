@@ -29,8 +29,16 @@ top::Type ::= ty1::Type ty2::Type
 {
   top.pp = "(" ++ ty1.pp ++ ") -> " ++ ty2.pp;
 
-  ty1.eqTest = case top.eqTest of | arrowType(x, _) -> x end;
-  ty2.eqTest = case top.eqTest of | arrowType(_, x) -> x end;
+  ty1.eqTest =
+      case top.eqTest of
+      | arrowType(x, _) -> x
+      | _ -> error("Should not need eqTest on ty1 unless top.eqTest is an arrow")
+      end;
+  ty2.eqTest =
+      case top.eqTest of
+      | arrowType(_, x) -> x
+      | _ -> error("Should not need eqTest on ty2 unless top.eqTest is an arrow")
+      end;
   top.isEq =
      case top.eqTest of
      | arrowType(_, _) -> ty1.isEq && ty2.isEq
@@ -59,8 +67,16 @@ top::Type ::= functorTy::Type argTy::Type
 {
   top.pp = functorTy.pp ++ " (" ++ argTy.pp ++ ")";
 
-  functorTy.eqTest = case top.eqTest of | functorType(x, _) -> x end;
-  argTy.eqTest = case top.eqTest of | functorType(_, x) -> x end;
+  functorTy.eqTest =
+      case top.eqTest of
+      | functorType(x, _) -> x
+      | _ -> error("Should not need eqTest on functorTy unless top.eqTest is a functor application")
+      end;
+  argTy.eqTest =
+      case top.eqTest of
+      | functorType(_, x) -> x
+      | _ -> error("Should not need eqTest on argTy unless top.eqTest is a functor application")
+      end;
   top.isEq =
      case top.eqTest of
      | functorType(_, _) -> functorTy.isEq && argTy.isEq

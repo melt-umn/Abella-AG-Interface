@@ -92,7 +92,7 @@ concrete productions top::PureCommand_c
 | 'search' '.'
   { top.ast = searchTactic(); }
 | 'search' n::Number_t '.'
-  { top.ast = searchDepthTactic(toInt(n.lexeme)); }
+  { top.ast = searchDepthTactic(toInteger(n.lexeme)); }
 | 'search' 'with' sw::SearchWitness_c '.'
   { top.ast = searchWitnessTactic(sw.ast); }
 | 'async' '.'
@@ -343,9 +343,9 @@ concrete productions top::Term_c
        attrAccessTerm(substring(0, dotLoc, a.lexeme),
                       substring(dotLoc + 1, length(a.lexeme), a.lexeme)); }
 | i::Number_t
-  { top.ast = intTerm(toInt(i.lexeme)); }
+  { top.ast = intTerm(toInteger(i.lexeme)); }
 | i::SilverNegativeInteger_t
-  { top.ast = intTerm(toInt(i.lexeme)); }
+  { top.ast = intTerm(toInteger(i.lexeme)); }
 | s::SilverString_t
   { top.ast = stringTerm(unescapeString(substring(1, length(s.lexeme)-2, s.lexeme))); }
 | 'true'
@@ -629,7 +629,7 @@ concrete productions top::SearchWitness_c
 | 'exists' '[' eb::ExistsBinds_c ']' sw::SearchWitness_c
   { top.ast = existsSearchWitness(eb.ast, sw.ast); }
 | 'unfold' '(' i::Id_t ',' n::Number_t swl::SearchWitnessList_c ')'
-  { top.ast = unfoldSearchWitness(i.lexeme, toInt(n.lexeme), swl.ast); }
+  { top.ast = unfoldSearchWitness(i.lexeme, toInteger(n.lexeme), swl.ast); }
 | '*'
   { top.ast = starSearchWitness(); }
 | '='
@@ -783,7 +783,7 @@ concrete productions top::MaybeDepth_c
 nonterminal Depth_c with ast<Integer>;
 concrete productions top::Depth_c
 | n::Number_t
-  { top.ast = toInt(n.lexeme); }
+  { top.ast = toInteger(n.lexeme); }
 
 
 
@@ -794,9 +794,9 @@ nonterminal NumList_c with ast<[Integer]>;
 
 concrete productions top::NumList_c
 | n::Number_t rest::NumList_c
-  { top.ast = toInt(n.lexeme)::rest.ast; }
+  { top.ast = toInteger(n.lexeme)::rest.ast; }
 | n::Number_t
-  { top.ast = [toInt(n.lexeme)]; }
+  { top.ast = [toInteger(n.lexeme)]; }
 
 
 
@@ -810,7 +810,7 @@ concrete productions top::ClauseSel_c
 |
   { top.ast = unfoldTactic(_); }
 | n::Number_t
-  { top.ast = unfoldStepsTactic(toInt(n.lexeme), _); }
+  { top.ast = unfoldStepsTactic(toInteger(n.lexeme), _); }
 | si::Id_t
   { top.ast = unfoldIdentifierTactic(si.lexeme, _); }
 

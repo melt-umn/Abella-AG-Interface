@@ -1,6 +1,6 @@
 #/bin/bash
 
-GRAMMAR=toAbella
+GRAMMAR=fromAbella
 
 silver $@ -I .. $GRAMMAR
 

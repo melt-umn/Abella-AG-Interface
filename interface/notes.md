@@ -1,4 +1,28 @@
 
+# Philosophy
+
+There are two implementation details we are looking to hide with this
+interface.
+
+The first thing is the interface should be to hide the details of the
+implementation of extensibility.  We should never see anything that
+shows how extinsibility is implemented.  It should look just like we
+are doing proofs in the composition but without being able to look at
+children.
+
+The secondary thing to hide is the details of how we are encoding
+attribute grammars from Silver into Abella.  This gets quite messy,
+but I believe it is well-ordered enough that we can handle it with a
+higher level of abstraction presented to the user.
+
+While we are hiding details, this is still essentially Abella.  We
+want to follow the Abella style when it doesn't interfere with hiding
+the implementation details as described above.
+
+
+
+
+
 # General notes
 
 - We want to use attribute accesses as values and as relations on
@@ -52,6 +76,11 @@
   be looking at them.  Boolean operations should still allow case
   analysis, since that gives useful information about the operands
   being `true` or `false`.
+- To take care of things like addition, we probably want to try to
+  automatically simplify things that can be simplified.  For example,
+  if we have `1 + 3 = X`, we probably want to automatically turn that
+  `X` into `4`.  Similarly, if we have `X + 0 = Y` or vice versa, we
+  might want to unify `X` and `Y`.
 
 
 
@@ -98,6 +127,18 @@
   displaying the raw Abella proof state.  This might be helpful for
   debugging, especially if it showed both proof states.  It could be
   something like `Set interface_debug (true | false).`
+- It would be nice to have functions show as `fun(args) = result`
+  rather than as as relation `fun <args> result`.
+- I'm having problems with parsing in `fromAbella` if I include
+  abbreviated hypotheses.  We could just disallow abbreviation;
+  alternatively, we could change the command `abbrev H "text".` into
+  `abbrev H "'text'".`  By quoting the text, we turn it into something
+  which can't be mistaken for a normal metaterm, and thus we can allow
+  abbreviation.  We would, of course, remove our added quotes for the
+  display back.  Alternatively, we could track abbreviated hypotheses
+  and abbreviate them ourselves rather than actually abbreviating them
+  with Abella.  This might make some of the automation we are thinking
+  about go easier.
 
 
 
