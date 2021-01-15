@@ -1,0 +1,7 @@
+Error: Unknown variable N1
+
+Variables: x
+H1 : $is_nat x
+============================
+ $is_integer ($posInt x)
+

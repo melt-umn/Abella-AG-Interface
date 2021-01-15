@@ -1,0 +1,5 @@
+Error: Search failed
+
+============================
+ forall x, $is_integer x -> $plus_integer x x x
+

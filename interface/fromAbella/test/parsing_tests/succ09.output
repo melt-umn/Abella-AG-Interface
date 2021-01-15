@@ -1,0 +1,9 @@
+
+IH : forall N1 N2 N3, $is_integer ($negSuccInt N1) * ->
+       $plus_integer ($negSuccInt ($succ N1)) N2 ($negSuccInt ($succ N3)) ->
+       $plus_integer ($negSuccInt N1) N2 ($negSuccInt N3)
+============================
+ forall N1 N2 N3, $is_integer ($negSuccInt N1) @ ->
+   $plus_integer ($negSuccInt ($succ N1)) N2 ($negSuccInt ($succ N3)) ->
+   $plus_integer ($negSuccInt N1) N2 ($negSuccInt N3)
+

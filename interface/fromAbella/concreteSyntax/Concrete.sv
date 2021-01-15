@@ -33,10 +33,6 @@ concrete productions top::FullDisplay_c
 nonterminal ExtraInformation_c with ast<ExtraInformation>;
 
 concrete productions top::ExtraInformation_c
-| 'Proof completed.'
-  { top.ast = proofCompleted(); }
-| 'Proof ABORTED.'
-  { top.ast = proofAborted(); }
 |
   { top.ast = emptyInformation(); }
 | 'Importing from' module::QString_t '.'
@@ -63,6 +59,10 @@ concrete productions top::ProofState_c
   { top.ast = noProof(); }
 | cs::CurrentSubgoal_c cg::CurrentGoal_c rest::MoreSubgoals_c
   { top.ast = proofInProgress(cs.ast, cg.ast, rest.ast); }
+| 'Proof completed.'
+  { top.ast = proofCompleted(); }
+| 'Proof ABORTED.'
+  { top.ast = proofAborted(); }
 
 
 

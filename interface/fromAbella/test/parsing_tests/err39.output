@@ -1,0 +1,15 @@
+Syntax error.
+Subgoal 2:
+
+Variables: N
+H2 : $is_integer ($posInt N)
+============================
+ $plus_integer ($posInt ($succ N)) ($posInt ($succ N)) ($posInt ($succ N))
+
+Subgoal 3 is:
+ $plus_integer ($negSuccInt $zero) ($negSuccInt $zero) ($negSuccInt $zero)
+
+Subgoal 4 is:
+ $plus_integer ($negSuccInt ($succ N)) ($negSuccInt ($succ N))
+   ($negSuccInt ($succ N))
+

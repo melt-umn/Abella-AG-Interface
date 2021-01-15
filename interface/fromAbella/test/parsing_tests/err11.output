@@ -1,0 +1,7 @@
+Error: "H1" already refers to an existing hypothesis
+
+Variables: x
+H1 : p x
+============================
+ $is_integer ($posInt x)
+

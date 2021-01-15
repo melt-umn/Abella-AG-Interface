@@ -1,0 +1,2 @@
+Error: Invalid formula: forall x, $plus_integer x x x * -> true
+ Cannot use size restrictions (*, @, #, or +)

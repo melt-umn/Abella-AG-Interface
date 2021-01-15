@@ -1,0 +1,13 @@
+Subgoal 1:
+
+Variables: B
+H2 : $and_bool $btrue $btrue B
+============================
+ $btrue = B
+
+Subgoal 2 is:
+ $bfalse = B
+
+Subgoal 3 is:
+ $bfalse = B
+

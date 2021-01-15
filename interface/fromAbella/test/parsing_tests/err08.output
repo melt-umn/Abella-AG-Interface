@@ -1,0 +1,7 @@
+Error: Unknown variable or hypothesis label "H2"
+
+Variables: x
+H1 : p x
+============================
+ $is_integer ($posInt x)
+

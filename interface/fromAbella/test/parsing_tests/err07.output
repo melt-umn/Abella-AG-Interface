@@ -1,0 +1,9 @@
+Error: Cannot go that far back!
+Subgoal 2:
+
+Variables: N1
+IH : forall N, $is_nat N * -> $is_integer ($posInt N)
+H2 : $is_nat N1 *
+============================
+ $is_integer ($posInt ($succ N1))
+

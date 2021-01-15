@@ -1,0 +1,5 @@
+Error: Can only induct on predicates and judgments
+
+============================
+ forall x, $is_integer ($posInt x)
+

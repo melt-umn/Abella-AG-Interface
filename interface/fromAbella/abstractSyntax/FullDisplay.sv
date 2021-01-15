@@ -31,24 +31,6 @@ top::ExtraInformation ::=
 }
 
 
-abstract production proofCompleted
-top::ExtraInformation ::=
-{
-  top.pp = "Proof completed.";
-
-  top.translation = proofCompleted();
-}
-
-
-abstract production proofAborted
-top::ExtraInformation ::=
-{
-  top.pp = "Proof ABORTED.";
-
-  top.translation = proofAborted();
-}
-
-
 abstract production importInformation
 top::ExtraInformation ::= moduleName::String
 {

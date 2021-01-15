@@ -1,0 +1,2 @@
+Error: Definitional clause head not atomic:
+true /\ false

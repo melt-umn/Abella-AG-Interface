@@ -1,0 +1,7 @@
+Typing error.
+Expression is applied to too many arguments
+
+Variables: x
+============================
+ $plus_integer x x x
+

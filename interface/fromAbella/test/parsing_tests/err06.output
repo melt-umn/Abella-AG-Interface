@@ -1,0 +1,11 @@
+Error: While matching argument #1:
+Unification failure (constant clash between $posInt and $negSuccInt)
+Subgoal 1:
+
+IH : forall N, $is_nat N * -> $is_integer ($negSuccInt N)
+============================
+ $is_integer ($negSuccInt $zero)
+
+Subgoal 2 is:
+ $is_integer ($negSuccInt ($succ N1))
+

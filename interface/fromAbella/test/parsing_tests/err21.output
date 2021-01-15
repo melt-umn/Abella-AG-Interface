@@ -1,0 +1,7 @@
+Error: Cannot perform case-analysis on undefined atom
+
+Variables: x
+H1 : p x
+============================
+ p x
+

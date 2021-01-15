@@ -1,0 +1,7 @@
+Error: "$is_nat__to__is_integer_posInt" already refers to a lemma
+
+Variables: x
+H1 : p x
+============================
+ $is_integer ($posInt x)
+

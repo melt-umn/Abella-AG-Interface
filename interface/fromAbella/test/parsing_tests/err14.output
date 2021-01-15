@@ -1,0 +1,5 @@
+Error: Expecting 1 induction arguments but got 2
+
+============================
+ forall x, p x -> $is_integer ($posInt x)
+

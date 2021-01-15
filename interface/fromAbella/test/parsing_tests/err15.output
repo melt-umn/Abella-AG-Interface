@@ -1,0 +1,5 @@
+Error: Cannot induct on p since it has not been defined
+
+============================
+ forall x, p x -> $is_integer ($posInt x)
+

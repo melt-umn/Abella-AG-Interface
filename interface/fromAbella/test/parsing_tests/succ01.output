@@ -1,0 +1,10 @@
+Subgoal 1:
+
+Variables: X Y B
+H2 : relation (X::Y::nil)
+============================
+ $btrue = B
+
+Subgoal 2 is:
+ $bfalse = B
+

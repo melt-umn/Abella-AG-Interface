@@ -1,0 +1,7 @@
+Error: Needless use of split
+
+Variables: x
+H1 : p x
+============================
+ $is_integer ($posInt x)
+

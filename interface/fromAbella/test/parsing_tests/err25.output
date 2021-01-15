@@ -1,0 +1,2 @@
+Error: Invalid defined predicate name "Nil".
+ Defined predicates may not begin with a capital letter.

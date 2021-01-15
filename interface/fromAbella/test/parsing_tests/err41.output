@@ -1,0 +1,7 @@
+Error: Could not find hypothesis or lemma x
+
+Variables: x
+H1 : $is_integer x
+============================
+ $plus_integer x x x
+
