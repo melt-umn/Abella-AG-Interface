@@ -21,6 +21,7 @@ top::Term ::= arg1::Term arg2::Term result::Term
   top.isAtomic = true;
 
   top.translation = error("Should never be translating an integerAddition");
+  top.shouldHide = false;
 }
 
 
@@ -31,6 +32,7 @@ top::Term ::= arg1::Term arg2::Term result::Term
   top.isAtomic = true;
 
   top.translation = error("Should never be translating an integerSubtraction");
+  top.shouldHide = false;
 }
 
 
@@ -41,6 +43,7 @@ top::Term ::= arg1::Term arg2::Term result::Term
   top.isAtomic = true;
 
   top.translation = error("Should never be translating an integerMultiplication");
+  top.shouldHide = false;
 }
 
 
@@ -51,6 +54,7 @@ top::Term ::= arg1::Term arg2::Term result::Term
   top.isAtomic = true;
 
   top.translation = error("Should never be translating an integerDivision");
+  top.shouldHide = false;
 }
 
 
@@ -61,6 +65,7 @@ top::Term ::= arg1::Term arg2::Term result::Term
   top.isAtomic = true;
 
   top.translation = error("Should never be translating an integerModulus");
+  top.shouldHide = false;
 }
 
 
@@ -71,6 +76,7 @@ top::Term ::= arg1::Term arg2::Term result::Term
   top.isAtomic = true;
 
   top.translation = error("Should never be translating an integerLess");
+  top.shouldHide = false;
 }
 
 
@@ -81,6 +87,7 @@ top::Term ::= arg1::Term arg2::Term result::Term
   top.isAtomic = true;
 
   top.translation = error("Should never be translating an integerLessEq");
+  top.shouldHide = false;
 }
 
 
@@ -91,6 +98,7 @@ top::Term ::= arg1::Term arg2::Term result::Term
   top.isAtomic = true;
 
   top.translation = error("Should never be translating an integerGreater");
+  top.shouldHide = false;
 }
 
 
@@ -101,6 +109,7 @@ top::Term ::= arg1::Term arg2::Term result::Term
   top.isAtomic = true;
 
   top.translation = error("Should never be translating an integerGreaterEq");
+  top.shouldHide = false;
 }
 
 
@@ -111,6 +120,7 @@ top::Term ::= arg::Term result::Term
   top.isAtomic = true;
 
   top.translation = error("Should never be translating an integerNegate");
+  top.shouldHide = false;
 }
 
 
@@ -127,6 +137,7 @@ top::Term ::= arg1::Term arg2::Term result::Term
   top.isAtomic = true;
 
   top.translation = error("Should never be translating an append");
+  top.shouldHide = false;
 }
 
 
@@ -143,6 +154,7 @@ top::Term ::= arg1::Term arg2::Term result::Term
   top.isAtomic = true;
 
   top.translation = error("Should never be translating a boolOr");
+  top.shouldHide = false;
 }
 
 
@@ -153,6 +165,7 @@ top::Term ::= arg1::Term arg2::Term result::Term
   top.isAtomic = true;
 
   top.translation = error("Should never be translating a boolAnd");
+  top.shouldHide = false;
 }
 
 
@@ -163,6 +176,7 @@ top::Term ::= arg::Term result::Term
   top.isAtomic = true;
 
   top.translation = error("Should never be translating a boolNot");
+  top.shouldHide = false;
 }
 
 
@@ -179,6 +193,7 @@ top::Term ::=
   top.isAtomic = true;
 
   top.translation = error("Should never be translatiing a trueTerm");
+  top.shouldHide = false;
 }
 
 
@@ -189,6 +204,7 @@ top::Term ::=
   top.isAtomic = true;
 
   top.translation = error("Should never be translatiing a falseTerm");
+  top.shouldHide = false;
 }
 
 
@@ -207,13 +223,14 @@ top::Term ::= i::Integer
   top.isAtomic = true;
 
   top.translation = error("Should never be translating an integerTerm");
+  top.shouldHide = false;
 }
 
 
 
 
 {-
-  LISTS CONSTANTS
+  LIST CONSTANTS
 -}
 
 abstract production listTerm
@@ -223,6 +240,7 @@ top::Term ::= contents::ListContents
   top.isAtomic = true;
 
   top.translation = error("Should never be translating a listTerm");
+  top.shouldHide = false;
 }
 
 
@@ -241,5 +259,37 @@ abstract production addListContents
 top::ListContents ::= t::Term rest::ListContents
 {
   top.pp = t.pp ++ (if rest.pp == "" then "" else ", " ++ rest.pp);
+}
+
+
+
+
+{-
+  ATTRIBUTE ACCESS
+-}
+
+abstract production attrAccess
+top::Term ::= treename::String attr::String
+{
+  top.pp = treename ++ "." ++ attr;
+  top.isAtomic = true;
+
+  top.translation = error("Should not be translating attrAccess");
+  top.shouldHide = false;
+}
+
+
+
+
+{-
+  HIDDEN HYPOTHESES
+-}
+
+abstract production hiddenHypothesis
+top::Hypothesis ::= name::String body::Metaterm
+{
+  top.pp = "";
+
+  top.translation = error("Should never be translating a hiddenHypothesis");
 }
 

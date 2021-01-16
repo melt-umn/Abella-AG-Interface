@@ -3,7 +3,7 @@ grammar fromAbella:abstractSyntax;
 
 nonterminal Metaterm with
    pp, isAtomic,
-   translation<Metaterm>;
+   translation<Metaterm>, shouldHide;
 
 abstract production termMetaterm
 top::Metaterm ::= t::Term r::Restriction
@@ -12,6 +12,7 @@ top::Metaterm ::= t::Term r::Restriction
   top.isAtomic = true;
 
   top.translation = termMetaterm(t.translation, r);
+  top.shouldHide = t.shouldHide;
 }
 
 
@@ -22,6 +23,7 @@ top::Metaterm ::=
   top.isAtomic = true;
 
   top.translation = trueMetaterm();
+  top.shouldHide = false;
 }
 
 
@@ -32,6 +34,7 @@ top::Metaterm ::=
   top.isAtomic = true;
 
   top.translation = falseMetaterm();
+  top.shouldHide = false;
 }
 
 
@@ -42,6 +45,7 @@ top::Metaterm ::= t1::Term t2::Term
   top.isAtomic = true;
 
   top.translation = eqMetaterm(t1.translation, t2.translation);
+  top.shouldHide = false;
 }
 
 
@@ -54,6 +58,7 @@ top::Metaterm ::= t1::Metaterm t2::Metaterm
   top.isAtomic = false;
 
   top.translation = impliesMetaterm(t1.translation, t2.translation);
+  top.shouldHide = false;
 }
 
 
@@ -70,6 +75,7 @@ top::Metaterm ::= t1::Metaterm t2::Metaterm
   top.isAtomic = false;
 
   top.translation = orMetaterm(t1.translation, t2.translation);
+  top.shouldHide = false;
 }
 
 
@@ -86,6 +92,7 @@ top::Metaterm ::= t1::Metaterm t2::Metaterm
   top.isAtomic = false;
 
   top.translation = andMetaterm(t1.translation, t2.translation);
+  top.shouldHide = false;
 }
 
 
@@ -100,6 +107,7 @@ top::Metaterm ::= b::Binder bindings::[String] body::Metaterm
   top.isAtomic = false;
 
   top.translation = bindingMetaterm(b, bindings, body.translation);
+  top.shouldHide = false;
 }
 
 
@@ -174,7 +182,7 @@ top::Binder::=
 
 nonterminal Term with
    pp, isAtomic,
-   translation<Term>;
+   translation<Term>, shouldHide;
 
 abstract production applicationTerm
 top::Term ::= f::Term args::TermList
@@ -242,6 +250,13 @@ top::Term ::= f::Term args::TermList
      --Nothing Special
      | _, _ -> applicationTerm(f.translation, args.translation)
      end;
+  top.shouldHide =
+      case f of
+      | nameTerm(name) ->
+        startsWith("$wpd_", name) ||
+        startsWith("$access_", name)
+      | _ -> false
+      end;
 }
 
 
@@ -258,9 +273,17 @@ top::Term ::= name::String
      | "$bfalse" -> falseTerm()
      --Integers
      | "$zero" -> integerTerm(0)
-     --Nothing Special
-     | _ -> nameTerm(name)
+     --Other Nothing Special
+     | _ ->
+       if findDot > 0
+       --Value of Attribute Access:  $<tree>_DOT_<attr>
+       then attrAccess(substring(1, findDot, name),
+                       substring(findDot + 5, length(name), name))
+       --Nothing Special
+       else nameTerm(name)
      end;
+  local findDot::Integer = indexOf("_DOT_", name);
+  top.shouldHide = false;
 }
 
 
@@ -282,6 +305,7 @@ top::Term ::= t1::Term t2::Term
         listTerm(addListContents(t1.translation, contents))
       | _ -> consTerm(t1.translation, t2.translation)
       end;
+  top.shouldHide = false;
 }
 
 
@@ -292,6 +316,7 @@ top::Term ::=
   top.isAtomic = true;
 
   top.translation = listTerm(emptyListContents());
+  top.shouldHide = false;
 }
 
 

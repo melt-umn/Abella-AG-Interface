@@ -16,3 +16,6 @@ synthesized attribute isAtomic::Boolean;
 -}
 synthesized attribute translation<a>::a;
 
+--Whether a hypothesis should be hidden from the user (determined from the metaterm)
+synthesized attribute shouldHide::Boolean;
+

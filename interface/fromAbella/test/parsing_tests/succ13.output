@@ -1,0 +1,7 @@
+Variables: $t_Tm $t_Node $t_DOT_attr
+H1 : $wpd_Nonterminal $t_Tm $t_Node
+H2 : $access__attr__Nonterminal $t_Node ($attr_ex $t_DOT_attr)
+H3 : $greater_integer $t_DOT_attr ($posInt ($succ ($succ ($succ $zero)))) $btrue
+============================
+ $greater_integer $t_DOT_attr ($posInt $zero) $btrue
+
