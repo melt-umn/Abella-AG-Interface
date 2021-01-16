@@ -265,6 +265,35 @@ top::ListContents ::= t::Term rest::ListContents
 
 
 {-
+  STRING CONSTANTS
+-}
+
+abstract production stringTerm
+top::Term ::= contents::String
+{
+  top.pp = "\"" ++ contents ++ "\"";
+  top.isAtomic = true;
+
+  top.translation = error("Should never be translating a stringTerm");
+  top.shouldHide = false;
+}
+
+
+--This is just for getting strings vs. lists of strings correct
+abstract production charTerm
+top::Term ::= char::String
+{
+  top.pp = "\"" ++ char ++ "\"";
+  top.isAtomic = true;
+
+  top.translation = error("Should never be translating a charTerm");
+  top.shouldHide = false;
+}
+
+
+
+
+{-
   ATTRIBUTE ACCESS
 -}
 

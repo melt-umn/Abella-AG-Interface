@@ -273,14 +273,17 @@ top::Term ::= name::String
      | "$bfalse" -> falseTerm()
      --Integers
      | "$zero" -> integerTerm(0)
-     --Other Nothing Special
+     --Other
      | _ ->
        if findDot > 0
        --Value of Attribute Access:  $<tree>_DOT_<attr>
        then attrAccess(substring(1, findDot, name),
                        substring(findDot + 5, length(name), name))
-       --Nothing Special
-       else nameTerm(name)
+       else if startsWith("$c_", name)
+            --Character for string
+            then charTerm(charsToString([toInteger(substring(3, 5, name))]))
+            --Nothing Special
+            else nameTerm(name)
      end;
   local findDot::Integer = indexOf("_DOT_", name);
   top.shouldHide = false;
@@ -300,10 +303,16 @@ top::Term ::= t1::Term t2::Term
   top.isAtomic = false;
 
   top.translation =
-      case t2.translation of
-      | listTerm(contents) ->
+      case t1.translation, t2.translation of
+      | charTerm(char), stringTerm(contents) ->
+        stringTerm(char ++ contents)
+      --we need this because we are using lists for strings, and don't know
+      --which we are looking at until we add a character to the beginning
+      | charTerm(char), listTerm(emptyListContents()) ->
+        stringTerm(char)
+      | _, listTerm(contents) ->
         listTerm(addListContents(t1.translation, contents))
-      | _ -> consTerm(t1.translation, t2.translation)
+      | _, _ -> consTerm(t1.translation, t2.translation)
       end;
   top.shouldHide = false;
 }

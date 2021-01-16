@@ -79,7 +79,7 @@ String ::= treeTy::Type
 function ordinalToCharConstructor
 String ::= ord::Integer
 {
-  return "c_" ++ toString(ord);
+  return "$c_" ++ toString(ord);
 }
 
 

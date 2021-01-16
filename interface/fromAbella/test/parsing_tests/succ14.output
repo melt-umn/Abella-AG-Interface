@@ -1,0 +1,10 @@
+Subgoal 1:
+
+Variables: X Y B
+H2 : relation ($c_88::$c_97::nil)
+============================
+ $btrue = B
+
+Subgoal 2 is:
+ (($c_88::$c_97::nil)::($c_44::nil)::nil) = X
+
