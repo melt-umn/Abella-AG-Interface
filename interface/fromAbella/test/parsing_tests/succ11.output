@@ -1,0 +1,15 @@
+Subgoal 2.4:
+
+Variables: N3 N5 N4
+IH : forall N1 N2, $is_integer N1 * -> $is_integer N2 ->
+       (exists N3, $plus_integer N1 N2 N3)
+H5 : $plus_integer ($posInt N4) ($negSuccInt N5) N3
+H6 : $is_integer ($negSuccInt N5)
+H7 : $is_integer ($posInt N4) *
+H8 : $is_integer N3
+============================
+ exists N3, $plus_integer ($posInt ($succ ($succ N4)))
+              ($negSuccInt ($succ N5)) N3
+
+2 other subgoals.
+

@@ -1,0 +1,11 @@
+Subgoal 3:
+
+Variables: N2
+IH : forall N1 N2, $is_integer N1 * -> $is_integer N2 ->
+       (exists N3, $plus_integer N1 N2 N3)
+H2 : $is_integer N2
+============================
+ exists N3, $plus_integer ($negSuccInt $zero) N2 N3
+
+1 other subgoal.
+

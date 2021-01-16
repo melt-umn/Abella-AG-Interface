@@ -107,6 +107,10 @@ concrete productions top::MoreSubgoals_c
   { top.ast = []; }
 | 'Subgoal' num::SubgoalNum_c 'is' ':' g::Metaterm_c rest::MoreSubgoals_c
   { top.ast = [subgoal(num.ast, g.ast)] ++ rest.ast; }
+| num::Number_t 'other subgoals.'
+  { top.ast = [hiddenSubgoals(toInteger(num.lexeme))]; }
+| num::Number_t 'other subgoal.'
+  { top.ast = [hiddenSubgoals(toInteger(num.lexeme))]; }
 
 
 concrete productions top::SubgoalNum_c
@@ -386,9 +390,9 @@ concrete productions top::ProcessingErrorMessage_c
   { top.ast = undeterminedVarType(); }
 | 'Search failed'
   { top.ast = searchFailure(); }
-| 'Could not find hypothesis or lemma' name::Id_t
+| 'Could not find hypothesis or lemma' name::ErrorId_t
   { top.ast = unknownHypLemma(name.lexeme); }
-| 'Unknown constant:' name::Id_t
+| 'Unknown constant:' name::ErrorId_t
   { top.ast = unknownConstant(name.lexeme); }
 | 'Imported file makes reference to unknown types:' names::IdList_c
   { top.ast = importedUnknownTy(names.ast); }
@@ -396,16 +400,13 @@ concrete productions top::ProcessingErrorMessage_c
   { top.ast = invalidFormula(form.ast); }
 | 'Some type variables in the theorem is not bounded'
   { top.ast = unboundedTyVars(); }
-| 'Predicate or constant' name::Id_t 'already exists'
+| 'Predicate or constant' name::ErrorId_t 'already exists'
   { top.ast = alreadyDefined(name.lexeme); }
---We need to specify 'nil' separately because of the dominates
-| 'Predicate or constant' 'nil' 'already exists'
-  { top.ast = alreadyDefined("nil"); }
 | 'Invalid defined predicate name' name::QString_t '.' 'Defined predicates may not begin with a capital letter.'
   { top.ast = invalidCapDefName(stripQuotes(name.lexeme)); }
-| 'Constants may not begin with a capital letter:' name::Id_t --include caps
+| 'Constants may not begin with a capital letter:' name::ErrorId_t
   { top.ast = invalidCapConstName(name.lexeme); }
-| 'Found stray clause for' name::Id_t
+| 'Found stray clause for' name::ErrorId_t
   { top.ast = strayClause(name.lexeme); }
 | 'Invalid head in definition:' formula::Metaterm_c
   { top.ast = invalidHead(formula.ast); }
@@ -413,15 +414,15 @@ concrete productions top::ProcessingErrorMessage_c
   { top.ast = nonatomicHead(hd.ast); }
 | 'Cannot perform case-analysis on undefined atom'
   { top.ast = caseUndefinedAtom(); }
-| 'Unknown hypothesis or variable' hyp::Id_t --include caps
+| 'Unknown hypothesis or variable' hyp::ErrorId_t
   { top.ast = unknownHypVar(hyp.lexeme); }
 | 'Could not find theorem named' name::QString_t
   { top.ast = unknownTheorem(stripQuotes(name.lexeme)); }
-| 'Unknown variable' name::Id_t -- include caps
+| 'Unknown variable' name::ErrorId_t
   { top.ast = unknownVar(name.lexeme); }
 | 'Can only induct on predicates and judgments'
   { top.ast = inductPredJudg(); }
-| 'Cannot induct on' name::Id_t 'since it has not been defined'
+| 'Cannot induct on' name::ErrorId_t 'since it has not been defined'
   { top.ast = inductUndefined(name.lexeme); }
 | 'Expecting' expected::Number_t 'induction arguments but got' got::Number_t
   { top.ast = tooManyInductions(toInteger(expected.lexeme), toInteger(got.lexeme)); }
@@ -439,18 +440,26 @@ concrete productions top::ProcessingErrorMessage_c
   { top.ast = unknownVarHypLabel(stripQuotes(name.lexeme)); }
 | 'Cannot go that far back!'
   { top.ast = cannotGoBack(); }
-| 'While matching argument #' argnum::Number_t ':' 'Unification failure (constant clash between' name1::Id_t 'and' name2::Id_t ')'
+| 'While matching argument #' argnum::Number_t ':' 'Unification failure (constant clash between' name1::ErrorId_t 'and' name2::ErrorId_t ')'
   { top.ast = matchingUnificationFailure(toInteger(argnum.lexeme), name1.lexeme, name2.lexeme); }
-| 'Type constructor' name::Id_t 'has inconsistent kind declarations'
+| 'Type constructor' name::ErrorId_t 'has inconsistent kind declarations'
   { top.ast = tyConstrInconsistentKinds(name.lexeme); }
-| 'Types may not begin with a capital letter:' name::Id_t
+| 'Types may not begin with a capital letter:' name::ErrorId_t
   { top.ast = tyNoCaps(name.lexeme); }
-| 'Unknown type constructor:' name::Id_t
+| 'Unknown type constructor:' name::ErrorId_t
   { top.ast = unknownTyConstr(name.lexeme); }
 | name::Id_t 'expects' expected::Number_t 'arguments but has' given::Number_t
   { top.ast = wrongArgNumber(name.lexeme, toInteger(expected.lexeme), toInteger(given.lexeme)); }
 | 'Cannot quantify over type prop'
   { top.ast = noQuantifyProp(); }
+| 'Unknown key' name::SingleQString_t
+  { top.ast = unknownSettingKey(stripQuotes(name.lexeme)); }
+| 'Unknown value' val::SingleQString_t 'for key' key::QString_t ';' 'expected non-negative integer'
+  { top.ast = unknownSettingsValueExpectInt(stripQuotes(val.lexeme), stripQuotes(key.lexeme)); }
+| 'Unknown value' val::SingleQString_t 'for key' key::QString_t ';' x::ExpectOnOff_t
+  { top.ast = unknownSettingsValueExpectOnOff(stripQuotes(val.lexeme), stripQuotes(key.lexeme)); }
+| 'Unknown value' val::SingleQString_t 'for key' key::QString_t ';' x::ExpectMany_t
+  { top.ast = unknownSettingsValueExpectMany(stripQuotes(val.lexeme), stripQuotes(key.lexeme)); }
 
 
 concrete productions top::TypingErrorMessage_c

@@ -147,3 +147,12 @@ top::Subgoal ::= num::[Integer] goal::Metaterm
   top.translation = subgoal(num, goal.translation);
 }
 
+
+abstract production hiddenSubgoals
+top::Subgoal ::= num::Integer
+{
+  top.pp = toString(num) ++ " other subgoal" ++ (if num == 1 then "s." else ".");
+
+  top.translation = hiddenSubgoals(num);
+}
+

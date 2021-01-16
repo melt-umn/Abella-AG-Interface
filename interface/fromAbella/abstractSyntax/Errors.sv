@@ -346,6 +346,42 @@ top::ProcessingErrorMessage ::=
 }
 
 
+abstract production unknownSettingKey
+top::ProcessingErrorMessage ::= name::String
+{
+  top.pp = "Unknown key '" ++ name ++ "'";
+
+  top.translation = unknownSettingKey(name);
+}
+
+
+abstract production unknownSettingsValueExpectInt
+top::ProcessingErrorMessage ::= val::String key::String
+{
+  top.pp = "Unknown value '" ++ val ++ "' for key \"" ++ key ++ "\"; expected non-negative integer";
+
+  top.translation = unknownSettingsValueExpectInt(val, key);
+}
+
+
+abstract production unknownSettingsValueExpectOnOff
+top::ProcessingErrorMessage ::= val::String key::String
+{
+  top.pp = "Unknown value '" ++ val ++ "' for key \"" ++ key ++ "\"; expected 'on' or 'off'";
+
+  top.translation = unknownSettingsValueExpectOnOff(val, key);
+}
+
+
+abstract production unknownSettingsValueExpectMany
+top::ProcessingErrorMessage ::= val::String key::String
+{
+  top.pp = "Unknown value '" ++ val ++ "' for key \"" ++ key ++ "\"; expected 'on', 'off', non-negative integer, or depth specification";
+
+  top.translation = unknownSettingsValueExpectMany(val, key);
+}
+
+
 
 
 
