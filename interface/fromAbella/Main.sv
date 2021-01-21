@@ -1,8 +1,8 @@
 grammar fromAbella;
 
 
-imports fromAbella:concreteSyntax;
-imports fromAbella:abstractSyntax;
+--imports fromAbella:concreteSyntax;
+--imports fromAbella:abstractSyntax;
 
 
 {-
