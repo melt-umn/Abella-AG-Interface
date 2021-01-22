@@ -4,8 +4,7 @@ grammar toAbella:abstractSyntax;
 --things you can do inside of proofs
 
 nonterminal ProofCommand with
-   --pp should end with two spaces
-   pp,
+   pp, --pp should end with two spaces
    translation<[ProofCommand]>, attrOccurrences;
 
 abstract production inductionTactic
@@ -55,7 +54,7 @@ top::ProofCommand ::= names::[String]
     e.g. forall (t : nt_Tree), ...
          We might introduce it as tree, in which case we want $tree_Structure and $tree_Node
   -}
-  top.translation = error("Translation not done in inductionTactic yet");
+  top.translation = error("Translation not done in introsTactic yet");
 }
 
 

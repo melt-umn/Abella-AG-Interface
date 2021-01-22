@@ -19,3 +19,17 @@ synthesized attribute translation<a>::a;
 --Whether a hypothesis should be hidden from the user (determined from the metaterm)
 synthesized attribute shouldHide::Boolean;
 
+
+
+--Whether a proof state is during a proof or not
+synthesized attribute inProof::Boolean;
+
+
+--The proof state of a full display
+synthesized attribute proof::ProofState;
+
+--Whether an error occurred
+synthesized attribute isError::Boolean;
+--Whether a warning occurred
+synthesized attribute isWarning::Boolean;
+

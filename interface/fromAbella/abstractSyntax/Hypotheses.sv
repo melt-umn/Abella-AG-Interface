@@ -5,7 +5,8 @@ grammar fromAbella:abstractSyntax;
 
 nonterminal ProofState with
    pp,
-   translation<ProofState>;
+   translation<ProofState>,
+   inProof;
 
 abstract production proofInProgress
 top::ProofState ::= subgoalNum::[Integer] currGoal::CurrentGoal futureGoals::[Subgoal]
@@ -21,6 +22,8 @@ top::ProofState ::= subgoalNum::[Integer] currGoal::CurrentGoal futureGoals::[Su
 
   top.translation = proofInProgress(subgoalNum, currGoal.translation,
                                     map(\ a::Subgoal -> a.translation, futureGoals));
+
+  top.inProof = true;
 }
 
 
@@ -30,6 +33,8 @@ top::ProofState ::=
   top.pp = "";
 
   top.translation = noProof();
+
+  top.inProof = false;
 }
 
 
@@ -39,6 +44,8 @@ top::ProofState ::=
   top.pp = "Proof completed.";
 
   top.translation = proofCompleted();
+
+  top.inProof = false;
 }
 
 
@@ -48,6 +55,8 @@ top::ProofState ::=
   top.pp = "Proof ABORTED.";
 
   top.translation = proofAborted();
+
+  top.inProof = false;
 }
 
 
