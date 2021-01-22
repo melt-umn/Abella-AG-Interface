@@ -34,7 +34,7 @@ IOVal<Integer> ::= largs::[String] ioin::IO
   local abella::IOVal<ProcessHandle> = spawnProcess("abella", [], ioin);
   --Abella outputs a welcome message, which we want to clean out
   local abella_initial_string::IOVal<String> =
-        read_abella_output(abella.iovalue, abella.io);
+        read_n_abella_outputs(1, abella.iovalue, abella.io);
   return run_step(noProof(), [], abella.iovalue, abella_initial_string.io);
 }
 
@@ -52,13 +52,13 @@ IOVal<Integer> ::= state::ProofState undolist::[Integer] abella::ProcessHandle i
   local input::String = stripExtraWhiteSpace(raw_input.iovalue);
   --Translate command
   ----------------------------
-  local top_result::ParseResult<TopCommand_c> = top_parse(input, "<<input>>");
+  local top_result::ParseResult<TopCommand_c> = top_parse(input, "<<top input>>");
   local top_c::TopCommand_c = top_result.parseTree;
   local top_a::TopCommand = top_c.ast;
-  local proof_result::ParseResult<Command_c> = proof_parse(input, "<<input>>");
+  local proof_result::ParseResult<Command_c> = proof_parse(input, "<<proof input>>");
   local proof_c::Command_c = proof_result.parseTree;
   local proof_a::ProofCommand = proof_c.ast;
-  local proof_a_trans::[ProofCommand] = proof_a.translation; --If we send multiple commands, we need to be ready to take multiple outputs back.
+  local proof_a_trans::[ProofCommand] = proof_a.translation;
   local output_command::String =
         if state.inProof
         then if proof_result.parseSuccess
@@ -72,8 +72,8 @@ IOVal<Integer> ::= state::ProofState undolist::[Integer] abella::ProcessHandle i
         if state.inProof
         then proof_result.parseSuccess
         else top_result.parseSuccess;
-  --an error based on our own checking
-  local our_own_error::String =
+  --an error or message based on our own checking
+  local our_own_output::String =
         if state.inProof
         then if proof_result.parseSuccess
              then ""
@@ -81,6 +81,10 @@ IOVal<Integer> ::= state::ProofState undolist::[Integer] abella::ProcessHandle i
         else if top_result.parseSuccess
              then ""
              else "Error:  Cannot use proof commands outside a proof\n\n";
+  local num_commands_sent::Integer =
+        if state.inProof
+        then length(proof_a_trans)
+        else 1; --we only send one top command ever
   --Send to abella
   ----------------------------
   local out_to_abella::IO =
@@ -99,7 +103,7 @@ IOVal<Integer> ::= state::ProofState undolist::[Integer] abella::ProcessHandle i
   ----------------------------
   local back_from_abella::IOVal<String> =
         if speak_to_abella
-        then read_abella_output(abella, out_to_abella)
+        then read_n_abella_outputs(num_commands_sent, abella, out_to_abella)
         else ioval(raw_input.io, "");
   --Translate output
   ----------------------------
@@ -122,7 +126,7 @@ IOVal<Integer> ::= state::ProofState undolist::[Integer] abella::ProcessHandle i
   local output_output::String =
         if speak_to_abella
         then full_a.translation.pp ++ "\n"
-        else our_own_error ++ state.translation.pp ++ "\n";
+        else our_own_output ++ state.translation.pp ++ "\n";
   local printed_output::IO =
         if full_result.parseSuccess
         then print(output_output, back_from_abella.io)
@@ -180,18 +184,74 @@ IOVal<String> ::= abella::ProcessHandle ioin::IO
          else ioval(readRest.io, read.iovalue ++ readRest.iovalue);
 }
 
---Read the output and remove the prompt
-function read_abella_output
-IOVal<String> ::= abella::ProcessHandle ioin::IO
+--Read the given number of Abella outputs
+--Returns the text of the last one
+function read_n_abella_outputs
+IOVal<String> ::= n::Integer abella::ProcessHandle ioin::IO
 {
-  --Get the output including the prompt
-  local text::IOVal<String> = read_full_abella_output(abella, ioin);
-  local len::Integer = length(text.iovalue);
-  --Remove " < "
-  local short_text::String = substring(0, len - 3, text.iovalue);
-  --Remove the current name (either Abella or the theorem being proven)
-  local space::Integer = lastIndexOf("\n", short_text);
-  local no_prompt::String = substring(0, space, short_text);
+  {-
+    NOTE:  If we ever need to handle an error output in the middle,
+    this will need to check each last-read step to see if it is an
+    error state (requires parsing it), then abort based on that.  In
+    that case, we should also return a pair of the last state and the
+    number of states we mananged to get through.
+  -}
 
-  return ioval(text.io, no_prompt);
+  local read::IOVal<String> = read_full_abella_output(abella, ioin);
+  local split::[String] = explode("<", read.iovalue);
+  local noWhiteSpace::[String] = map(stripExtraWhiteSpace, split);
+  local noBlanks::[String] = filter(\ x::String -> x != "", noWhiteSpace);
+  local len::Integer = length(noBlanks);
+
+  return
+    if len < n
+    then --read more
+      read_n_abella_outputs(n - len, abella, read.io)
+    else if len == n
+         then --take the last current output, minus the name from the prompt
+           ioval(read.io, removeLastWord(last(noBlanks)))
+         else --how did we get more outputs than inputs?
+           error("BUG:  Should not have more outputs from Abella than commands sent\n" ++
+                 "Expected " ++ toString(n) ++ "; found " ++ toString(len) ++ "\n\n" ++
+                 implode("\n\n", noBlanks) ++ "\n\n" ++
+                 "Please report this");
 }
+
+--Remove the last word in a string
+--We use this because the Abella prompt has the form "name < "
+function removeLastWord
+String ::= str::String
+{
+  local noExtraSpace::String = stripExtraWhiteSpace(str);
+  local space::Integer = lastIndexOf("\n", noExtraSpace);
+  local noWord::String = substring(0, space, noExtraSpace);
+  return noWord;
+}
+
+
+--The library function is actually replacing all interior whitespace with just a space
+--Therefore we need this as a temporary workaround
+function stripExtraWhiteSpace
+String ::= str::String
+{
+  local split::[String] = explode("", str);
+  local cleanedHead::[String] = removeInitialSpaces(split);
+  local reversedList::[String] = reverse(cleanedHead);
+  local cleanedTail::[String] = removeInitialSpaces(reversedList);
+  local forwardList::[String] = reverse(cleanedTail);
+  return implode("", forwardList);
+}
+--Helper---takes a list of single characters
+function removeInitialSpaces
+[String] ::= lst::[String]
+{
+  return
+    case lst of
+    | [] -> []
+    | h::t ->
+      if isSpace(h)
+      then removeInitialSpaces(t)
+      else lst
+    end;
+}
+
