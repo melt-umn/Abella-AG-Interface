@@ -4,7 +4,7 @@ grammar fromAbella:abstractSyntax;
 nonterminal FullDisplay with
    pp,
    translation<FullDisplay>,
-   proof, isError, isWarning;
+   proof, isError, isWarning, proofEnded;
 
 abstract production fullDisplay
 top::FullDisplay ::= msg::ExtraInformation state::ProofState
@@ -16,6 +16,50 @@ top::FullDisplay ::= msg::ExtraInformation state::ProofState
   top.proof = state;
   top.isError = msg.isError;
   top.isWarning = msg.isWarning;
+  top.proofEnded = false; --proof didn't *just* end
+}
+
+
+abstract production displayProofCompleted
+top::FullDisplay ::= msg::ExtraInformation
+{
+  top.pp = msg.pp ++ (if msg.pp != "" then "\n\n" else "") ++ "Proof completed.";
+
+  top.translation = displayProofCompleted(msg.translation);
+
+  top.proof = noProof();
+  top.isError = msg.isError;
+  top.isWarning = msg.isWarning;
+  top.proofEnded = true;
+}
+
+
+abstract production displayProofAborted
+top::FullDisplay ::= msg::ExtraInformation
+{
+  top.pp = msg.pp ++ (if msg.pp != "" then "\n\n" else "") ++ "Proof ABORTED.";
+
+  top.translation = displayProofAborted(msg.translation);
+
+  top.proof = noProof();
+  top.isError = msg.isError;
+  top.isWarning = msg.isWarning;
+  top.proofEnded = true;
+}
+
+
+abstract production showDisplay
+top::FullDisplay ::= name::String body::Metaterm
+{
+  top.pp = "Theorem " ++ name ++ " : " ++ body.pp;
+
+  top.translation = showDisplay(name, body.translation);
+
+  --We don't know what the current state is
+  top.proof = noProof();
+  top.isError = false;
+  top.isWarning = false;
+  top.proofEnded = false;
 }
 
 

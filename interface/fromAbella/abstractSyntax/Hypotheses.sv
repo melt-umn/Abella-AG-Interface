@@ -38,28 +38,6 @@ top::ProofState ::=
 }
 
 
-abstract production proofCompleted
-top::ProofState ::=
-{
-  top.pp = "Proof completed.";
-
-  top.translation = proofCompleted();
-
-  top.inProof = false;
-}
-
-
-abstract production proofAborted
-top::ProofState ::=
-{
-  top.pp = "Proof ABORTED.";
-
-  top.translation = proofAborted();
-
-  top.inProof = false;
-}
-
-
 
 
 

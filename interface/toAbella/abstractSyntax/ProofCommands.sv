@@ -5,7 +5,19 @@ grammar toAbella:abstractSyntax;
 
 nonterminal ProofCommand with
    pp, --pp should end with two spaces
-   translation<[ProofCommand]>, attrOccurrences;
+   translation<[ProofCommand]>, attrOccurrences,
+   isQuit;
+
+
+
+aspect default production
+top::ProofCommand ::=
+{
+  --the only quits are no-op commands
+  top.isQuit = false;
+}
+
+
 
 abstract production inductionTactic
 top::ProofCommand ::= h::HHint nl::[Integer]
@@ -398,6 +410,8 @@ top::ProofCommand ::= n::NoOpCommand
   top.pp = n.pp;
 
   top.translation = [proofNoOpCommand(n.translation)];
+
+  top.isQuit = n.isQuit;
 }
 
 

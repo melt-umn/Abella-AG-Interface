@@ -6,7 +6,19 @@ grammar toAbella:abstractSyntax;
 nonterminal TopCommand with
    --pp should always end with a newline
    pp,
-   translation<TopCommand>, attrOccurrences;
+   translation<TopCommand>, attrOccurrences,
+   isQuit;
+
+
+
+aspect default production
+top::TopCommand ::=
+{
+  --the only quits are no-op commands
+  top.isQuit = false;
+}
+
+
 
 abstract production theoremDeclaration
 top::TopCommand ::= name::String params::[String] body::Metaterm
@@ -198,5 +210,7 @@ top::TopCommand ::= n::NoOpCommand
   top.pp = n.pp;
 
   top.translation = topNoOpCommand(n.translation);
+
+  top.isQuit = n.isQuit;
 }
 

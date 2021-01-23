@@ -49,7 +49,12 @@ autocopy attribute attrOccurrences::[Pair<String [Type]>];
 
 
 
-
+--Check for equality
 inherited attribute eqTest<a>::a;
 synthesized attribute isEq::Boolean;
+
+
+
+--Check if a command is a command for quitting
+synthesized attribute isQuit::Boolean;
 

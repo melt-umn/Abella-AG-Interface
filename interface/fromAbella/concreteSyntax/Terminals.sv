@@ -19,6 +19,7 @@ terminal ProofQuit_t    'Proof ABORTED.'     lexer classes {DISPLAY};
 terminal ImportFrom_t   'Importing from'     lexer classes {DISPLAY};
 terminal OtherSubs_t    'other subgoals.'    lexer classes {DISPLAY};
 terminal OtherSub_t     'other subgoal.'     lexer classes {DISPLAY};
+terminal Theorem_t      'Theorem'            lexer classes {DISPLAY};
 
 terminal SyntaxError_t       'Syntax error.'                                                        lexer classes {DISPLAY, ERROR};
 terminal Error_t             'Error:'                                                               lexer classes {DISPLAY, ERROR};

@@ -24,7 +24,13 @@ nonterminal FullDisplay_c with ast<FullDisplay>;
 
 concrete productions top::FullDisplay_c
 | ei::ExtraInformation_c ps::ProofState_c
-  { top.ast = fullDisplay(ei.ast, ps.ast); }
+{ top.ast = fullDisplay(ei.ast, ps.ast); }
+| ei::ExtraInformation_c 'Proof completed.'
+  { top.ast = displayProofCompleted(ei.ast); }
+| ei::ExtraInformation_c 'Proof ABORTED.'
+  { top.ast = displayProofAborted(ei.ast); }
+| 'Theorem' name::Id_t ':' body::Metaterm_c
+  { top.ast = showDisplay(name.lexeme, body.ast); }
 
 
 
@@ -59,10 +65,6 @@ concrete productions top::ProofState_c
   { top.ast = noProof(); }
 | cs::CurrentSubgoal_c cg::CurrentGoal_c rest::MoreSubgoals_c
   { top.ast = proofInProgress(cs.ast, cg.ast, rest.ast); }
-| 'Proof completed.'
-  { top.ast = proofCompleted(); }
-| 'Proof ABORTED.'
-  { top.ast = proofAborted(); }
 
 
 

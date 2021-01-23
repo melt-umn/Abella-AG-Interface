@@ -49,7 +49,7 @@ IOVal<Integer> ::= state::ProofState undolist::[Integer] abella::ProcessHandle i
   ----------------------------
   local printed_prompt::IO = print(" < ", ioin);
   local raw_input::IOVal<String> = read_full_input(printed_prompt);
-  local input::String = stripExtraWhiteSpace(raw_input.iovalue);
+  local input::String = stripExternalWhiteSpace(raw_input.iovalue);
   --Translate command
   ----------------------------
   local top_result::ParseResult<TopCommand_c> = top_parse(input, "<<top input>>");
@@ -77,10 +77,14 @@ IOVal<Integer> ::= state::ProofState undolist::[Integer] abella::ProcessHandle i
         if state.inProof
         then if proof_result.parseSuccess
              then ""
-             else "Error:  Cannot use top commands in a proof\n\n"
+             else if top_result.parseSuccess
+                  then "Error:  Cannot use top commands in a proof\n\n"
+                  else "" --not an actual command
         else if top_result.parseSuccess
              then ""
-             else "Error:  Cannot use proof commands outside a proof\n\n";
+             else if proof_result.parseSuccess
+                  then "Error:  Cannot use proof commands outside a proof\n\n"
+                  else ""; --not an actual command
   local num_commands_sent::Integer =
         if state.inProof
         then length(proof_a_trans)
@@ -93,7 +97,10 @@ IOVal<Integer> ::= state::ProofState undolist::[Integer] abella::ProcessHandle i
         else raw_input.io;
 
 
-  local should_exit::Boolean = input == "exit.";
+  local should_exit::Boolean =
+        if state.inProof
+        then proof_result.parseSuccess && proof_a.isQuit
+        else top_result.parseSuccess && top_a.isQuit;
 
 
   {-
@@ -136,6 +143,16 @@ IOVal<Integer> ::= state::ProofState undolist::[Integer] abella::ProcessHandle i
 
 
   {-
+    EXIT
+  -}
+  local wait_on_exit::IO = waitForProcess(abella, out_to_abella);
+  --we can't use our normal read function because that looks for a new prompt
+  local any_last_words::IOVal<String> = readAllFromProcess(abella, wait_on_exit);
+  local output_last::IO = print(any_last_words.iovalue, any_last_words.io);
+  local exit_message::IO = print("Quitting.\n", output_last);
+
+
+  {-
     RUN REPL AGAIN
   -}
   local again::IOVal<Integer> =
@@ -143,7 +160,7 @@ IOVal<Integer> ::= state::ProofState undolist::[Integer] abella::ProcessHandle i
 
 
   return if should_exit
-         then ioval(printed_output, 0)
+         then ioval(exit_message, 0)
          else again;
 }
 
@@ -156,7 +173,7 @@ IOVal<String> ::= ioin::IO
 {
   local read::IOVal<String> = readLineStdin(ioin);
   local readRest::IOVal<String> = read_full_input(read.io);
-  local noWhiteSpace::String = stripExtraWhiteSpace(read.iovalue);
+  local noWhiteSpace::String = stripExternalWhiteSpace(read.iovalue);
   local shouldEnd::Boolean =
         lastIndexOf(".", noWhiteSpace) == length(noWhiteSpace) - 1;
   return if shouldEnd
@@ -170,7 +187,7 @@ IOVal<String> ::= ioin::IO
   output available from Abella, because there might not be any output
   available initially (we need to wait for it to finish processing) or
   not all the output might be available at once, and we need to keep
-  going until we find the true end (the next prompt).
+  going until we find a true end (the next prompt).
 -}
 function read_full_abella_output
 IOVal<String> ::= abella::ProcessHandle ioin::IO
@@ -184,7 +201,7 @@ IOVal<String> ::= abella::ProcessHandle ioin::IO
          else ioval(readRest.io, read.iovalue ++ readRest.iovalue);
 }
 
---Read the given number of Abella outputs
+--Read the given number of Abella outputs (prompt-terminated)
 --Returns the text of the last one
 function read_n_abella_outputs
 IOVal<String> ::= n::Integer abella::ProcessHandle ioin::IO
@@ -199,7 +216,7 @@ IOVal<String> ::= n::Integer abella::ProcessHandle ioin::IO
 
   local read::IOVal<String> = read_full_abella_output(abella, ioin);
   local split::[String] = explode("<", read.iovalue);
-  local noWhiteSpace::[String] = map(stripExtraWhiteSpace, split);
+  local noWhiteSpace::[String] = map(stripExternalWhiteSpace, split);
   local noBlanks::[String] = filter(\ x::String -> x != "", noWhiteSpace);
   local len::Integer = length(noBlanks);
 
@@ -222,16 +239,15 @@ IOVal<String> ::= n::Integer abella::ProcessHandle ioin::IO
 function removeLastWord
 String ::= str::String
 {
-  local noExtraSpace::String = stripExtraWhiteSpace(str);
+  local noExtraSpace::String = stripExternalWhiteSpace(str);
   local space::Integer = lastIndexOf("\n", noExtraSpace);
   local noWord::String = substring(0, space, noExtraSpace);
   return noWord;
 }
 
 
---The library function is actually replacing all interior whitespace with just a space
---Therefore we need this as a temporary workaround
-function stripExtraWhiteSpace
+--Remove white space from the front and end
+function stripExternalWhiteSpace
 String ::= str::String
 {
   local split::[String] = explode("", str);

@@ -33,3 +33,6 @@ synthesized attribute isError::Boolean;
 --Whether a warning occurred
 synthesized attribute isWarning::Boolean;
 
+--Whether an open proof was ended (completed or aborted)
+synthesized attribute proofEnded::Boolean;
+
