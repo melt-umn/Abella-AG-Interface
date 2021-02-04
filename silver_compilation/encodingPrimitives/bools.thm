@@ -1,0 +1,531 @@
+
+Kind $bool   type.
+Type $btrue   $bool.
+Type $bfalse   $bool.
+
+Define $is_bool : $bool -> prop by
+  $is_bool $btrue;
+  $is_bool $bfalse.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                AND                                 %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Define $and_bool : $bool -> $bool -> $bool -> prop by
+  $and_bool $btrue $btrue $btrue;
+  $and_bool $bfalse B $bfalse;
+  $and_bool B $bfalse $bfalse.
+
+Theorem $and_bool_unique : forall B1 B2 B B',
+  $and_bool B1 B2 B -> $and_bool B1 B2 B' -> B = B'.
+intros. case H1.
+  %Subgoal 1
+   case H2. search.
+  %Subgoal 2
+   case H2.
+     %Subgoal 2.1
+      search.
+     %Subgoal 2.2
+      search.
+  %Subgoal 3
+   case H2.
+     %Subgoal 3.1
+      search.
+     %Subgoal 3.2
+      search.
+
+Theorem $and_bool_total : forall B1 B2,
+  $is_bool B1 -> $is_bool B2 -> exists B, $and_bool B1 B2 B.
+intros. case H1.
+  %Subgoal 1
+   case H2.
+     %Subgoal 1.1
+      search.
+     %Subgoal 1.2
+      search.
+  %Subgoal 2
+   search.
+
+Theorem $and_bool_is_bool : forall B1 B2 B3,
+  $is_bool B1 -> $is_bool B2 -> $and_bool B1 B2 B3 -> $is_bool B3.
+intros. case H3.
+  %Subgoal 1
+   search.
+  %Subgoal 2
+   search.
+  %Subgoal 3
+   search.
+
+Theorem $and_bool_comm : forall B1 B2 B3,
+  $and_bool B1 B2 B3 -> $and_bool B2 B1 B3.
+intros. case H1.
+  %Subgoal 1
+   search.
+  %Subgoal 2
+   search.
+  %Subgoal 3
+   search.
+
+Theorem $and_bool_true_left : forall B,
+  $is_bool B -> $and_bool $btrue B B.
+intros. case H1.
+  %Subgoal 1
+   search.
+  %Subgoal 2
+   search.
+
+Theorem $and_bool_true_left_eq : forall B B',
+  $and_bool $btrue B B' -> B' = B.
+intros. case H1.
+  %Subgoal 1
+   search.
+  %Subgoal 2
+   search.
+
+Theorem $and_bool_true_right : forall B,
+  $is_bool B -> $and_bool B $btrue B.
+intros. backchain $and_bool_comm. backchain $and_bool_true_left.
+
+Theorem $and_bool_true_right_eq : forall B B',
+  $and_bool B $btrue B' -> B' = B.
+intros. case H1.
+  %Subgoal 1
+   search.
+  %Subgoal 2
+   search.
+
+Theorem $and_bool_false_left : forall B B',
+  $and_bool $bfalse B B' -> B' = $bfalse.
+intros. case H1.
+  %Subgoal 1
+   search.
+  %Subgoal 2
+   search.
+
+Theorem $and_bool_false_right : forall B B',
+  $and_bool B $bfalse B' -> B' = $bfalse.
+intros. case H1.
+  %Subgoal 1
+   search.
+  %Subgoal 2
+   search.
+
+Theorem $and_bool_associative : forall B1 B2 B3 BRes1 Result,
+  $is_bool B2 -> $is_bool B3 ->
+  $and_bool B1 B2 BRes1 -> $and_bool BRes1 B3 Result ->
+  exists BRes2, $and_bool B2 B3 BRes2 /\ $and_bool B1 BRes2 Result.
+intros. case H3.
+  %Subgoal 1
+   exists B3. split.
+     %Subgoal 1.1
+      backchain $and_bool_true_left.
+     %Subgoal 1.2
+      search.
+  %Subgoal 2
+   apply $and_bool_total to H1 H2. exists B. split.
+     %Subgoal 2.1
+      search.
+     %Subgoal 2.2
+      apply $and_bool_false_left to H4. search.
+  %Subgoal 3
+   exists $bfalse. split.
+     %Subgoal 3.1
+      search.
+     %Subgoal 3.2
+      apply $and_bool_false_left to H4. search.
+
+Theorem $and_bool_idempotent : forall B,
+  $is_bool B -> $and_bool B B B.
+intros. case H1.
+  %Subgoal 1
+   search.
+  %Subgoal 2
+   search.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                OR                                  %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Define $or_bool : $bool -> $bool -> $bool -> prop by
+  $or_bool $btrue B $btrue;
+  $or_bool B $btrue $btrue;
+  $or_bool $bfalse $bfalse $bfalse.
+
+Theorem $or_bool_unique : forall B1 B2 B B',
+  $or_bool B1 B2 B -> $or_bool B1 B2 B' -> B = B'.
+intros. case H1.
+  %Subgoal 1
+   case H2.
+     %Subgoal 1.1
+      search.
+     %Subgoal 1.2
+      search.
+  %Subgoal 2
+   case H2.
+     %Subgoal 2.1
+      search.
+     %Subgoal 2.2
+      search.
+  %Subgoal 3
+   case H2. search.
+
+Theorem $or_bool_total : forall B1 B2,
+  $is_bool B1 -> $is_bool B2 -> exists B, $or_bool B1 B2 B.
+intros. case H1.
+  %Subgoal 1
+   search.
+  %Subgoal 2
+   case H2.
+     %Subgoal 2.1
+      search.
+     %Subgoal 2.2
+      search.
+
+Theorem $or_bool_is_bool : forall B1 B2 B3,
+  $is_bool B1 -> $is_bool B2 -> $or_bool B1 B2 B3 -> $is_bool B3.
+intros. case H3.
+  %Subgoal 1
+   search.
+  %Subgoal 2
+   search.
+  %Subgoal 3
+   search.
+
+Theorem $or_bool_comm : forall B1 B2 B3,
+  $or_bool B1 B2 B3 -> $or_bool B2 B1 B3.
+intros. case H1.
+  %Subgoal 1
+   search.
+  %Subgoal 2
+   search.
+  %Subgoal 3
+   search.
+
+Theorem $or_bool_true_left : forall B B',
+  $or_bool $btrue B B' -> B' = $btrue.
+intros. case H1.
+  %Subgoal 1
+   search.
+  %Subgoal 2
+   search.
+
+Theorem $or_bool_true_right : forall B B',
+  $or_bool B $btrue B' -> B' = $btrue.
+intros. case H1.
+  %Subgoal 1
+   search.
+  %Subgoal 2
+   search.
+
+Theorem $or_bool_false_left : forall B,
+  $is_bool B -> $or_bool $bfalse B B.
+intros. case H1.
+  %Subgoal 1
+   search.
+  %Subgoal 2
+   search.
+
+Theorem $or_bool_false_left_eq : forall B B',
+  $or_bool $bfalse B B' -> B' = B.
+intros. case H1.
+  %Subgoal 1
+   search.
+  %Subgoal 2
+   search.
+
+Theorem $or_bool_false_right : forall B,
+  $is_bool B -> $or_bool B $bfalse B.
+intros. backchain $or_bool_comm. backchain $or_bool_false_left.
+
+Theorem $or_bool_false_right_eq : forall B B',
+  $or_bool B $bfalse B' -> B' = B.
+intros. case H1.
+  %Subgoal 1
+   search.
+  %Subgoal 2
+   search.
+
+Theorem $or_bool_associative : forall B1 B2 B3 BRes1 Result,
+  $is_bool B2 -> $is_bool B3 ->
+  $or_bool B1 B2 BRes1 -> $or_bool BRes1 B3 Result ->
+  exists BRes2, $or_bool B2 B3 BRes2 /\ $or_bool B1 BRes2 Result.
+intros. case H3.
+  %Subgoal 1
+   apply $or_bool_true_left to H4. apply $or_bool_total to H1 H2.
+   exists B. split.
+     %Subgoal 1.1
+      search.
+     %Subgoal 1.2
+      search.
+  %Subgoal 2
+   exists $btrue. split.
+     %Subgoal 2.1
+      search.
+     %Subgoal 2.2
+      apply $or_bool_true_left to H4. search.
+  %Subgoal 3
+   exists B3. split.
+     %Subgoal 3.1
+      backchain $or_bool_false_left.
+     %Subgoal 3.2
+      search.
+
+Theorem $or_bool_idempotent : forall B,
+  $is_bool B -> $or_bool B B B.
+intros. case H1.
+  %Subgoal 1
+   search.
+  %Subgoal 2
+   search.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                NOT                                 %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Define $not_bool : $bool -> $bool -> prop by
+  $not_bool $btrue $bfalse;
+  $not_bool $bfalse $btrue.
+
+Theorem $not_bool_unique : forall B1 B B',
+  $not_bool B1 B -> $not_bool B1 B' -> B = B'.
+intros. case H1.
+  %Subgoal 1
+   case H2. search.
+  %Subgoal 2
+   case H2. search.
+
+Theorem $not_bool_total : forall B,
+  $is_bool B -> exists B', $not_bool B B'.
+intros. case H1.
+  %Subgoal 1
+   search.
+  %Subgoal 2
+   search.
+
+Theorem $not_bool_is_bool : forall B B',
+  $not_bool B B' -> $is_bool B'.
+intros. case H1.
+  %Subgoal 1
+   search.
+  %Subgoal 2
+   search.
+
+Theorem $not_bool_double_negation : forall B B',
+  $not_bool B B' -> $not_bool B' B.
+intros. case H1.
+  %Subgoal 1
+   search.
+  %Subgoal 2
+   search.
+
+Theorem $and_bool_complementation : forall B NotB,
+  $not_bool B NotB -> $and_bool B NotB $bfalse.
+intros. case H1.
+  %Subgoal 1
+   search.
+  %Subgoal 2
+   search.
+
+Theorem $or_bool_complementation : forall B NotB,
+  $not_bool B NotB -> $or_bool B NotB $btrue.
+intros. case H1.
+  %Subgoal 1
+   search.
+  %Subgoal 2
+   search.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                         DISTRIBUTIVE LAWS                          %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% A && (B || C)  ==>  (A && B) || (A && C)
+Theorem $and_bool__distribute_over__or : forall A B C OrBC Result,
+  $is_bool A -> $is_bool B -> $is_bool C ->
+  $or_bool B C OrBC -> $and_bool A OrBC Result ->
+  exists AndAB AndAC, $and_bool A B AndAB /\
+                      $and_bool A C AndAC /\
+                      $or_bool AndAB AndAC Result.
+intros. case H4.
+  %Subgoal 1
+   case H5.
+     %Subgoal 1.1
+      exists $btrue, C. split.
+        %Subgoal 1.1.1
+         search.
+        %Subgoal 1.1.2
+         backchain $and_bool_true_left.
+        %Subgoal 1.1.3
+         search.
+     %Subgoal 1.2
+      exists $bfalse, $bfalse. search.
+  %Subgoal 2
+   case H5.
+     %Subgoal 2.1
+      exists B, $btrue. split.
+        %Subgoal 2.1.1
+         backchain $and_bool_true_left.
+        %Subgoal 2.1.2
+         search.
+        %Subgoal 2.1.3
+         search.
+     %Subgoal 2.2
+      exists $bfalse, $bfalse. search.
+  %Subgoal 3
+    apply $and_bool_false_right to H5.
+    exists $bfalse, $bfalse. search.
+
+% A && (B || C)  <==  (A && B) || (A && C)
+Theorem $and_bool__undistribute_over__or :
+  forall A B C AndAB AndAC Result,
+    $is_bool A -> $is_bool B -> $is_bool C ->
+    $and_bool A B AndAB -> $and_bool A C AndAC ->
+    $or_bool AndAB AndAC Result ->
+    exists OrBC, $or_bool B C OrBC /\
+                 $and_bool A OrBC Result.
+intros. case H4.
+  %Subgoal 1
+   apply $or_bool_true_left to H6.
+   exists $btrue. search.
+  %Subgoal 2
+   apply $and_bool_false_left to H5. case H6.
+   apply $or_bool_total to H2 H3. exists B1. search.
+  %Subgoal 3
+   exists C. split.
+     %Subgoal 3.1
+      backchain $or_bool_false_left.
+     %Subgoal 3.2
+      apply $or_bool_false_left_eq to H6. search.
+
+% A || (B && C)  ==>  (A || B) && (A || C)
+Theorem $or_bool__distribute_over__and : forall A B C AndBC Result,
+  $is_bool A -> $is_bool B -> $is_bool C ->
+  $and_bool B C AndBC -> $or_bool A AndBC Result ->
+  exists OrAB OrAC, $or_bool A B OrAB /\
+                    $or_bool A C OrAC /\
+                    $and_bool OrAB OrAC Result.
+intros. case H4.
+  %Subgoal 1
+   apply $or_bool_true_right to H5.
+   exists $btrue, $btrue. search.
+  %Subgoal 2
+   case H1.
+     %Subgoal 2.1
+      case H5. exists $btrue, $btrue. search.
+     %Subgoal 2.2
+      exists $bfalse, C. split.
+        %Subgoal 2.2.1
+         search.
+        %Subgoal 2.2.2
+         backchain $or_bool_false_left.
+        %Subgoal 2.2.3
+         case H5. search.
+  %Subgoal 3
+   apply $or_bool_false_right_eq to H5. case H1.
+     %Subgoal 3.1
+      exists $btrue, $btrue. search.
+     %Subgoal 3.2
+      exists B, $bfalse. split.
+        %Subgoal 3.2.1
+         backchain $or_bool_false_left.
+        %Subgoal 3.2.2
+         search.
+        %Subgoal 3.2.3
+         search.
+
+% A || (B && C)  <==  (A || B) && (A || C)
+Theorem $or_bool__undistribute_over__and :
+  forall A B C OrAB OrAC Result,
+    $is_bool A -> $is_bool B -> $is_bool C ->
+    $or_bool A B OrAB -> $or_bool A C OrAC ->
+    $and_bool OrAB OrAC Result ->
+    exists AndBC, $and_bool B C AndBC /\
+                  $or_bool A AndBC Result.
+intros. case H4.
+  %Subgoal 1
+   apply $and_bool_total to H2 H3. apply $or_bool_true_left to H5.
+   case H6. exists B1. search.
+  %Subgoal 2
+   case H5.
+     %Subgoal 2.1
+      case H6. exists C. split.
+        %Subgoal 2.1.1
+         backchain $and_bool_true_left.
+        %Subgoal 2.1.2
+         search.
+     %Subgoal 2.2
+      case H6. exists $btrue. search.
+     %Subgoal 2.3
+      case H6. exists $bfalse. search.
+  %Subgoal 3
+   apply $and_bool_false_left to H6. exists $bfalse. search.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                             DE MORGAN                              %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% ! (A && B)  ==>  !A || !B
+Theorem DeMorgan__not_bool__and_bool : forall A B AndAB Result,
+  $is_bool A -> $is_bool B ->
+  $and_bool A B AndAB -> $not_bool AndAB Result ->
+  exists NotA NotB, $not_bool A NotA /\ $not_bool B NotB /\
+                    $or_bool NotA NotB Result.
+intros. case H3.
+  %Subgoal 1
+   case H4. exists $bfalse, $bfalse. search.
+  %Subgoal 2
+   case H4. apply $not_bool_total to H2. exists $btrue, B'. search.
+  %Subgoal 3
+   case H4. apply $not_bool_total to H1. exists B', $btrue. search.
+
+% ! (A && B)  <==  !A || !B
+Theorem DeMorgan__or_bool__not_bool : forall A B NotA NotB Result,
+  $is_bool A -> $is_bool B ->
+  $not_bool A NotA -> $not_bool B NotB ->
+  $or_bool NotA NotB Result ->
+  exists AndAB, $and_bool A B AndAB /\ $not_bool AndAB Result.
+intros. case H5.
+  %Subgoal 1
+   case H3. exists $bfalse. search.
+  %Subgoal 2
+   case H4. exists $bfalse. search.
+  %Subgoal 3
+   case H3. case H4. search.
+
+% ! (A || B)  ==>  !A && !B
+Theorem DeMorgan__not_bool__or_bool : forall A B OrAB Result,
+  $is_bool A -> $is_bool B ->
+  $or_bool A B OrAB -> $not_bool OrAB Result ->
+  exists NotA NotB, $not_bool A NotA /\ $not_bool B NotB /\
+                    $and_bool NotA NotB Result.
+intros. case H3.
+  %Subgoal 1
+   case H4. apply $not_bool_total to H2. exists $bfalse, B'. search.
+  %Subgoal 2
+   case H4. apply $not_bool_total to H1. exists B', $bfalse. search.
+  %Subgoal 3
+   case H4. exists $btrue, $btrue. search.
+
+% ! (A || B)  <==  !A && !B
+Theorem DeMorgan__and_bool__not_bool : forall A B NotA NotB Result,
+  $is_bool A -> $is_bool B ->
+  $not_bool A NotA -> $not_bool B NotB ->
+  $and_bool NotA NotB Result ->
+  exists OrAB, $or_bool A B OrAB /\ $not_bool OrAB Result.
+intros. case H5.
+  %Subgoal 1
+   case H3. case H4. search.
+  %Subgoal 2
+   case H3. exists $btrue. search.
+  %Subgoal 3
+   case H4. search.
+

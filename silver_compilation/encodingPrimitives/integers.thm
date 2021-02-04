@@ -1,0 +1,96 @@
+
+/*
+  Abella requires declaring the imported kinds.  I'm not sure why.
+*/
+
+Kind $nat   type.
+Import "nats".
+
+Kind $bool   type.
+Import "bools".
+
+
+/*
+  The term `$posInt N` is the positive number `N`.  The term
+  `$negSuccInt N` is the negative number `(-N - 1)`.  For example,
+  `$negsuccInt $zero` is -1.  This encoding gives us a single encoding
+  for the integer 0, where an encoding with just a `$negInt`
+  constructor (rather than `$negSuccInt`) would give us positive and
+  negative zeroes.
+
+  Similarly, an encoding which didn't use the `$nat` type and simply
+  had constructors for zero, adding a positive one, and subtracting a
+  negative one, would not have unique encodings for any number.
+*/
+
+Kind $integer   type.
+Type $posInt   $nat -> $integer.
+Type $negSuccInt   $nat -> $integer.
+
+%The definition using $is_nat is NOT helpful
+Define $is_integer : $integer -> prop by
+  $is_integer ($posInt $zero);
+  $is_integer ($posInt ($succ N)) := $is_integer ($posInt N);
+  $is_integer ($negSuccInt $zero);
+  $is_integer ($negSuccInt ($succ N)) := $is_integer ($negSuccInt N).
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                            IS RELATIONS                            %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Theorem $is_nat__to__is_integer_posInt : forall N,
+  $is_nat N -> $is_integer ($posInt N).
+induction on 1. intros. case H1.
+  %Subgoal 1
+   search.
+  %Subgoal 2
+   apply IH to H2. search.
+
+Theorem $is_nat__to__is_integer_negSuccInt : forall N,
+  $is_nat N -> $is_integer ($negSuccInt N).
+induction on 1. intros. case H1.
+  %Subgoal 1
+   search.
+  %Subgoal 2
+   apply IH to H2. search.
+
+Theorem $is_integer_posInt__to__is_nat : forall N,
+  $is_integer ($posInt N) -> $is_nat N.
+induction on 1. intros. case H1.
+  %Subgoal 1
+   search.
+  %Subgoal 2
+   apply IH to H2. search.
+
+Theorem $is_integer_negSuccInt__to__is_nat : forall N,
+  $is_integer ($negSuccInt N) -> $is_nat N.
+induction on 1. intros. case H1.
+  %Subgoal 1
+   search.
+  %Subgoal 2
+   apply IH to H2. search.
+
+Theorem $is_integer_posInt__to__negSuccInt : forall N,
+  $is_integer ($posInt N) -> $is_integer ($negSuccInt N).
+intros. apply $is_integer_posInt__to__is_nat to H1.
+backchain $is_nat__to__is_integer_negSuccInt.
+
+Theorem $is_integer_negSuccInt__to__posInt : forall N,
+  $is_integer ($negSuccInt N) -> $is_integer ($posInt N).
+intros. apply $is_integer_negSuccInt__to__is_nat to H1.
+backchain $is_nat__to__is_integer_posInt.
+
+Theorem $is_integer_posInt_or_negSuccInt : forall N,
+  $is_integer N -> exists A, N = $posInt A \/ N = $negSuccInt A.
+intros. case H1.
+  %Subgoal 1
+   search.
+  %Subgoal 2
+   search.
+  %Subgoal 3
+   search.
+  %Subgoal 4
+   search.
+

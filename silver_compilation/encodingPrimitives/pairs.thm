@@ -1,0 +1,6 @@
+
+
+Kind $pair   type -> type -> type.
+Type $pair_c   A -> B -> $pair A B.
+
+

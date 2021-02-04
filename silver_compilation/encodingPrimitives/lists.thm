@@ -1,0 +1,38 @@
+
+
+/*
+  Lists are one of the few things actually built into Abella, so we
+  don't need to define them.  However, we will want to have some
+  relations over them and properties of these relations.
+*/
+
+Define $is_list : (A -> prop) -> list A -> prop by
+  $is_list IsA nil;
+  $is_list IsA (H::T) := IsA H /\ $is_list IsA T.
+
+
+Define $append : list A -> list A -> list A -> prop by
+  $append nil L L;
+  $append (H::T) L2 (H::L3) := $append T L2 L3.
+
+
+Theorem append_nil_right[A] : forall (L L' : list A),
+  $append L nil L' -> L = L'.
+induction on 1. intros. case H1.
+  %Subgoal 1
+   search.
+  %Subgoal 2
+   apply IH to H2. search.
+
+Theorem append_nil_left[A] : forall (L L' : list A),
+  $append nil L L' -> L = L'.
+intros. case H1. search.
+
+Theorem append_unique[A] : forall (L1 L2 L3 L3' : list A),
+  $append L1 L2 L3 -> $append L1 L2 L3' -> L3 = L3'.
+induction on 1. intros. case H1.
+  %Subgoal 1
+   case H2. search.
+  %Subgoal 2
+   case H2. apply IH to H3 H4. search.
+

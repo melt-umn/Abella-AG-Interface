@@ -1,0 +1,77 @@
+
+Import "lists".
+
+
+/*
+  We will represent Silver strings as lists of characters and use the
+  operations we have already defined on lists for our string
+  operations.
+*/
+
+
+/*
+  We represent characters by constants, with the constant "c_<ord>"
+  being the character with ordinal <ord>.  This is probably the most
+  tractable solution, certainly more tractable than naming each one,
+  which would require a complicated function to encode.
+
+  This is an encoding of all the characters which appear on the
+  keyboard, plus some which come from escape sequences (e.g. \n, \t).
+  This probably covers everything we are likely to encounter in a
+  Silver grammar.  However, our scheme is extensible, so we can add
+  any character to this that we need without much trouble.  I just
+  don't think we need hundreds of characters encoded (and, I assume,
+  slowing things down), for what we are going to do.
+*/
+
+Kind $char   type.
+Type $c_8, $c_9, $c_10, $c_11, $c_13, $c_32, $c_33, $c_34     $char.
+Type $c_35, $c_36, $c_37, $c_38, $c_39, $c_40, $c_41, $c_42   $char.
+Type $c_43, $c_44, $c_45, $c_46, $c_47, $c_48, $c_49, $c_50   $char.
+Type $c_51, $c_52, $c_53, $c_54, $c_55, $c_56, $c_57, $c_58   $char.
+Type $c_59, $c_60, $c_61, $c_62, $c_63, $c_64, $c_65, $c_66   $char.
+Type $c_67, $c_68, $c_69, $c_70, $c_71, $c_72, $c_73, $c_74   $char.
+Type $c_75, $c_76, $c_77, $c_78, $c_79, $c_80, $c_81, $c_82   $char.
+Type $c_83, $c_84, $c_85, $c_86, $c_87, $c_88, $c_89, $c_90   $char.
+Type $c_91, $c_92, $c_93, $c_94, $c_95, $c_96, $c_97, $c_98   $char.
+Type $c_99, $c_100, $c_101, $c_102, $c_103, $c_104, $c_105    $char.
+Type $c_106, $c_107, $c_108, $c_109, $c_110, $c_111, $c_112   $char.
+Type $c_113, $c_114, $c_115, $c_116, $c_117, $c_118, $c_119   $char.
+Type $c_120, $c_121, $c_122, $c_123, $c_124, $c_125, $c_126   $char.
+
+
+/*
+  I'm not sure we need an *actual* is-relation for characters.  Our
+  reasoning will probably mostly ignore them.  Just in case, we will
+  provide a real one anyway.
+*/
+Define $is_char : $char -> prop by
+  $is_char $c_8;  $is_char $c_9;  $is_char $c_10;  $is_char $c_11;
+  $is_char $c_13;  $is_char $c_32;  $is_char $c_33;  $is_char $c_34;
+  $is_char $c_35;  $is_char $c_36;  $is_char $c_37;  $is_char $c_38;
+  $is_char $c_39;  $is_char $c_40;  $is_char $c_41;  $is_char $c_42;
+  $is_char $c_43;  $is_char $c_44;  $is_char $c_45;  $is_char $c_46;
+  $is_char $c_47;  $is_char $c_48;  $is_char $c_49;  $is_char $c_50;
+  $is_char $c_51;  $is_char $c_52;  $is_char $c_53;  $is_char $c_54;
+  $is_char $c_55;  $is_char $c_56;  $is_char $c_57;  $is_char $c_58;
+  $is_char $c_59;  $is_char $c_60;  $is_char $c_61;  $is_char $c_62;
+  $is_char $c_63;  $is_char $c_64;  $is_char $c_65;  $is_char $c_66;
+  $is_char $c_67;  $is_char $c_68;  $is_char $c_69;  $is_char $c_70;
+  $is_char $c_71;  $is_char $c_72;  $is_char $c_73;  $is_char $c_74;
+  $is_char $c_75;  $is_char $c_76;  $is_char $c_77;  $is_char $c_78;
+  $is_char $c_79;  $is_char $c_80;  $is_char $c_81;  $is_char $c_82;
+  $is_char $c_83;  $is_char $c_84;  $is_char $c_85;  $is_char $c_86;
+  $is_char $c_87;  $is_char $c_88;  $is_char $c_89;  $is_char $c_90;
+  $is_char $c_91;  $is_char $c_92;  $is_char $c_93;  $is_char $c_94;
+  $is_char $c_95;  $is_char $c_96;  $is_char $c_97;  $is_char $c_98;
+  $is_char $c_99;  $is_char $c_100;  $is_char $c_101;  $is_char $c_102;
+  $is_char $c_103;  $is_char $c_104;  $is_char $c_105;  $is_char $c_106;
+  $is_char $c_107;  $is_char $c_108;  $is_char $c_109;  $is_char $c_110;
+  $is_char $c_111;  $is_char $c_112;  $is_char $c_113;  $is_char $c_114;
+  $is_char $c_115;  $is_char $c_116;  $is_char $c_117;  $is_char $c_118;
+  $is_char $c_119;  $is_char $c_120;  $is_char $c_121;  $is_char $c_122;
+  $is_char $c_123;  $is_char $c_124;  $is_char $c_125;  $is_char $c_126.
+
+Define $is_string : list $char -> prop by
+  $is_string L := $is_list $is_char L.
+
