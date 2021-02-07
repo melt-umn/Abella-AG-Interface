@@ -6,15 +6,16 @@ grammar toAbella:abstractSyntax;
 nonterminal ProofCommand with
    pp, --pp should end with two spaces
    translation<[ProofCommand]>, attrOccurrences,
-   isQuit;
+   isQuit, isDebug;
 
 
 
 aspect default production
 top::ProofCommand ::=
 {
-  --the only quits are no-op commands
+  --the only quits and debug setters are no-op commands
   top.isQuit = false;
+  top.isDebug = pair(false, false);
 }
 
 
@@ -412,6 +413,7 @@ top::ProofCommand ::= n::NoOpCommand
   top.translation = [proofNoOpCommand(n.translation)];
 
   top.isQuit = n.isQuit;
+  top.isDebug = n.isDebug;
 }
 
 

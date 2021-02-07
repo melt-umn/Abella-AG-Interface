@@ -7,15 +7,16 @@ nonterminal TopCommand with
    --pp should always end with a newline
    pp,
    translation<TopCommand>, attrOccurrences,
-   isQuit;
+   isQuit, isDebug;
 
 
 
 aspect default production
 top::TopCommand ::=
 {
-  --the only quits are no-op commands
+  --the only quits and debug setters are no-op commands
   top.isQuit = false;
+  top.isDebug = pair(false, false);
 }
 
 
@@ -106,7 +107,7 @@ top::TopCommand ::= importFile::String withs::[Pair<String String>]
      else " with " ++ buildWiths(withs);
   top.pp = "Import " ++ importFile ++ withString ++ ".\n";
 
-  top.translation = error("Translation not done in importCommand yet");
+  top.translation = importCommand(importFile, withs);
 }
 
 
@@ -136,7 +137,7 @@ top::TopCommand ::= theoremName::String newTheoremNames::[String]
      else " as " ++ buildNames(newTheoremNames);
   top.pp = "Split " ++ theoremName ++ namesString ++ ".\n";
 
-  top.translation = error("Translation not done in splitTheorem yet");
+  top.translation = splitTheorem(theoremName, newTheoremNames);
 }
 
 
@@ -212,5 +213,6 @@ top::TopCommand ::= n::NoOpCommand
   top.translation = topNoOpCommand(n.translation);
 
   top.isQuit = n.isQuit;
+  top.isDebug = n.isDebug;
 }
 

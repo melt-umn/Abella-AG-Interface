@@ -139,6 +139,9 @@ the implementation details as described above.
   and abbreviate them ourselves rather than actually abbreviating them
   with Abella.  This might make some of the automation we are thinking
   about go easier.
+- It would be nice to have some kind of a `Search` like Coq has to
+  find relevant theorems, based on the relation being used or
+  something like that.
 
 
 

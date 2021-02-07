@@ -7,11 +7,11 @@ nonterminal NoOpCommand with
    --pp should always end with a newline
    pp,
    translation<NoOpCommand>,
-   isQuit;
+   isQuit, isDebug;
 
 --because we only intend to pass these through to Abella, we don't
 --   need to actually know anything about the option or its value
---   other than its text
+--   other than its text, other than our own debug option
 abstract production setCommand
 top::NoOpCommand ::= opt::String val::String
 {
@@ -20,6 +20,9 @@ top::NoOpCommand ::= opt::String val::String
   top.translation = setCommand(opt, val);
 
   top.isQuit = false;
+  --We'll be lazy and let anything with debug other than "on" be equivalent to "off"
+  --Since users shouldn't be using this option, it's fine to be sloppy with it
+  top.isDebug = pair(opt == "debug", val == "on");
 }
 
 
@@ -31,6 +34,7 @@ top::NoOpCommand ::= theoremName::String
   top.translation = showCommand(theoremName);
 
   top.isQuit = false;
+  top.isDebug = pair(false, false);
 }
 
 
@@ -42,6 +46,7 @@ top::NoOpCommand ::=
   top.translation = quitCommand();
 
   top.isQuit = true;
+  top.isDebug = pair(false, false);
 }
 
 
@@ -54,6 +59,7 @@ top::NoOpCommand ::=
   top.translation = error("Translation not done in backCommand yet");
 
   top.isQuit = false;
+  top.isDebug = pair(false, false);
 }
 
 
@@ -66,5 +72,6 @@ top::NoOpCommand ::=
   top.translation = error("Translation not done in resetCommand yet");
 
   top.isQuit = false;
+  top.isDebug = pair(false, false);
 }
 

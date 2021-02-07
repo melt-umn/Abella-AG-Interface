@@ -172,6 +172,8 @@ concrete productions top::CommonCommand_c
   { top.ast = setCommand(opt.lexeme, value.lexeme); }
 | 'Set' opt::Id_t value::QString_t '.'
   { top.ast = setCommand(opt.lexeme, value.lexeme); }
+| 'Set' opt::Id_t 'on' '.'
+  { top.ast = setCommand(opt.lexeme, "on"); }
 | 'Show' name::Id_t '.'
   { top.ast = showCommand(name.lexeme); }
 | 'Quit' '.'

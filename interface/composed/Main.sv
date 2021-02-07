@@ -35,12 +35,22 @@ IOVal<Integer> ::= largs::[String] ioin::IO
   --Abella outputs a welcome message, which we want to clean out
   local abella_initial_string::IOVal<String> =
         read_n_abella_outputs(1, abella.iovalue, abella.io);
-  return run_step(noProof(), [], abella.iovalue, abella_initial_string.io);
+  return run_step(noProof(), [], false, abella.iovalue, abella_initial_string.io);
 }
 
 
+{--
+  - Take input from the user, process it, send it through Abella, process the result, and output it.
+  -
+  - @state  The current proof state
+  - @undolist  How many `undo` commands to issue to Abella for each of the user commands issued
+  - @debug  Whether to print out the input to and output from Abella for debugging
+  - @abella  The process in which Abella is running
+  - @ioin  The incoming IO token
+  - @return  The resulting IO token and exit status
+-}
 function run_step
-IOVal<Integer> ::= state::ProofState undolist::[Integer] abella::ProcessHandle ioin::IO
+IOVal<Integer> ::= state::ProofState undolist::[Integer] debug::Boolean abella::ProcessHandle ioin::IO
 {
   {-
     PROCESS COMMAND
@@ -70,8 +80,16 @@ IOVal<Integer> ::= state::ProofState undolist::[Integer] abella::ProcessHandle i
   --whether we have an actual command to send to Abella
   local speak_to_abella::Boolean =
         if state.inProof
-        then proof_result.parseSuccess
-        else top_result.parseSuccess;
+        then if proof_result.parseSuccess
+             then --Set our own debug option
+                  !proof_a.isDebug.fst
+             else --Nothing to send if we can't parse it
+                  false
+        else if top_result.parseSuccess
+             then --Set our own debug option
+                  !top_a.isDebug.fst
+             else --Nothing to send if we can't parse it
+                  false;
   --an error or message based on our own checking
   local our_own_output::String =
         if state.inProof
@@ -79,22 +97,28 @@ IOVal<Integer> ::= state::ProofState undolist::[Integer] abella::ProcessHandle i
              then ""
              else if top_result.parseSuccess
                   then "Error:  Cannot use top commands in a proof\n\n"
-                  else "" --not an actual command
+                  else "Error:  Could not parse:\n" ++ proof_result.parseErrors --not an actual command
         else if top_result.parseSuccess
              then ""
              else if proof_result.parseSuccess
                   then "Error:  Cannot use proof commands outside a proof\n\n"
-                  else ""; --not an actual command
+                  else "Error:  Could not parse" ++ top_result.parseErrors; --not an actual command
   local num_commands_sent::Integer =
         if state.inProof
         then length(proof_a_trans)
         else 1; --we only send one top command ever
   --Send to abella
   ----------------------------
+  local debug_output::IO =
+       if debug
+       then if speak_to_abella
+            then print("Command sent:  " ++ output_command ++ "\n\n", raw_input.io)
+            else print("Nothing to send to Abella\n\n", raw_input.io)
+       else raw_input.io;
   local out_to_abella::IO =
         if speak_to_abella
-        then sendToProcess(abella, output_command, raw_input.io)
-        else raw_input.io;
+        then sendToProcess(abella, output_command, debug_output)
+        else debug_output;
 
 
   local should_exit::Boolean =
@@ -111,7 +135,11 @@ IOVal<Integer> ::= state::ProofState undolist::[Integer] abella::ProcessHandle i
   local back_from_abella::IOVal<String> =
         if speak_to_abella
         then read_n_abella_outputs(num_commands_sent, abella, out_to_abella)
-        else ioval(raw_input.io, "");
+        else ioval(out_to_abella, "");
+  local debug_back_output::IO =
+        if debug && speak_to_abella
+        then print("Read back from Abella:\n" ++ back_from_abella.iovalue ++ "\nEnd Abella output\n\n", back_from_abella.io)
+        else back_from_abella.io;
   --Translate output
   ----------------------------
   local full_result::ParseResult<FullDisplay_c> =
@@ -128,6 +156,11 @@ IOVal<Integer> ::= state::ProofState undolist::[Integer] abella::ProcessHandle i
              then length(proof_a_trans)::undolist
              else [] --no proof going on, so nothing to undo
         else undolist;
+  local new_debug::Boolean =
+        --only need to check top_result because Set is included in both
+        if top_result.parseSuccess && top_a.isDebug.fst
+        then top_a.isDebug.snd
+        else debug;
   --Show to user
   ----------------------------
   local output_output::String =
@@ -136,7 +169,7 @@ IOVal<Integer> ::= state::ProofState undolist::[Integer] abella::ProcessHandle i
         else our_own_output ++ state.translation.pp ++ "\n";
   local printed_output::IO =
         if full_result.parseSuccess
-        then print(output_output, back_from_abella.io)
+        then print(output_output, debug_back_output)
         else error("BUG:  Unable to parse Abella's output:\n\n" ++
                    back_from_abella.iovalue ++
                    "\n\nPlease report this");
@@ -147,6 +180,7 @@ IOVal<Integer> ::= state::ProofState undolist::[Integer] abella::ProcessHandle i
   -}
   local wait_on_exit::IO = waitForProcess(abella, out_to_abella);
   --we can't use our normal read function because that looks for a new prompt
+  --guaranteed to get all the output because we waited for the process to exit first
   local any_last_words::IOVal<String> = readAllFromProcess(abella, wait_on_exit);
   local output_last::IO = print(any_last_words.iovalue, any_last_words.io);
   local exit_message::IO = print("Quitting.\n", output_last);
@@ -156,7 +190,7 @@ IOVal<Integer> ::= state::ProofState undolist::[Integer] abella::ProcessHandle i
     RUN REPL AGAIN
   -}
   local again::IOVal<Integer> =
-        run_step(new_proof_state, new_undolist, abella, printed_output);
+        run_step(new_proof_state, new_undolist, new_debug, abella, printed_output);
 
 
   return if should_exit
@@ -247,7 +281,7 @@ String ::= str::String
 
 
 --Remove white space from the front and end
-function stripExternalWhiteSpace
+function stripExternalWhiteSpace 
 String ::= str::String
 {
   local split::[String] = explode("", str);

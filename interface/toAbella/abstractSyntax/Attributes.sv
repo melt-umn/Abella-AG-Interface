@@ -58,3 +58,6 @@ synthesized attribute isEq::Boolean;
 --Check if a command is a command for quitting
 synthesized attribute isQuit::Boolean;
 
+--Check if a command is setting debug, and the value for it if so
+synthesized attribute isDebug::Pair<Boolean Boolean>;
+
