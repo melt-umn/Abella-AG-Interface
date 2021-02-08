@@ -1,0 +1,7 @@
+#/bin/bash
+
+GRAMMAR=interface_:fromAbella
+
+silver $@ -I ../.. $GRAMMAR
+
+

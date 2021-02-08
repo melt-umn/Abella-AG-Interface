@@ -1,7 +1,0 @@
-#/bin/bash
-
-GRAMMAR=toAbella
-
-silver $@ -I .. $GRAMMAR
-
-
