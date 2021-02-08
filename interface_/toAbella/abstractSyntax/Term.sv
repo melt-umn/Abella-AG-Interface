@@ -2,7 +2,6 @@ grammar interface_:toAbella:abstractSyntax;
 
 
 attribute
-   pp,
    translation<Metaterm>, newPremises,
    boundVars, boundVarsOut, attrOccurrences,
    errors
@@ -11,8 +10,6 @@ occurs on Metaterm;
 aspect production termMetaterm
 top::Metaterm ::= t::Term r::Restriction
 {
-  top.pp = t.pp ++ r.pp;
-
   {-
     We use the bare term `t.a` as a metaterm even though it doesn't
     have type `prop` as a way to say that the attribute has a value.
@@ -33,8 +30,6 @@ top::Metaterm ::= t::Term r::Restriction
 aspect production trueMetaterm
 top::Metaterm ::=
 {
-  top.pp = "true";
-
   top.translation = trueMetaterm();
 
   top.boundVarsOut = top.boundVars;
@@ -44,8 +39,6 @@ top::Metaterm ::=
 aspect production falseMetaterm
 top::Metaterm ::=
 {
-  top.pp = "false";
-
   top.translation = falseMetaterm();
 
   top.boundVarsOut = top.boundVars;
@@ -55,8 +48,6 @@ top::Metaterm ::=
 aspect production eqMetaterm
 top::Metaterm ::= t1::Term t2::Term
 {
-  top.pp = t1.pp ++ " = " ++ t2.pp;
-
   top.translation = eqMetaterm(t1.translation, t2.translation);
 
   t1.boundVars = top.boundVars;
@@ -68,8 +59,6 @@ top::Metaterm ::= t1::Term t2::Term
 aspect production impliesMetaterm
 top::Metaterm ::= t1::Metaterm t2::Metaterm
 {
-  top.pp = "(" ++ t1.pp ++ ") -> " ++ t2.pp;
-
   top.translation = impliesMetaterm(t1.translation, t2.translation);
 
   t1.boundVars = top.boundVars;
@@ -81,8 +70,6 @@ top::Metaterm ::= t1::Metaterm t2::Metaterm
 aspect production orMetaterm
 top::Metaterm ::= t1::Metaterm t2::Metaterm
 {
-  top.pp = "(" ++ t1.pp ++ ") \\/ (" ++ t2.pp ++ ")";
-
   top.translation = orMetaterm(t1.translation, t2.translation);
 
   t1.boundVars = top.boundVars;
@@ -94,8 +81,6 @@ top::Metaterm ::= t1::Metaterm t2::Metaterm
 aspect production andMetaterm
 top::Metaterm ::= t1::Metaterm t2::Metaterm
 {
-  top.pp = "(" ++ t1.pp ++ ") /\\ (" ++ t2.pp ++ ")";
-
   top.translation = andMetaterm(t1.translation, t2.translation);
 
   t1.boundVars = top.boundVars;
@@ -107,17 +92,6 @@ top::Metaterm ::= t1::Metaterm t2::Metaterm
 aspect production bindingMetaterm
 top::Metaterm ::= b::Binder bindings::[Pair<String Maybe<Type>>] body::Metaterm
 {
-  local bindingsString::String =
-     if null(bindings)
-     then error("Empty bindings not allowed; production bindingsMetaterm")
-     else foldr1(\ a::String b::String -> a ++ " " ++ b,
-                 map(\p::Pair<String Maybe<Type>> ->
-                     case p of
-                     | pair(a, just(ty)) -> "(" ++ a ++ " : " ++ ty.pp ++ ")"
-                     | pair(a, nothing()) -> a
-                     end, bindings));
-  top.pp = b.pp ++ " " ++ bindingsString ++ ", " ++ body.pp;
-
   --We want to add things where the relevant variables are bound, so
   --   we need to check that on each of our things to add/change
   local noDupPremises::[NewPremise] =
@@ -184,8 +158,6 @@ top::Metaterm ::= b::Binder bindings::[Pair<String Maybe<Type>>] body::Metaterm
 aspect production plusMetaterm
 top::Metaterm ::= t1::Term t2::Term result::Term
 {
-  top.pp = t1.pp ++ " + " ++ t2.pp ++ " = " ++ result.pp;
-
   top.translation =
       termMetaterm(
          buildApplication(nameTerm(integerAdditionName, nothing()),
@@ -203,8 +175,6 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 aspect production minusMetaterm
 top::Metaterm ::= t1::Term t2::Term result::Term
 {
-  top.pp = t1.pp ++ " - " ++ t2.pp ++ " = " ++ result.pp;
-
   top.translation =
       termMetaterm(
          buildApplication(nameTerm(integerSubtractionName, nothing()),
@@ -222,8 +192,6 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 aspect production multiplyMetaterm
 top::Metaterm ::= t1::Term t2::Term result::Term
 {
-  top.pp = t1.pp ++ " * " ++ t2.pp ++ " = " ++ result.pp;
-
   top.translation =
       termMetaterm(
          buildApplication(nameTerm(integerMultiplicationName, nothing()),
@@ -241,8 +209,6 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 aspect production divideMetaterm
 top::Metaterm ::= t1::Term t2::Term result::Term
 {
-  top.pp = t1.pp ++ " / " ++ t2.pp ++ " = " ++ result.pp;
-
   top.translation =
       termMetaterm(
          buildApplication(nameTerm(integerDivisionName, nothing()),
@@ -260,8 +226,6 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 aspect production modulusMetaterm
 top::Metaterm ::= t1::Term t2::Term result::Term
 {
-  top.pp = t1.pp ++ " mod " ++ t2.pp ++ " = " ++ result.pp;
-
   top.translation =
       termMetaterm(
          buildApplication(nameTerm(integerModulusName, nothing()),
@@ -279,8 +243,6 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 aspect production lessMetaterm
 top::Metaterm ::= t1::Term t2::Term result::Term
 {
-  top.pp = t1.pp ++ " < " ++ t2.pp ++ " = " ++ result.pp;
-
   top.translation =
       termMetaterm(
          buildApplication(nameTerm(integerLessName, nothing()),
@@ -298,8 +260,6 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 aspect production lessEqMetaterm
 top::Metaterm ::= t1::Term t2::Term result::Term
 {
-  top.pp = t1.pp ++ " <= " ++ t2.pp ++ " = " ++ result.pp;
-
   top.translation =
       termMetaterm(
          buildApplication(nameTerm(integerLessEqName, nothing()),
@@ -317,8 +277,6 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 aspect production greaterMetaterm
 top::Metaterm ::= t1::Term t2::Term result::Term
 {
-  top.pp = t1.pp ++ " > " ++ t2.pp ++ " = " ++ result.pp;
-
   top.translation =
       termMetaterm(
          buildApplication(nameTerm(integerGreaterName, nothing()),
@@ -336,8 +294,6 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 aspect production greaterEqMetaterm
 top::Metaterm ::= t1::Term t2::Term result::Term
 {
-  top.pp = t1.pp ++ " >= " ++ t2.pp ++ " = " ++ result.pp;
-
   top.translation =
       termMetaterm(
          buildApplication(nameTerm(integerGreaterEqName, nothing()),
@@ -355,8 +311,6 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 aspect production appendMetaterm
 top::Metaterm ::= t1::Term t2::Term result::Term
 {
-  top.pp = t1.pp ++ " ++ " ++ t2.pp ++ " = " ++ result.pp;
-
   top.translation =
       termMetaterm(
          buildApplication(nameTerm(appendName, nothing()),
@@ -374,8 +328,6 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 aspect production orBoolMetaterm
 top::Metaterm ::= t1::Term t2::Term result::Term
 {
-  top.pp = t1.pp ++ " || " ++ t2.pp ++ " = " ++ result.pp;
-
   top.translation =
       termMetaterm(
          buildApplication(nameTerm(orName, nothing()),
@@ -393,8 +345,6 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 aspect production andBoolMetaterm
 top::Metaterm ::= t1::Term t2::Term result::Term
 {
-  top.pp = t1.pp ++ " && " ++ t2.pp ++ " = " ++ result.pp;
-
   top.translation =
       termMetaterm(
          buildApplication(nameTerm(andName, nothing()),
@@ -412,8 +362,6 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 aspect production notBoolMetaterm
 top::Metaterm ::= t::Term result::Term
 {
-  top.pp = "!" ++ t.pp ++ " = " ++ result.pp;
-
   top.translation =
       termMetaterm(
          buildApplication(nameTerm(notName, nothing()),
@@ -429,74 +377,7 @@ top::Metaterm ::= t::Term result::Term
 
 
 
-attribute pp occurs on Restriction;
-
-aspect production emptyRestriction
-top::Restriction ::=
-{
-  top.pp = "";
-}
-
-
-aspect production starRestriction
-top::Restriction ::= n::Integer
-{
-  top.pp = replicate(n, "*");
-}
-
-
-aspect production atRestriction
-top::Restriction ::= n::Integer
-{
-  top.pp = replicate(n, "@");
-}
-
-
-aspect production plusRestriction
-top::Restriction ::= n::Integer
-{
-  top.pp = replicate(n, "+");
-}
-
-
-aspect production hashRestriction
-top::Restriction ::= n::Integer
-{
-  top.pp = replicate(n, "#");
-}
-
-
-
-
-
-attribute pp occurs on Binder;
-
-aspect production forallBinder
-top::Binder ::=
-{
-  top.pp = "forall";
-}
-
-
-aspect production existsBinder
-top::Binder ::=
-{
-  top.pp = "exists";
-}
-
-
-aspect production nablaBinder
-top::Binder::=
-{
-  top.pp = "nabla";
-}
-
-
-
-
-
 attribute
-   pp,
    translation<Term>, newPremises,
    boundVars, boundVarsOut, attrOccurrences,
    errors
@@ -505,8 +386,6 @@ occurs on Term;
 aspect production applicationTerm
 top::Term ::= f::Term args::TermList
 {
-  top.pp = "(" ++ f.pp ++ ") " ++ args.pp;
-
   top.translation = applicationTerm(f.translation, args.translation);
 
   f.boundVars = top.boundVars;
@@ -518,11 +397,6 @@ top::Term ::= f::Term args::TermList
 aspect production nameTerm
 top::Term ::= name::String ty::Maybe<Type>
 {
-  top.pp = case ty of
-           | just(t) -> "(" ++ name ++ " : " ++ t.pp ++ ")"
-           | nothing() -> name
-           end;
-
   top.translation = nameTerm(name, ty);
 
   top.boundVarsOut = top.boundVars;
@@ -538,8 +412,6 @@ top::Term ::= name::String ty::Maybe<Type>
 aspect production consTerm
 top::Term ::= t1::Term t2::Term
 {
-  top.pp = "(" ++ t1.pp ++ ")::(" ++ t2.pp ++ ")";
-
   top.translation = consTerm(t1.translation, t2.translation);
 
   top.boundVarsOut = top.boundVars;
@@ -549,8 +421,6 @@ top::Term ::= t1::Term t2::Term
 aspect production nilTerm
 top::Term ::=
 {
-  top.pp = "nil";
-
   top.translation = nilTerm();
 
   top.boundVarsOut = [];
@@ -560,11 +430,6 @@ top::Term ::=
 aspect production underscoreTerm
 top::Term ::= ty::Maybe<Type>
 {
-  top.pp = case ty of
-           | just(t) -> "(_ : " ++ t.pp ++ ")"
-           | nothing() -> "_"
-           end;
-
   top.translation = underscoreTerm(ty);
 
   top.boundVarsOut = top.boundVars;
@@ -574,8 +439,6 @@ top::Term ::= ty::Maybe<Type>
 aspect production attrAccessTerm
 top::Term ::= treename::String attr::String
 {
-  top.pp = treename ++ "." ++ attr;
-
   top.translation = nameTerm(accessToAccessName(treename, attr), nothing());
   top.newPremises := [attrAccessNewPremise(treename, attr), wpdNewPremise(treename)];
 
@@ -619,8 +482,6 @@ top::Term ::= treename::String attr::String
 aspect production intTerm
 top::Term ::= i::Integer
 {
-  top.pp = toString(i);
-
   top.translation = integerToIntegerTerm(i);
 
   top.boundVarsOut = top.boundVars;
@@ -630,8 +491,6 @@ top::Term ::= i::Integer
 aspect production stringTerm
 top::Term ::= contents::String
 {
-  top.pp = "\"" ++ contents ++ "\"";
-
   local charOrdinals::[Integer] = stringToChars(contents);
   local charConstants::[String] = map(ordinalToCharConstructor, charOrdinals);
   local charTerms::[Term] = map(nameTerm(_, nothing()), charConstants);
@@ -644,8 +503,6 @@ top::Term ::= contents::String
 aspect production trueTerm
 top::Term ::=
 {
-  top.pp = "true";
-
   top.translation = nameTerm(trueName, nothing());
 
   top.boundVarsOut = top.boundVars;
@@ -655,8 +512,6 @@ top::Term ::=
 aspect production falseTerm
 top::Term ::=
 {
-  top.pp = "false";
-
   top.translation = nameTerm(falseName, nothing());
 
   top.boundVarsOut = top.boundVars;
@@ -667,7 +522,6 @@ top::Term ::=
 
 
 attribute
-   pp,
    translation<TermList>, newPremises,
    boundVars, boundVarsOut, attrOccurrences,
    errors
@@ -676,8 +530,6 @@ occurs on TermList;
 aspect production singleTermList
 top::TermList ::= t::Term
 {
-  top.pp = "(" ++ t.pp ++ ")";
-
   top.translation = singleTermList(t.translation);
 }
 
@@ -685,8 +537,6 @@ top::TermList ::= t::Term
 aspect production consTermList
 top::TermList ::= t::Term rest::TermList
 {
-  top.pp = "(" ++ t.pp ++ ") " ++ rest.pp;
-
   top.translation = consTermList(t.translation, rest.translation);
 }
 

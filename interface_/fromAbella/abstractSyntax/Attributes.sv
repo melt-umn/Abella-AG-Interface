@@ -4,13 +4,6 @@ grammar interface_:fromAbella:abstractSyntax;
 imports interface_:common;
 
 
-synthesized attribute pp::String;
-
---This tells us whether something is essentially atomic for pretty printing purposes
-synthesized attribute isAtomic::Boolean;
-
-
-
 {-
   I don't think the system will ever need anything but the string, but
   making the translation structured allows us to take advantage of any

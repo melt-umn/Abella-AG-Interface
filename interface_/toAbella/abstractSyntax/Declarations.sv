@@ -21,15 +21,12 @@ top::Kind ::= k::Kind
 
 
 attribute
-   pp,
    eqTest<Type>, isEq
 occurs on Type;
 
 aspect production arrowType
 top::Type ::= ty1::Type ty2::Type
 {
-  top.pp = "(" ++ ty1.pp ++ ") -> " ++ ty2.pp;
-
   ty1.eqTest =
       case top.eqTest of
       | arrowType(x, _) -> x
@@ -52,8 +49,6 @@ top::Type ::= ty1::Type ty2::Type
 aspect production nameType
 top::Type ::= name::String
 {
-  top.pp = name;
-
   top.isEq =
      case top.eqTest of
      | nameType(n) -> n == name
@@ -66,8 +61,6 @@ top::Type ::= name::String
 aspect production functorType
 top::Type ::= functorTy::Type argTy::Type
 {
-  top.pp = functorTy.pp ++ " (" ++ argTy.pp ++ ")";
-
   functorTy.eqTest =
       case top.eqTest of
       | functorType(x, _) -> x
@@ -90,8 +83,6 @@ top::Type ::= functorTy::Type argTy::Type
 aspect production underscoreType
 top::Type ::=
 {
-  top.pp = "_";
-
   top.isEq = true;
 }
 

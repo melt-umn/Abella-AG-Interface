@@ -4,11 +4,6 @@ grammar interface_:toAbella:abstractSyntax;
 imports interface_:common;
 
 
-synthesized attribute pp::String;
-
-
-
-
 {-
   How are we going to do translation?  We're going to build an actual
   structured tree, then use pp to get the text to send to Abella.

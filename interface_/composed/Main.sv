@@ -2,6 +2,8 @@ grammar interface_:composed;
 
 imports interface_:toAbella;
 imports interface_:fromAbella;
+--need to import common just to get pp
+imports interface_:common;
 
 imports silver:util:subprocess;
 

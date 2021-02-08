@@ -2,16 +2,12 @@ grammar interface_:fromAbella:abstractSyntax;
 
 
 attribute
-   pp, isAtomic,
    translation<Metaterm>, shouldHide
 occurs on Metaterm;
 
 aspect production termMetaterm
 top::Metaterm ::= t::Term r::Restriction
 {
-  top.pp = t.pp ++ r.pp;
-  top.isAtomic = true;
-
   top.translation =
       case t.translation of
       | left(tm) -> termMetaterm(tm, r)
@@ -24,9 +20,6 @@ top::Metaterm ::= t::Term r::Restriction
 aspect production trueMetaterm
 top::Metaterm ::=
 {
-  top.pp = "true";
-  top.isAtomic = true;
-
   top.translation = trueMetaterm();
   top.shouldHide = false;
 }
@@ -35,9 +28,6 @@ top::Metaterm ::=
 aspect production falseMetaterm
 top::Metaterm ::=
 {
-  top.pp = "false";
-  top.isAtomic = true;
-
   top.translation = falseMetaterm();
   top.shouldHide = false;
 }
@@ -46,9 +36,6 @@ top::Metaterm ::=
 aspect production eqMetaterm
 top::Metaterm ::= t1::Term t2::Term
 {
-  top.pp = t1.pp ++ " = " ++ t2.pp;
-  top.isAtomic = true;
-
   top.translation =
       case t1.translation, t2.translation of
       | left(tm1), left(tm2) -> eqMetaterm(tm1, tm2)
@@ -61,11 +48,6 @@ top::Metaterm ::= t1::Term t2::Term
 aspect production impliesMetaterm
 top::Metaterm ::= t1::Metaterm t2::Metaterm
 {
-  top.pp = (if t1.isAtomic
-            then t1.pp
-            else "(" ++ t1.pp ++ ")") ++ " -> " ++ t2.pp;
-  top.isAtomic = false;
-
   top.translation = impliesMetaterm(t1.translation, t2.translation);
   top.shouldHide = false;
 }
@@ -74,15 +56,6 @@ top::Metaterm ::= t1::Metaterm t2::Metaterm
 aspect production orMetaterm
 top::Metaterm ::= t1::Metaterm t2::Metaterm
 {
-  top.pp =
-    ( if t1.isAtomic
-      then t1.pp
-      else "(" ++ t1.pp ++ ")" ) ++ " \\/ " ++
-    ( if t2.isAtomic
-      then t2.pp
-      else "(" ++ t2.pp ++ ")" );
-  top.isAtomic = false;
-
   top.translation = orMetaterm(t1.translation, t2.translation);
   top.shouldHide = false;
 }
@@ -91,15 +64,6 @@ top::Metaterm ::= t1::Metaterm t2::Metaterm
 aspect production andMetaterm
 top::Metaterm ::= t1::Metaterm t2::Metaterm
 {
-  top.pp =
-    ( if t1.isAtomic
-      then t1.pp
-      else "(" ++ t1.pp ++ ")" ) ++ " /\\ " ++
-    ( if t2.isAtomic
-      then t2.pp
-      else "(" ++ t2.pp ++ ")" );
-  top.isAtomic = false;
-
   top.translation = andMetaterm(t1.translation, t2.translation);
   top.shouldHide = false;
 }
@@ -108,14 +72,6 @@ top::Metaterm ::= t1::Metaterm t2::Metaterm
 aspect production bindingMetaterm
 top::Metaterm ::= b::Binder nameBindings::[Pair<String Maybe<Type>>] body::Metaterm
 {
-  local bindings::[String] = map(fst, nameBindings);
-  local bindingsString::String =
-     if null(bindings)
-     then error("Empty bindings not allowed; production bindingsMetaterm")
-     else foldr1(\ a::String b::String -> a ++ " " ++ b, bindings);
-  top.pp = b.pp ++ " " ++ bindingsString ++ ", " ++ body.pp;
-  top.isAtomic = false;
-
   top.translation = bindingMetaterm(b, nameBindings, body.translation);
   top.shouldHide = false;
 }
@@ -124,74 +80,7 @@ top::Metaterm ::= b::Binder nameBindings::[Pair<String Maybe<Type>>] body::Metat
 
 
 
-attribute pp occurs on Restriction;
-
-aspect production emptyRestriction
-top::Restriction ::=
-{
-  top.pp = "";
-}
-
-
-aspect production starRestriction
-top::Restriction ::= n::Integer
-{
-  top.pp = " " ++ replicate(n, "*");
-}
-
-
-aspect production atRestriction
-top::Restriction ::= n::Integer
-{
-  top.pp = " " ++ replicate(n, "@");
-}
-
-
-aspect production plusRestriction
-top::Restriction ::= n::Integer
-{
-  top.pp = " " ++ replicate(n, "+");
-}
-
-
-aspect production hashRestriction
-top::Restriction ::= n::Integer
-{
-  top.pp = " " ++ replicate(n, "#");
-}
-
-
-
-
-
-attribute pp occurs on Binder;
-
-aspect production forallBinder
-top::Binder ::=
-{
-  top.pp = "forall";
-}
-
-
-aspect production existsBinder
-top::Binder ::=
-{
-  top.pp = "exists";
-}
-
-
-aspect production nablaBinder
-top::Binder::=
-{
-  top.pp = "nabla";
-}
-
-
-
-
-
 attribute
-   pp, isAtomic,
    --Either because some applied relations need to become metaterms
    translation<Either<Term Metaterm>>, shouldHide
 occurs on Term;
@@ -199,12 +88,6 @@ occurs on Term;
 aspect production applicationTerm
 top::Term ::= f::Term args::TermList
 {
-  top.pp =
-    ( if f.isAtomic
-      then f.pp
-      else "(" ++ f.pp ++ ")" ) ++ " " ++ args.pp;
-  top.isAtomic = false;
-
   top.translation =
      case f, args.translation of
      --Integer Operations
@@ -275,9 +158,6 @@ top::Term ::= f::Term args::TermList
 aspect production nameTerm
 top::Term ::= name::String ty::Maybe<Type>
 {
-  top.pp = name;
-  top.isAtomic = true;
-
   top.translation =
      left(case name of
           --Booleans
@@ -305,15 +185,6 @@ top::Term ::= name::String ty::Maybe<Type>
 aspect production consTerm
 top::Term ::= t1::Term t2::Term
 {
-  top.pp =
-    ( if t1.isAtomic
-      then t1.pp
-      else "(" ++ t1.pp ++ ")" ) ++ "::" ++
-    ( if t2.isAtomic
-      then t2.pp
-      else "(" ++ t2.pp ++ ")" );
-  top.isAtomic = false;
-
   top.translation =
       left(case t1.translation, t2.translation of
            | left(charTerm(char)), left(stringTerm(contents)) ->
@@ -334,9 +205,6 @@ top::Term ::= t1::Term t2::Term
 aspect production nilTerm
 top::Term ::=
 {
-  top.pp = "nil";
-  top.isAtomic = true;
-
   top.translation = left(listTerm(emptyListContents()));
   top.shouldHide = false;
 }
@@ -346,15 +214,12 @@ top::Term ::=
 
 
 attribute
-   pp,
    translation<TermList>
 occurs on TermList;
 
 aspect production singleTermList
 top::TermList ::= t::Term
 {
-  top.pp = if t.isAtomic then t.pp else "(" ++ t.pp ++ ")";
-
   top.translation =
       case t.translation of
       | left(tm) -> singleTermList(tm)
@@ -366,8 +231,6 @@ top::TermList ::= t::Term
 aspect production consTermList
 top::TermList ::= t::Term rest::TermList
 {
-  top.pp = (if t.isAtomic then t.pp else "(" ++ t.pp ++ ")") ++ " " ++ rest.pp;
-
   top.translation =
       case t.translation of
       | left(tm) -> consTermList(tm, rest.translation)

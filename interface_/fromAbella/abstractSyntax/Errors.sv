@@ -411,16 +411,12 @@ top::TypingErrorMessage ::=
 
 
 attribute
-   pp, isAtomic,
    translation<Type>
 occurs on Type;
 
 aspect production arrowType
 top::Type ::= ty1::Type ty2::Type
 {
-  top.pp = (if ty1.isAtomic then ty1.pp else "(" ++ ty1.pp ++ ")") ++ " -> " ++ ty2.pp;
-  top.isAtomic = false;
-
   top.translation = arrowType(ty1.translation, ty2.translation);
 }
 
@@ -428,9 +424,6 @@ top::Type ::= ty1::Type ty2::Type
 aspect production nameType
 top::Type ::= name::String
 {
-  top.pp = name;
-  top.isAtomic = true;
-
   top.translation = nameType(name);
 }
 
@@ -438,9 +431,6 @@ top::Type ::= name::String
 aspect production functorType
 top::Type ::= functorTy::Type argTy::Type
 {
-  top.pp = functorTy.pp ++ " " ++ if argTy.isAtomic then argTy.pp else "(" ++ argTy.pp ++ ")";
-  top.isAtomic = false;
-
   top.translation = functorType(functorTy.translation, argTy.translation);
 }
 

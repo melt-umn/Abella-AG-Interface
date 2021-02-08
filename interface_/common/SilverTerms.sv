@@ -15,95 +15,168 @@ grammar interface_:common;
 -}
 abstract production plusMetaterm
 top::Metaterm ::= t1::Term t2::Term result::Term
-{ }
+{
+  top.pp = t1.pp ++ " + " ++ t2.pp ++ " = " ++ result.pp;
+  top.isAtomic = true;
+}
 
 abstract production minusMetaterm
 top::Metaterm ::= t1::Term t2::Term result::Term
-{ }
+{
+  top.pp = t1.pp ++ " - " ++ t2.pp ++ " = " ++ result.pp;
+  top.isAtomic = true;
+}
 
 abstract production multiplyMetaterm
 top::Metaterm ::= t1::Term t2::Term result::Term
-{ }
+{
+  top.pp = t1.pp ++ " * " ++ t2.pp ++ " = " ++ result.pp;
+  top.isAtomic = true;
+}
 
 abstract production divideMetaterm
 top::Metaterm ::= t1::Term t2::Term result::Term
-{ }
+{
+  top.pp = t1.pp ++ " / " ++ t2.pp ++ " = " ++ result.pp;
+  top.isAtomic = true;
+}
 
 abstract production modulusMetaterm
 top::Metaterm ::= t1::Term t2::Term result::Term
-{ }
+{
+  top.pp = t1.pp ++ " mod " ++ t2.pp ++ " = " ++ result.pp;
+  top.isAtomic = true;
+}
 
 abstract production negateMetaterm
 top::Metaterm ::= t::Term result::Term
-{ }
+{
+  top.pp = "- " ++ t.pp ++ " = " ++ result.pp;
+  top.isAtomic = true;
+}
 
 abstract production lessMetaterm
 top::Metaterm ::= t1::Term t2::Term result::Term
-{ }
+{
+  top.pp = t1.pp ++ " < " ++ t2.pp ++ " = " ++ result.pp;
+  top.isAtomic = true;
+}
 
 abstract production lessEqMetaterm
 top::Metaterm ::= t1::Term t2::Term result::Term
-{ }
+{
+  top.pp = t1.pp ++ " <= " ++ t2.pp ++ " = " ++ result.pp;
+  top.isAtomic = true;
+}
 
 abstract production greaterMetaterm
 top::Metaterm ::= t1::Term t2::Term result::Term
-{ }
+{
+  top.pp = t1.pp ++ " > " ++ t2.pp ++ " = " ++ result.pp;
+  top.isAtomic = true;
+}
 
 abstract production greaterEqMetaterm
 top::Metaterm ::= t1::Term t2::Term result::Term
-{ }
+{
+  top.pp = t1.pp ++ " >= " ++ t2.pp ++ " = " ++ result.pp;
+  top.isAtomic = true;
+}
 
 abstract production appendMetaterm
 top::Metaterm ::= t1::Term t2::Term result::Term
-{ }
+{
+  top.pp = t1.pp ++ " ++ " ++ t2.pp ++ " = " ++ result.pp;
+  top.isAtomic = true;
+}
 
 abstract production orBoolMetaterm
 top::Metaterm ::= t1::Term t2::Term result::Term
-{ }
+{
+  top.pp = t1.pp ++ " || " ++ t2.pp ++ " = " ++ result.pp;
+  top.isAtomic = true;
+}
 
 abstract production andBoolMetaterm
 top::Metaterm ::= t1::Term t2::Term result::Term
-{ }
+{
+  top.pp = t1.pp ++ " && " ++ t2.pp ++ " = " ++ result.pp;
+  top.isAtomic = true;
+}
 
 abstract production notBoolMetaterm
 top::Metaterm ::= t::Term result::Term
-{ }
+{
+  top.pp = "! " ++ t.pp ++ " = " ++ result.pp;
+  top.isAtomic = true;
+}
 
 
 
 --TERMS
 abstract production attrAccessTerm
 top::Term ::= treename::String attr::String
-{ }
+{
+  top.pp = treename ++ "." ++ attr;
+  top.isAtomic = true;
+}
 
 abstract production intTerm
 top::Term ::= i::Integer
-{ }
+{
+  top.pp = toString(i);
+  top.isAtomic = true;
+}
 
 abstract production stringTerm
 top::Term ::= contents::String
-{ }
+{
+  top.pp = "\"" ++ contents ++ "\"";
+  top.isAtomic = true;
+}
 
 abstract production trueTerm
 top::Term ::=
-{ }
+{
+  top.pp = "true";
+  top.isAtomic = true;
+}
 
 abstract production falseTerm
 top::Term ::=
-{ }
+{
+  top.pp = "false";
+  top.isAtomic = true;
+}
 
 abstract production listTerm
 top::Term ::= contents::ListContents
-{ }
+{
+  top.pp = "[" ++ contents.pp ++ "]";
+  top.isAtomic = true;
+}
+
+abstract production charTerm
+top::Term ::= char::String
+{
+  top.pp = "\"" ++ char ++ "\"";
+  top.isAtomic = true;
+}
 
 
-nonterminal ListContents;
+
+
+nonterminal ListContents with pp;
 
 abstract production emptyListContents
 top::ListContents ::=
-{ }
+{
+  top.pp = "";
+}
 
 abstract production addListContents
 top::ListContents ::= t::Term rest::ListContents
-{ }
+{
+  top.pp = t.pp ++ (if rest.pp == "" then "" else ", " ++ rest.pp);
+}
 
