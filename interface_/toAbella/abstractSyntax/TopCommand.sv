@@ -41,6 +41,7 @@ top::TopCommand ::= name::String params::[String] body::Metaterm
       "Theorem " ++ name ++ " " ++ paramsString ++
       " : " ++ body.pp ++ ".\n";
 
+  body.boundVars = [];
   top.translation = theoremDeclaration(name, params, body.translation);
 }
 
@@ -156,10 +157,11 @@ top::TopCommand ::= names::[String] k::Kind
   local namesString::String =
      if null(names)
      then ""
-     else " as " ++ buildNames(names);
+     else " " ++ buildNames(names);
   top.pp = "Kind " ++ namesString ++ "   " ++ k.pp ++ ".\n";
 
-  top.translation = error("Translation not done in kindDeclaration yet");
+  top.translation = --error("Translation not done in kindDeclaration yet");
+      kindDeclaration(names, k);
 }
 
 

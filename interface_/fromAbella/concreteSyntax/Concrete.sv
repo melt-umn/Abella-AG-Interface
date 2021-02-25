@@ -29,7 +29,7 @@ concrete productions top::FullDisplay_c
   { top.ast = displayProofCompleted(ei.ast); }
 | ei::ExtraInformation_c 'Proof ABORTED.'
   { top.ast = displayProofAborted(ei.ast); }
-| 'Theorem' name::Id_t ':' body::Metaterm_c
+| 'Theorem' name::Id_t ':' body::Metaterm_c '.'
   { top.ast = showDisplay(name.lexeme, body.ast); }
 
 
@@ -53,6 +53,10 @@ concrete productions top::ExtraInformation_c
   { top.ast = typingError(msg.ast); }
 | 'Ignoring import:' file::FilePath_t 'has already been imported.'
   { top.ast = alreadyImported(file.lexeme); }
+--I think this is the only one which can have two messages together
+| 'Importing from' module::QString_t '.'
+  'Error:' msg::ProcessingErrorMessage_c
+  { top.ast = importError(stripQuotes(module.lexeme), msg.ast); }
 
 
 
@@ -462,6 +466,8 @@ concrete productions top::ProcessingErrorMessage_c
   { top.ast = unknownSettingsValueExpectOnOff(stripQuotes(val.lexeme), stripQuotes(key.lexeme)); }
 | 'Unknown value' val::SingleQString_t 'for key' key::QString_t ';' x::ExpectMany_t
   { top.ast = unknownSettingsValueExpectMany(stripQuotes(val.lexeme), stripQuotes(key.lexeme)); }
+| 'Not enough arguments to apply' '(' 'Expected' exp::Number_t 'but got' got::Number_t ')'
+  { top.ast = applyWrongArgsNumber(toInteger(exp.lexeme), toInteger(got.lexeme)); }
 
 
 concrete productions top::TypingErrorMessage_c

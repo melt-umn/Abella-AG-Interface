@@ -51,12 +51,16 @@ top::NoOpCommand ::=
 
 
 abstract production backCommand
-top::NoOpCommand ::=
+top::NoOpCommand ::= n::Integer
 {
-  top.pp = "#back.\n";
+  top.pp = replicate(n - 1, "#back. ") ++ "#back.\n";
 
-  --I don't understand what this does, so I can't be sure about translating it
-  top.translation = error("Translation not done in backCommand yet");
+  --This is what Proof General uses for undoing things
+  top.translation = --error("Translation not done in backCommand yet");
+      backCommand(n);
+  --When we handle the undo list in the composed Main function, we need to move everything back based on this.
+  --We also need to translate this based on the undo list numbers.
+  --We need to hold onto the entire undo list, from all theorems, for this.
 
   top.isQuit = false;
   top.isDebug = pair(false, false);
@@ -69,7 +73,8 @@ top::NoOpCommand ::=
   top.pp = "#reset.\n";
 
   --I don't understand what this does, so I can't be sure about translating it
-  top.translation = error("Translation not done in resetCommand yet");
+  top.translation = --error("Translation not done in resetCommand yet");
+      resetCommand();
 
   top.isQuit = false;
   top.isDebug = pair(false, false);

@@ -155,3 +155,15 @@ top::ExtraInformation ::= filepath::String
   top.isWarning = true;
 }
 
+
+abstract production importError
+top::ExtraInformation ::= moduleName::String msg::ProcessingErrorMessage
+{
+  top.pp = "Importing from \"" ++ moduleName ++ "\".\nError: " ++ msg.pp;
+
+  top.translation = importError(moduleName, msg.translation);
+
+  top.isError = true;
+  top.isWarning = false;
+}
+

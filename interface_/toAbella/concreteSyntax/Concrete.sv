@@ -178,10 +178,21 @@ concrete productions top::CommonCommand_c
   { top.ast = showCommand(name.lexeme); }
 | 'Quit' '.'
   { top.ast = quitCommand(); }
-| '#back' '.'
-  { top.ast = backCommand(); }
+--Proof General will send a bunch of these at once
+--We might be able to change that
+| b::Backs_c --'#back' '.'
+  { top.ast = backCommand(b.ast); }
 | '#reset' '.'
   { top.ast = resetCommand(); }
+
+
+nonterminal Backs_c with ast<Integer>;
+
+concrete productions top::Backs_c
+| '#back' '.'
+  { top.ast = 1; }
+| '#back' '.' rest::Backs_c
+  { top.ast = 1 + rest.ast; }
 
 
 

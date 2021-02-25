@@ -192,6 +192,8 @@ top::Term ::= ty::Maybe<Type>
       | just(t) -> "(_ : " ++ t.pp ++ ")"
       | nothing() -> "_"
       end;
+
+  top.isAtomic = true;
 }
 
 

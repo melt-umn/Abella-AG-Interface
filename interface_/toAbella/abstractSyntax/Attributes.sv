@@ -12,12 +12,12 @@ synthesized attribute translation<a>::a;
 
 --new premises we are adding to the current theorem being defined
 monoid attribute newPremises::[NewPremise] with [], ++;
-propagate newPremises on Metaterm, Term, TermList
+propagate newPremises on Metaterm, Term, TermList, ListContents
    excluding bindingMetaterm, attrAccessTerm;
 
 
 monoid attribute errors::[Error] with [], ++;
-propagate errors on Metaterm, Term, TermList
+propagate errors on Metaterm, Term, TermList, ListContents
    excluding bindingMetaterm, attrAccessTerm;
 
 

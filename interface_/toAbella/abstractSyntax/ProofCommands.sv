@@ -30,9 +30,10 @@ top::ProofCommand ::= h::HHint nl::[Integer]
        | [n] -> toString(n)
        | n::rest -> toString(n) ++ " " ++ buildInts(rest)
        end;
-  top.pp = h.pp ++ "induction " ++ buildInts(nl) ++ ".  ";
+  top.pp = h.pp ++ "induction on " ++ buildInts(nl) ++ ".  ";
 
-  top.translation = error("Translation not done in inductionTactic yet");
+  top.translation =-- error("Translation not done in inductionTactic yet");
+      [inductionTactic(h, nl)];
 }
 
 
@@ -67,7 +68,8 @@ top::ProofCommand ::= names::[String]
     e.g. forall (t : nt_Tree), ...
          We might introduce it as tree, in which case we want $tree_Structure and $tree_Node
   -}
-  top.translation = error("Translation not done in introsTactic yet");
+  top.translation = --error("Translation not done in introsTactic yet");
+      [introsTactic(names)];
 }
 
 
@@ -89,7 +91,7 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> theorem::Clearable args::[A
   local argsString::String =
      if null(args)
      then ""
-     else "to " ++ buildArgs(args);
+     else " to " ++ buildArgs(args);
   local buildWiths::(String ::= [Pair<String Term>]) =
     \ wl::[Pair<String Term>] ->
       case wl of
@@ -103,7 +105,8 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> theorem::Clearable args::[A
      else "with " ++ buildWiths(withs);
   top.pp = h.pp ++ "apply " ++ depthString ++ theorem.pp ++ argsString ++ withsString ++ ".  ";
 
-  top.translation = error("Translation not done in applyTactic yet");
+  top.translation = --error("Translation not done in applyTactic yet");
+      [applyTactic(h, depth, theorem, args, map(\ p::Pair<String Term> -> pair(p.fst, p.snd.translation), withs))];
 }
 
 
@@ -128,7 +131,8 @@ top::ProofCommand ::= depth::Maybe<Integer> theorem::Clearable withs::[Pair<Stri
      else "with " ++ buildWiths(withs);
   top.pp = "backchain " ++ depthString ++ theorem.pp ++ withsString ++ ".  ";
 
-  top.translation = error("Translation not done in backchainTactic yet");
+  top.translation = --error("Translation not done in backchainTactic yet");
+      [backchainTactic(depth, theorem, map(\ p::Pair<String Term> -> pair(p.fst, p.snd.translation), withs))];
 }
 
 
@@ -137,7 +141,8 @@ top::ProofCommand ::= h::HHint hyp::String keep::Boolean
 {
   top.pp = h.pp ++ "case " ++ hyp ++ if keep then "(keep).  " else ".  ";
 
-  top.translation = error("Translation not done in caseTactic yet");
+  top.translation = --error("Translation not done in caseTactic yet");
+      [caseTactic(h, hyp, keep)];
 }
 
 
@@ -146,7 +151,8 @@ top::ProofCommand ::= h::HHint tree::String attr::String
 {
   top.pp = h.pp ++ "case " ++ tree ++ "." ++ attr ++ ".  ";
 
-  top.translation = error("Translation not done in caseAttrAccess yet");
+  top.translation = --error("Translation not done in caseAttrAccess yet");
+      [caseAttrAccess(h, tree, attr)];
 }
 
 
@@ -160,7 +166,9 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> m::Metaterm
      end;
   top.pp = h.pp ++ "assert " ++ depthString ++ m.pp ++ ".  ";
 
-  top.translation = error("Translation not done in assertTactic yet");
+  m.boundVars = [];
+  top.translation = --error("Translation not done in assertTactic yet");
+      [assertTactic(h, depth, m.translation)];
 }
 
 
@@ -177,7 +185,8 @@ top::ProofCommand ::= ew::[EWitness]
      end;
   top.pp = "exists " ++ buildWitnesses(ew) ++ ".  ";
 
-  top.translation = error("Translation not done in existsTactic yet");
+  top.translation = --error("Translation not done in existsTactic yet");
+      [existsTactic(map(\ e::EWitness -> e.translation, ew))];
 }
 
 
@@ -194,7 +203,8 @@ top::ProofCommand ::= ew::[EWitness]
      end;
   top.pp = "witness " ++ buildWitnesses(ew) ++ ".  ";
 
-  top.translation = error("Translation not done in witnessTactic yet");
+  top.translation = --error("Translation not done in witnessTactic yet");
+      [witnessTactic(map(\ e::EWitness -> e.translation, ew))];
 }
 
 
@@ -297,7 +307,8 @@ top::ProofCommand ::=
     command the user entered.  If that turned into multiple commands,
     we should undo them all.
   -}
-  top.translation = error("Translation not done in undoTactic yet");
+  top.translation = --error("Translation not done in undoTactic yet");
+      [undoCommand()];
 }
 
 
@@ -315,6 +326,7 @@ top::ProofCommand ::= removes::[String] hasArrow::Boolean
      end;
   top.pp = "clear " ++ (if hasArrow then "-> " else "") ++ buildHyps(removes) ++ ".  ";
 
+  --TODO Should be checking this is an actual hypothesis the user can see
   top.translation = [clearCommand(removes, hasArrow)];
 }
 
@@ -329,7 +341,8 @@ top::ProofCommand ::= original::String renamed::String
     rename a couple of things which map together (renaming a tree
     needs to rename its structure and nodes)
   -}
-  top.translation = error("Translation not done in renameTactic yet");
+  top.translation = --error("Translation not done in renameTactic yet");
+      [renameTactic(original, renamed)];
 }
 
 
@@ -466,12 +479,16 @@ top::ApplyArg ::= name::String instantiation::[Type]
 
 
 
-nonterminal EWitness with pp;
+nonterminal EWitness with
+   pp,
+   translation<EWitness>;
 
 abstract production termEWitness
 top::EWitness ::= t::Term
 {
   top.pp = t.pp;
+
+  top.translation = termEWitness(t.translation);
 }
 
 
@@ -479,6 +496,8 @@ abstract production nameEWitness
 top::EWitness ::= name::String t::Term
 {
   top.pp = name ++ " = " ++ t.pp;
+
+  top.translation = nameEWitness(name, t.translation);
 }
 
 

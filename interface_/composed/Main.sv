@@ -37,7 +37,7 @@ IOVal<Integer> ::= largs::[String] ioin::IO
   --Abella outputs a welcome message, which we want to clean out
   local abella_initial_string::IOVal<String> =
         read_n_abella_outputs(1, abella.iovalue, abella.io);
-  return run_step(noProof(), [], false, abella.iovalue, abella_initial_string.io);
+  return run_step(noProof(), [], false, [], abella.iovalue, abella_initial_string.io);
 }
 
 
@@ -52,7 +52,9 @@ IOVal<Integer> ::= largs::[String] ioin::IO
   - @return  The resulting IO token and exit status
 -}
 function run_step
-IOVal<Integer> ::= state::ProofState undolist::[Integer] debug::Boolean abella::ProcessHandle ioin::IO
+IOVal<Integer> ::=
+   state::ProofState undolist::[Integer] debug::Boolean
+   attrOccurrences::[Pair<String [Type]>] abella::ProcessHandle ioin::IO
 {
   {-
     PROCESS COMMAND
@@ -67,10 +69,13 @@ IOVal<Integer> ::= state::ProofState undolist::[Integer] debug::Boolean abella::
   local top_result::ParseResult<TopCommand_c> = top_parse(input, "<<top input>>");
   local top_c::TopCommand_c = top_result.parseTree;
   local top_a::TopCommand = top_c.ast;
+  top_a.attrOccurrences = attrOccurrences;
   local proof_result::ParseResult<Command_c> = proof_parse(input, "<<proof input>>");
   local proof_c::Command_c = proof_result.parseTree;
   local proof_a::ProofCommand = proof_c.ast;
+  proof_a.attrOccurrences = attrOccurrences;
   local proof_a_trans::[ProofCommand] = proof_a.translation;
+  local is_blank::Boolean = isSpace(input);
   local output_command::String =
         if state.inProof
         then if proof_result.parseSuccess
@@ -81,30 +86,34 @@ IOVal<Integer> ::= state::ProofState undolist::[Integer] debug::Boolean abella::
              else "";
   --whether we have an actual command to send to Abella
   local speak_to_abella::Boolean =
-        if state.inProof
-        then if proof_result.parseSuccess
-             then --Set our own debug option
-                  !proof_a.isDebug.fst
-             else --Nothing to send if we can't parse it
-                  false
-        else if top_result.parseSuccess
-             then --Set our own debug option
-                  !top_a.isDebug.fst
-             else --Nothing to send if we can't parse it
-                  false;
+        if is_blank
+        then false
+        else if state.inProof
+             then if proof_result.parseSuccess
+                  then --Set our own debug option
+                       !proof_a.isDebug.fst
+                  else --Nothing to send if we can't parse it
+                       false
+             else if top_result.parseSuccess
+                  then --Set our own debug option
+                       !top_a.isDebug.fst
+                  else --Nothing to send if we can't parse it
+                       false;
   --an error or message based on our own checking
   local our_own_output::String =
-        if state.inProof
-        then if proof_result.parseSuccess
-             then ""
+        if is_blank
+        then ""
+        else if state.inProof
+             then if proof_result.parseSuccess
+                  then ""
+                  else if top_result.parseSuccess
+                       then "Error:  Cannot use top commands in a proof\n\n"
+                       else "Error:  Could not parse:\n" ++ proof_result.parseErrors --not an actual command
              else if top_result.parseSuccess
-                  then "Error:  Cannot use top commands in a proof\n\n"
-                  else "Error:  Could not parse:\n" ++ proof_result.parseErrors --not an actual command
-        else if top_result.parseSuccess
-             then ""
-             else if proof_result.parseSuccess
-                  then "Error:  Cannot use proof commands outside a proof\n\n"
-                  else "Error:  Could not parse" ++ top_result.parseErrors; --not an actual command
+                  then ""
+                  else if proof_result.parseSuccess
+                       then "Error:  Cannot use proof commands outside a proof\n\n"
+                       else "Error:  Could not parse" ++ top_result.parseErrors; --not an actual command
   local num_commands_sent::Integer =
         if state.inProof
         then length(proof_a_trans)
@@ -140,7 +149,8 @@ IOVal<Integer> ::= state::ProofState undolist::[Integer] debug::Boolean abella::
         else ioval(out_to_abella, "");
   local debug_back_output::IO =
         if debug && speak_to_abella
-        then print("Read back from Abella:\n" ++ back_from_abella.iovalue ++ "\nEnd Abella output\n\n", back_from_abella.io)
+        then print("***** Read back from Abella: *****\n\n" ++ back_from_abella.iovalue ++
+               "\n\n***** End Abella output *****\n\n\n", back_from_abella.io)
         else back_from_abella.io;
   --Translate output
   ----------------------------
@@ -150,7 +160,9 @@ IOVal<Integer> ::= state::ProofState undolist::[Integer] debug::Boolean abella::
   local full_a::FullDisplay = full_c.ast;
   local new_proof_state::ProofState =
         if speak_to_abella
-        then full_a.proof
+        then if full_result.parseSuccess
+             then full_a.proof
+             else state
         else state;
   local new_undolist::[Integer] =
         if speak_to_abella
@@ -192,7 +204,9 @@ IOVal<Integer> ::= state::ProofState undolist::[Integer] debug::Boolean abella::
     RUN REPL AGAIN
   -}
   local again::IOVal<Integer> =
-        run_step(new_proof_state, new_undolist, new_debug, abella, printed_output);
+        run_step(new_proof_state, new_undolist, new_debug,
+                 attrOccurrences,
+                 abella, printed_output);
 
 
   return if should_exit
@@ -260,14 +274,11 @@ IOVal<String> ::= n::Integer abella::ProcessHandle ioin::IO
     if len < n
     then --read more
       read_n_abella_outputs(n - len, abella, read.io)
-    else if len == n
-         then --take the last current output, minus the name from the prompt
-           ioval(read.io, removeLastWord(last(noBlanks)))
-         else --how did we get more outputs than inputs?
-           error("BUG:  Should not have more outputs from Abella than commands sent\n" ++
-                 "Expected " ++ toString(n) ++ "; found " ++ toString(len) ++ "\n\n" ++
-                 implode("\n\n", noBlanks) ++ "\n\n" ++
-                 "Please report this");
+    else
+      --We can have more outputs come back, but we'll assume that when
+      --   we get at least the expected number back we are done
+      --We could get less with errors, maybe.
+      ioval(read.io, removeLastWord(last(noBlanks)));
 }
 
 --Remove the last word in a string
@@ -278,7 +289,11 @@ String ::= str::String
   local noExtraSpace::String = stripExternalWhiteSpace(str);
   local space::Integer = lastIndexOf("\n", noExtraSpace);
   local noWord::String = substring(0, space, noExtraSpace);
-  return noWord;
+  return
+     --might not have a space, if the last command resulted in blank output
+     if space >= 0
+     then noWord
+     else "";
 }
 
 

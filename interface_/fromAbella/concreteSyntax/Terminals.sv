@@ -84,6 +84,9 @@ terminal ForKey_t            'for key'                                          
 terminal ExpectInt_t         'expected non-negative integer'                                        lexer classes {ERROR};
 terminal ExpectOnOff_t       /expected 'on' or 'off'/                                               lexer classes {ERROR};
 terminal ExpectMany_t        /expected 'on', 'off', non-negative integer, or depth specification/   lexer classes {ERROR};
+terminal NotEnoughArgs_t     'Not enough arguments to apply'                                        lexer classes {ERROR};
+terminal Expected_t          'Expected'                                                             lexer classes {ERROR};
+terminal ButGot_t            'but got'                                                              lexer classes {ERROR};
 
 
 terminal Exists_t       'exists'       lexer classes {LOGIC};

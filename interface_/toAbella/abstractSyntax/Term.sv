@@ -104,7 +104,9 @@ top::Metaterm ::= b::Binder bindings::[Pair<String Maybe<Type>>] body::Metaterm
         | currentScope::_ ->
           map(\ x::NewPremise ->
                 decorate x with
-                {currentNames = fst(splitList(bindings)); boundVarsHere = currentScope;},
+                {currentNames = fst(splitList(bindings));
+                 boundVarsHere = currentScope;
+                 eqTest = error("Should not require eqTest");},
               noDupPremises)
         end;
   local premisesHere::[Decorated NewPremise] =
@@ -236,6 +238,21 @@ top::Metaterm ::= t1::Term t2::Term result::Term
   t1.boundVars = top.boundVars;
   t2.boundVars = t1.boundVarsOut;
   result.boundVars = t2.boundVarsOut;
+  top.boundVarsOut = result.boundVarsOut;
+}
+
+
+aspect production negateMetaterm
+top::Metaterm ::= t::Term result::Term
+{
+  top.translation =
+      termMetaterm(
+         buildApplication(nameTerm(integerNegateName, nothing()),
+                          [t.translation, result.translation]),
+         emptyRestriction());
+
+  t.boundVars = top.boundVars;
+  result.boundVars = t.boundVarsOut;
   top.boundVarsOut = result.boundVarsOut;
 }
 
@@ -414,7 +431,9 @@ top::Term ::= t1::Term t2::Term
 {
   top.translation = consTerm(t1.translation, t2.translation);
 
-  top.boundVarsOut = top.boundVars;
+  t1.boundVars = top.boundVars;
+  t2.boundVars = t1.boundVarsOut;
+  top.boundVarsOut = t2.boundVarsOut;
 }
 
 
@@ -423,7 +442,7 @@ top::Term ::=
 {
   top.translation = nilTerm();
 
-  top.boundVarsOut = [];
+  top.boundVarsOut = top.boundVars;
 }
 
 
@@ -518,6 +537,54 @@ top::Term ::=
 }
 
 
+aspect production charTerm
+top::Term ::= c::String
+{
+  top.translation = error("Should not have charTerm in toAbella");
+
+  top.boundVarsOut = error("Should not have charTerm in toAbella");
+}
+
+
+aspect production listTerm
+top::Term ::= contents::ListContents
+{
+  top.translation = contents.translation;
+
+  contents.boundVars = top.boundVars;
+  top.boundVarsOut = contents.boundVarsOut;
+}
+
+
+
+
+
+attribute
+   translation<Term>, newPremises,
+   boundVars, boundVarsOut, attrOccurrences,
+   errors
+occurs on ListContents;
+
+aspect production emptyListContents
+top::ListContents ::=
+{
+  top.translation = nilTerm();
+
+  top.boundVarsOut = top.boundVars;
+}
+
+
+aspect production addListContents
+top::ListContents ::= hd::Term tl::ListContents
+{
+  top.translation = consTerm(hd.translation, tl.translation);
+
+  hd.boundVars = top.boundVars;
+  tl.boundVars = hd.boundVarsOut;
+  top.boundVarsOut = tl.boundVarsOut;
+}
+
+
 
 
 
@@ -531,6 +598,9 @@ aspect production singleTermList
 top::TermList ::= t::Term
 {
   top.translation = singleTermList(t.translation);
+
+  t.boundVars = top.boundVars;
+  top.boundVarsOut = t.boundVarsOut;
 }
 
 
@@ -538,5 +608,9 @@ aspect production consTermList
 top::TermList ::= t::Term rest::TermList
 {
   top.translation = consTermList(t.translation, rest.translation);
+
+  t.boundVars = top.boundVars;
+  rest.boundVars = t.boundVarsOut;
+  top.boundVarsOut = rest.boundVarsOut;
 }
 

@@ -210,6 +210,14 @@ top::Term ::=
 }
 
 
+aspect production underscoreTerm
+top::Term ::= ty::Maybe<Type>
+{
+  top.translation = error("Should not translate underscoreTerm");
+  top.shouldHide = false;
+}
+
+
 
 
 

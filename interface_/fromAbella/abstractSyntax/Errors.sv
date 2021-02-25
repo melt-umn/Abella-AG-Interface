@@ -382,6 +382,15 @@ top::ProcessingErrorMessage ::= val::String key::String
 }
 
 
+abstract production applyWrongArgsNumber
+top::ProcessingErrorMessage ::= expected::Integer got::Integer
+{
+  top.pp = "Not enough arguments to apply\n(Expected " ++ toString(expected) ++ " but got " ++ toString(got) ++ ")";
+
+  top.translation = applyWrongArgsNumber(expected, got);
+}
+
+
 
 
 
@@ -432,5 +441,12 @@ aspect production functorType
 top::Type ::= functorTy::Type argTy::Type
 {
   top.translation = functorType(functorTy.translation, argTy.translation);
+}
+
+
+aspect production underscoreType
+top::Type ::=
+{
+  top.translation = underscoreType();
 }
 
