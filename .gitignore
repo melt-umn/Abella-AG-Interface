@@ -4,5 +4,8 @@
 build.xml
 *.copperdump.html
 
+# Compiled Abella files
+*.thc
+
 # Emacs autosave
 *~
