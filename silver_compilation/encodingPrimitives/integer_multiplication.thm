@@ -1,6 +1,6 @@
 
 Kind $bool   type.
-Kind $nat   type.
+Kind nat   type.
 Import "integer_addition".
 
 
@@ -9,7 +9,7 @@ Import "integer_addition".
 %                              MULTIPLY                              %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Define $multiply_integer : $integer -> $integer -> $integer -> prop by
+Define $multiply_integer : integer -> integer -> integer -> prop by
   $multiply_integer ($posInt $zero) N ($posInt $zero);
   $multiply_integer ($posInt ($succ N1)) N2 N3 :=
      exists N',
@@ -50,12 +50,12 @@ induction on 1. intros. case H1.
       search.
 
 Theorem $multiply_integer_posInt_negSuccInt : forall A B C,
-  $is_integer ($posInt A) -> $is_integer ($negSuccInt B) ->
+  is_integer ($posInt A) -> is_integer ($negSuccInt B) ->
   $multiply_integer ($posInt ($succ A)) ($negSuccInt B) C ->
   exists C', C = $negSuccInt C'.
 induction on 1. intros. case H1.
   %Subgoal 1
-   case H3. case H4. apply $plus_integer_comm to _ _ H5.
+   case H3. case H4. apply plus_integer_comm to _ _ H5.
    case H6. search.
   %Subgoal 2
    case H3. apply IH to H4 _ H5. case H6.
@@ -65,7 +65,7 @@ induction on 1. intros. case H1.
       search.
 
 Theorem $multiply_integer_negSuccInt_posInt : forall A B C,
-  $is_integer ($negSuccInt A) -> $is_integer ($posInt B) ->
+  is_integer ($negSuccInt A) -> is_integer ($posInt B) ->
   $multiply_integer ($negSuccInt A) ($posInt ($succ B)) C ->
   exists C', C = $negSuccInt C'.
 induction on 1. intros. case H1.
@@ -79,7 +79,7 @@ induction on 1. intros. case H1.
       search.
 
 Theorem $multiply_integer_negSuccInts : forall A B C,
-  $is_integer ($negSuccInt A) -> $is_integer ($negSuccInt B) ->
+  is_integer ($negSuccInt A) -> is_integer ($negSuccInt B) ->
   $multiply_integer ($negSuccInt A) ($negSuccInt B) C ->
   exists C', C = $posInt C'.
 induction on 1. intros. case H1.
@@ -94,23 +94,23 @@ induction on 1. intros. case H1.
 
 % This is a lemma for distribution for a case that comes up
 Theorem $plus_integer_cancel : forall A B C D ResAB ResCD Result,
-  $is_integer A -> $is_integer B -> $is_integer C -> $is_integer D ->
+  is_integer A -> is_integer B -> is_integer C -> is_integer D ->
   $plus_integer A B ResAB -> $plus_integer C D ResCD ->
   $plus_integer ResAB ResCD Result ->
   $plus_integer B C ($posInt $zero) ->
   $plus_integer A D Result.
-intros. apply $plus_integer_is_integer to _ _ H5.
-apply $plus_integer_is_integer to _ _ H6.
-apply $plus_integer_comm to _ _ H7.
-apply $plus_integer_assoc to _ _ _ H5 H11.
-apply $plus_integer_comm to _ _ H6.
-apply $plus_integer_assoc to _ _ _ H14 H12.
-apply $plus_integer_comm to _ _ H15.
-apply $plus_integer_unique to H8 H17.
-apply $plus_integer_comm to _ _ H16. case H18. search.
+intros. apply plus_integer_is_integer to _ _ H5.
+apply plus_integer_is_integer to _ _ H6.
+apply plus_integer_comm to _ _ H7.
+apply plus_integer_assoc to _ _ _ H5 H11.
+apply plus_integer_comm to _ _ H6.
+apply plus_integer_assoc to _ _ _ H14 H12.
+apply plus_integer_comm to _ _ H15.
+apply plus_integer_unique to H8 H17.
+apply plus_integer_comm to _ _ H16. case H18. search.
 
 Theorem $multiply_integer_posInt_-1_right : forall N,
-  $is_integer ($posInt N) ->
+  is_integer ($posInt N) ->
   $multiply_integer ($posInt ($succ N)) ($negSuccInt $zero)
                     ($negSuccInt N).
 induction on 1. intros. case H1.
@@ -120,7 +120,7 @@ induction on 1. intros. case H1.
    apply IH to H2. search.
 
 Theorem $multiply_integer_negSuccInt_-1_right : forall N,
-  $is_integer ($negSuccInt N) ->
+  is_integer ($negSuccInt N) ->
   $multiply_integer ($negSuccInt N) ($negSuccInt $zero)
                     ($posInt ($succ N)).
 induction on 1. intros. case H1.
@@ -131,19 +131,19 @@ induction on 1. intros. case H1.
    assert ($plus_integer ($posInt ($succ $zero)) ($posInt ($succ N1))
                          ($posInt ($succ ($succ N1)))).
    apply $is_integer_negSuccInt__to__posInt to H2.
-   apply $plus_integer_comm to _ _ H4. search.
+   apply plus_integer_comm to _ _ H4. search.
 
 
 /*
   The theorems we are actually going for:
 */
-Theorem $multiply_integer_unique : forall N1 N2 N N',
+Theorem multiply_integer_unique : forall N1 N2 N N',
   $multiply_integer N1 N2 N -> $multiply_integer N1 N2 N' -> N = N'.
 induction on 1. intros. case H1.
   %Subgoal 1
    case H2. search.
   %Subgoal 2
-   case H2. apply IH to H3 H5. apply $plus_integer_unique to H4 H6.
+   case H2. apply IH to H3 H5. apply plus_integer_unique to H4 H6.
    search.
   %Subgoal 3
    case H2. search.
@@ -152,21 +152,51 @@ induction on 1. intros. case H1.
   %Subgoal 5
    case H2. search.
   %Subgoal 6
-   case H2. apply IH to H3 H5. apply $plus_integer_unique to H4 H6.
+   case H2. apply IH to H3 H5. apply plus_integer_unique to H4 H6.
    search.
   %Subgoal 7
-   case H2. apply IH to H3 H5. apply $plus_integer_unique to H4 H6.
+   case H2. apply IH to H3 H5. apply plus_integer_unique to H4 H6.
    search.
 
-Theorem $multiply_integer_is_integer : forall N1 N2 N3,
-  $is_integer N1 -> $is_integer N2 -> $multiply_integer N1 N2 N3 ->
-  $is_integer N3.
+Theorem multiply_integer_is_integer : forall N1 N2 N,
+  is_integer N1 -> is_integer N2 -> $multiply_integer N1 N2 N ->
+  is_integer N.
+induction on 1. intros. case H1.
+  %Subgoal 1
+   case H3. search.
+  %Subgoal 2
+   case H3. apply IH to H4 _ H5.
+   apply plus_integer_is_integer to _ _ H6. search.
+  %Subgoal 3
+   case H3.
+     %Subgoal 3.1
+      search.
+     %Subgoal 3.2
+      case H2. backchain $is_integer_posInt__to__negSuccInt.
+     %Subgoal 3.3
+      apply $is_integer_negSuccInt__to__posInt to H2. search.
+  %Subgoal 4
+   case H3.
+     %Subgoal 4.1
+      search.
+     %Subgoal 4.2
+      apply IH to H4 _ H5. case H2.
+      apply $is_integer_posInt__to__negSuccInt to H8.
+      apply plus_integer_is_integer to _ _ H6. search.
+     %Subgoal 4.3
+      apply IH to H4 _ H5.
+      apply $is_integer_negSuccInt__to__posInt to H2.
+      apply plus_integer_is_integer to _ _ H6. search.
+
+Theorem multiply_integer_is_unique : forall N1 N2 N3,
+  is_integer N1 -> is_integer N2 -> $multiply_integer N1 N2 N3 ->
+  is_integer N3.
 induction on 3. intros. case H3.
   %Subgoal 1
    search.
   %Subgoal 2
    case H1. apply IH to _ _ H4.
-   apply $plus_integer_is_integer to _ _ H5. search.
+   apply plus_integer_is_integer to _ _ H5. search.
   %Subgoal 3
    search.
   %Subgoal 4
@@ -176,21 +206,21 @@ induction on 3. intros. case H3.
   %Subgoal 6
    case H1. case H2. apply IH to _ _ H4.
    apply $is_integer_posInt__to__negSuccInt to H7.
-   apply $plus_integer_is_integer to _ _ H5. search.
+   apply plus_integer_is_integer to _ _ H5. search.
   %Subgoal 7
    case H1.apply IH to _ _ H4.
    apply $is_integer_negSuccInt__to__posInt to H2.
-   apply $plus_integer_is_integer to _ _ H5. search.
+   apply plus_integer_is_integer to _ _ H5. search.
 
-Theorem $multiply_integer_total : forall N1 N2,
-  $is_integer N1 -> $is_integer N2 ->
+Theorem multiply_integer_total : forall N1 N2,
+  is_integer N1 -> is_integer N2 ->
   exists N, $multiply_integer N1 N2 N.
 induction on 1. intros. case H1.
   %Subgoal 1
    search.
   %Subgoal 2
-   apply IH to H3 H2. apply $multiply_integer_is_integer to _ _ H4.
-   apply $plus_integer_total to H2 H5. search.
+   apply IH to H3 H2. apply multiply_integer_is_unique to _ _ H4.
+   apply plus_integer_total to H2 H5. search.
   %Subgoal 3
    case H2.
      %Subgoal 3.1
@@ -206,21 +236,21 @@ induction on 1. intros. case H1.
      %Subgoal 4.1
       search.
      %Subgoal 4.2
-      apply IH to H3 H2. apply $multiply_integer_is_integer to _ _ H5.
+      apply IH to H3 H2. apply multiply_integer_is_unique to _ _ H5.
       apply $is_integer_posInt__to__negSuccInt to H4.
-      apply $plus_integer_total to H6 H7. search.
+      apply plus_integer_total to H6 H7. search.
      %Subgoal 4.3
-      apply IH to H3 H2. apply $multiply_integer_is_integer to _ _ H4.
-      assert ($is_integer ($posInt ($succ $zero))).
-      apply $plus_integer_total to H5 H6. search.
+      apply IH to H3 H2. apply multiply_integer_is_unique to _ _ H4.
+      assert (is_integer ($posInt ($succ $zero))).
+      apply plus_integer_total to H5 H6. search.
      %Subgoal 4.4
-      apply IH to H3 H2. apply $multiply_integer_is_integer to _ _ H5.
+      apply IH to H3 H2. apply multiply_integer_is_unique to _ _ H5.
       apply $is_integer_negSuccInt__to__posInt to H4.
-      assert ($is_integer ($posInt ($succ ($succ N3)))).
-      apply $plus_integer_total to H6 H8. search.
+      assert (is_integer ($posInt ($succ ($succ N3)))).
+      apply plus_integer_total to H6 H8. search.
 
-Theorem $multiply_integer_0_right : forall N,
-  $is_integer N ->
+Theorem multiply_integer_0_right : forall N,
+  is_integer N ->
   $multiply_integer N ($posInt $zero) ($posInt $zero).
 induction on 1. intros. case H1.
   %Subgoal 1
@@ -232,14 +262,14 @@ induction on 1. intros. case H1.
   %Subgoal 4
    search.
 
-Theorem $multiply_integer_1 : forall A,
-  $is_integer A -> $multiply_integer ($posInt ($succ $zero)) A A.
-intros. apply $multiply_integer_total to _ H1 with
+Theorem multiply_integer_1 : forall A,
+  is_integer A -> $multiply_integer ($posInt ($succ $zero)) A A.
+intros. apply multiply_integer_total to _ H1 with
               N1 = ($posInt ($succ $zero)). case H2 (keep). case H3.
-apply $plus_integer_comm to _ _ H4. case H5. search.
+apply plus_integer_comm to _ _ H4. case H5. search.
 
-Theorem $multiply_integer_1_right : forall A,
-  $is_integer A ->
+Theorem multiply_integer_1_right : forall A,
+  is_integer A ->
   $multiply_integer A ($posInt ($succ $zero)) A.
 induction on 1. intros. case H1.
   %Subgoal 1
@@ -250,22 +280,22 @@ induction on 1. intros. case H1.
    search.
   %Subgoal 4
    apply IH to H2.
-   apply $plus_integer_total to H2 _ with N2 = ($negSuccInt $zero).
-   apply $plus_integer_comm to _ _ H4. case H5. search.
+   apply plus_integer_total to H2 _ with N2 = ($negSuccInt $zero).
+   apply plus_integer_comm to _ _ H4. case H5. search.
 
-Theorem $multiply_integer_0_result : forall A B,
-  $is_integer A -> $is_integer B ->
+Theorem multiply_integer_0_result : forall A B,
+  is_integer A -> is_integer B ->
   $multiply_integer A B ($posInt $zero) ->
   A = $posInt $zero \/ B = $posInt $zero.
 induction on 3. intros. case H3.
   %Subgoal 1
    search.
   %Subgoal 2
-   apply $plus_integer_0_result to H5. case H6.
+   apply plus_integer_0_result to H5. case H6.
      %Subgoal 2.1
       search.
      %Subgoal 2.2
-      apply $plus_integer_0_result to H5.
+      apply plus_integer_0_result to H5.
       apply $multiply_integer_posInts to H4.
      %Subgoal 2.3
       case H1. case H7.
@@ -276,13 +306,13 @@ induction on 3. intros. case H3.
   %Subgoal 3
    search.
   %Subgoal 4
-   apply $plus_integer_0_result to H5. case H6. case H1. case H2.
+   apply plus_integer_0_result to H5. case H6. case H1. case H2.
    apply $multiply_integer_negSuccInt_posInt to _ _ H4.
   %Subgoal 5
-   apply $plus_integer_0_result to H5. case H6. case H1.
+   apply plus_integer_0_result to H5. case H6. case H1.
    apply $multiply_integer_negSuccInts to _ _ H4.
 
-Theorem $multiply_integer_-1_negate : forall A B,
+Theorem multiply_integer_-1_negate : forall A B,
   $multiply_integer ($negSuccInt $zero) A B ->
   $negate_integer A B.
 intros. case H1.
@@ -293,80 +323,80 @@ intros. case H1.
   %Subgoal 3
    search.
 
-Theorem $multiply_integer_negation : forall A B C -A -C,
-  $is_integer A -> $is_integer B ->
+Theorem multiply_integer_negation : forall A B C -A -C,
+  is_integer A -> is_integer B ->
   $negate_integer A -A -> $multiply_integer A B C ->
   $negate_integer C -C -> $multiply_integer -A B -C.
-induction on 1. intros. apply $multiply_integer_is_integer to _ _ H4.
+induction on 1. intros. apply multiply_integer_is_unique to _ _ H4.
 case H1.
   %Subgoal 1
    case H3. case H4. case H5. search.
   %Subgoal 2
-   case H4. apply $negate_integer_total to H7.
-   apply $multiply_integer_is_integer to _ _ H8.
-   apply $negate_integer_total to H11.
+   case H4. apply negate_integer_total to H7.
+   apply multiply_integer_is_unique to _ _ H8.
+   apply negate_integer_total to H11.
    apply IH to H7 H2 H10 H8 H12. case H3. rename N'2 to -N'.
    case H10.
      %Subgoal 2.1
-      case H13. case H8. apply $plus_integer_comm to _ _ H9. case H14.
-      apply $multiply_integer_total to _ H2 with
+      case H13. case H8. apply plus_integer_comm to _ _ H9. case H14.
+      apply multiply_integer_total to _ H2 with
             N1 = ($negSuccInt $zero).
-      apply $multiply_integer_-1_negate to H15.
-      apply $negate_integer_unique to H5 H16. search.
+      apply multiply_integer_-1_negate to H15.
+      apply negate_integer_unique to H5 H16. search.
      %Subgoal 2.2
       apply $is_integer_posInt_or_negSuccInt to H2. case H14.
         %Subgoal 2.2.1
-         apply $negate_integer_total to H2.
+         apply negate_integer_total to H2.
          apply $plus_integer_negatives to _ _ _ H15 H12 H5 H9.
          case H15.
            %Subgoal 2.2.1.1
             case H16. case H7.
             apply $is_integer_posInt__to__negSuccInt to H17.
-            apply $multiply_integer_0_right to H18.
-            apply $multiply_integer_unique to H13 H19.
-            backchain $multiply_integer_0_right.
+            apply multiply_integer_0_right to H18.
+            apply multiply_integer_unique to H13 H19.
+            backchain multiply_integer_0_right.
            %Subgoal 2.2.1.2
-            apply $negate_integer_is_integer to _ H12.
+            apply negate_integer_is_integer to _ H12.
             apply $is_integer_posInt__to__negSuccInt to H2. case H18.
-            apply $plus_integer_comm to _ _ H16. search.
+            apply plus_integer_comm to _ _ H16. search.
         %Subgoal 2.2.2
          apply $plus_integer_negatives to _ _ _ _ _ _ H9.
-         apply $negate_integer_is_integer to _ H12.
+         apply negate_integer_is_integer to _ H12.
          apply $is_integer_negSuccInt__to__posInt to H2.
-         apply $plus_integer_comm to _ _ H15. search.
+         apply plus_integer_comm to _ _ H15. search.
   %Subgoal 3
-   case H3. apply $multiply_integer_-1_negate to H4.
-   apply $negate_integer_double to H7.
-   apply $negate_integer_unique to H5 H8.
-   backchain $multiply_integer_1.
+   case H3. apply multiply_integer_-1_negate to H4.
+   apply negate_integer_double to H7.
+   apply negate_integer_unique to H5 H8.
+   backchain multiply_integer_1.
   %Subgoal 4
    case H3. case H4.
      %Subgoal 4.1
-      case H5. backchain $multiply_integer_0_right.
+      case H5. backchain multiply_integer_0_right.
       apply $is_integer_negSuccInt__to__posInt to H7. search.
      %Subgoal 4.2
-      apply $multiply_integer_is_integer to _ _ H8.
-      apply $negate_integer_total to H10. rename N'1 to -N'.
+      apply multiply_integer_is_unique to _ _ H8.
+      apply negate_integer_total to H10. rename N'1 to -N'.
       apply IH to H7 _ _ H8 H11.
       apply $is_integer_posInt__to__negSuccInt to H2. case H13.
       apply $plus_integer_negatives to _ _ _ _ _ _ H9.
-      apply $negate_integer_is_integer to _ H11.
-      apply $plus_integer_comm to _ _ H15. search.
+      apply negate_integer_is_integer to _ H11.
+      apply plus_integer_comm to _ _ H15. search.
      %Subgoal 4.3
-      apply $multiply_integer_is_integer to _ _ H8.
-      apply $negate_integer_total to H10. rename N'1 to -N'.
+      apply multiply_integer_is_unique to _ _ H8.
+      apply negate_integer_total to H10. rename N'1 to -N'.
       apply IH to H7 _ _ H8 H11.
       apply $is_integer_negSuccInt__to__posInt to H2.
       apply $plus_integer_negatives to _ _ _ _ _ _ H9.
-      apply $negate_integer_is_integer to _ H11.
-      apply $plus_integer_comm to _ _ H14. search.
+      apply negate_integer_is_integer to _ H11.
+      apply plus_integer_comm to _ _ H14. search.
 
 
 %%%%% Lemmas which rely on previous theorems
 %%%%%%%%%%%%%%%%%%%%
 Theorem $multiply_integer_pos_succ_right__to_multiply :
   forall A B C Sub,
-    $is_integer A -> $is_integer ($posInt B) ->
+    is_integer A -> is_integer ($posInt B) ->
     $multiply_integer A ($posInt B) Sub ->
     $plus_integer A Sub C ->
     $multiply_integer A ($posInt ($succ B)) C.
@@ -374,14 +404,14 @@ induction on 1. intros. case H1.
   %Subgoal 1
    case H4. case H3. search.
   %Subgoal 2
-   case H3. apply $multiply_integer_is_integer to _ _ H6.
-   apply $plus_integer_total to H5 H8.
+   case H3. apply multiply_integer_is_unique to _ _ H6.
+   apply plus_integer_total to H5 H8.
    apply IH to H5 H2 H6 H9.
-   apply $plus_integer_comm to _ _ H7.
-   apply $plus_integer_assoc to _ _ _ H11 H4.
+   apply plus_integer_comm to _ _ H7.
+   apply plus_integer_assoc to _ _ _ H11 H4.
    apply $plus_integer_succ_right_to_left to H12.
-   apply $plus_integer_assoc to _ _ _ H14 H13.
-   apply $plus_integer_unique to H15 H9. search.
+   apply plus_integer_assoc to _ _ _ H14 H13.
+   apply plus_integer_unique to H15 H9. search.
   %Subgoal 3
    case H3.
      %Subgoal 3.1
@@ -391,78 +421,78 @@ induction on 1. intros. case H1.
   %Subgoal 4
    case H3.
      %Subgoal 4.1
-      case H4. backchain $multiply_integer_1_right.
+      case H4. backchain multiply_integer_1_right.
      %Subgoal 4.2
       case H2. apply $is_integer_posInt__to__negSuccInt to H8.
-      apply $multiply_integer_is_integer to _ _ H6.
-      apply $plus_integer_total to H5 H10.
+      apply multiply_integer_is_unique to _ _ H6.
+      apply plus_integer_total to H5 H10.
       apply IH to H5 _ H6 H11.
-      apply $plus_integer_assoc to _ _ _ H7 H4.
+      apply plus_integer_assoc to _ _ _ H7 H4.
       apply $plus_integer_succ_negSuccInt_right_to_left to _ H13.
-      apply $plus_integer_assoc to _ _ _ H15 H14.
-      apply $plus_integer_unique to H11 H16.
-      apply $plus_integer_is_integer to _ _ H16.
-      apply $plus_integer_comm to _ _ H17. search.
+      apply plus_integer_assoc to _ _ _ H15 H14.
+      apply plus_integer_unique to H11 H16.
+      apply plus_integer_is_integer to _ _ H16.
+      apply plus_integer_comm to _ _ H17. search.
 
 Theorem $multiply_integer_negSuccInt_succ_right_pos__to_multiply :
   forall A B C Sub,
-    $is_integer ($posInt A) -> $is_integer ($negSuccInt B) ->
+    is_integer ($posInt A) -> is_integer ($negSuccInt B) ->
     $multiply_integer ($posInt ($succ A)) ($negSuccInt B) Sub ->
     $plus_integer Sub ($negSuccInt A) C ->
     $multiply_integer ($posInt ($succ A)) ($negSuccInt ($succ B)) C.
 induction on 1. intros. case H1.
   %Subgoal 1
-   case H3. case H5. apply $plus_integer_comm to _ _ H6. case H7.
-   apply $plus_integer_comm to _ _ H4. case H8. search.
+   case H3. case H5. apply plus_integer_comm to _ _ H6. case H7.
+   apply plus_integer_comm to _ _ H4. case H8. search.
   %Subgoal 2
-   case H3. apply $multiply_integer_is_integer to _ _ H6.
+   case H3. apply multiply_integer_is_unique to _ _ H6.
    apply $is_integer_posInt__to__negSuccInt to H5.
-   apply $plus_integer_total to H8 H9.
+   apply plus_integer_total to H8 H9.
    apply IH to H5 H2 H6 H10.
-   apply $plus_integer_is_integer to _ _ H7.
-   apply $plus_integer_comm to _ _ H4.
-   apply $plus_integer_comm to _ _ H7.
-   apply $plus_integer_assoc to _ _ _ H14 H13.
+   apply plus_integer_is_integer to _ _ H7.
+   apply plus_integer_comm to _ _ H4.
+   apply plus_integer_comm to _ _ H7.
+   apply plus_integer_assoc to _ _ _ H14 H13.
    apply $plus_integer_succ_negSuccInt_right_to_left to _ H15.
-   apply $plus_integer_assoc to _ _ _ H17 H16.
-   apply $plus_integer_comm to _ _ H18.
-   apply $plus_integer_unique to H20 H10. search.
+   apply plus_integer_assoc to _ _ _ H17 H16.
+   apply plus_integer_comm to _ _ H18.
+   apply plus_integer_unique to H20 H10. search.
 
 Theorem $multiply_integer_negSuccInt_succ_right_neg__to_multiply :
   forall A B C Sub,
-    $is_integer ($negSuccInt A) -> $is_integer ($negSuccInt B) ->
+    is_integer ($negSuccInt A) -> is_integer ($negSuccInt B) ->
     $multiply_integer ($negSuccInt A) ($negSuccInt B) Sub ->
     $plus_integer Sub ($posInt ($succ A)) C ->
     $multiply_integer ($negSuccInt A) ($negSuccInt ($succ B)) C.
 induction on 1. intros. case H1.
   %Subgoal 1
    case H3. apply $is_integer_negSuccInt__to__posInt to H2.
-   apply $plus_integer_comm to _ _ H4. case H6. case H7. search.
+   apply plus_integer_comm to _ _ H4. case H6. case H7. search.
   %Subgoal 2
-   case H3. apply $multiply_integer_is_integer to _ _ H6.
+   case H3. apply multiply_integer_is_unique to _ _ H6.
    apply $is_integer_negSuccInt__to__posInt to H5.
-   apply $plus_integer_total to H8 _ with N2 = ($posInt ($succ N)).
+   apply plus_integer_total to H8 _ with N2 = ($posInt ($succ N)).
    apply IH to H5 H2 H6 H10.
    apply $is_integer_negSuccInt__to__posInt to H2.
-   apply $plus_integer_is_integer to _ _ H7.
-   apply $plus_integer_comm to _ _ H4.
-   apply $plus_integer_assoc to _ _ _ H7 H14.
+   apply plus_integer_is_integer to _ _ H7.
+   apply plus_integer_comm to _ _ H4.
+   apply plus_integer_assoc to _ _ _ H7 H14.
    apply $plus_integer_succ_right_to_left to H15.
-   apply $plus_integer_assoc to _ _ _ H17 H16.
-   apply $plus_integer_comm to _ _ H18.
-   apply $plus_integer_unique to H20 H10.
-   apply $plus_integer_is_integer to _ _ H20.
-   apply $plus_integer_comm to _ _ H19. search.
+   apply plus_integer_assoc to _ _ _ H17 H16.
+   apply plus_integer_comm to _ _ H18.
+   apply plus_integer_unique to H20 H10.
+   apply plus_integer_is_integer to _ _ H20.
+   apply plus_integer_comm to _ _ H19. search.
 
 
 %%%%% More wanted theorems
 %%%%%%%%%%%%%%%%%%%%
-Theorem $multiply_integer_comm : forall N1 N2 N3,
-  $is_integer N1 -> $is_integer N2 ->
+Theorem multiply_integer_comm : forall N1 N2 N3,
+  is_integer N1 -> is_integer N2 ->
   $multiply_integer N1 N2 N3 -> $multiply_integer N2 N1 N3.
 induction on 1. intros. case H1.
   %Subgoal 1
-   case H3. backchain $multiply_integer_0_right.
+   case H3. backchain multiply_integer_0_right.
   %Subgoal 2
    case H3. apply IH to H4 _ H5.
    backchain $multiply_integer_pos_succ_right__to_multiply.
@@ -486,9 +516,9 @@ induction on 1. intros. case H1.
       backchain $multiply_integer_negSuccInt_succ_right_neg__to_multiply.
 
 % (N1 + N2) * N3  ==>  (N1 * N3) + (N2 * N3)
-Theorem $multiply_integer_distribute_over_plus :
+Theorem multiply_integer_distribute_over_plus :
   forall N1 N2 AddN1N2 N3 Result,
-    $is_integer N1 -> $is_integer N2 -> $is_integer N3 ->
+    is_integer N1 -> is_integer N2 -> is_integer N3 ->
     $plus_integer N1 N2 AddN1N2 ->
     $multiply_integer AddN1N2 N3 Result ->
     exists MulN1N3 MulN2N3, $multiply_integer N1 N3 MulN1N3 /\
@@ -501,29 +531,29 @@ induction on 1. intros. case H1.
    case H4 (keep).
      %Subgoal 2.1
       case H5. apply IH to H6 _ _ H7 H8.
-      apply $multiply_integer_is_integer to _ _ H10.
-      apply $multiply_integer_is_integer to _ _ H11.
-      apply $plus_integer_total to H3 H13. exists N4, MulN2N3. split.
+      apply multiply_integer_is_unique to _ _ H10.
+      apply multiply_integer_is_unique to _ _ H11.
+      apply plus_integer_total to H3 H13. exists N4, MulN2N3. split.
         %Subgoal 2.1.1
          search.
         %Subgoal 2.1.2
          search.
         %Subgoal 2.1.3
-         apply $plus_integer_comm to _ _ H12.
-         apply $plus_integer_assoc to _ _ _ H16 H9.
-         apply $plus_integer_comm to _ _ H17.
-         apply $plus_integer_unique to H15 H19.
-         backchain $plus_integer_comm.
-         apply $plus_integer_is_integer to _ _ H15. search.
+         apply plus_integer_comm to _ _ H12.
+         apply plus_integer_assoc to _ _ _ H16 H9.
+         apply plus_integer_comm to _ _ H17.
+         apply plus_integer_unique to H15 H19.
+         backchain plus_integer_comm.
+         apply plus_integer_is_integer to _ _ H15. search.
      %Subgoal 2.2
       case H3.
         %Subgoal 2.2.1
          exists Result, $posInt $zero.
-         apply $multiply_integer_is_integer to _ _ H5.
+         apply multiply_integer_is_unique to _ _ H5.
          apply $plus_integer_zero_right to H7. search.
         %Subgoal 2.2.2
-         apply $multiply_integer_is_integer to _ _ H5.
-         apply $plus_integer_total to _ H8 with
+         apply multiply_integer_is_unique to _ _ H5.
+         apply plus_integer_total to _ H8 with
                N1 = ($posInt ($succ N4)).
          exists N5, ($negSuccInt N4). split.
            %Subgoal 2.2.2.1
@@ -531,7 +561,7 @@ induction on 1. intros. case H1.
            %Subgoal 2.2.2.2
             search.
            %Subgoal 2.2.2.3
-            apply $plus_integer_comm to _ _ H9.
+            apply plus_integer_comm to _ _ H9.
             assert ($minus_integer Result ($negSuccInt N4) N5).
             apply $is_integer_posInt__to__negSuccInt to H7.
             apply $minus_plus_same_integer to _ _ H11. search.
@@ -543,102 +573,102 @@ induction on 1. intros. case H1.
             search.
            %Subgoal 2.2.3.3
             apply $is_integer_posInt__to__negSuccInt to H6.
-            backchain $plus_integer_comm. case H6.
+            backchain plus_integer_comm. case H6.
               %Subgoal 2.2.3.3.1
                case H5. search.
               %Subgoal 2.2.3.3.2
                apply $multiply_integer_posInt_-1_right to H8.
-               apply $multiply_integer_unique to H5 H9. search.
+               apply multiply_integer_unique to H5 H9. search.
         %Subgoal 2.2.4
          apply $plus_integer_zero_right to H6.
          apply IH to H6 _ _ H8 H5.
-         apply $multiply_integer_is_integer to _ _ H9.
-         assert ($is_integer ($negSuccInt ($succ N4))).
-         apply $plus_integer_total to H13 H12.
+         apply multiply_integer_is_unique to _ _ H9.
+         assert (is_integer ($negSuccInt ($succ N4))).
+         apply plus_integer_total to H13 H12.
          exists N5, $posInt ($succ ($succ N4)). split.
            %Subgoal 2.2.4.1
             search.
            %Subgoal 2.2.4.2
             search.
            %Subgoal 2.2.4.3
-            case H10. apply $plus_integer_comm to _ _ H11. case H15.
-            apply $plus_integer_comm to _ _ H14.
+            case H10. apply plus_integer_comm to _ _ H11. case H15.
+            apply plus_integer_comm to _ _ H14.
             assert ($minus_integer Result
                                    ($posInt ($succ ($succ N4))) N5).
             backchain $minus_plus_same_integer.
             apply $is_integer_negSuccInt__to__posInt to H13. search.
      %Subgoal 2.3
       case H2. apply IH to H6 _ _ H7 H5.
-      apply $multiply_integer_is_integer to _ _ H9.
-      apply $plus_integer_total to H3 H12. case H3.
+      apply multiply_integer_is_unique to _ _ H9.
+      apply plus_integer_total to H3 H12. case H3.
         %Subgoal 2.3.1
          exists $posInt $zero, $posInt $zero. split.
            %Subgoal 2.3.1.1
-            backchain $multiply_integer_0_right.
+            backchain multiply_integer_0_right.
            %Subgoal 2.3.1.2
-            backchain $multiply_integer_0_right.
+            backchain multiply_integer_0_right.
            %Subgoal 2.3.1.3
-            apply $plus_integer_is_integer to _ _ H4.
-            apply $multiply_integer_0_right to H14.
-            apply $multiply_integer_unique to H15 H5. search.
+            apply plus_integer_is_integer to _ _ H4.
+            apply multiply_integer_0_right to H14.
+            apply multiply_integer_unique to H15 H5. search.
         %Subgoal 2.3.2
-         apply $multiply_integer_is_integer to _ _ H10.
+         apply multiply_integer_is_unique to _ _ H10.
          apply $is_integer_posInt__to__negSuccInt to H14.
-         apply $plus_integer_total to H15 H16.
+         apply plus_integer_total to H15 H16.
          exists N4, N7. split.
            %Subgoal 2.3.2.1
             search.
            %Subgoal 2.3.2.2
             search.
            %Subgoal 2.3.2.3
-            apply $plus_integer_comm to _ _ H13.
-            apply $plus_integer_comm to _ _ H17.
+            apply plus_integer_comm to _ _ H13.
+            apply plus_integer_comm to _ _ H17.
             apply $plus_integer_negation to H14.
-            apply $plus_integer_is_integer to _ _ H17.
-            apply $plus_integer_is_integer to _ _ H18.
-            apply $plus_integer_total to H22 H21.
+            apply plus_integer_is_integer to _ _ H17.
+            apply plus_integer_is_integer to _ _ H18.
+            apply plus_integer_total to H22 H21.
             apply $plus_integer_cancel to _ _ _ _ H18 H19 H23 H20.
-            apply $plus_integer_unique to H24 H11. search.
+            apply plus_integer_unique to H24 H11. search.
         %Subgoal 2.3.3
-         assert ($is_integer ($negSuccInt $zero)).
-         apply $plus_integer_total to H14 H12.
-         apply $multiply_integer_is_integer to _ _ H10.
-         assert ($is_integer ($posInt ($succ $zero))).
-         apply $plus_integer_total to H16 H17. exists N6, N7. split.
+         assert (is_integer ($negSuccInt $zero)).
+         apply plus_integer_total to H14 H12.
+         apply multiply_integer_is_unique to _ _ H10.
+         assert (is_integer ($posInt ($succ $zero))).
+         apply plus_integer_total to H16 H17. exists N6, N7. split.
            %Subgoal 2.3.3.1
             search.
            %Subgoal 2.3.3.2
             search.
            %Subgoal 2.3.3.3
-            apply $plus_integer_is_integer to _ _ H15.
-            apply $plus_integer_is_integer to _ _ H18.
-            apply $plus_integer_total to H19 H20.
-            apply $plus_integer_comm to _ _ H15.
-            apply $plus_integer_comm to _ _ H18.
+            apply plus_integer_is_integer to _ _ H15.
+            apply plus_integer_is_integer to _ _ H18.
+            apply plus_integer_total to H19 H20.
+            apply plus_integer_comm to _ _ H15.
+            apply plus_integer_comm to _ _ H18.
             apply $plus_integer_negation to _ with N = $zero.
-            apply $plus_integer_comm to _ _ H24.
+            apply plus_integer_comm to _ _ H24.
             apply $plus_integer_cancel to _ _ _ _ H22 H23 H21 H25.
-            apply $plus_integer_unique to H26 H11. search.
+            apply plus_integer_unique to H26 H11. search.
         %Subgoal 2.3.4
-         assert ($is_integer ($negSuccInt ($succ N6))).
-         apply $multiply_integer_is_integer to _ _ H10.
-         apply $plus_integer_total to H15 H12.
+         assert (is_integer ($negSuccInt ($succ N6))).
+         apply multiply_integer_is_unique to _ _ H10.
+         apply plus_integer_total to H15 H12.
          apply $is_integer_negSuccInt__to__posInt to H15.
-         assert ($is_integer ($posInt ($succ ($succ N6)))).
-         apply $plus_integer_total to H16 H19. exists N7, N8. split.
+         assert (is_integer ($posInt ($succ ($succ N6)))).
+         apply plus_integer_total to H16 H19. exists N7, N8. split.
            %Subgoal 2.3.4.1
             search.
            %Subgoal 2.3.4.2
             search.
            %Subgoal 2.3.4.3
-            apply $plus_integer_is_integer to _ _ H17.
-            apply $plus_integer_is_integer to _ _ H20.
-            apply $plus_integer_total to H22 H21.
+            apply plus_integer_is_integer to _ _ H17.
+            apply plus_integer_is_integer to _ _ H20.
+            apply plus_integer_total to H22 H21.
             apply $plus_integer_negation to H18.
             apply $plus_integer_cancel to _ _ _ _ H20 H17 H23 H24.
-            apply $plus_integer_comm to _ _ H25.
-            apply $plus_integer_unique to H26 H11.
-            backchain $plus_integer_comm.
+            apply plus_integer_comm to _ _ H25.
+            apply plus_integer_unique to H26 H11.
+            backchain plus_integer_comm.
   %Subgoal 3
    case H4.
      %Subgoal 3.1
@@ -649,7 +679,7 @@ induction on 1. intros. case H1.
          search.
         %Subgoal 3.1.3
          backchain $plus_integer_zero_right.
-         apply $multiply_integer_is_integer to _ _ H5. search.
+         apply multiply_integer_is_unique to _ _ H5. search.
      %Subgoal 3.2
       case H3.
         %Subgoal 3.2.1
@@ -657,25 +687,25 @@ induction on 1. intros. case H1.
            %Subgoal 3.2.1.1
             search.
            %Subgoal 3.2.1.2
-            backchain $multiply_integer_0_right.
+            backchain multiply_integer_0_right.
            %Subgoal 3.2.1.3
-            case H2. apply $multiply_integer_0_right to H6.
-            apply $multiply_integer_unique to H5 H7. search.
+            case H2. apply multiply_integer_0_right to H6.
+            apply multiply_integer_unique to H5 H7. search.
         %Subgoal 3.2.2
-         case H2. apply $multiply_integer_is_integer to _ _ H5.
-         assert ($is_integer ($posInt ($succ N))).
-         apply $plus_integer_total to H9 H8.
+         case H2. apply multiply_integer_is_unique to _ _ H5.
+         assert (is_integer ($posInt ($succ N))).
+         apply plus_integer_total to H9 H8.
          exists $negSuccInt N, N5. split.
            %Subgoal 3.2.2.1
             search.
            %Subgoal 3.2.2.2
             search.
            %Subgoal 3.2.2.3
-            apply $plus_integer_comm to _ _ H10.
+            apply plus_integer_comm to _ _ H10.
             assert ($minus_integer Result ($negSuccInt N) N5).
-            apply $plus_integer_is_integer to _ _ H11.
+            apply plus_integer_is_integer to _ _ H11.
             apply $is_integer_posInt__to__negSuccInt to H6.
-            backchain $plus_integer_comm.
+            backchain plus_integer_comm.
             backchain $minus_plus_same_integer.
         %Subgoal 3.2.3
          exists $posInt ($succ $zero), $negSuccInt N4. split.
@@ -685,31 +715,31 @@ induction on 1. intros. case H1.
             case H2. backchain $multiply_integer_posInt_-1_right.
            %Subgoal 3.2.3.3
             case H2. apply $multiply_integer_posInt_-1_right to H6.
-            case H7. apply $multiply_integer_unique to H5 H8.
+            case H7. apply multiply_integer_unique to H5 H8.
             apply $is_integer_posInt__to__negSuccInt to H6.
-            apply $multiply_integer_is_integer to _ _ H8.
-            apply $plus_integer_comm to _ _ H9.
+            apply multiply_integer_is_unique to _ _ H8.
+            apply plus_integer_comm to _ _ H9.
             assert ($minus_integer N' ($posInt ($succ $zero))
                                    ($negSuccInt N4)).
-            backchain $plus_integer_comm.
+            backchain plus_integer_comm.
             backchain $minus_plus_same_integer.
         %Subgoal 3.2.4
          apply $is_integer_posInt__to__negSuccInt to H2. case H2.
-         apply $multiply_integer_is_integer to _ _ H5.
-         assert ($is_integer ($negSuccInt ($succ N))).
-         apply $plus_integer_total to H10 H9.
+         apply multiply_integer_is_unique to _ _ H5.
+         assert (is_integer ($negSuccInt ($succ N))).
+         apply plus_integer_total to H10 H9.
          exists $posInt ($succ ($succ N)), N5. split.
            %Subgoal 3.2.4.1
             search.
            %Subgoal 3.2.4.2
             search.
            %Subgoal 3.2.4.3
-            apply $plus_integer_comm to _ _ H11.
-            apply $plus_integer_is_integer to _ _ H11.
+            apply plus_integer_comm to _ _ H11.
+            apply plus_integer_is_integer to _ _ H11.
             apply $is_integer_negSuccInt__to__posInt to H6.
             assert ($minus_integer Result
                                    ($posInt ($succ ($succ N))) N5).
-            backchain $plus_integer_comm.
+            backchain plus_integer_comm.
             backchain $minus_plus_same_integer.
      %Subgoal 3.3
       case H5.
@@ -722,18 +752,18 @@ induction on 1. intros. case H1.
            %Subgoal 3.3.2.2
             search.
            %Subgoal 3.3.2.3
-            apply $multiply_integer_is_integer to _ _ H6.
+            apply multiply_integer_is_unique to _ _ H6.
             case H3. apply $is_integer_posInt__to__negSuccInt to H9.
-            backchain $plus_integer_comm.
+            backchain plus_integer_comm.
         %Subgoal 3.3.3
-         apply $multiply_integer_is_integer to _ _ H6.
+         apply multiply_integer_is_unique to _ _ H6.
          apply $is_integer_negSuccInt__to__posInt to H3.
-         apply $plus_integer_comm to _ _ H7.
+         apply plus_integer_comm to _ _ H7.
          exists $posInt ($succ N5), N'. search.
   %Subgoal 4
    case H4 (keep).
      %Subgoal 4.1
-      apply $multiply_integer_is_integer to _ _ H5.
+      apply multiply_integer_is_unique to _ _ H5.
       apply $plus_integer_zero_right to H7.
       exists Result, $posInt $zero. search.
      %Subgoal 4.2
@@ -741,34 +771,34 @@ induction on 1. intros. case H1.
         %Subgoal 4.2.1
          exists $posInt $zero, $posInt $zero. split.
            %Subgoal 4.2.1.1
-            backchain $multiply_integer_0_right.
+            backchain multiply_integer_0_right.
            %Subgoal 4.2.1.2
-            backchain $multiply_integer_0_right.
+            backchain multiply_integer_0_right.
            %Subgoal 4.2.1.3
-            apply $multiply_integer_0_right to H6.
-            apply $multiply_integer_unique to H9 H12.
-            apply $multiply_integer_0_right to H8.
-            apply $multiply_integer_unique to H10 H13.
+            apply multiply_integer_0_right to H6.
+            apply multiply_integer_unique to H9 H12.
+            apply multiply_integer_0_right to H8.
+            apply multiply_integer_unique to H10 H13.
             case H11. search.
         %Subgoal 4.2.2
          apply $is_integer_posInt__to__negSuccInt to H12.
-         apply $multiply_integer_is_integer to _ _ H9.
-         apply $multiply_integer_is_integer to _ _ H10.
-         assert ($is_integer ($posInt ($succ N4))).
-         apply $plus_integer_total to H14 H13.
-         apply $plus_integer_total to H16 H15. exists N6, N7. split.
+         apply multiply_integer_is_unique to _ _ H9.
+         apply multiply_integer_is_unique to _ _ H10.
+         assert (is_integer ($posInt ($succ N4))).
+         apply plus_integer_total to H14 H13.
+         apply plus_integer_total to H16 H15. exists N6, N7. split.
            %Subgoal 4.2.2.1
             search.
            %Subgoal 4.2.2.2
             search.
            %Subgoal 4.2.2.3
-            apply $plus_integer_is_integer to _ _ H17.
-            apply $plus_integer_is_integer to _ _ H18.
-            apply $plus_integer_total to H19 H20.
+            apply plus_integer_is_integer to _ _ H17.
+            apply plus_integer_is_integer to _ _ H18.
+            apply plus_integer_total to H19 H20.
             apply $plus_integer_negation to H12.
-            apply $plus_integer_comm to _ _ H22.
+            apply plus_integer_comm to _ _ H22.
             apply $plus_integer_cancel to _ _ _ _ H17 H18 H21 H23.
-            apply $plus_integer_unique to H11 H24. search.
+            apply plus_integer_unique to H11 H24. search.
         %Subgoal 4.2.3
          exists $posInt ($succ ($succ N)), $negSuccInt N5. split.
            %Subgoal 4.2.3.1
@@ -777,22 +807,22 @@ induction on 1. intros. case H1.
             backchain $multiply_integer_posInt_-1_right.
            %Subgoal 4.2.3.3
             apply $multiply_integer_negSuccInt_-1_right to H6.
-            apply $multiply_integer_unique to H12 H9. case H8.
+            apply multiply_integer_unique to H12 H9. case H8.
               %Subgoal 4.2.3.3.1
                case H10.
-               apply $multiply_integer_is_integer to _ _ H12.
-               apply $plus_integer_comm to _ _ H11. case H14. search.
+               apply multiply_integer_is_unique to _ _ H12.
+               apply plus_integer_comm to _ _ H11. case H14. search.
               %Subgoal 4.2.3.3.2
                apply $multiply_integer_posInt_-1_right to H13.
-               apply $multiply_integer_unique to H10 H14. search.
+               apply multiply_integer_unique to H10 H14. search.
         %Subgoal 4.2.4
          apply $is_integer_negSuccInt__to__posInt to H12.
-         apply $multiply_integer_is_integer to _ _ H9.
-         apply $multiply_integer_is_integer to _ _ H10.
-         assert ($is_integer ($negSuccInt ($succ N4))).
-         assert ($is_integer ($posInt ($succ ($succ N4)))).
-         apply $plus_integer_total to H14 H17.
-         apply $plus_integer_total to H16 H15.
+         apply multiply_integer_is_unique to _ _ H9.
+         apply multiply_integer_is_unique to _ _ H10.
+         assert (is_integer ($negSuccInt ($succ N4))).
+         assert (is_integer ($posInt ($succ ($succ N4)))).
+         apply plus_integer_total to H14 H17.
+         apply plus_integer_total to H16 H15.
          exists N6, N7. split.
            %Subgoal 4.2.4.1
             search.
@@ -800,34 +830,34 @@ induction on 1. intros. case H1.
             search.
            %Subgoal 4.2.4.3
             apply $plus_integer_negation to _ with N = ($succ N4).
-            apply $plus_integer_is_integer to _ _ H18.
-            apply $plus_integer_is_integer to _ _ H19.
-            apply $plus_integer_total to H21 H22.
+            apply plus_integer_is_integer to _ _ H18.
+            apply plus_integer_is_integer to _ _ H19.
+            apply plus_integer_total to H21 H22.
             apply $plus_integer_cancel to _ _ _ _ H18 H19 H23 H20.
-            apply $plus_integer_unique to H11 H24. search.
+            apply plus_integer_unique to H11 H24. search.
      %Subgoal 4.3
       case H5.
         %Subgoal 4.3.1
          exists $posInt $zero, $posInt $zero. search.
         %Subgoal 4.3.2
          apply IH to H6 _ _ H7 H8.
-         apply $multiply_integer_is_integer to _ _ H10.
-         apply $multiply_integer_is_integer to _ _ H11. case H3.
+         apply multiply_integer_is_unique to _ _ H10.
+         apply multiply_integer_is_unique to _ _ H11. case H3.
          apply $is_integer_posInt__to__negSuccInt to H15.
-         apply $plus_integer_total to H13 H16.
+         apply plus_integer_total to H13 H16.
          exists N4, MulN2N3. split.
            %Subgoal 4.3.2.1
             search.
            %Subgoal 4.3.2.2
             search.
            %Subgoal 4.3.2.3
-            apply $plus_integer_is_integer to _ _ H12.
-            apply $plus_integer_comm to _ _ H9.
-            apply $plus_integer_comm to _ _ H12.
-            apply $plus_integer_assoc to _ _ _ H20 H19.
-            apply $plus_integer_unique to H17 H21.
-            backchain $plus_integer_comm.
-            apply $plus_integer_is_integer to _ _ H21. search.
+            apply plus_integer_is_integer to _ _ H12.
+            apply plus_integer_comm to _ _ H9.
+            apply plus_integer_comm to _ _ H12.
+            apply plus_integer_assoc to _ _ _ H20 H19.
+            apply plus_integer_unique to H17 H21.
+            backchain plus_integer_comm.
+            apply plus_integer_is_integer to _ _ H21. search.
         %Subgoal 4.3.3
          apply IH to H6 _ _ H7 H8. case H3.
            %Subgoal 4.3.3.1
@@ -838,152 +868,152 @@ induction on 1. intros. case H1.
               %Subgoal 4.3.3.1.2
                backchain $multiply_integer_negSuccInt_-1_right.
               %Subgoal 4.3.3.1.3
-               apply $plus_integer_is_integer to _ _ H4. case H13.
+               apply plus_integer_is_integer to _ _ H4. case H13.
                apply $multiply_integer_negSuccInt_-1_right to H14.
-               apply $multiply_integer_unique to H8 H15.
+               apply multiply_integer_unique to H8 H15.
                apply $is_integer_negSuccInt__to__posInt to H14.
-               apply $plus_integer_comm to _ _ H9. case H17. case H18.
+               apply plus_integer_comm to _ _ H9. case H17. case H18.
                apply $multiply_integer_negSuccInt_-1_right to H6.
-               apply $multiply_integer_unique to H10 H19.
+               apply multiply_integer_unique to H10 H19.
                apply $multiply_integer_negSuccInt_-1_right to H2.
-               apply $multiply_integer_unique to H11 H20. search.
+               apply multiply_integer_unique to H11 H20. search.
            %Subgoal 4.3.3.2
-            apply $multiply_integer_is_integer to _ _ H10.
-            apply $multiply_integer_is_integer to _ _ H11.
+            apply multiply_integer_is_unique to _ _ H10.
+            apply multiply_integer_is_unique to _ _ H11.
             apply $is_integer_negSuccInt__to__posInt to H13.
-            assert ($is_integer ($posInt ($succ ($succ N4)))).
-            apply $plus_integer_total to H14 H17.
+            assert (is_integer ($posInt ($succ ($succ N4)))).
+            apply plus_integer_total to H14 H17.
             exists N8, MulN2N3. split.
               %Subgoal 4.3.3.2.1
                search.
               %Subgoal 4.3.3.2.2
                search.
               %Subgoal 4.3.3.2.3
-               apply $plus_integer_comm to _ _ H12.
-               apply $plus_integer_is_integer to _ _ H12.
-               apply $plus_integer_comm to _ _ H9.
-               apply $plus_integer_assoc to _ _ _ H19 H21.
-               apply $plus_integer_unique to H18 H22.
-               backchain $plus_integer_comm.
-               apply $plus_integer_is_integer to _ _ H22. search.
+               apply plus_integer_comm to _ _ H12.
+               apply plus_integer_is_integer to _ _ H12.
+               apply plus_integer_comm to _ _ H9.
+               apply plus_integer_assoc to _ _ _ H19 H21.
+               apply plus_integer_unique to H18 H22.
+               backchain plus_integer_comm.
+               apply plus_integer_is_integer to _ _ H22. search.
 
-Theorem $multiply_integer_assoc : forall N1 N2 N3 MulN1N2 Result,
-  $is_integer N1 -> $is_integer N2 -> $is_integer N3 ->
+Theorem multiply_integer_assoc : forall N1 N2 N3 MulN1N2 Result,
+  is_integer N1 -> is_integer N2 -> is_integer N3 ->
   $multiply_integer N1 N2 MulN1N2 ->
   $multiply_integer MulN1N2 N3 Result ->
   exists MulN2N3, $multiply_integer N2 N3 MulN2N3 /\
                   $multiply_integer N1 MulN2N3 Result.
 induction on 1. intros. case H1.
   %Subgoal 1
-   case H4. case H5. apply $multiply_integer_total to H2 H3. search.
+   case H4. case H5. apply multiply_integer_total to H2 H3. search.
   %Subgoal 2
-   case H4. apply $multiply_integer_is_integer to _ _ H7.
-   apply $multiply_integer_total to H9 H3.
+   case H4. apply multiply_integer_is_unique to _ _ H7.
+   apply multiply_integer_total to H9 H3.
    apply IH to H6 _ _ H7 H10.
    exists MulN2N3. split.
      %Subgoal 2.1
       search.
      %Subgoal 2.2
-      apply $multiply_integer_distribute_over_plus to _ _ _ H8 H5.
-      apply $multiply_integer_unique to H10 H14.
-      apply $multiply_integer_unique to H11 H13.
+      apply multiply_integer_distribute_over_plus to _ _ _ H8 H5.
+      apply multiply_integer_unique to H10 H14.
+      apply multiply_integer_unique to H11 H13.
       search.
   %Subgoal 3
-   apply $multiply_integer_-1_negate to H4. rename MulN1N2 to -N2.
-   apply $negate_integer_is_integer to _ H6.
-   apply $multiply_integer_is_integer to _ _ H5.
-   apply $negate_integer_total to H8. rename N' to -Result.
-   apply $negate_integer_double to H6.
-   apply $multiply_integer_negation to _ _ H10 H5 H9.
+   apply multiply_integer_-1_negate to H4. rename MulN1N2 to -N2.
+   apply negate_integer_is_integer to _ H6.
+   apply multiply_integer_is_unique to _ _ H5.
+   apply negate_integer_total to H8. rename N' to -Result.
+   apply negate_integer_double to H6.
+   apply multiply_integer_negation to _ _ H10 H5 H9.
    exists -Result. split.
      %Subgoal 3.1
       search.
      %Subgoal 3.2
-      apply $negate_integer_is_integer to _ H9.
-      apply $multiply_integer_total to _ H12 with N1 = ($negSuccInt $zero).
-      apply $multiply_integer_-1_negate to H13.
-      apply $negate_integer_double to H9.
-      apply $negate_integer_unique to H14 H15. search.
+      apply negate_integer_is_integer to _ H9.
+      apply multiply_integer_total to _ H12 with N1 = ($negSuccInt $zero).
+      apply multiply_integer_-1_negate to H13.
+      apply negate_integer_double to H9.
+      apply negate_integer_unique to H14 H15. search.
   %Subgoal 4
    case H4.
      %Subgoal 4.1
       case H5. exists ($posInt $zero). search.
      %Subgoal 4.2
-      apply $multiply_integer_is_integer to _ _ H7.
-      apply $multiply_integer_total to H9 H3.
+      apply multiply_integer_is_unique to _ _ H7.
+      apply multiply_integer_total to H9 H3.
       apply IH to H6 _ _ H7 H10. exists MulN2N3. split.
         %Subgoal 4.2.1
          search.
         %Subgoal 4.2.2
          case H2. apply $is_integer_posInt__to__negSuccInt to H13.
-         apply $multiply_integer_distribute_over_plus to _ _ _ H8 H5.
-         apply $multiply_integer_unique to H10 H15.
-         apply $multiply_integer_is_integer to _ _ H11.
-         apply $negate_integer_total to H18. rename N'1 to -MulN2N3.
-         apply $multiply_integer_negation to _ _ _ H11 H19.
-         apply $multiply_integer_unique to H20 H16.
+         apply multiply_integer_distribute_over_plus to _ _ _ H8 H5.
+         apply multiply_integer_unique to H10 H15.
+         apply multiply_integer_is_unique to _ _ H11.
+         apply negate_integer_total to H18. rename N'1 to -MulN2N3.
+         apply multiply_integer_negation to _ _ _ H11 H19.
+         apply multiply_integer_unique to H20 H16.
          apply $is_integer_posInt_or_negSuccInt to H18. case H21.
            %Subgoal 4.2.2.1
             case H18.
               %Subgoal 4.2.2.1.1
-               case H19. apply $multiply_integer_is_integer to _ _ H15.
+               case H19. apply multiply_integer_is_unique to _ _ H15.
                apply $plus_integer_zero_right to H22.
-               apply $plus_integer_unique to H23 H17. case H12.
-               backchain $multiply_integer_0_right.
+               apply plus_integer_unique to H23 H17. case H12.
+               backchain multiply_integer_0_right.
               %Subgoal 4.2.2.1.2
                case H19. search.
            %Subgoal 4.2.2.2
             case H19. search.
      %Subgoal 4.3
-      apply $multiply_integer_is_integer to _ _ H7.
-      apply $multiply_integer_total to H9 H3.
+      apply multiply_integer_is_unique to _ _ H7.
+      apply multiply_integer_total to H9 H3.
       apply IH to H6 _ _ H7 H10. exists MulN2N3. split.
         %Subgoal 4.3.1
          search.
         %Subgoal 4.3.2
-         apply $multiply_integer_is_integer to _ _ H11.
+         apply multiply_integer_is_unique to _ _ H11.
          apply $is_integer_posInt_or_negSuccInt to H13. case H14.
            %Subgoal 4.3.2.1
             case H13.
               %Subgoal 4.3.2.1.1
-               apply $multiply_integer_0_right to H6.
-               apply $multiply_integer_unique to H12 H15.
-               apply $multiply_integer_0_result to _ _ H11. case H16.
+               apply multiply_integer_0_right to H6.
+               apply multiply_integer_unique to H12 H15.
+               apply multiply_integer_0_result to _ _ H11. case H16.
                apply $is_integer_negSuccInt__to__posInt to H2.
-               apply $plus_integer_is_integer to _ _ H8.
-               apply $multiply_integer_comm to _ _ H5. case H19.
-               backchain $multiply_integer_comm.
+               apply plus_integer_is_integer to _ _ H8.
+               apply multiply_integer_comm to _ _ H5. case H19.
+               backchain multiply_integer_comm.
               %Subgoal 4.3.2.1.2
                apply $is_integer_posInt__to__negSuccInt to H15.
-               apply $multiply_integer_negation to _ _ _ H11 _.
+               apply multiply_integer_negation to _ _ _ H11 _.
                apply $is_integer_negSuccInt__to__posInt to H2.
-               apply $multiply_integer_distribute_over_plus to _ _ _ H8 H5.
-               apply $multiply_integer_unique to H19 H10.
-               apply $multiply_integer_unique to H17 H20. search.
+               apply multiply_integer_distribute_over_plus to _ _ _ H8 H5.
+               apply multiply_integer_unique to H19 H10.
+               apply multiply_integer_unique to H17 H20. search.
            %Subgoal 4.3.2.2
-            apply $multiply_integer_negation to _ _ _ H11 _.
+            apply multiply_integer_negation to _ _ _ H11 _.
             apply $is_integer_negSuccInt__to__posInt to H2.
-            apply $multiply_integer_distribute_over_plus to _ _ _ H8 H5.
-            apply $multiply_integer_unique to H15 H18.
-            apply $multiply_integer_unique to H10 H17. search.
+            apply multiply_integer_distribute_over_plus to _ _ _ H8 H5.
+            apply multiply_integer_unique to H15 H18.
+            apply multiply_integer_unique to H10 H17. search.
 
 % (N1 + N2) * N3  <==  (N1 * N3) + (N2 * N3)
-Theorem $multiply_integer_undistribute_over_plus :
+Theorem multiply_integer_undistribute_over_plus :
   forall N1 N2 N3 MulN1N3 MulN2N3 Result,
-    $is_integer N1 -> $is_integer N2 -> $is_integer N3 ->
+    is_integer N1 -> is_integer N2 -> is_integer N3 ->
     $multiply_integer N1 N3 MulN1N3 ->
     $multiply_integer N2 N3 MulN2N3 ->
     $plus_integer MulN1N3 MulN2N3 Result ->
     exists AddN1N2, $plus_integer N1 N2 AddN1N2 /\
                     $multiply_integer AddN1N2 N3 Result.
-intros. apply $plus_integer_total to H1 H2. exists N4. split.
+intros. apply plus_integer_total to H1 H2. exists N4. split.
   %Subgoal 1
    search.
   %Subgoal 2
-   apply $plus_integer_is_integer to _ _ H7.
-   apply $multiply_integer_total to H8 H3.
-   apply $multiply_integer_distribute_over_plus to _ _ _ H7 H9.
-   apply $multiply_integer_unique to H4 H10.
-   apply $multiply_integer_unique to H5 H11.
-   apply $plus_integer_unique to H6 H12. search.
+   apply plus_integer_is_integer to _ _ H7.
+   apply multiply_integer_total to H8 H3.
+   apply multiply_integer_distribute_over_plus to _ _ _ H7 H9.
+   apply multiply_integer_unique to H4 H10.
+   apply multiply_integer_unique to H5 H11.
+   apply plus_integer_unique to H6 H12. search.
 

@@ -11,20 +11,20 @@
   more difficult for the binary encoding.
 */
 
-Kind $nat   type.
-Type $zero   $nat.
-Type $succ   $nat -> $nat.
+Kind nat   type.
+Type $zero   nat.
+Type $succ   nat -> nat.
 
-Define $is_nat : $nat -> prop by
+Define $is_nat : nat -> prop by
   $is_nat $zero;
   $is_nat ($succ N) := $is_nat N.
 
 
-Define $less_nat : $nat -> $nat -> prop by
+Define $less_nat : nat -> nat -> prop by
   $less_nat $zero ($succ N);
   $less_nat ($succ N1) ($succ N2) := $less_nat N1 N2.
 
-Define $lesseq_nat : $nat -> $nat -> prop by
+Define $lesseq_nat : nat -> nat -> prop by
   $lesseq_nat N N;
   $lesseq_nat N1 N2 := $less_nat N1 N2.
 
