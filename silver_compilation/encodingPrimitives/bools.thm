@@ -3,9 +3,9 @@ Kind $bool   type.
 Type $btrue   $bool.
 Type $bfalse   $bool.
 
-Define $is_bool : $bool -> prop by
-  $is_bool $btrue;
-  $is_bool $bfalse.
+Define is_bool : $bool -> prop by
+  is_bool $btrue;
+  is_bool $bfalse.
 
 
 
@@ -37,7 +37,7 @@ intros. case H1.
       search.
 
 Theorem $and_bool_total : forall B1 B2,
-  $is_bool B1 -> $is_bool B2 -> exists B, $and_bool B1 B2 B.
+  is_bool B1 -> is_bool B2 -> exists B, $and_bool B1 B2 B.
 intros. case H1.
   %Subgoal 1
    case H2.
@@ -49,7 +49,7 @@ intros. case H1.
    search.
 
 Theorem $and_bool_is_bool : forall B1 B2 B3,
-  $is_bool B1 -> $is_bool B2 -> $and_bool B1 B2 B3 -> $is_bool B3.
+  is_bool B1 -> is_bool B2 -> $and_bool B1 B2 B3 -> is_bool B3.
 intros. case H3.
   %Subgoal 1
    search.
@@ -69,7 +69,7 @@ intros. case H1.
    search.
 
 Theorem $and_bool_true_left : forall B,
-  $is_bool B -> $and_bool $btrue B B.
+  is_bool B -> $and_bool $btrue B B.
 intros. case H1.
   %Subgoal 1
    search.
@@ -85,7 +85,7 @@ intros. case H1.
    search.
 
 Theorem $and_bool_true_right : forall B,
-  $is_bool B -> $and_bool B $btrue B.
+  is_bool B -> $and_bool B $btrue B.
 intros. backchain $and_bool_comm. backchain $and_bool_true_left.
 
 Theorem $and_bool_true_right_eq : forall B B',
@@ -113,7 +113,7 @@ intros. case H1.
    search.
 
 Theorem $and_bool_associative : forall B1 B2 B3 BRes1 Result,
-  $is_bool B2 -> $is_bool B3 ->
+  is_bool B2 -> is_bool B3 ->
   $and_bool B1 B2 BRes1 -> $and_bool BRes1 B3 Result ->
   exists BRes2, $and_bool B2 B3 BRes2 /\ $and_bool B1 BRes2 Result.
 intros. case H3.
@@ -137,7 +137,7 @@ intros. case H3.
       apply $and_bool_false_left to H4. search.
 
 Theorem $and_bool_idempotent : forall B,
-  $is_bool B -> $and_bool B B B.
+  is_bool B -> $and_bool B B B.
 intros. case H1.
   %Subgoal 1
    search.
@@ -174,7 +174,7 @@ intros. case H1.
    case H2. search.
 
 Theorem $or_bool_total : forall B1 B2,
-  $is_bool B1 -> $is_bool B2 -> exists B, $or_bool B1 B2 B.
+  is_bool B1 -> is_bool B2 -> exists B, $or_bool B1 B2 B.
 intros. case H1.
   %Subgoal 1
    search.
@@ -186,7 +186,7 @@ intros. case H1.
       search.
 
 Theorem $or_bool_is_bool : forall B1 B2 B3,
-  $is_bool B1 -> $is_bool B2 -> $or_bool B1 B2 B3 -> $is_bool B3.
+  is_bool B1 -> is_bool B2 -> $or_bool B1 B2 B3 -> is_bool B3.
 intros. case H3.
   %Subgoal 1
    search.
@@ -222,7 +222,7 @@ intros. case H1.
    search.
 
 Theorem $or_bool_false_left : forall B,
-  $is_bool B -> $or_bool $bfalse B B.
+  is_bool B -> $or_bool $bfalse B B.
 intros. case H1.
   %Subgoal 1
    search.
@@ -238,7 +238,7 @@ intros. case H1.
    search.
 
 Theorem $or_bool_false_right : forall B,
-  $is_bool B -> $or_bool B $bfalse B.
+  is_bool B -> $or_bool B $bfalse B.
 intros. backchain $or_bool_comm. backchain $or_bool_false_left.
 
 Theorem $or_bool_false_right_eq : forall B B',
@@ -250,7 +250,7 @@ intros. case H1.
    search.
 
 Theorem $or_bool_associative : forall B1 B2 B3 BRes1 Result,
-  $is_bool B2 -> $is_bool B3 ->
+  is_bool B2 -> is_bool B3 ->
   $or_bool B1 B2 BRes1 -> $or_bool BRes1 B3 Result ->
   exists BRes2, $or_bool B2 B3 BRes2 /\ $or_bool B1 BRes2 Result.
 intros. case H3.
@@ -275,7 +275,7 @@ intros. case H3.
       search.
 
 Theorem $or_bool_idempotent : forall B,
-  $is_bool B -> $or_bool B B B.
+  is_bool B -> $or_bool B B B.
 intros. case H1.
   %Subgoal 1
    search.
@@ -301,7 +301,7 @@ intros. case H1.
    case H2. search.
 
 Theorem $not_bool_total : forall B,
-  $is_bool B -> exists B', $not_bool B B'.
+  is_bool B -> exists B', $not_bool B B'.
 intros. case H1.
   %Subgoal 1
    search.
@@ -309,7 +309,7 @@ intros. case H1.
    search.
 
 Theorem $not_bool_is_bool : forall B B',
-  $not_bool B B' -> $is_bool B'.
+  $not_bool B B' -> is_bool B'.
 intros. case H1.
   %Subgoal 1
    search.
@@ -348,7 +348,7 @@ intros. case H1.
 
 % A && (B || C)  ==>  (A && B) || (A && C)
 Theorem $and_bool__distribute_over__or : forall A B C OrBC Result,
-  $is_bool A -> $is_bool B -> $is_bool C ->
+  is_bool A -> is_bool B -> is_bool C ->
   $or_bool B C OrBC -> $and_bool A OrBC Result ->
   exists AndAB AndAC, $and_bool A B AndAB /\
                       $and_bool A C AndAC /\
@@ -385,7 +385,7 @@ intros. case H4.
 % A && (B || C)  <==  (A && B) || (A && C)
 Theorem $and_bool__undistribute_over__or :
   forall A B C AndAB AndAC Result,
-    $is_bool A -> $is_bool B -> $is_bool C ->
+    is_bool A -> is_bool B -> is_bool C ->
     $and_bool A B AndAB -> $and_bool A C AndAC ->
     $or_bool AndAB AndAC Result ->
     exists OrBC, $or_bool B C OrBC /\
@@ -406,7 +406,7 @@ intros. case H4.
 
 % A || (B && C)  ==>  (A || B) && (A || C)
 Theorem $or_bool__distribute_over__and : forall A B C AndBC Result,
-  $is_bool A -> $is_bool B -> $is_bool C ->
+  is_bool A -> is_bool B -> is_bool C ->
   $and_bool B C AndBC -> $or_bool A AndBC Result ->
   exists OrAB OrAC, $or_bool A B OrAB /\
                     $or_bool A C OrAC /\
@@ -443,7 +443,7 @@ intros. case H4.
 % A || (B && C)  <==  (A || B) && (A || C)
 Theorem $or_bool__undistribute_over__and :
   forall A B C OrAB OrAC Result,
-    $is_bool A -> $is_bool B -> $is_bool C ->
+    is_bool A -> is_bool B -> is_bool C ->
     $or_bool A B OrAB -> $or_bool A C OrAC ->
     $and_bool OrAB OrAC Result ->
     exists AndBC, $and_bool B C AndBC /\
@@ -475,7 +475,7 @@ intros. case H4.
 
 % ! (A && B)  ==>  !A || !B
 Theorem DeMorgan__not_bool__and_bool : forall A B AndAB Result,
-  $is_bool A -> $is_bool B ->
+  is_bool A -> is_bool B ->
   $and_bool A B AndAB -> $not_bool AndAB Result ->
   exists NotA NotB, $not_bool A NotA /\ $not_bool B NotB /\
                     $or_bool NotA NotB Result.
@@ -489,7 +489,7 @@ intros. case H3.
 
 % ! (A && B)  <==  !A || !B
 Theorem DeMorgan__or_bool__not_bool : forall A B NotA NotB Result,
-  $is_bool A -> $is_bool B ->
+  is_bool A -> is_bool B ->
   $not_bool A NotA -> $not_bool B NotB ->
   $or_bool NotA NotB Result ->
   exists AndAB, $and_bool A B AndAB /\ $not_bool AndAB Result.
@@ -503,7 +503,7 @@ intros. case H5.
 
 % ! (A || B)  ==>  !A && !B
 Theorem DeMorgan__not_bool__or_bool : forall A B OrAB Result,
-  $is_bool A -> $is_bool B ->
+  is_bool A -> is_bool B ->
   $or_bool A B OrAB -> $not_bool OrAB Result ->
   exists NotA NotB, $not_bool A NotA /\ $not_bool B NotB /\
                     $and_bool NotA NotB Result.
@@ -517,7 +517,7 @@ intros. case H3.
 
 % ! (A || B)  <==  !A && !B
 Theorem DeMorgan__and_bool__not_bool : forall A B NotA NotB Result,
-  $is_bool A -> $is_bool B ->
+  is_bool A -> is_bool B ->
   $not_bool A NotA -> $not_bool B NotB ->
   $and_bool NotA NotB Result ->
   exists OrAB, $or_bool A B OrAB /\ $not_bool OrAB Result.

@@ -9,7 +9,8 @@ Import "integer_multiplication". %Import "nats".
 %                                LESS                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Define $less_integer : $integer -> $integer -> $bool -> prop by
+Define $less_integer : integer -> integer -> $bool -> prop by
+  $less_integer ($posInt $zero) ($posInt $zero) $bfalse;
   $less_integer ($posInt $zero) ($posInt ($succ N2)) $btrue;
   $less_integer ($posInt ($succ N1)) ($posInt $zero) $bfalse;
   $less_integer ($posInt ($succ N1)) ($posInt ($succ N2)) B :=
@@ -18,14 +19,108 @@ Define $less_integer : $integer -> $integer -> $bool -> prop by
   $less_integer ($negSuccInt N1) ($posInt N2) $btrue;
   $less_integer ($posInt N1) ($negSuccInt N2) $bfalse;
   %
+  $less_integer ($negSuccInt $zero) ($negSuccInt $zero) $bfalse;
   $less_integer ($negSuccInt ($succ N1)) ($negSuccInt $zero) $btrue;
   $less_integer ($negSuccInt $zero) ($negSuccInt ($succ N2)) $bfalse;
   $less_integer ($negSuccInt ($succ N1)) ($negSuccInt ($succ N2)) B :=
      $less_integer ($negSuccInt N1) ($negSuccInt N2) B.
 
 %unique
+Theorem less_integer_unique : forall N1 N2 B B',
+  $less_integer N1 N2 B -> $less_integer N1 N2 B' -> B = B'.
+induction on 1. intros. case H1.
+  %Subgoal 1
+   case H2. search.
+  %Subgoal 2
+   case H2. search.
+  %Subgoal 3
+   case H2. search.
+  %Subgoal 4
+   case H2. apply IH to H3 H4. search.
+  %Subgoal 5
+   case H2. search.
+  %Subgoal 6
+   case H2. search.
+  %Subgoal 7
+   case H2. search.
+  %Subgoal 8
+   case H2. search.
+  %Subgoal 9
+   case H2. search.
+  %Subgoal 10
+   case H2. apply IH to H3 H4. search.
+
 %total
+Theorem less_integer_total : forall N1 N2,
+  is_integer N1 -> is_integer N2 ->
+  exists B, $less_integer N1 N2 B.
+induction on 1. intros. case H1.
+  %Subgoal 1
+   case H2.
+     %Subgoal 1.1
+      exists $bfalse. search.
+     %Subgoal 1.1
+      exists $btrue. search.
+     %Subgoal 1.1
+      exists $bfalse. search.
+     %Subgoal 1.1
+      exists $bfalse. search.
+  %Subgoal 2
+   case H2.
+     %Subgoal 2.1
+      exists $bfalse. search.
+     %Subgoal 2.2
+      apply IH to H3 H4. exists B. search.
+     %Subgoal 2.3
+      exists $bfalse. search.
+     %Subgoal 2.4
+      exists $bfalse. search.
+  %Subgoal 3
+   case H2.
+     %Subgoal 3.1
+      exists $btrue. search.
+     %Subgoal 3.2
+      exists $btrue. search.
+     %Subgoal 3.3
+      exists $bfalse. search.
+     %Subgoal 3.4
+      exists $bfalse. search.
+  %Subgoal 4
+   case H2.
+     %Subgoal 4.1
+      exists $btrue. search.
+     %Subgoal 4.2
+      exists $btrue. search.
+     %Subgoal 4.3
+      exists $btrue. search.
+     %Subgoal 4.4
+      apply IH to H3 H4. exists B. search.
+
 %creates $is_bool
+Theorem less_integer_is_bool : forall N1 N2 B,
+  $less_integer N1 N2 B -> is_bool B.
+induction on 1. intros. case H1.
+  %Subgoal 1
+   search.
+  %Subgoal 2
+   search.
+  %Subgoal 3
+   search.
+  %Subgoal 4
+   apply IH to H2. search.
+  %Subgoal 5
+   search.
+  %Subgoal 6
+   search.
+  %Subgoal 7
+   search.
+  %Subgoal 8
+   search.
+  %Subgoal 9
+   search.
+  %Subgoal 10
+   apply IH to H2. search.
+
 %other things?
 
 Theorem $less_integer_true_flip : forall N1 N2,
@@ -43,18 +138,27 @@ induction on 1. intros. case H1.
    apply IH to H2. search.
 
 Theorem $less_integer_false_flip : forall N1 N2,
-  $less_integer N1 N2 $bfalse -> $less_integer N2 N1 $btrue.
+  $less_integer N1 N2 $bfalse -> (N1 = N2 -> false) ->
+  $less_integer N2 N1 $btrue.
 induction on 1. intros. case H1.
   %Subgoal 1
-   search.
+   assert ($posInt $zero = $posInt $zero). apply H2 to H3.
   %Subgoal 2
-   apply IH to H2. search.
-  %Subgoal 3
    search.
+  %Subgoal 3
+   assert ($posInt N3 = $posInt N4 -> false).
+      intros. backchain H2.
+   apply IH to H3 H4. search.
   %Subgoal 4
    search.
   %Subgoal 5
-   apply IH to H2. search.
+   assert ($negSuccInt $zero = $negSuccInt $zero). apply H2 to H3.
+  %Subgoal 6
+   search.
+  %Subgoal 7
+   assert ($negSuccInt N3 = $negSuccInt N4 -> false).
+      intros. backchain H2.
+   apply IH to H3 H4. search.
 
 
 
@@ -62,7 +166,7 @@ induction on 1. intros. case H1.
 %                               LESSEQ                               %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Define $lesseq_integer : $integer -> $integer -> $bool -> prop by
+Define $lesseq_integer : integer -> integer -> $bool -> prop by
   $lesseq_integer ($posInt $zero) ($posInt $zero) $btrue;
   $lesseq_integer ($posInt $zero) ($posInt ($succ N2)) $btrue;
   $lesseq_integer ($posInt ($succ N1)) ($posInt $zero) $bfalse;
@@ -79,12 +183,105 @@ Define $lesseq_integer : $integer -> $integer -> $bool -> prop by
      $lesseq_integer ($negSuccInt N1) ($negSuccInt N2) B.
 
 %unique
+Theorem lesseq_integer_unique : forall N1 N2 B B',
+  $lesseq_integer N1 N2 B -> $lesseq_integer N1 N2 B' -> B = B'.
+induction on 1. intros. case H1.
+  %Subgoal 1
+   case H2. search.
+  %Subgoal 2
+   case H2. search.
+  %Subgoal 3
+   case H2. search.
+  %Subgoal 4
+   case H2. apply IH to H3 H4. search.
+  %Subgoal 5
+   case H2. search.
+  %Subgoal 6
+   case H2. search.
+  %Subgoal 7
+   case H2. search.
+  %Subgoal 8
+   case H2. search.
+  %Subgoal 9
+   case H2. search.
+  %Subgoal 10
+   case H2. apply IH to H3 H4. search.
+
 %total
+Theorem lesseq_integer_total : forall N1 N2,
+  is_integer N1 -> is_integer N2 ->
+  exists B, $lesseq_integer N1 N2 B.
+induction on 1. intros. case H1.
+  %Subgoal 1
+   case H2.
+     %Subgoal 1.1
+      search.
+     %Subgoal 1.2
+      search.
+     %Subgoal 1.3
+      search.
+     %Subgoal 1.4
+      search.
+  %Subgoal 2
+   case H2.
+     %Subgoal 2.1
+      search.
+     %Subgoal 2.2
+      apply IH to H3 H4. search.
+     %Subgoal 2.3
+      search.
+     %Subgoal 2.4
+      search.
+  %Subgoal 3
+   case H2.
+     %Subgoal 3.1
+      search.
+     %Subgoal 3.2
+      search.
+     %Subgoal 3.3
+      search.
+     %Subgoal 3.4
+      search.
+  %Subgoal 4
+   case H2.
+     %Subgoal 4.1
+      search.
+     %Subgoal 4.2
+      search.
+     %Subgoal 4.3
+      search.
+     %Subgoal 4.4
+      apply IH to H3 H4. search.
+
 %creates $is_bool
+Theorem lesseq_integer_is_bool : forall N1 N2 B,
+  $lesseq_integer N1 N2 B -> is_bool B.
+induction on 1. intros. case H1.
+  %Subgoal 1
+   search.
+  %Subgoal 2
+   search.
+  %Subgoal 3
+   search.
+  %Subgoal 4
+   apply IH to H2. search.
+  %Subgoal 5
+   search.
+  %Subgoal 6
+   search.
+  %Subgoal 7
+   search.
+  %Subgoal 8
+   search.
+  %Subgoal 9
+   search.
+  %Subgoal 10
+   apply IH to H2. search.
+
 %other things?
 
 Theorem eq_to_lesseq_integer : forall N,
-  $is_integer N -> $lesseq_integer N N $btrue.
+  is_integer N -> $lesseq_integer N N $btrue.
 induction on 1. intros. case H1.
   %Subgoal 1
    search.
@@ -115,12 +312,25 @@ induction on 1. intros. case H1.
 %                              GREATER                               %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Define $greater_integer : $integer -> $integer -> $bool -> prop by
+Define $greater_integer : integer -> integer -> $bool -> prop by
   $greater_integer N1 N2 B := $less_integer N2 N1 B.
 
 %unique
+Theorem greater_integer_unique : forall N1 N2 B B',
+  $greater_integer N1 N2 B -> $greater_integer N1 N2 B' -> B = B'.
+intros. case H1. case H2. backchain less_integer_unique.
+
 %total
+Theorem greater_integer_total : forall N1 N2,
+  is_integer N1 -> is_integer N2 ->
+  exists B, $greater_integer N1 N2 B.
+intros. apply less_integer_total to H2 H1. search.
+
 %creates $is_bool
+Theorem greater_integer_is_bool : forall N1 N2 B,
+  $greater_integer N1 N2 B -> is_bool B.
+intros. case H1. apply less_integer_is_bool to H2. search.
+
 %other things?
 
 Theorem $greater_integer_true_flip : forall N1 N2,
@@ -129,7 +339,7 @@ intros. case H1. apply $less_integer_true_flip to H2. search.
 
 Theorem $greater_integer_false_flip : forall N1 N2,
   $greater_integer N1 N2 $bfalse -> $greater_integer N2 N1 $btrue.
-intros. case H1. apply $less_integer_false_flip to H2. search.
+intros. case H1. abort. %apply $less_integer_false_flip to H2. search.
 
 Theorem greater_true_flip_less_integer : forall N1 N2,
   $greater_integer N1 N2 $btrue -> $less_integer N1 N2 $bfalse.
@@ -139,7 +349,7 @@ induction on 1. intros. case H1.
 Theorem greater_false_flip_less_integer : forall N1 N2,
   $greater_integer N1 N2 $bfalse -> $less_integer N1 N2 $btrue.
 induction on 1. intros. case H1.
- apply $less_integer_false_flip to H2. search.
+abort. % apply $less_integer_false_flip to H2. search.
 
 
 
@@ -147,13 +357,30 @@ induction on 1. intros. case H1.
 %                             GREATEREQ                              %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Define $greatereq_integer : $integer -> $integer -> $bool -> prop by
+Define $greatereq_integer : integer -> integer -> $bool -> prop by
   $greatereq_integer N1 N2 B := $lesseq_integer N2 N1 B.
 
 %unique
+Theorem greatereq_integer_unique : forall N1 N2 B B',
+  $greatereq_integer N1 N2 B -> $greatereq_integer N1 N2 B' -> B = B'.
+intros. case H1. case H2. backchain lesseq_integer_unique.
+
 %total
+Theorem greatereq_integer_total : forall N1 N2,
+  is_integer N1 -> is_integer N2 ->
+  exists B, $greatereq_integer N1 N2 B.
+intros. apply lesseq_integer_total to H2 H1. search.
+
 %creates $is_bool
+Theorem greatereq_integer_is_bool : forall N1 N2 B,
+  $greatereq_integer N1 N2 B -> is_bool B.
+intros. case H1. apply lesseq_integer_is_bool to H2. search.
+
 %other things?
+
+Theorem eq_to_greatereq_integer : forall N,
+  is_integer N -> $greatereq_integer N N $btrue.
+intros. apply eq_to_lesseq_integer to H1. search.
 
 Theorem greater_to_greatereq_integer : forall N1 N2,
   $greater_integer N1 N2 $btrue -> $greatereq_integer N1 N2 $btrue.

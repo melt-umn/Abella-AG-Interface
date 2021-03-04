@@ -72,6 +72,6 @@ Define $is_char : $char -> prop by
   $is_char $c_119;  $is_char $c_120;  $is_char $c_121;  $is_char $c_122;
   $is_char $c_123;  $is_char $c_124;  $is_char $c_125;  $is_char $c_126.
 
-Define $is_string : list $char -> prop by
-  $is_string L := $is_list $is_char L.
+Define is_string : list $char -> prop by
+  is_string L := is_list $is_char L.
 

@@ -1,0 +1,12 @@
+
+
+/*The $attrVal type should be defined in a library.*/
+Kind $attrVal   type -> type.
+Type $attr_ex   A -> $attrVal A.
+Type $attr_no   $attrVal A.
+
+
+Define $is_attrVal : (A -> prop) -> $attrVal A -> prop by
+  $is_attrVal SubRel ($attr_ex A) := SubRel A;
+  $is_attrVal SubRel $attr_no.
+

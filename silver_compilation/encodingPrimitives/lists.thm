@@ -6,9 +6,9 @@
   relations over them and properties of these relations.
 */
 
-Define $is_list : (A -> prop) -> list A -> prop by
-  $is_list IsA nil;
-  $is_list IsA (H::T) := IsA H /\ $is_list IsA T.
+Define is_list : (A -> prop) -> list A -> prop by
+  is_list IsA nil;
+  is_list IsA (H::T) := IsA H /\ is_list IsA T.
 
 
 Define $append : list A -> list A -> list A -> prop by
