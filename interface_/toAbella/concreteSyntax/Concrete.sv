@@ -81,8 +81,8 @@ concrete productions top::PureCommand_c
   became an ambiguity.  By moving the option here (in the following
   two rules) rather than the MaybeDepth_c nonterminal, we remove the
   ambiguity.-}
-| h::HHint_c 'assert' d::Depth_c m::Metaterm_c '.'
-  { top.ast = assertTactic(h.ast, just(d.ast), m.ast); }
+--| h::HHint_c 'assert' d::Depth_c m::Metaterm_c '.'
+--  { top.ast = assertTactic(h.ast, just(d.ast), m.ast); }
 | h::HHint_c 'assert' m::Metaterm_c '.'
   { top.ast = assertTactic(h.ast, nothing(), m.ast); }
 | 'exists' ew::EWitnesses_c '.'
@@ -122,7 +122,7 @@ concrete productions top::PureCommand_c
 | 'clear' '->' hl::HypList_c '.'
   { top.ast = clearCommand(hl.ast, true); }
 | 'abbrev' hl::HypList_c q::QString_t '.'
-  { top.ast = abbrevCommand(hl.ast, substring(1, length(q.lexeme) - 1, q.lexeme)); }
+  { top.ast = abbrevCommand(hl.ast, removeQuotes(q.lexeme)); }
 | 'unabbrev' hl::HypList_c '.'
   { top.ast = unabbrevCommand(hl.ast); }
 | 'rename' original::Id_t 'to' newname::Id_t '.'
@@ -150,9 +150,9 @@ concrete productions top::PureTopCommand_c
 | 'Query' m::Metaterm_c '.'
   { top.ast = queryCommand(m.ast); }
 | 'Import' q::QString_t '.'
-  { top.ast = importCommand(q.lexeme, []); }
+  { top.ast = importCommand(removeQuotes(q.lexeme), []); }
 | 'Import' q::QString_t 'with' iw::ImportWiths_c '.'
-  { top.ast = importCommand(q.lexeme, iw.ast); }
+  { top.ast = importCommand(removeQuotes(q.lexeme), iw.ast); }
 | 'Kind' il::IdList_c k::Knd_c '.'
   { top.ast = kindDeclaration(il.ast, k.ast); }
 | 'Type' il::IdList_c t::Ty_c '.'
@@ -345,8 +345,15 @@ concrete productions top::Term_c
   { top.ast = applicationTerm(e.ast, el.ast); }
 | e::Exp_c
   { top.ast = e.ast; }
-| t1::Term_c '::' t2::Term_c
+| t1::Exp_c '::' t2::Term_c
   { top.ast = consTerm(t1.ast, t2.ast); }
+
+
+concrete productions top::Exp_c
+| '(' t::Term_c ')'
+  { top.ast = t.ast; }
+| p::PAId_c
+  { top.ast = p.ast; }
 | 'nil'
   { top.ast = nilTerm(); }
 --New for Silver:
@@ -365,13 +372,6 @@ concrete productions top::Term_c
   { top.ast = trueTerm(); }
 | 'false'
   { top.ast = falseTerm(); }
-
-
-concrete productions top::Exp_c
-| '(' t::Term_c ')'
-  { top.ast = t.ast; }
-| p::PAId_c
-  { top.ast = p.ast; }
 
 
 concrete productions top::ExpList_c
@@ -859,4 +859,14 @@ concrete productions top::ImportWiths_c
 { top.ast = [pair(i1.lexeme, i2.lexeme)]; }
 | i1::Id_t ':=' i2::Id_t ',' rest::ImportWiths_c
 { top.ast = pair(i1.lexeme, i2.lexeme)::rest.ast; }
+
+
+
+
+
+function removeQuotes
+String ::= qstring::String
+{
+  return substring(1, length(qstring) - 1, qstring);
+}
 

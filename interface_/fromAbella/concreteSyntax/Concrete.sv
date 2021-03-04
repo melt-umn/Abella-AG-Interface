@@ -260,10 +260,8 @@ concrete productions top::Term_c
   { top.ast = applicationTerm(e.ast, el.ast); }
 | e::Exp_c
   { top.ast = e.ast; }
-| t1::Term_c '::' t2::Term_c
+| t1::Exp_c '::' t2::Term_c
   { top.ast = consTerm(t1.ast, t2.ast); }
-| 'nil'
-  { top.ast = nilTerm(); }
 
 
 concrete productions top::Exp_c
@@ -271,6 +269,8 @@ concrete productions top::Exp_c
   { top.ast = t.ast; }
 | p::PAId_c
   { top.ast = p.ast; }
+| 'nil'
+  { top.ast = nilTerm(); }
 
 
 concrete productions top::ExpList_c
