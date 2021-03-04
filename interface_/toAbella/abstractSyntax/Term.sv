@@ -113,10 +113,17 @@ top::Metaterm ::= b::Binder bindings::[Pair<String Maybe<Type>>] body::Metaterm
         filter((.addPremiseHere), decPremises);
   local newNames::[Pair<String Maybe<Type>>] = concat(map((.newBindingNames), premisesHere));
   local removeNames::[String] = concat(map((.removeBindingNames), premisesHere));
-  local transNames::[Pair<String Maybe<Type>>] =
+  local cleanedNames::[Pair<String Maybe<Type>>] =
         removeAllBy(\ p::Pair<String Maybe<Type>> name::Pair<String Maybe<Type>> ->
                       case p, name of | pair(a, _), pair(n, _) -> a == n end,
                     map(pair(_, nothing()), removeNames), bindings) ++ newNames;
+  local transNames::[Pair<String Maybe<Type>>] =
+        map(\ p::Pair<String Maybe<Type>> ->
+              (fst(p), case snd(p) of
+                       | just(ty) -> just(ty.translation)
+                       | nothing() -> nothing()
+                       end),
+            cleanedNames);
   top.translation =
      bindingMetaterm(b, transNames,
                      foldr(impliesMetaterm(_, _), body.translation,
@@ -470,6 +477,7 @@ top::Term ::= treename::String attr::String
         case findAssociatedScopes(treename, top.boundVars) of
         | just(just(l)) -> intersectBy(tysEqual, occursOnTypes, l)
         | just(nothing()) -> occursOnTypes
+        | _ -> error("Should not access local possibleTys if there are errors (attrAccessTerm)")
         end;
 
   top.boundVarsOut = replaceAssociatedScopes(treename, just(possibleTys), top.boundVars);

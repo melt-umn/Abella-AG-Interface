@@ -71,7 +71,13 @@ top::Metaterm ::= t1::Metaterm t2::Metaterm
 abstract production bindingMetaterm
 top::Metaterm ::= b::Binder nameBindings::[Pair<String Maybe<Type>>] body::Metaterm
 {
-  local bindings::[String] = map(fst, nameBindings);
+  local bindings::[String] =
+        map(\ p::Pair<String Maybe<Type>> ->
+              case p of
+              | (name, just(ty)) -> "(" ++ name ++ " : " ++ ty.pp ++ ")"
+              | (name, nothing()) -> name
+              end,
+            nameBindings);
   local bindingsString::String =
      if null(bindings)
      then error("Empty bindings not allowed; production bindingsMetaterm")

@@ -106,9 +106,26 @@ top::TopCommand ::= importFile::String withs::[Pair<String String>]
      if null(withs)
      then ""
      else " with " ++ buildWiths(withs);
-  top.pp = "Import " ++ importFile ++ withString ++ ".\n";
+  top.pp = "Import \"" ++ importFile ++ "\"" ++ withString ++ ".\n";
 
-  top.translation = importCommand(importFile, withs);
+  {-
+    We can't import Abella files which include defined relations
+    (constants with result type prop).  We use such constants all over
+    in component definitions, so we are going to read the files and
+    pass their text to Abella directly.  I'm not handling withs in
+    that case, but there shouldn't be any withs any.
+
+    For simplicity, we are going to import our library files normally,
+    since they don't include any declared relations.
+  -}
+  local libraryFiles::[String] =
+        ["bools", "integers", "integer_addition", "integer_multiplication",
+         "integer_division", "integer_comparison", "lists", "pairs",
+         "strings", "attr_val"];
+  top.translation =
+      if contains(fileNameInFilePath(importFile), libraryFiles)
+      then importCommand(importFile, withs)
+      else textCommand(readFile(importFile ++ ".thm", unsafeIO()).iovalue);
 }
 
 
@@ -216,5 +233,15 @@ top::TopCommand ::= n::NoOpCommand
 
   top.isQuit = n.isQuit;
   top.isDebug = n.isDebug;
+}
+
+
+
+--This is to handle imports for reasons described there
+abstract production textCommand
+top::TopCommand ::= text::String
+{
+  top.pp = text;
+  top.translation = textCommand(text);
 }
 

@@ -21,6 +21,7 @@ top::Kind ::= k::Kind
 
 
 attribute
+   translation<Type>,
    eqTest<Type>, isEq
 occurs on Type;
 
@@ -43,6 +44,8 @@ top::Type ::= ty1::Type ty2::Type
      | underscoreType() -> true
      | _ -> false
      end;
+
+  top.translation = arrowType(ty1.translation, ty2.translation);
 }
 
 
@@ -55,6 +58,11 @@ top::Type ::= name::String
      | underscoreType() -> true
      | _ -> false
      end;
+
+  top.translation =
+      if name == "string"
+      then functorType(nameType("list"), nameType("$char"))
+      else nameType(name);
 }
 
 
@@ -77,6 +85,8 @@ top::Type ::= functorTy::Type argTy::Type
      | underscoreType() -> true
      | _ -> false
      end;
+
+  top.translation = functorType(functorTy.translation, argTy.translation);
 }
 
 
@@ -84,6 +94,8 @@ aspect production underscoreType
 top::Type ::=
 {
   top.isEq = true;
+
+  top.translation = underscoreType();
 }
 
 

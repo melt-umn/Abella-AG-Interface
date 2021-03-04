@@ -37,7 +37,7 @@ IOVal<Integer> ::= largs::[String] ioin::IO
   --Abella outputs a welcome message, which we want to clean out
   local abella_initial_string::IOVal<String> =
         read_n_abella_outputs(1, abella.iovalue, abella.io);
-  return run_step(noProof(), [], false, [], abella.iovalue, abella_initial_string.io);
+  return run_step(noProof(), [], false, [("a", [nameType("$nt_Term")])], abella.iovalue, abella_initial_string.io);
 }
 
 
@@ -54,7 +54,7 @@ IOVal<Integer> ::= largs::[String] ioin::IO
 function run_step
 IOVal<Integer> ::=
    state::ProofState undolist::[Integer] debug::Boolean
-   attrOccurrences::[Pair<String [Type]>] abella::ProcessHandle ioin::IO
+   attrOccurrences::[(String, [Type])] abella::ProcessHandle ioin::IO
 {
   {-
     PROCESS COMMAND
@@ -113,11 +113,11 @@ IOVal<Integer> ::=
                   then ""
                   else if proof_result.parseSuccess
                        then "Error:  Cannot use proof commands outside a proof\n\n"
-                       else "Error:  Could not parse" ++ top_result.parseErrors; --not an actual command
+                       else "Error:  Could not parse:\n" ++ top_result.parseErrors; --not an actual command
   local num_commands_sent::Integer =
         if state.inProof
         then length(proof_a_trans)
-        else 1; --we only send one top command ever
+        else 1;
   --Send to abella
   ----------------------------
   local debug_output::IO =
@@ -185,7 +185,7 @@ IOVal<Integer> ::=
         if full_result.parseSuccess
         then print(output_output, debug_back_output)
         else error("BUG:  Unable to parse Abella's output:\n\n" ++
-                   back_from_abella.iovalue ++
+                   back_from_abella.iovalue ++ "\n\n" ++ full_result.parseErrors ++
                    "\n\nPlease report this");
 
 
@@ -232,29 +232,15 @@ IOVal<String> ::= ioin::IO
 }
 
 
-{-
-  This needs to be recursive, even though we tell it to read all the
-  output available from Abella, because there might not be any output
-  available initially (we need to wait for it to finish processing) or
-  not all the output might be available at once, and we need to keep
-  going until we find a true end (the next prompt).
--}
-function read_full_abella_output
-IOVal<String> ::= abella::ProcessHandle ioin::IO
-{
-  local read::IOVal<String> = readAllFromProcess(abella, ioin);
-  local readRest::IOVal<String> =
-        read_full_abella_output(abella, read.io);
-  local shouldEnd::Boolean = endsWith("< ", read.iovalue);
-  return if shouldEnd
-         then ioval(ioin, read.iovalue)
-         else ioval(readRest.io, read.iovalue ++ readRest.iovalue);
-}
-
 --Read the given number of Abella outputs (prompt-terminated)
 --Returns the text of the last one
 function read_n_abella_outputs
 IOVal<String> ::= n::Integer abella::ProcessHandle ioin::IO
+{
+  return read_n_abella_outputs_helper(n, "", abella, ioin);
+}
+function read_n_abella_outputs_helper
+IOVal<String> ::= n::Integer thusFar::String abella::ProcessHandle ioin::IO
 {
   {-
     NOTE:  If we ever need to handle an error output in the middle,
@@ -263,22 +249,25 @@ IOVal<String> ::= n::Integer abella::ProcessHandle ioin::IO
     that case, we should also return a pair of the last state and the
     number of states we mananged to get through.
   -}
-
-  local read::IOVal<String> = read_full_abella_output(abella, ioin);
-  local split::[String] = explode("<", read.iovalue);
+  local read::IOVal<String> = readAllFromProcess(abella, ioin);
+  local lastComplete::Boolean = endsWith("< ", read.iovalue);
+  local split::[String] = explode("<", thusFar ++ read.iovalue);
   local noWhiteSpace::[String] = map(stripExternalWhiteSpace, split);
   local noBlanks::[String] = filter(\ x::String -> x != "", noWhiteSpace);
-  local len::Integer = length(noBlanks);
+  local len::Integer = if null(noBlanks) then 0 else length(noBlanks) - (if lastComplete then 0 else 1);
 
+  {-
+    We assume that if what we read ends with a prompt, it is actually
+    done.  This could be wrong, but it is unlikely to end up being
+    wrong in any particular case.  The reason we do this instead of
+    counting the outputs is due to our import problems, described in a
+    comment on the importCommand production in
+    toAbella/abstractSyntax/TopCommand.sv.
+  -}
   return
-    if len < n
-    then --read more
-      read_n_abella_outputs(n - len, abella, read.io)
-    else
-      --We can have more outputs come back, but we'll assume that when
-      --   we get at least the expected number back we are done
-      --We could get less with errors, maybe.
-      ioval(read.io, removeLastWord(last(noBlanks)));
+     if lastComplete
+     then ioval(read.io, removeLastWord(last(noBlanks)))
+     else read_n_abella_outputs_helper(n, "", abella, read.io);
 }
 
 --Remove the last word in a string

@@ -161,6 +161,8 @@ top::NewPremise ::= tree::String attr::String
   local ty::Type =
         case findty of
         | just(just([ty])) -> ty
+        | _ -> error("Shouldn't access local ty if local findty is " ++
+                     "the wrong shape (attrAccessNewPremise)")
         end;
 
   top.addPremiseHere = containsBy(\ x::String y::String -> x == y, tree, top.currentNames);
@@ -202,6 +204,8 @@ top::NewPremise ::= tree::String
   local ty::Type =
         case findty of
         | just(just([ty])) -> ty
+        | _ -> error("Shouldn't access local ty if local findty is " ++
+                     "the wrong shape (wpdNewPremise)")
         end;
 
   top.addPremiseHere = containsBy(\ x::String y::String -> x == y, tree, top.currentNames);
