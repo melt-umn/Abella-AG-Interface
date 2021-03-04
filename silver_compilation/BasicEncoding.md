@@ -225,8 +225,8 @@ may not have a value on a particular decorated tree.  To handle this,
 we introduce a new type with two constructors:
 ```
 Kind attrVal   type -> type.
-Type attr_ex   A -> attr_val A.
-Type attr_no   attr_val A.
+Type attr_ex   A -> attrVal A.
+Type attr_no   attrVal A.
 ```
 This is a standard `option`/`Maybe` type.  We need to introduce it
 since Abella has nearly no types built in, so I am naming it for its
@@ -540,6 +540,15 @@ for the production in the component relation, but without a body.
 This means that the set of equations is vacuously satisfied, since
 there are no equations.
 
+We can end up defining equation relations for inherited attributes
+which don't occur on a nonterminal, but which occur on its children,
+if it sets the inherited attributes on them.  For example, we commonly
+have a `Root` nonterminal in Silver which wraps a top-level construct
+in the language.  This `Root` does not have inherited attributes occur
+on it, but sets the appropriate inherited attributes for its child,
+such as an attribute `env` for the environment.  Thus we need an
+equation relation for `env` for `Root` to capture this equation.
+
 In systems where relations are assumed to be extensible, such as
 Prolog, we don't need to have declared full equation relations and
 defined component equation relations.  We can simply define the
@@ -731,7 +740,7 @@ would be as follows:
 ```
 Define wpd_Expr__host : nt_Expr -> node_tree -> prop by
   wpd_Expr__host (prod_num N) (ntr_Expr Node []) :=
-     wpd_node_Expr (prod_nm N) (ntr_Expr Node []);
+     wpd_node_Expr (prod_num N) (ntr_Expr Node []);
   wpd_Expr__host (prod_plus E1 E2) (ntr_Expr Node [E1Ntr, E2Ntr]) :=
      wpd_node_Expr (prod_plus E1 E2) (ntr_Expr Node [E1Ntr, E2Ntr]) /\
      wpd_Expr E1 E1Ntr /\
