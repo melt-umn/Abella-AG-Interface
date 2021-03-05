@@ -139,11 +139,11 @@ Either<String [ProofCommand]> ::=
   
   local name_Assert::String = "$Assert_" ++ toString(genInt());
   local name_IH::String = "$IH_" ++ toString(genInt());
-  local name_H1::String = "$H1_" ++ toString(genInt());
-  local name_H2::String = "$H2_" ++ toString(genInt());
-  local name_H3::String = "$H3_" ++ toString(genInt());
-  local name_H4::String = "$H4_" ++ toString(genInt());
-  local name_H5::String = "$H5_" ++ toString(genInt());
+  local name_H1::String = "$H1_" ++ toString(genInt()) ++ "a";
+  local name_H2::String = "$H2_" ++ toString(genInt()) ++ "b";
+  local name_H3::String = "$H3_" ++ toString(genInt()) ++ "c";
+  local name_H4::String = "$H4_" ++ toString(genInt()) ++ "d";
+  local name_H5::String = "$H5_" ++ toString(genInt()) ++ "e";
 
   --The appropriate subrelation is either in the first argument with
   --is_list or as an argument under args
@@ -202,7 +202,7 @@ Either<String [ProofCommand]> ::=
          --Subgoal 2
          caseTactic(nameHint(name_H5), name_H3, false),
          applyTactic(noHint(), nothing(), clearable(false, name_IH, []),
-                     [hypApplyArg(name_H1, []), hypApplyArg(name_H2, []),
+                     [hypApplyArg(name_H4 ++ "1", []), hypApplyArg(name_H2, []),
                       hypApplyArg(name_H5, [])], []),
          searchTactic(),
        --End assertion proof

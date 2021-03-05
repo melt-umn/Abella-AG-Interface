@@ -6,6 +6,6 @@ nonterminal Error with pp;
 abstract production errorMsg
 top::Error ::= msg::String
 {
-  top.pp = msg;
+  top.pp = "Error:  " ++ msg;
 }
 
