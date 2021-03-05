@@ -144,7 +144,7 @@ top::Metaterm ::= b::Binder bindings::[Pair<String Maybe<Type>>] body::Metaterm
       | _::otherScopes -> otherScopes
       end;
 
-  top.errors :=
+  top.errors <-
      --check for names bound here with empty lists
      case body.boundVarsOut of
      | [] -> error("We lost a scope somewhere (bindingMetaterm production)")
@@ -482,7 +482,7 @@ top::Term ::= treename::String attr::String
 
   top.boundVarsOut = replaceAssociatedScopes(treename, just(possibleTys), top.boundVars);
 
-  top.errors :=
+  top.errors <-
       --check whether the attribute exists
       case findAssociated(attr, top.attrOccurrences) of
       | just(tys) -> []

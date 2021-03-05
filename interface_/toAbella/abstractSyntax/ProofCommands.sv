@@ -5,7 +5,8 @@ grammar interface_:toAbella:abstractSyntax;
 
 nonterminal ProofCommand with
    pp, --pp should end with two spaces
-   translation<[ProofCommand]>, attrOccurrences,
+   translation<[ProofCommand]>, attrOccurrences, hypList,
+   errors,
    isQuit, isDebug;
 
 
@@ -55,7 +56,7 @@ top::ProofCommand ::= names::[String]
        | [] ->
          error("Should not reach here; introsTactic production")
        | [a] -> a
-       | a::rest -> a ++ ", " ++ buildNames(rest)
+       | a::rest -> a ++ " " ++ buildNames(rest)
        end;
   local namesString::String =
      if null(names)
@@ -105,8 +106,39 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> theorem::Clearable args::[A
      else "with " ++ buildWiths(withs);
   top.pp = h.pp ++ "apply " ++ depthString ++ theorem.pp ++ argsString ++ withsString ++ ".  ";
 
+  top.errors <-
+      case theorem of
+      | clearable(_, "is_list_member", _) ->
+        case theorem__is_list_member(h, depth, args, withs, top.hypList) of
+        | right(prf) -> []
+        | left(err) -> [errorMsg(err)]
+        end
+      | clearable(_, "is_list_append", _) ->
+        case theorem__is_list_append(h, depth, args, withs, top.hypList) of
+        | right(prf) -> []
+        | left(err) -> [errorMsg(err)]
+        end
+      | _ -> []
+      end;
+
   top.translation = --error("Translation not done in applyTactic yet");
-      [applyTactic(h, depth, theorem, args, map(\ p::Pair<String Term> -> pair(p.fst, p.snd.translation), withs))];
+      case theorem of
+      | clearable(_, "is_list_member", _) ->
+        case theorem__is_list_member(h, depth, args, withs, top.hypList) of
+        | right(prf) -> prf
+        | left(err) ->
+          error("Should not access translation with errors (applyTactic is_list_member)")
+        end
+      | clearable(_, "is_list_append", _) ->
+        case theorem__is_list_append(h, depth, args, withs, top.hypList) of
+        | right(prf) -> prf
+        | left(err) ->
+          error("Should not access translation with errors (applyTactic is_list_append)")
+        end
+      | _ ->
+        [applyTactic(h, depth, theorem, args,
+              map(\ p::Pair<String Term> -> pair(p.fst, p.snd.translation), withs))]
+      end;
 }
 
 
@@ -451,7 +483,9 @@ top::Clearable ::= star::Boolean hyp::String instantiation::[Type]
 
 
 
-nonterminal ApplyArg with pp;
+nonterminal ApplyArg with
+   pp,
+   name;
 
 abstract production hypApplyArg
 top::ApplyArg ::= hyp::String instantiation::[Type]
@@ -462,6 +496,8 @@ top::ApplyArg ::= hyp::String instantiation::[Type]
      else "[" ++ foldr1(\a::String b::String -> a ++ ", " ++ b,
                         map((.pp), instantiation)) ++ "]";
   top.pp = hyp ++ instString;
+
+  top.name = hyp;
 }
 
 abstract production starApplyArg
@@ -473,6 +509,8 @@ top::ApplyArg ::= name::String instantiation::[Type]
      else "[" ++ foldr1(\a::String b::String -> a ++ ", " ++ b,
                         map((.pp), instantiation)) ++ "]";
   top.pp = "*" ++ name ++ instString;
+
+  top.name = name;
 }
 
 

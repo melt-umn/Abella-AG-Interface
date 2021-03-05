@@ -17,8 +17,7 @@ propagate newPremises on Metaterm, Term, TermList, ListContents
 
 
 monoid attribute errors::[Error] with [], ++;
-propagate errors on Metaterm, Term, TermList, ListContents
-   excluding bindingMetaterm, attrAccessTerm;
+propagate errors on Metaterm, Term, TermList, ListContents, ProofCommand, TopCommand;
 
 
 
@@ -46,6 +45,10 @@ synthesized attribute boundVarsOut::[[Pair<String Maybe<[Type]>>]];
 autocopy attribute attrOccurrences::[Pair<String [Type]>];
 
 
+--The hypotheses in the current context (name and term)
+inherited attribute hypList::[Pair<String Metaterm>];
+
+
 
 --Check for equality
 inherited attribute eqTest<a>::a;
@@ -58,4 +61,9 @@ synthesized attribute isQuit::Boolean;
 
 --Check if a command is setting debug, and the value for it if so
 synthesized attribute isDebug::Pair<Boolean Boolean>;
+
+
+
+--Name of a hypothesis given as an argument
+synthesized attribute name::String;
 

@@ -6,7 +6,7 @@ grammar interface_:fromAbella:abstractSyntax;
 nonterminal ProofState with
    pp,
    translation<ProofState>,
-   inProof;
+   inProof, hypList;
 
 abstract production proofInProgress
 top::ProofState ::= subgoalNum::[Integer] currGoal::CurrentGoal futureGoals::[Subgoal]
@@ -24,6 +24,7 @@ top::ProofState ::= subgoalNum::[Integer] currGoal::CurrentGoal futureGoals::[Su
                                     map(\ a::Subgoal -> a.translation, futureGoals));
 
   top.inProof = true;
+  top.hypList = currGoal.hypList;
 }
 
 
@@ -35,6 +36,7 @@ top::ProofState ::=
   top.translation = noProof();
 
   top.inProof = false;
+  top.hypList = [];
 }
 
 
@@ -43,7 +45,8 @@ top::ProofState ::=
 
 nonterminal Hypothesis with
    pp,
-   translation<Hypothesis>;
+   translation<Hypothesis>,
+   hypList;
 
 abstract production metatermHyp
 top::Hypothesis ::= name::String body::Metaterm
@@ -51,19 +54,21 @@ top::Hypothesis ::= name::String body::Metaterm
   top.pp = name ++ " : " ++ body.pp;
 
   top.translation =
-      if body.shouldHide
+      if body.shouldHide || startsWith("$", name)
       then hiddenHypothesis(name, body)
       else metatermHyp(name, body.translation);
+
+  top.hypList = [(name, new(body))];
 }
 
-
+{-Going to disallow this, at least for now.
 abstract production abbreviatedHyp
 top::Hypothesis ::= name::String body::String
 {
   top.pp = name ++ " : " ++ body;
 
   top.translation = abbreviatedHyp(name, body);
-}
+}-}
 
 
 
@@ -72,7 +77,8 @@ top::Hypothesis ::= name::String body::String
 --A context is the hypotheses available for proving the current goal
 nonterminal Context with
    pp,
-   translation<Context>;
+   translation<Context>,
+   hypList;
 
 abstract production emptyContext
 top::Context ::=
@@ -80,6 +86,8 @@ top::Context ::=
   top.pp = "";
 
   top.translation = emptyContext();
+
+  top.hypList = [];
 }
 
 
@@ -90,6 +98,8 @@ top::Context ::= h::Hypothesis
   top.pp = if h.pp == "" then "" else h.pp ++ "\n";
 
   top.translation = singleContext(h.translation);
+
+  top.hypList = h.hypList;
 }
 
 
@@ -99,6 +109,8 @@ top::Context ::= c1::Context c2::Context
   top.pp = c1.pp ++ c2.pp;
 
   top.translation = branchContext(c1.translation, c2.translation);
+
+  top.hypList = c1.hypList ++ c2.hypList;
 }
 
 
@@ -107,7 +119,8 @@ top::Context ::= c1::Context c2::Context
 
 nonterminal CurrentGoal with
    pp,
-   translation<CurrentGoal>;
+   translation<CurrentGoal>,
+   hypList;
 
 abstract production currentGoal
 top::CurrentGoal ::= vars::[String] ctx::Context goal::Metaterm
@@ -126,6 +139,8 @@ top::CurrentGoal ::= vars::[String] ctx::Context goal::Metaterm
   local cleanVars::[String] =
         filter(\ x::String -> x != "", map(cleanVariable, vars));
   top.translation = currentGoal(cleanVars, ctx.translation, goal.translation);
+
+  top.hypList = ctx.hypList;
 }
 
 function cleanVariable

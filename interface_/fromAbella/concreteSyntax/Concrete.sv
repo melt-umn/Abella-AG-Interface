@@ -111,6 +111,8 @@ concrete productions top::CurrentSubgoal_c
 concrete productions top::MoreSubgoals_c
 |
   { top.ast = []; }
+| 'Subgoal' 'is' ':' g::Metaterm_c
+  { top.ast = [subgoal([1], g.ast)]; }
 | 'Subgoal' num::SubgoalNum_c 'is' ':' g::Metaterm_c rest::MoreSubgoals_c
   { top.ast = [subgoal(num.ast, g.ast)] ++ rest.ast; }
 | num::Number_t 'other subgoals.'

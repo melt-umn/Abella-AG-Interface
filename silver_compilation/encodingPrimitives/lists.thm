@@ -36,3 +36,40 @@ induction on 1. intros. case H1.
   %Subgoal 2
    case H2. apply IH to H3 H4. search.
 
+
+
+
+/*
+  These are temporary, and simply used for building the proof schemas
+  to ensure they are correct.  We will actually build these into the
+  theorem prover, so when a script says to apply one of these
+  theorems, it asserts it and builds the proof there for the
+  appropriate subrelation.
+
+  We want to name all the hypotheses we use, since we are going to
+  replace them with generated names in the assert proofs to avoid
+  conflicts with other hypotheses which exist.
+
+  If these show up in this file in git, it is a mistake.
+*/
+/*
+Type subrel   A -> prop.
+
+%is_list_member : forall SubRel L E, is_list SubRel L -> member E L -> SubRel E
+Theorem is_list_member[A] : forall (L : list A) E,
+  is_list subrel L -> member E L -> subrel E.
+$IH : induction on 1. intros $H1 $H2. $H3 : case $H1.
+  case $H2.
+  $H4 : case $H2.
+    search.
+    backchain $IH.
+
+%is_list_append : forall SubRel L1 L2 L3,
+%  is_list SubRel L1 -> is_list SubRel L2 -> L1 ++ L2 = L3 -> is_list SubRel L3
+Theorem is_list_append[A] : forall (L1 L2 L3 : list A),
+  is_list subrel L1 -> is_list subrel L2 -> $append L1 L2 L3 ->
+  is_list subrel L3.
+$IH : induction on 1. intros $H1 $H2 $H3. $H4 : case $H1.
+  case $H3. search.
+  $H5 : case $H3. apply $IH to $H1 $H2 $H5. search.
+*/

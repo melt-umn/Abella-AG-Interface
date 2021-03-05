@@ -4,3 +4,37 @@ Kind $pair   type -> type -> type.
 Type $pair_c   A -> B -> $pair A B.
 
 
+Define is_pair : (A -> prop) -> (B -> prop) -> ($pair A B) -> prop by
+  is_pair SubRelA SubRelB ($pair_c A B) :=
+     SubRelA A /\ SubRelB B.
+
+
+
+
+/*
+  These are temporary, and simply used for building the proof schemas
+  to ensure they are correct.  We will actually build these into the
+  theorem prover, so when a script says to apply one of these
+  theorems, it asserts it and builds the proof there for the
+  appropriate subrelation.
+
+  We want to name all the hypotheses we use, since we are going to
+  replace them with generated names in the assert proofs to avoid
+  conflicts with other hypotheses which exist.
+
+  If these show up in this file in git, it is a mistake.
+*/
+
+Type subrelA   A -> prop.
+Type subrelB   B -> prop.
+
+
+%is_pair : forall SubRelA SubRelB A B, is_pair SubRelA SubRelB (A, B) ->
+%  SubRelA A /\ SubRelB B
+Theorem is_pair_elements[A, B] : forall (A : A) (B : B),
+  is_pair subrelA subrelB ($pair_c A B) ->
+  subrelA A /\ subrelB B.
+intros $H1. $H2 : case $H1. split.
+  search.
+  search.
+

@@ -7,6 +7,7 @@ nonterminal TopCommand with
    --pp should always end with a newline
    pp,
    translation<TopCommand>, attrOccurrences,
+   errors,
    isQuit, isDebug;
 
 
