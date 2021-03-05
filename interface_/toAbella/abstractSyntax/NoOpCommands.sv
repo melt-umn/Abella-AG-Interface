@@ -7,6 +7,7 @@ nonterminal NoOpCommand with
    --pp should always end with a newline
    pp,
    translation<NoOpCommand>,
+   errors, sendCommand, ownOutput,
    isQuit, isDebug;
 
 --because we only intend to pass these through to Abella, we don't
@@ -20,9 +21,23 @@ top::NoOpCommand ::= opt::String val::String
   top.translation = setCommand(opt, val);
 
   top.isQuit = false;
-  --We'll be lazy and let anything with debug other than "on" be equivalent to "off"
-  --Since users shouldn't be using this option, it's fine to be sloppy with it
-  top.isDebug = pair(opt == "debug", val == "on");
+  top.isDebug = pair(opt == "debug" && (val == "on" || val == "off"), val == "on");
+
+  top.errors <-
+      if opt == "debug"
+      then if (val == "on" || val == "off")
+           then []
+           else [errorMsg("Unknown value '" ++ val ++
+                          "' for key \"debug\"; expected 'on' or 'off'")]
+      else [];
+
+  top.sendCommand = opt != "debug";
+  top.ownOutput =
+      if opt == "debug"
+      then if val == "on" || val == "off"
+           then "Turning debug " ++ val ++ ".\n"
+           else errors_to_string(top.errors)
+      else errors_to_string(top.errors);
 }
 
 
@@ -35,6 +50,9 @@ top::NoOpCommand ::= theoremName::String
 
   top.isQuit = false;
   top.isDebug = pair(false, false);
+
+  top.sendCommand = true;
+  top.ownOutput = "";
 }
 
 
@@ -47,6 +65,9 @@ top::NoOpCommand ::=
 
   top.isQuit = true;
   top.isDebug = pair(false, false);
+
+  top.sendCommand = true;
+  top.ownOutput = "";
 }
 
 
@@ -64,6 +85,9 @@ top::NoOpCommand ::= n::Integer
 
   top.isQuit = false;
   top.isDebug = pair(false, false);
+
+  top.sendCommand = true;
+  top.ownOutput = "";
 }
 
 
@@ -78,5 +102,8 @@ top::NoOpCommand ::=
 
   top.isQuit = false;
   top.isDebug = pair(false, false);
+
+  top.sendCommand = true;
+  top.ownOutput = "";
 }
 

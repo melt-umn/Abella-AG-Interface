@@ -77,10 +77,6 @@ IOVal<Integer> ::=
   proof_a.attrOccurrences = attrOccurrences;
   proof_a.hypList = state.hypList;
   local proof_a_trans::[ProofCommand] = proof_a.translation;
-  local cmdErrors::[Error] =
-        if state.inProof
-        then proof_a.errors
-        else top_a.errors;
   local is_blank::Boolean = isSpace(input);
   local output_command::String =
         if state.inProof
@@ -96,17 +92,11 @@ IOVal<Integer> ::=
         then false
         else if state.inProof
              then if proof_result.parseSuccess
-                  then --Set our own debug option
-                       !proof_a.isDebug.fst &&
-                       --No errors
-                       null(cmdErrors)
+                  then proof_a.sendCommand
                   else --Nothing to send if we can't parse it
                        false
              else if top_result.parseSuccess
-                  then --Set our own debug option
-                       !top_a.isDebug.fst &&
-                       --No errors
-                       null(cmdErrors)
+                  then top_a.sendCommand
                   else --Nothing to send if we can't parse it
                        false;
   --an error or message based on our own checking
@@ -115,16 +105,12 @@ IOVal<Integer> ::=
         then ""
         else if state.inProof
              then if proof_result.parseSuccess
-                  then if null(cmdErrors)
-                       then ""
-                       else foldr(\ e::Error rest::String -> e.pp ++ "\n" ++ rest, "", cmdErrors)
+                  then proof_a.ownOutput
                   else if top_result.parseSuccess
                        then "Error:  Cannot use top commands in a proof\n\n"
                        else "Error:  Could not parse:\n" ++ proof_result.parseErrors --not an actual command
              else if top_result.parseSuccess
-                  then if null(cmdErrors)
-                       then ""
-                       else foldr(\ e::Error rest::String -> e.pp ++ "\n" ++ rest, "", cmdErrors)
+                  then top_a.ownOutput
                   else if proof_result.parseSuccess
                        then "Error:  Cannot use proof commands outside a proof\n\n"
                        else "Error:  Could not parse:\n" ++ top_result.parseErrors; --not an actual command

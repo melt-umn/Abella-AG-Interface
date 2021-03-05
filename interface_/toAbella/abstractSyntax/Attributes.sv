@@ -17,7 +17,14 @@ propagate newPremises on Metaterm, Term, TermList, ListContents
 
 
 monoid attribute errors::[Error] with [], ++;
-propagate errors on Metaterm, Term, TermList, ListContents, ProofCommand, TopCommand;
+propagate errors on Metaterm, Term, TermList, ListContents,
+                    ProofCommand, TopCommand, NoOpCommand;
+
+--Whether a command is something to be sent to Abella, or handled internally
+synthesized attribute sendCommand::Boolean;
+
+--Our own output, to show the user in the case we shouldn't send to Abella
+synthesized attribute ownOutput::String;
 
 
 

@@ -6,7 +6,7 @@ grammar interface_:toAbella:abstractSyntax;
 nonterminal ProofCommand with
    pp, --pp should end with two spaces
    translation<[ProofCommand]>, attrOccurrences, hypList,
-   errors,
+   errors, sendCommand, ownOutput,
    isQuit, isDebug;
 
 
@@ -17,6 +17,11 @@ top::ProofCommand ::=
   --the only quits and debug setters are no-op commands
   top.isQuit = false;
   top.isDebug = pair(false, false);
+
+  --Most things only care about errors for sending
+  --If it has something more than errors to care about, it can set it
+  top.sendCommand = null(top.errors);
+  top.ownOutput = errors_to_string(top.errors);
 }
 
 
@@ -459,6 +464,9 @@ top::ProofCommand ::= n::NoOpCommand
 
   top.isQuit = n.isQuit;
   top.isDebug = n.isDebug;
+
+  top.sendCommand = n.sendCommand;
+  top.ownOutput = n.ownOutput;
 }
 
 

@@ -7,7 +7,7 @@ nonterminal TopCommand with
    --pp should always end with a newline
    pp,
    translation<TopCommand>, attrOccurrences,
-   errors,
+   errors, sendCommand, ownOutput,
    isQuit, isDebug;
 
 
@@ -18,6 +18,11 @@ top::TopCommand ::=
   --the only quits and debug setters are no-op commands
   top.isQuit = false;
   top.isDebug = pair(false, false);
+
+  --Most things only care about errors for sending
+  --If it has something more than errors to care about, it can set it
+  top.sendCommand = null(top.errors);
+  top.ownOutput = errors_to_string(top.errors);
 }
 
 
@@ -123,10 +128,17 @@ top::TopCommand ::= importFile::String withs::[Pair<String String>]
         ["bools", "integers", "integer_addition", "integer_multiplication",
          "integer_division", "integer_comparison", "lists", "pairs",
          "strings", "attr_val"];
+  local readFilename::String = importFile ++ ".thm";
+  local fileExists::Boolean = isFile(readFilename, unsafeIO()).iovalue;
   top.translation =
       if contains(fileNameInFilePath(importFile), libraryFiles)
       then importCommand(importFile, withs)
       else textCommand(readFile(importFile ++ ".thm", unsafeIO()).iovalue);
+
+  top.errors <-
+      if fileExists
+      then []
+      else [errorMsg("File \"" ++ readFilename ++ "\" does not exist")];
 }
 
 
@@ -234,6 +246,9 @@ top::TopCommand ::= n::NoOpCommand
 
   top.isQuit = n.isQuit;
   top.isDebug = n.isDebug;
+
+  top.sendCommand = n.sendCommand;
+  top.ownOutput = n.ownOutput;
 }
 
 
