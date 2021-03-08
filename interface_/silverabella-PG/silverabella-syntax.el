@@ -37,17 +37,17 @@
   '(
     ;;The actual proof commands
     ;; apply | assert | backchain | case | clear | induction | intros | left |
-    ;; rename | right | search | skip | split | split* | unfold |
+    ;; rename | right | search | split | split* | unfold |
     ;; witness | exists
-    ("\\(apply\\)\\|\\(assert\\)\\|\\(backchain\\)\\|\\(case\\)\\|\\(clear\\)\\|\\(induction\\)\\|\\(intros\\)\\|\\(left\\)\\|\\(rename\\)\\|\\(right\\)\\|\\(search\\)\\|\\(skip\\)\\|\\(split\\)\\|\\(split*\\)\\|\\(unfold\\)\\|\\(witness\\)\\|\\(exists\\)"
+    ("\\(apply\\)\\|\\(assert\\)\\|\\(backchain\\)\\|\\(case\\)\\|\\(clear\\)\\|\\(induction\\)\\|\\(intros\\)\\|\\(left\\)\\|\\(rename\\)\\|\\(right\\)\\|\\(search\\)\\|\\(split\\)\\|\\(split*\\)\\|\\(unfold\\)\\|\\(witness\\)\\|\\(exists\\)"
      . font-lock-function-name-face)
     ;;Auxiliary words to go with them
     ;; keep | on | to
     ("\\(keep\\)\\|\\(on\\)\\|\\(to\\)"
      . font-lock-function-name-face)
     ;;Commands which we don't want to have appear
-    ;; abort | #back | #reset | undo
-    ("\\(abort\\)\\|\\(#back\\)\\|\\(#reset\\)\\|\\(undo\\)"
+    ;; skip | abort | #back | #reset | undo
+    ("\\(skip\\)\\|\\(abort\\)\\|\\(#back\\)\\|\\(#reset\\)\\|\\(undo\\)"
      . font-lock-warning-face)
     )
   )

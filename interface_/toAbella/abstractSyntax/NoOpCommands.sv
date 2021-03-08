@@ -8,8 +8,8 @@ nonterminal NoOpCommand with
    pp,
    translation<NoOpCommand>,
    errors, sendCommand, ownOutput, numCommandsSent,
-   isQuit, isDebug,
-   isUndo, undoListIn, undoListOut;
+   isQuit, isUndo,
+   stateListIn, stateListOut;
 
 --because we only intend to pass these through to Abella, we don't
 --   need to actually know anything about the option or its value
@@ -22,7 +22,7 @@ top::NoOpCommand ::= opt::String val::String
   top.translation = setCommand(opt, val);
 
   top.isQuit = false;
-  top.isDebug = pair(opt == "debug" && (val == "on" || val == "off"), val == "on");
+  top.isUndo = false;
 
   top.errors <-
       if opt == "debug"
@@ -41,8 +41,16 @@ top::NoOpCommand ::= opt::String val::String
       else "";
   top.numCommandsSent = if top.sendCommand then just(1) else just(0);
 
-  top.isUndo = false;
-  top.undoListOut = top.undoListIn;
+  local currentState::ProverState = head(top.stateListIn).snd;
+  top.stateListOut =
+      (case top.numCommandsSent of
+       | just(x) -> x
+       | nothing() -> -1
+       end,
+       proverState(currentState.state,
+                   if opt == "debug"
+                   then val == "on"
+                   else currentState.debug))::top.stateListIn;
 }
 
 
@@ -54,14 +62,13 @@ top::NoOpCommand ::= theoremName::String
   top.translation = showCommand(theoremName);
 
   top.isQuit = false;
-  top.isDebug = pair(false, false);
+  top.isUndo = false;
 
   top.sendCommand = true;
   top.ownOutput = "";
   top.numCommandsSent = just(1);
 
-  top.isUndo = false;
-  top.undoListOut = top.undoListIn;
+  top.stateListOut = (1, head(top.stateListIn).snd)::top.stateListIn;
 }
 
 
@@ -73,14 +80,13 @@ top::NoOpCommand ::=
   top.translation = quitCommand();
 
   top.isQuit = true;
-  top.isDebug = pair(false, false);
+  top.isUndo = false;
 
   top.sendCommand = true;
   top.ownOutput = "";
   top.numCommandsSent = just(1);
 
-  top.isUndo = false;
-  top.undoListOut = top.undoListIn;
+  top.stateListOut = (1, head(top.stateListIn).snd)::top.stateListIn;
 }
 
 
@@ -92,26 +98,25 @@ top::NoOpCommand ::= n::Integer
 
   local trans_n::Integer =
         foldr(\ p::(Integer, ProverState) i::Integer -> i + p.1,
-              0, take(n, top.undoListIn));
+              0, take(n, top.stateListIn));
   top.translation = backCommand(trans_n);
 
   top.errors <-
-      if length(top.undoListIn) < n
+      if length(top.stateListIn) < n
       then [errorMsg("Too many #back commands")]
       else if any(map(\ p::(Integer, ProverState) -> p.1 == -1,
-                      take(n, top.undoListIn)))
+                      take(n, top.stateListIn)))
            then [errorMsg("Can't undo that far")]
            else [];
 
   top.isQuit = false;
-  top.isDebug = pair(false, false);
+  top.isUndo = false;
 
   top.sendCommand = null(top.errors) && trans_n > 0;
   top.ownOutput = "";
   top.numCommandsSent = just(trans_n);
 
-  top.isUndo = true;
-  top.undoListOut = drop(n, top.undoListIn);
+  top.stateListOut = drop(n, top.stateListIn);
 }
 
 
@@ -121,17 +126,34 @@ top::NoOpCommand ::=
   top.pp = "#reset.\n";
 
   --I don't understand what this does, so I can't be sure about translating it
-  top.translation = --error("Translation not done in resetCommand yet");
-      resetCommand();
+  top.translation = error("Translation not done in resetCommand yet");
+      --resetCommand();
 
   top.isQuit = false;
-  top.isDebug = pair(false, false);
+  top.isUndo = false;
 
   top.sendCommand = true;
   top.ownOutput = "";
   top.numCommandsSent = just(1);
 
+  top.stateListOut = top.stateListIn;
+}
+
+
+abstract production showCurrentCommand
+top::NoOpCommand ::=
+{
+  top.pp = "Show $$current.\n";
+
+  top.translation = showCurrentCommand();
+
+  top.isQuit = false;
   top.isUndo = false;
-  top.undoListOut = top.undoListIn;
+
+  top.sendCommand = false;
+  top.ownOutput = head(top.stateListIn).snd.state.pp;
+  top.numCommandsSent = just(0);
+
+  top.stateListOut = top.stateListIn;
 }
 

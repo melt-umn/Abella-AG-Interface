@@ -10,9 +10,9 @@ grammar interface_:toAbella:abstractSyntax;
 nonterminal AnyCommand with
    pp,
    translation<String>, attrOccurrences, hypList, inProof,
-   isQuit, isDebug,
+   isQuit,
    sendCommand, ownOutput, numCommandsSent,
-   isUndo, undoListIn, undoListOut;
+   stateListIn, stateListOut, newProofState, wasError;
 
 
 abstract production anyTopCommand
@@ -23,7 +23,6 @@ top::AnyCommand ::= c::TopCommand
   top.translation = c.translation.pp;
 
   top.isQuit = false;
-  top.isDebug = (false, false);
 
   top.sendCommand =
       if top.inProof
@@ -43,8 +42,15 @@ top::AnyCommand ::= c::TopCommand
            end
       else just(0);
 
-  top.isUndo = false;
-  top.undoListOut = top.undoListIn;
+  top.stateListOut =
+      if top.wasError || top.inProof || !null(c.errors)
+      then top.stateListIn
+      else (case top.numCommandsSent of
+            | just(x) -> x
+            | nothing() -> -1
+            end, proverState(top.newProofState,
+                             head(top.stateListIn).snd.debug)
+           )::top.stateListIn;
 }
 
 
@@ -54,7 +60,6 @@ top::AnyCommand ::= c::ProofCommand
   top.pp = c.pp;
 
   top.isQuit = false;
-  top.isDebug = (false, false);
 
   c.hypList = top.hypList;
 
@@ -77,9 +82,18 @@ top::AnyCommand ::= c::ProofCommand
       then just(length(c.translation))
       else just(0);
 
-  top.isUndo = c.isUndo;
-  c.undoListIn = top.undoListIn;
-  top.undoListOut = c.undoListOut;
+  c.stateListIn = top.stateListIn;
+  top.stateListOut =
+      if top.wasError || !top.inProof || !null(c.errors)
+      then top.stateListIn
+      else if c.isUndo
+           then c.stateListOut
+           else (case top.numCommandsSent of
+                 | just(x) -> x
+                 | nothing() -> -1
+                 end, proverState(top.newProofState,
+                                  head(top.stateListIn).snd.debug)
+                )::top.stateListIn;
 }
 
 
@@ -91,7 +105,6 @@ top::AnyCommand ::= c::NoOpCommand
   top.translation = c.translation.pp;
 
   top.isQuit = c.isQuit;
-  top.isDebug = c.isDebug;
 
   top.sendCommand = null(c.errors) && c.sendCommand;
   top.ownOutput =
@@ -103,8 +116,28 @@ top::AnyCommand ::= c::NoOpCommand
       then c.numCommandsSent
       else just(0);
 
-  top.isUndo = c.isUndo;
-  c.undoListIn = top.undoListIn;
-  top.undoListOut = c.undoListOut;
+  c.stateListIn = top.stateListIn;
+  top.stateListOut =
+      if top.wasError || !null(c.errors)
+      then top.stateListIn
+      else c.stateListOut;
+}
+
+
+--Putting this in a production simplifies the run_step function
+abstract production anyParseFailure
+top::AnyCommand ::= parseErrors::String
+{
+  top.pp = "";
+
+  top.translation = error("Should not translate anyParseFailure");
+
+  top.isQuit = false;
+
+  top.sendCommand = false;
+  top.ownOutput = "Error:  Could not parse:\n" ++ parseErrors;
+  top.numCommandsSent = just(0);
+
+  top.stateListOut = top.stateListIn;
 }
 

@@ -67,22 +67,22 @@ IOVal<Integer> ::=
   --Translate command
   ----------------------------
   local result::ParseResult<AnyCommand_c> = cmd_parse(input, "<<input>>");
-  local any_a::AnyCommand = result.parseTree.ast;
+  local any_a::AnyCommand =
+        if result.parseSuccess
+        then result.parseTree.ast
+        else anyParseFailure(result.parseErrors);
   any_a.attrOccurrences = attrOccurrences;
   any_a.hypList = state.hypList;
   any_a.inProof = state.inProof;
-  any_a.undoListIn = stateList;
+  any_a.stateListIn = stateList;
   local is_blank::Boolean = isSpace(input);
   --whether we have an actual command to send to Abella
-  local speak_to_abella::Boolean =
-        !is_blank && result.parseSuccess && any_a.sendCommand;
+  local speak_to_abella::Boolean = !is_blank && any_a.sendCommand;
   --an error or message based on our own checking
   local our_own_output::String =
         if is_blank
         then ""
-        else if result.parseSuccess
-             then any_a.ownOutput
-             else "Error:  Could not parse:\n" ++ result.parseErrors;
+        else any_a.ownOutput;
   --Send to abella
   ----------------------------
   local debug_output::IO =
@@ -95,9 +95,6 @@ IOVal<Integer> ::=
         if speak_to_abella
         then sendToProcess(abella, any_a.translation, debug_output)
         else debug_output;
-
-
-  local should_exit::Boolean = result.parseSuccess && any_a.isQuit;
 
 
   {-
@@ -120,27 +117,11 @@ IOVal<Integer> ::=
   local full_result::ParseResult<FullDisplay_c> =
         from_parse(back_from_abella.iovalue, "<<output>>");
   local full_a::FullDisplay = full_result.parseTree.ast;
-  local new_proof_state::ProofState =
+  any_a.wasError =
         if speak_to_abella
-        then if full_result.parseSuccess
-             then full_a.proof
-             else state
-        else state;
-  local new_debug::Boolean =
-        if result.parseSuccess && any_a.isDebug.fst
-        then any_a.isDebug.snd
-        else debug;
-  local new_stateList::[(Integer, ProverState)] =
-        if any_a.isUndo
-        then any_a.undoListOut
-        else if speak_to_abella
-             then if any_a.isDebug.fst
-                  then any_a.undoListOut
-                  else (case any_a.numCommandsSent of
-                        | just(x) -> x
-                        | nothing() -> -1 --will not be undoable
-                        end, proverState(new_proof_state, new_debug))::stateList
-             else (0, proverState(state, new_debug))::stateList;
+        then !full_result.parseSuccess || full_a.isError
+        else false;
+  any_a.newProofState = full_a.proof;
   --Show to user
   ----------------------------
   local output_output::String =
@@ -170,11 +151,11 @@ IOVal<Integer> ::=
     RUN REPL AGAIN
   -}
   local again::IOVal<Integer> =
-        run_step(new_stateList, attrOccurrences,
+        run_step(any_a.stateListOut, attrOccurrences,
                  abella, printed_output);
 
 
-  return if should_exit
+  return if any_a.isQuit
          then ioval(exit_message, 0)
          else again;
 }

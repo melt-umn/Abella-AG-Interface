@@ -7,18 +7,13 @@ nonterminal TopCommand with
    --pp should always end with a newline
    pp,
    translation<TopCommand>, attrOccurrences,
-   errors, sendCommand, ownOutput,
-   isQuit, isDebug;
+   errors, sendCommand, ownOutput;
 
 
 
 aspect default production
 top::TopCommand ::=
 {
-  --the only quits and debug setters are no-op commands
-  top.isQuit = false;
-  top.isDebug = pair(false, false);
-
   top.sendCommand = true;
   top.ownOutput = "";
 }

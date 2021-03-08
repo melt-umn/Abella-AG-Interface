@@ -7,24 +7,20 @@ nonterminal ProofCommand with
    pp, --pp should end with two spaces
    translation<[ProofCommand]>, attrOccurrences, hypList,
    errors, sendCommand, ownOutput,
-   isQuit, isDebug,
-   isUndo, undoListIn, undoListOut;
+   isUndo,
+   stateListIn, stateListOut;
 
 
 
 aspect default production
 top::ProofCommand ::=
 {
-  --the only quits and debug setters are no-op commands
-  top.isQuit = false;
-  top.isDebug = pair(false, false);
-
   top.sendCommand = true;
   top.ownOutput = "";
 
   --Only 'undo' is an undo
   top.isUndo = false;
-  top.undoListOut = top.undoListIn;
+  top.stateListOut = top.stateListIn;
 }
 
 
@@ -348,19 +344,19 @@ top::ProofCommand ::=
     we should undo them all.
   -}
   top.translation = --error("Translation not done in undoTactic yet");
-      repeat(undoCommand(), head(top.undoListIn).fst);
+      repeat(undoCommand(), head(top.stateListIn).fst);
 
   top.errors <-
-      if head(top.undoListIn).fst == -1
+      if head(top.stateListIn).fst == -1
       then [errorMsg("Can't undo command")]
       else [];
 
   top.isUndo = true;
-  top.undoListOut =
-      if length(top.undoListIn) == 0
+  top.stateListOut =
+      if length(top.stateListIn) == 0
       then --We shouldn't ever have nothing in the undo list
-        error("Empty undoListIn (undoCommand)")
-      else tail(top.undoListIn);
+        error("Empty stateListIn (undoCommand)")
+      else tail(top.stateListIn);
 }
 
 

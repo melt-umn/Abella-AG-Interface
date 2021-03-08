@@ -174,12 +174,12 @@ concrete productions top::CommonCommand_c
   { top.ast = showCommand(name.lexeme); }
 | 'Quit' '.'
   { top.ast = quitCommand(); }
---Proof General will send a bunch of these at once
---We might be able to change that
-| b::Backs_c --'#back' '.'
+| b::Backs_c
   { top.ast = backCommand(b.ast); }
 | '#reset' '.'
   { top.ast = resetCommand(); }
+| 'Show $$current.'
+  { top.ast = showCurrentCommand(); }
 
 
 nonterminal Backs_c with ast<Integer>;

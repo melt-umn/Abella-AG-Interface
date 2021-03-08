@@ -30,13 +30,16 @@ synthesized attribute ownOutput::String;
 synthesized attribute numCommandsSent::Maybe<Integer>;
 
 
---We let commands determine whether and what to undo
-synthesized attribute isUndo::Boolean;
 
---undoListOut has the correct number of things removed from the front
---The state at the head of the list is the new current state after undoing
-inherited attribute undoListIn::[(Integer, ProverState)];
-synthesized attribute undoListOut::[(Integer, ProverState)];
+--State list before the command
+inherited attribute stateListIn::[(Integer, ProverState)];
+--State list after the command
+synthesized attribute stateListOut::[(Integer, ProverState)];
+
+--The new proof state read back from Abella
+inherited attribute newProofState::ProofState;
+--If Abella gave an error on the translation of this command
+inherited attribute wasError::Boolean;
 
 
 
@@ -81,8 +84,8 @@ synthesized attribute isEq::Boolean;
 --Check if a command is a command for quitting
 synthesized attribute isQuit::Boolean;
 
---Check if a command is setting debug, and the value for it if so
-synthesized attribute isDebug::Pair<Boolean Boolean>;
+--We let commands determine whether and what to undo
+synthesized attribute isUndo::Boolean;
 
 
 
