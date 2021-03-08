@@ -22,33 +22,29 @@ Pair<String String> ::= a::AttrAccess_t
 
 
 
-nonterminal Command_c with ast<ProofCommand>;
+--nonterminal Command_c with ast<ProofCommand>;
 nonterminal PureCommand_c with ast<ProofCommand>;
-nonterminal TopCommand_c with ast<TopCommand>;
+--nonterminal TopCommand_c with ast<TopCommand>;
 nonterminal CommonCommand_c with ast<NoOpCommand>;
 nonterminal PureTopCommand_c with ast<TopCommand>;
 
 
-{-This appears to be useless, but it might end up being useful in
-  ProofGeneral, so I'll hold onto it in a comment.
-
-nonterminal AnyCommand_c;
+nonterminal AnyCommand_c with ast<AnyCommand>;
 concrete productions top::AnyCommand_c
 | c::PureTopCommand_c
-{ }
+  { top.ast = anyTopCommand(c.ast); }
 | c::PureCommand_c
-{ }
+  { top.ast = anyProofCommand(c.ast); }
 | c::CommonCommand_c
-{ }
--}
+  { top.ast = anyNoOpCommand(c.ast); }
 
-
+{-
 concrete productions top::Command_c
 | p::PureCommand_c
   { top.ast = p.ast; }
 | c::CommonCommand_c
   { top.ast = proofNoOpCommand(c.ast); }
-
+-}
 
 concrete productions top::PureCommand_c
 | h::HHint_c 'induction' 'on' nl::NumList_c '.'
@@ -132,13 +128,13 @@ concrete productions top::PureCommand_c
 | 'permute' p::Perm_c h::Hyp_c '.'
   { top.ast = permuteTactic(p.ast, just(h.ast)); }
 
-
+{-
 concrete productions top::TopCommand_c
 | p::PureTopCommand_c
   { top.ast = p.ast; }
 | c::CommonCommand_c
   { top.ast = topNoOpCommand(c.ast); }
-
+-}
 
 concrete productions top::PureTopCommand_c
 | 'Theorem' name::Id_t params::TheoremTyparams_c ':' body::Metaterm_c '.'

@@ -2,24 +2,14 @@ grammar interface_:fromAbella:abstractSyntax;
 
 
 
-
-nonterminal ProofState with
-   pp,
+attribute
    translation<ProofState>,
-   inProof, hypList;
+   inProof, hypList
+occurs on ProofState;
 
-abstract production proofInProgress
+aspect production proofInProgress
 top::ProofState ::= subgoalNum::[Integer] currGoal::CurrentGoal futureGoals::[Subgoal]
 {
-  local subgoalString::String =
-        if !(length(subgoalNum) == 1 && head(subgoalNum) == 0) --subgoalNum != [0]
-        then "Subgoal " ++ subgoalNumToString(subgoalNum) ++ ":\n"
-        else "";
-  local futureGoalsString::String =
-        foldr(\ a::Subgoal b::String -> a.pp ++ "\n\n" ++ b,
-              "", futureGoals);
-  top.pp = subgoalString ++ "\n" ++ currGoal.pp ++ "\n" ++ futureGoalsString;
-
   top.translation = proofInProgress(subgoalNum, currGoal.translation,
                                     map(\ a::Subgoal -> a.translation, futureGoals));
 
@@ -28,11 +18,9 @@ top::ProofState ::= subgoalNum::[Integer] currGoal::CurrentGoal futureGoals::[Su
 }
 
 
-abstract production noProof
+aspect production noProof
 top::ProofState ::=
 {
-  top.pp = "";
-
   top.translation = noProof();
 
   top.inProof = false;
@@ -43,16 +31,14 @@ top::ProofState ::=
 
 
 
-nonterminal Hypothesis with
-   pp,
+attribute
    translation<Hypothesis>,
-   hypList;
+   hypList
+occurs on Hypothesis;
 
-abstract production metatermHyp
+aspect production metatermHyp
 top::Hypothesis ::= name::String body::Metaterm
 {
-  top.pp = name ++ " : " ++ body.pp;
-
   top.translation =
       if body.shouldHide || startsWith("$", name)
       then hiddenHypothesis(name, body)
@@ -74,40 +60,32 @@ top::Hypothesis ::= name::String body::String
 
 
 
---A context is the hypotheses available for proving the current goal
-nonterminal Context with
-   pp,
+attribute
    translation<Context>,
-   hypList;
+   hypList
+occurs on Context;
 
-abstract production emptyContext
+aspect production emptyContext
 top::Context ::=
 {
-  top.pp = "";
-
   top.translation = emptyContext();
 
   top.hypList = [];
 }
 
 
-abstract production singleContext
+aspect production singleContext
 top::Context ::= h::Hypothesis
 {
-  --We don't want to put blank lines for hidden hypotheses
-  top.pp = if h.pp == "" then "" else h.pp ++ "\n";
-
   top.translation = singleContext(h.translation);
 
   top.hypList = h.hypList;
 }
 
 
-abstract production branchContext
+aspect production branchContext
 top::Context ::= c1::Context c2::Context
 {
-  top.pp = c1.pp ++ c2.pp;
-
   top.translation = branchContext(c1.translation, c2.translation);
 
   top.hypList = c1.hypList ++ c2.hypList;
@@ -117,19 +95,14 @@ top::Context ::= c1::Context c2::Context
 
 
 
-nonterminal CurrentGoal with
-   pp,
+attribute
    translation<CurrentGoal>,
-   hypList;
+   hypList
+occurs on CurrentGoal;
 
-abstract production currentGoal
+aspect production currentGoal
 top::CurrentGoal ::= vars::[String] ctx::Context goal::Metaterm
 {
-  local varsString::String =
-        if null(vars)
-        then ""
-        else "Variables: " ++ foldr1(\ x::String y::String -> x ++ " " ++ y, vars) ++ "\n";
-  top.pp = varsString ++ ctx.pp ++ "============================\n " ++ goal.pp ++ "\n";
 
   {-
     We assume all attributes are for trees which are listed in the
@@ -168,25 +141,20 @@ String ::= name::String
 
 
 
---A subgoal is a goal to proven in the future, after the current goal
-nonterminal Subgoal with
-   pp,
-   translation<Subgoal>;
+attribute
+   translation<Subgoal>
+occurs on Subgoal;
 
-abstract production subgoal
+aspect production subgoal
 top::Subgoal ::= num::[Integer] goal::Metaterm
 {
-  top.pp = "Subgoal " ++ subgoalNumToString(num) ++ " is:\n " ++ goal.pp;
-
   top.translation = subgoal(num, goal.translation);
 }
 
 
-abstract production hiddenSubgoals
+aspect production hiddenSubgoals
 top::Subgoal ::= num::Integer
 {
-  top.pp = toString(num) ++ " other subgoal" ++ (if num == 1 then "s." else ".");
-
   top.translation = hiddenSubgoals(num);
 }
 

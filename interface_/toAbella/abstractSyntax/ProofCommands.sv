@@ -7,7 +7,8 @@ nonterminal ProofCommand with
    pp, --pp should end with two spaces
    translation<[ProofCommand]>, attrOccurrences, hypList,
    errors, sendCommand, ownOutput,
-   isQuit, isDebug;
+   isQuit, isDebug,
+   isUndo, undoListIn, undoListOut;
 
 
 
@@ -18,10 +19,12 @@ top::ProofCommand ::=
   top.isQuit = false;
   top.isDebug = pair(false, false);
 
-  --Most things only care about errors for sending
-  --If it has something more than errors to care about, it can set it
-  top.sendCommand = null(top.errors);
-  top.ownOutput = errors_to_string(top.errors);
+  top.sendCommand = true;
+  top.ownOutput = "";
+
+  --Only 'undo' is an undo
+  top.isUndo = false;
+  top.undoListOut = top.undoListIn;
 }
 
 
@@ -345,7 +348,19 @@ top::ProofCommand ::=
     we should undo them all.
   -}
   top.translation = --error("Translation not done in undoTactic yet");
-      [undoCommand()];
+      repeat(undoCommand(), head(top.undoListIn).fst);
+
+  top.errors <-
+      if head(top.undoListIn).fst == -1
+      then [errorMsg("Can't undo command")]
+      else [];
+
+  top.isUndo = true;
+  top.undoListOut =
+      if length(top.undoListIn) == 0
+      then --We shouldn't ever have nothing in the undo list
+        error("Empty undoListIn (undoCommand)")
+      else tail(top.undoListIn);
 }
 
 
@@ -452,21 +467,6 @@ top::ProofCommand ::= all::Boolean
   top.pp = "unfold " ++ if all then "(all).  " else ".  ";
 
   top.translation = error("Translation not done in unfoldTactic yet");
-}
-
-
-abstract production proofNoOpCommand
-top::ProofCommand ::= n::NoOpCommand
-{
-  top.pp = n.pp;
-
-  top.translation = [proofNoOpCommand(n.translation)];
-
-  top.isQuit = n.isQuit;
-  top.isDebug = n.isDebug;
-
-  top.sendCommand = n.sendCommand;
-  top.ownOutput = n.ownOutput;
 }
 
 

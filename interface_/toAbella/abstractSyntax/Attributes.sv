@@ -26,6 +26,18 @@ synthesized attribute sendCommand::Boolean;
 --Our own output, to show the user in the case we shouldn't send to Abella
 synthesized attribute ownOutput::String;
 
+--Number of commands sent, or nothing() if it is the import problem
+synthesized attribute numCommandsSent::Maybe<Integer>;
+
+
+--We let commands determine whether and what to undo
+synthesized attribute isUndo::Boolean;
+
+--undoListOut has the correct number of things removed from the front
+--The state at the head of the list is the new current state after undoing
+inherited attribute undoListIn::[(Integer, ProverState)];
+synthesized attribute undoListOut::[(Integer, ProverState)];
+
 
 
 {-
@@ -54,6 +66,9 @@ autocopy attribute attrOccurrences::[Pair<String [Type]>];
 
 --The hypotheses in the current context (name and term)
 inherited attribute hypList::[Pair<String Metaterm>];
+
+--Whether we are currently in a proof or not
+inherited attribute inProof::Boolean;
 
 
 

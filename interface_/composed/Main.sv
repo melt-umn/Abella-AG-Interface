@@ -16,13 +16,7 @@ parser from_parse::FullDisplay_c
   interface_:fromAbella:concreteSyntax;
 }
 
-parser top_parse::TopCommand_c
-{
-  interface_:toAbella:concreteSyntax;
-}
-
-
-parser proof_parse::Command_c
+parser cmd_parse::AnyCommand_c
 {
   interface_:toAbella:concreteSyntax;
 }
@@ -37,7 +31,8 @@ IOVal<Integer> ::= largs::[String] ioin::IO
   --Abella outputs a welcome message, which we want to clean out
   local abella_initial_string::IOVal<String> =
         read_n_abella_outputs(just(1), abella.iovalue, abella.io);
-  return run_step(noProof(), [], false, [("a", [nameType("$nt_Term")])],
+  return run_step([(-1, proverState(noProof(), false))],
+                  [("a", [nameType("$nt_Term")])],
                   abella.iovalue, abella_initial_string.io);
 }
 
@@ -45,18 +40,22 @@ IOVal<Integer> ::= largs::[String] ioin::IO
 {--
   - Take input from the user, process it, send it through Abella, process the result, and output it.
   -
-  - @state  The current proof state
-  - @undolist  How many `undo` commands to issue to Abella for each of the user commands issued
-  - @debug  Whether to print out the input to and output from Abella for debugging
+  - @undolist  How many `undo` commands to issue to Abella for each of the user commands issued,
+  -            and the state of the prover after those commands were issued.  The current state
+  -            of the prover is the first element of the list.
+  - @attrOccurrences  What attributes we know and the types on which they occur
   - @abella  The process in which Abella is running
   - @ioin  The incoming IO token
   - @return  The resulting IO token and exit status
 -}
 function run_step
 IOVal<Integer> ::=
-   state::ProofState undolist::[Integer] debug::Boolean
+   stateList::[(Integer, ProverState)]
    attrOccurrences::[(String, [Type])] abella::ProcessHandle ioin::IO
 {
+  local state::ProofState = head(stateList).snd.state;
+  local debug::Boolean = head(stateList).snd.debug;
+
   {-
     PROCESS COMMAND
   -}
@@ -67,75 +66,38 @@ IOVal<Integer> ::=
   local input::String = stripExternalWhiteSpace(raw_input.iovalue);
   --Translate command
   ----------------------------
-  local top_result::ParseResult<TopCommand_c> = top_parse(input, "<<top input>>");
-  local top_c::TopCommand_c = top_result.parseTree;
-  local top_a::TopCommand = top_c.ast;
-  top_a.attrOccurrences = attrOccurrences;
-  local proof_result::ParseResult<Command_c> = proof_parse(input, "<<proof input>>");
-  local proof_c::Command_c = proof_result.parseTree;
-  local proof_a::ProofCommand = proof_c.ast;
-  proof_a.attrOccurrences = attrOccurrences;
-  proof_a.hypList = state.hypList;
-  local proof_a_trans::[ProofCommand] = proof_a.translation;
+  local result::ParseResult<AnyCommand_c> = cmd_parse(input, "<<input>>");
+  local any_a::AnyCommand = result.parseTree.ast;
+  any_a.attrOccurrences = attrOccurrences;
+  any_a.hypList = state.hypList;
+  any_a.inProof = state.inProof;
+  any_a.undoListIn = stateList;
   local is_blank::Boolean = isSpace(input);
-  local output_command::String =
-        if state.inProof
-        then if proof_result.parseSuccess
-             then implode("", map(\ p::ProofCommand -> p.pp, proof_a_trans)) ++ "\n"
-             else ""
-        else if top_result.parseSuccess
-             then top_a.translation.pp ++ "\n"
-             else "";
   --whether we have an actual command to send to Abella
   local speak_to_abella::Boolean =
-        if is_blank
-        then false
-        else if state.inProof
-             then if proof_result.parseSuccess
-                  then proof_a.sendCommand
-                  else --Nothing to send if we can't parse it
-                       false
-             else if top_result.parseSuccess
-                  then top_a.sendCommand
-                  else --Nothing to send if we can't parse it
-                       false;
+        !is_blank && result.parseSuccess && any_a.sendCommand;
   --an error or message based on our own checking
   local our_own_output::String =
         if is_blank
         then ""
-        else if state.inProof
-             then if proof_result.parseSuccess
-                  then proof_a.ownOutput
-                  else if top_result.parseSuccess
-                       then "Error:  Cannot use top commands in a proof\n\n"
-                       else "Error:  Could not parse:\n" ++ proof_result.parseErrors --not an actual command
-             else if top_result.parseSuccess
-                  then top_a.ownOutput
-                  else if proof_result.parseSuccess
-                       then "Error:  Cannot use proof commands outside a proof\n\n"
-                       else "Error:  Could not parse:\n" ++ top_result.parseErrors; --not an actual command
-  local num_commands_sent::Integer =
-        if state.inProof
-        then length(proof_a_trans)
-        else 1;
+        else if result.parseSuccess
+             then any_a.ownOutput
+             else "Error:  Could not parse:\n" ++ result.parseErrors;
   --Send to abella
   ----------------------------
   local debug_output::IO =
        if debug
        then if speak_to_abella
-            then print("Command sent:  " ++ output_command ++ "\n\n", raw_input.io)
+            then print("Command sent:  " ++ any_a.translation ++ "\n\n", raw_input.io)
             else print("Nothing to send to Abella\n\n", raw_input.io)
        else raw_input.io;
   local out_to_abella::IO =
         if speak_to_abella
-        then sendToProcess(abella, output_command, debug_output)
+        then sendToProcess(abella, any_a.translation, debug_output)
         else debug_output;
 
 
-  local should_exit::Boolean =
-        if state.inProof
-        then proof_result.parseSuccess && proof_a.isQuit
-        else top_result.parseSuccess && top_a.isQuit;
+  local should_exit::Boolean = result.parseSuccess && any_a.isQuit;
 
 
   {-
@@ -143,45 +105,42 @@ IOVal<Integer> ::=
   -}
   --Read output
   ----------------------------
-  local should_count::Maybe<Integer> =
-        if !state.inProof
-        then case top_a.translation of
-             | textCommand(_) -> nothing()
-             | _ -> just(num_commands_sent)
-             end
-        else just(num_commands_sent);
+  local should_count_outputs::Maybe<Integer> = any_a.numCommandsSent;
   local back_from_abella::IOVal<String> =
         if speak_to_abella
-        then read_n_abella_outputs(should_count, abella, out_to_abella)
+        then read_n_abella_outputs(should_count_outputs, abella, out_to_abella)
         else ioval(out_to_abella, "");
   local debug_back_output::IO =
         if debug && speak_to_abella
         then print("***** Read back from Abella: *****\n\n" ++ back_from_abella.iovalue ++
-               "\n\n***** End Abella output *****\n\n\n", back_from_abella.io)
+               "\n\n*****   End Abella output    *****\n\n\n", back_from_abella.io)
         else back_from_abella.io;
   --Translate output
   ----------------------------
   local full_result::ParseResult<FullDisplay_c> =
         from_parse(back_from_abella.iovalue, "<<output>>");
-  local full_c::FullDisplay_c = full_result.parseTree;
-  local full_a::FullDisplay = full_c.ast;
+  local full_a::FullDisplay = full_result.parseTree.ast;
   local new_proof_state::ProofState =
         if speak_to_abella
         then if full_result.parseSuccess
              then full_a.proof
              else state
         else state;
-  local new_undolist::[Integer] =
-        if speak_to_abella
-        then if new_proof_state.inProof
-             then length(proof_a_trans)::undolist
-             else [] --no proof going on, so nothing to undo
-        else undolist;
   local new_debug::Boolean =
-        --only need to check top_result because Set is included in both
-        if top_result.parseSuccess && top_a.isDebug.fst
-        then top_a.isDebug.snd
+        if result.parseSuccess && any_a.isDebug.fst
+        then any_a.isDebug.snd
         else debug;
+  local new_stateList::[(Integer, ProverState)] =
+        if any_a.isUndo
+        then any_a.undoListOut
+        else if speak_to_abella
+             then if any_a.isDebug.fst
+                  then any_a.undoListOut
+                  else (case any_a.numCommandsSent of
+                        | just(x) -> x
+                        | nothing() -> -1 --will not be undoable
+                        end, proverState(new_proof_state, new_debug))::stateList
+             else (0, proverState(state, new_debug))::stateList;
   --Show to user
   ----------------------------
   local output_output::String =
@@ -211,8 +170,7 @@ IOVal<Integer> ::=
     RUN REPL AGAIN
   -}
   local again::IOVal<Integer> =
-        run_step(new_proof_state, new_undolist, new_debug,
-                 attrOccurrences,
+        run_step(new_stateList, attrOccurrences,
                  abella, printed_output);
 
 
@@ -268,9 +226,10 @@ IOVal<String> ::= n::Maybe<Integer> thusFar::String abella::ProcessHandle ioin::
         else length(noBlanks) - (if lastComplete then 0 else 1);
 
   local newCarry::String =
-        if null(noBlanks) || lastComplete
+        if null(split) || lastComplete
         then ""
-        else last(noBlanks);
+        else --Terminating whitespace is important, so use split instead of noBlanks
+          last(split);
 
   {-
     If we are not counting, we assume that if what we read ends with a

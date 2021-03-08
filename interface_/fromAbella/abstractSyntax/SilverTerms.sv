@@ -239,5 +239,9 @@ top::Hypothesis ::= name::String body::Metaterm
   top.pp = "";
 
   top.translation = error("Should never be translating a hiddenHypothesis");
+
+  top.hypList = [(name, new(body))];
+
+  forwards to metatermHyp(name, body);
 }
 

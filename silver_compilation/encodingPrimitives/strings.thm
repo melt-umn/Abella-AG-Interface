@@ -85,3 +85,38 @@ assert (forall S1 S2 S3, is_list $is_char S1 -> is_list $is_char S2 ->
       case H3. apply IH to H5 H2 H6. search.
 intros. case H2. case H3. apply H1 to H5 H6 H4. search.
 
+%This is provable, but Abella doesn't like it because it is long
+Theorem $is_char_eq_or_not : forall C1 C2,
+  $is_char C1 -> $is_char C2 ->
+  C1 = C2 \/ (C1 = C2 -> false).
+intros. skip. %case H1.
+/*
+This Python code prints out the rest of the proof after `case H1.`:
+for i in range(100):
+    print("case H2. ", end="")
+    for j in range(100):
+        if i == j:
+            print("left. search. ", end="")
+        else:
+            print("right. intros. case H3. ", end="")
+    print()
+*/
+
+Theorem is_string_eq_or_not : forall S1 S2,
+  is_string S1 -> is_string S2 ->
+  S1 = S2 \/ (S1 = S2 -> false).
+assert (forall L1 L2, is_list $is_char L1 -> is_list $is_char L2 ->
+         L1 = L2 \/ (L1 = L2 -> false)).
+   induction on 1. intros. case H1.
+     case H2.
+       left. search.
+       right. intros. case H5.
+     case H2.
+       right. intros. case H5.
+       apply IH to H4 H6. case H7.
+         apply $is_char_eq_or_not to H3 H5. case H8.
+           left. search.
+           right. intros. case H10. backchain H9.
+         right. intros. case H9. backchain H8.
+intros. case H2. case H3. apply H1 to H4 H5. search.
+

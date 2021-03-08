@@ -19,10 +19,8 @@ top::TopCommand ::=
   top.isQuit = false;
   top.isDebug = pair(false, false);
 
-  --Most things only care about errors for sending
-  --If it has something more than errors to care about, it can set it
-  top.sendCommand = null(top.errors);
-  top.ownOutput = errors_to_string(top.errors);
+  top.sendCommand = true;
+  top.ownOutput = "";
 }
 
 
@@ -147,6 +145,8 @@ top::TopCommand ::= m::Metaterm
 {
   top.pp = "Query " ++ m.pp ++ ".\n";
 
+  m.boundVars = [];
+
   top.translation = error("Translation not done in queryCommand yet");
 }
 
@@ -234,21 +234,6 @@ top::TopCommand ::= tys::[Type]
   top.pp = "Close " ++ typesString ++ ".\n";
 
   top.translation = error("Translation not done in closeCommand yet");
-}
-
-
-abstract production topNoOpCommand
-top::TopCommand ::= n::NoOpCommand
-{
-  top.pp = n.pp;
-
-  top.translation = topNoOpCommand(n.translation);
-
-  top.isQuit = n.isQuit;
-  top.isDebug = n.isDebug;
-
-  top.sendCommand = n.sendCommand;
-  top.ownOutput = n.ownOutput;
 }
 
 

@@ -7,8 +7,9 @@ nonterminal NoOpCommand with
    --pp should always end with a newline
    pp,
    translation<NoOpCommand>,
-   errors, sendCommand, ownOutput,
-   isQuit, isDebug;
+   errors, sendCommand, ownOutput, numCommandsSent,
+   isQuit, isDebug,
+   isUndo, undoListIn, undoListOut;
 
 --because we only intend to pass these through to Abella, we don't
 --   need to actually know anything about the option or its value
@@ -36,8 +37,12 @@ top::NoOpCommand ::= opt::String val::String
       if opt == "debug"
       then if val == "on" || val == "off"
            then "Turning debug " ++ val ++ ".\n"
-           else errors_to_string(top.errors)
-      else errors_to_string(top.errors);
+           else ""
+      else "";
+  top.numCommandsSent = if top.sendCommand then just(1) else just(0);
+
+  top.isUndo = false;
+  top.undoListOut = top.undoListIn;
 }
 
 
@@ -53,6 +58,10 @@ top::NoOpCommand ::= theoremName::String
 
   top.sendCommand = true;
   top.ownOutput = "";
+  top.numCommandsSent = just(1);
+
+  top.isUndo = false;
+  top.undoListOut = top.undoListIn;
 }
 
 
@@ -68,26 +77,41 @@ top::NoOpCommand ::=
 
   top.sendCommand = true;
   top.ownOutput = "";
+  top.numCommandsSent = just(1);
+
+  top.isUndo = false;
+  top.undoListOut = top.undoListIn;
 }
 
 
+--This is what Proof General uses for undoing things
 abstract production backCommand
 top::NoOpCommand ::= n::Integer
 {
   top.pp = replicate(n - 1, "#back. ") ++ "#back.\n";
 
-  --This is what Proof General uses for undoing things
-  top.translation = --error("Translation not done in backCommand yet");
-      backCommand(n);
-  --When we handle the undo list in the composed Main function, we need to move everything back based on this.
-  --We also need to translate this based on the undo list numbers.
-  --We need to hold onto the entire undo list, from all theorems, for this.
+  local trans_n::Integer =
+        foldr(\ p::(Integer, ProverState) i::Integer -> i + p.1,
+              0, take(n, top.undoListIn));
+  top.translation = backCommand(trans_n);
+
+  top.errors <-
+      if length(top.undoListIn) < n
+      then [errorMsg("Too many #back commands")]
+      else if any(map(\ p::(Integer, ProverState) -> p.1 == -1,
+                      take(n, top.undoListIn)))
+           then [errorMsg("Can't undo that far")]
+           else [];
 
   top.isQuit = false;
   top.isDebug = pair(false, false);
 
-  top.sendCommand = true;
+  top.sendCommand = null(top.errors) && trans_n > 0;
   top.ownOutput = "";
+  top.numCommandsSent = just(trans_n);
+
+  top.isUndo = true;
+  top.undoListOut = drop(n, top.undoListIn);
 }
 
 
@@ -105,5 +129,9 @@ top::NoOpCommand ::=
 
   top.sendCommand = true;
   top.ownOutput = "";
+  top.numCommandsSent = just(1);
+
+  top.isUndo = false;
+  top.undoListOut = top.undoListIn;
 }
 
