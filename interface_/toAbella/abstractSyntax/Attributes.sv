@@ -12,13 +12,15 @@ synthesized attribute translation<a>::a;
 
 --new premises we are adding to the current theorem being defined
 monoid attribute newPremises::[NewPremise] with [], ++;
-propagate newPremises on Metaterm, Term, TermList, ListContents
+propagate newPremises on
+   Metaterm, Term, TermList, ListContents, PairContents
    excluding bindingMetaterm, attrAccessTerm;
 
 
 monoid attribute errors::[Error] with [], ++;
-propagate errors on Metaterm, Term, TermList, ListContents,
-                    ProofCommand, TopCommand, NoOpCommand;
+propagate errors on
+   Metaterm, Term, TermList, ListContents, PairContents,
+   ProofCommand, TopCommand, NoOpCommand;
 
 --Whether a command is something to be sent to Abella, or handled internally
 synthesized attribute sendCommand::Boolean;

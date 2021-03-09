@@ -554,6 +554,16 @@ top::Term ::= c::String
 }
 
 
+aspect production pairTerm
+top::Term ::= contents::PairContents
+{
+  top.translation = contents.translation;
+
+  contents.boundVars = top.boundVars;
+  top.boundVarsOut = contents.boundVarsOut;
+}
+
+
 aspect production listTerm
 top::Term ::= contents::ListContents
 {
@@ -590,6 +600,38 @@ top::ListContents ::= hd::Term tl::ListContents
   hd.boundVars = top.boundVars;
   tl.boundVars = hd.boundVarsOut;
   top.boundVarsOut = tl.boundVarsOut;
+}
+
+
+
+
+
+attribute
+   translation<Term>, newPremises,
+   boundVars, boundVarsOut, attrOccurrences,
+   errors
+occurs on PairContents;
+
+aspect production singlePairContents
+top::PairContents ::= t::Term
+{
+  top.translation = t.translation;
+
+  t.boundVars = top.boundVars;
+  top.boundVarsOut = t.boundVarsOut;
+}
+
+
+aspect production addPairContents
+top::PairContents ::= t::Term rest::PairContents
+{
+  top.translation =
+      buildApplication(nameTerm(pairConstructorName, nothing()),
+                       [t.translation, rest.translation]);
+
+  t.boundVars = top.boundVars;
+  rest.boundVars = t.boundVarsOut;
+  top.boundVarsOut = rest.boundVarsOut;
 }
 
 

@@ -29,6 +29,8 @@ global integerGreaterEqName::String = "$greatereq_integer";
 
 global appendName::String = "$append";
 
+global pairConstructorName::String = "$pair_c";
+
 global orName::String = "$or_bool";
 global andName::String = "$and_bool";
 global notName::String = "$not_bool";
@@ -56,10 +58,22 @@ String ::= treeName::String
   return "$" ++ treeName ++ "_Node";
 }
 
+function treeToChildListName
+String ::= treeName::String
+{
+  return "$" ++ treeName ++ "_ChildList";
+}
+
 function accessToAccessName
 String ::= treeName::String attrName::String
 {
   return "$" ++ treeName ++ "_DOT_" ++ attrName;
+}
+
+function nodeTreeConstructorName
+String ::= treeTy::Type
+{
+  return "$ntr_" ++ treeTy.pp;
 }
 
 function accessRelationName
@@ -145,13 +159,15 @@ top::NewPremise ::= tree::String attr::String
 {
   local treeNode::Term = nameTerm(treeToNodeName(tree), nothing());
   local valueName::Term = nameTerm(accessToAccessName(tree, attr), nothing());
+  local valAttr::Term =
+        buildApplication(nameTerm(attributeExistsName, nothing()), [valueName]);
   local accessRel::Term = nameTerm(accessRelationName(ty, attr), nothing());
   top.translation =
      case findty of
      | just(just([_])) ->
        -- <accessRel> <treeNode> (<attributeExistsName> <valueName>)
        termMetaterm(
-          buildApplication(accessRel, [treeNode, valueName]),
+          buildApplication(accessRel, [treeNode, valAttr]),
           emptyRestriction())
      | just(just(_)) -> trueMetaterm() --no type, so can't actually translate this
      | _ -> trueMetaterm() --error case, but I think it is caught elsewhere
@@ -189,12 +205,16 @@ top::NewPremise ::= tree::String
   local wpdRel::Term = nameTerm(wpdTypeName(ty), nothing());
   local treeStructure::Term = nameTerm(treeToStructureName(tree), nothing());
   local treeNode::Term = nameTerm(treeToNodeName(tree), nothing());
+  local treeChildList::Term = nameTerm(treeToChildListName(tree), nothing());
+  local nodeTree::Term =
+        buildApplication(nameTerm(nodeTreeConstructorName(ty), nothing()),
+                         [treeNode, treeChildList]);
   top.translation =
      case findty of
      | just(just([_])) ->
        -- <wpdRel> <treeStructure> <treeNode>
        termMetaterm(
-          buildApplication(wpdRel, [treeStructure, treeNode]),
+          buildApplication(wpdRel, [treeStructure, nodeTree]),
           emptyRestriction())
      | just(just(_)) -> trueMetaterm() --no type, so can't actually translate this
      | _ -> trueMetaterm() --error case, but I think it is caught elsewhere
@@ -219,8 +239,9 @@ top::NewPremise ::= tree::String
   --We don't want to add these names if we can't find a type for them.
   top.newBindingNames =
      case findty of
-     | just(just([_])) -> [pair(treeToStructureName(tree), just(ty)),
-                           pair(treeToNodeName(tree), just(nodeTreeType))]
+     | just(just([_])) -> [(treeToStructureName(tree), just(ty)),
+                           (treeToNodeName(tree), nothing()),
+                           (treeToChildListName(tree), nothing())]
      | _ -> []
      end;
   top.removeBindingNames =

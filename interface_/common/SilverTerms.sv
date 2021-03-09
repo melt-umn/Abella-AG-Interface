@@ -156,6 +156,13 @@ top::Term ::= contents::ListContents
   top.isAtomic = true;
 }
 
+abstract production pairTerm
+top::Term ::= contents::PairContents
+{
+  top.pp = "(" ++ contents.pp ++ ")";
+  top.isAtomic = true;
+}
+
 abstract production charTerm
 top::Term ::= char::String
 {
@@ -178,5 +185,22 @@ abstract production addListContents
 top::ListContents ::= t::Term rest::ListContents
 {
   top.pp = t.pp ++ (if rest.pp == "" then "" else ", " ++ rest.pp);
+}
+
+
+
+
+nonterminal PairContents with pp;
+
+abstract production singlePairContents
+top::PairContents ::= t::Term
+{
+  top.pp = t.pp;
+}
+
+abstract production addPairContents
+top::PairContents ::= t::Term rest::PairContents
+{
+  top.pp = t.pp ++ ", " ++ rest.pp;
 }
 

@@ -25,7 +25,7 @@ Define is_pair : (A -> prop) -> (B -> prop) -> ($pair A B) -> prop by
   If these show up in this file in git, it is a mistake.
 */
 
-Type subrelA   A -> prop.
+/*Type subrelA   A -> prop.
 Type subrelB   B -> prop.
 
 
@@ -36,5 +36,5 @@ Theorem is_pair_elements[A, B] : forall (A : A) (B : B),
   subrelA A /\ subrelB B.
 intros $H1. $H2 : case $H1. split.
   search.
-  search.
+  search.*/
 

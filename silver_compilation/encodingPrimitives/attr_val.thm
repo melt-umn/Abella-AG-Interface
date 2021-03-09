@@ -26,7 +26,7 @@ Define $is_attrVal : (A -> prop) -> $attrVal A -> prop by
 
   If these show up in this file in git, it is a mistake.
 */
-
+/*
 Type subrel   A -> prop.
 
 %$is_attrVal_element : forall SubRel A, $is_attrVal SubRel ($attr_ex A) -> SubRel A.
@@ -34,4 +34,4 @@ Type subrel   A -> prop.
 Theorem $is_attrVal_element[A] : forall (A : A),
   $is_attrVal subrel ($attr_ex A) -> subrel A.
 intros $H1. $H2 : case $H1. search.
-
+*/

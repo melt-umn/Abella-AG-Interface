@@ -2,7 +2,6 @@ grammar interface_:composed;
 
 imports interface_:toAbella;
 imports interface_:fromAbella;
---need to import common just to get pp
 imports interface_:common;
 
 imports silver:util:subprocess;
@@ -32,7 +31,10 @@ IOVal<Integer> ::= largs::[String] ioin::IO
   local abella_initial_string::IOVal<String> =
         read_n_abella_outputs(just(1), abella.iovalue, abella.io);
   return run_step([(-1, proverState(noProof(), false))],
-                  [("a", [nameType("$nt_Term")])],
+                  [("env", [nameType("nt_Expr")]),
+                   ("value", [nameType("nt_Expr"), nameType("nt_Root")]),
+                   ("knownNames", [nameType("nt_Expr")]),
+                   ("valExists", [nameType("nt_Expr"), nameType("nt_Root")])],
                   abella.iovalue, abella_initial_string.io);
 }
 
@@ -51,7 +53,8 @@ IOVal<Integer> ::= largs::[String] ioin::IO
 function run_step
 IOVal<Integer> ::=
    stateList::[(Integer, ProverState)]
-   attrOccurrences::[(String, [Type])] abella::ProcessHandle ioin::IO
+   attrOccurrences::[(String, [Type])]
+   abella::ProcessHandle ioin::IO
 {
   local state::ProofState = head(stateList).snd.state;
   local debug::Boolean = head(stateList).snd.debug;

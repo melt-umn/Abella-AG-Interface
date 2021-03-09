@@ -48,7 +48,10 @@ top::Metaterm ::= t1::Term t2::Term
 aspect production impliesMetaterm
 top::Metaterm ::= t1::Metaterm t2::Metaterm
 {
-  top.translation = impliesMetaterm(t1.translation, t2.translation);
+  top.translation =
+      if t1.shouldHide
+      then t2.translation
+      else impliesMetaterm(t1.translation, t2.translation);
   top.shouldHide = false;
 }
 
@@ -70,9 +73,13 @@ top::Metaterm ::= t1::Metaterm t2::Metaterm
 
 
 aspect production bindingMetaterm
-top::Metaterm ::= b::Binder nameBindings::[Pair<String Maybe<Type>>] body::Metaterm
+top::Metaterm ::= b::Binder nameBindings::[(String, Maybe<Type>)] body::Metaterm
 {
-  top.translation = bindingMetaterm(b, nameBindings, body.translation);
+  --We need to remove $ names and replace $<tree>_Tm with <tree>
+  local cleanedNames::[(String, Maybe<Type>)] =
+        filter(\ p::(String, Maybe<Type>) -> p.fst != "",
+               map(\ p::(String, Maybe<Type>) -> (cleanVariable(p.fst), p.snd), nameBindings));
+  top.translation = bindingMetaterm(b, cleanedNames, body.translation);
   top.shouldHide = false;
 }
 
@@ -142,6 +149,9 @@ top::Term ::= f::Term args::TermList
        left(intTerm(-i - 1))
      | nameTerm("$succ", _), singleTermList(intTerm(i)) ->
        left(intTerm(i + 1))
+     --Pairs
+     | nameTerm("$pair_c", _), consTermList(arg1, singleTermList(arg2)) ->
+       left(pairTerm(addPairContents(arg1, singlePairContents(arg2))))
      --Nothing Special
      | ftm, atm -> left(applicationTerm(ftm, atm))
      end;

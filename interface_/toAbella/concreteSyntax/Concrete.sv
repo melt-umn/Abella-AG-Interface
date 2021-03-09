@@ -333,6 +333,8 @@ concrete productions top::SubMetaterm_c
 nonterminal Term_c with ast<Term>;
 nonterminal Exp_c with ast<Term>;
 nonterminal ExpList_c with ast<TermList>;
+nonterminal PairBody_c with ast<PairContents>;
+nonterminal ListBody_c with ast<ListContents>;
 nonterminal PAId_c with ast<Term>;
 
 
@@ -357,7 +359,8 @@ concrete productions top::Exp_c
   { local dotLoc::Integer = indexOf(".", a.lexeme);
     top.ast =
        attrAccessTerm(substring(0, dotLoc, a.lexeme),
-                      substring(dotLoc + 1, length(a.lexeme), a.lexeme)); }
+                      substring(dotLoc + 1, length(a.lexeme),
+                                a.lexeme)); }
 | i::Number_t
   { top.ast = intTerm(toInteger(i.lexeme)); }
 | i::SilverNegativeInteger_t
@@ -368,6 +371,10 @@ concrete productions top::Exp_c
   { top.ast = trueTerm(); }
 | 'false'
   { top.ast = falseTerm(); }
+| '(' pairBody::PairBody_c ')'
+  { top.ast = pairTerm(pairBody.ast); }
+| '[' listBody::ListBody_c ']'
+  { top.ast = listTerm(listBody.ast); }
 
 
 concrete productions top::ExpList_c
@@ -375,6 +382,20 @@ concrete productions top::ExpList_c
   { top.ast = consTermList(e.ast, el.ast); }
 | e::Exp_c
   { top.ast = singleTermList(e.ast); }
+
+
+concrete productions top::PairBody_c
+| t1::Term_c ',' t2::Term_c
+  { top.ast = addPairContents(t1.ast, singlePairContents(t2.ast)); }
+| t::Term_c ',' rest::PairBody_c
+  { top.ast = addPairContents(t.ast, rest.ast); }
+
+
+concrete productions top::ListBody_c
+| 
+  { top.ast = emptyListContents(); }
+| t::Term_c ',' rest::ListBody_c
+  { top.ast = addListContents(t.ast, rest.ast); }
 
 
 concrete productions top::PAId_c
