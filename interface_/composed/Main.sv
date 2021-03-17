@@ -30,11 +30,39 @@ IOVal<Integer> ::= largs::[String] ioin::IO
   --Abella outputs a welcome message, which we want to clean out
   local abella_initial_string::IOVal<String> =
         read_n_abella_outputs(just(1), abella.iovalue, abella.io);
-  return run_step([(-1, proverState(noProof(), false))],
-                  [("env", [nameType("nt_Expr")]),
-                   ("value", [nameType("nt_Expr"), nameType("nt_Root")]),
-                   ("knownNames", [nameType("nt_Expr")]),
-                   ("valExists", [nameType("nt_Expr"), nameType("nt_Root")])],
+  return run_step([(-1,
+                    proverState(
+                       noProof(),
+                       false,
+                       [  ("env", functorType(nameType("list"),
+                                     functorType(functorType(nameType("$pair"),
+                                        functorType(nameType("list"), nameType("$char"))),
+                                        nameType("integer"))) ), --list (pair string integer)
+                          ("value", nameType("integer")),
+                          ("knownNames", functorType(nameType("list"), --list string
+                                            functorType(nameType("list"), nameType("$char"))) ),
+                          ("valExists", nameType("$bool"))
+                       ],
+                       [  ("env", [nameType("nt_Expr")]),
+                          ("value", [nameType("nt_Expr"), nameType("nt_Root")]),
+                          ("knownNames", [nameType("nt_Expr")]),
+                          ("valExists", [nameType("nt_Expr"), nameType("nt_Root")])
+                       ],
+                       [  ("prod_intConst", arrowType(nameType("integer"), nameType("nt_Expr")) ),
+                          ("prod_plus", arrowType(nameType("nt_Expr"),
+                                           arrowType(nameType("nt_Expr"), nameType("nt_Expr"))) ),
+                          ("prod_minus", arrowType(nameType("nt_Expr"),
+                                            arrowType(nameType("nt_Expr"), nameType("nt_Expr"))) ),
+                          ("prod_mult", arrowType(nameType("nt_Expr"),
+                                           arrowType(nameType("nt_Expr"), nameType("nt_Expr"))) ),
+                          ("prod_letBind", arrowType(functorType(nameType("list"), nameType("$char")),
+                                              arrowType(nameType("nt_Expr"),
+                                                 arrowType(nameType("nt_Expr"), nameType("nt_Expr")))) ),
+                          ("prod_name", arrowType(functorType(nameType("list"), nameType("$char")),
+                                           nameType("nt_Expr")) )
+                       ]
+                    )
+                  )],
                   abella.iovalue, abella_initial_string.io);
 }
 
@@ -42,10 +70,8 @@ IOVal<Integer> ::= largs::[String] ioin::IO
 {--
   - Take input from the user, process it, send it through Abella, process the result, and output it.
   -
-  - @undolist  How many `undo` commands to issue to Abella for each of the user commands issued,
-  -            and the state of the prover after those commands were issued.  The current state
-  -            of the prover is the first element of the list.
-  - @attrOccurrences  What attributes we know and the types on which they occur
+  - @statelist  The state of the prover after each command issued to the prover.
+  -             The current state of the prover is the first element of the list.
   - @abella  The process in which Abella is running
   - @ioin  The incoming IO token
   - @return  The resulting IO token and exit status
@@ -53,11 +79,13 @@ IOVal<Integer> ::= largs::[String] ioin::IO
 function run_step
 IOVal<Integer> ::=
    stateList::[(Integer, ProverState)]
-   attrOccurrences::[(String, [Type])]
    abella::ProcessHandle ioin::IO
 {
   local state::ProofState = head(stateList).snd.state;
   local debug::Boolean = head(stateList).snd.debug;
+  local attrs::[(String, Type)] = head(stateList).snd.knownAttrs;
+  local attrOccurrences::[(String, [Type])] = head(stateList).snd.knownAttrOccurrences;
+  local prods::[(String, Type)] = head(stateList).snd.knownProductions;
 
   {-
     PROCESS COMMAND
@@ -154,8 +182,7 @@ IOVal<Integer> ::=
     RUN REPL AGAIN
   -}
   local again::IOVal<Integer> =
-        run_step(any_a.stateListOut, attrOccurrences,
-                 abella, printed_output);
+        run_step(any_a.stateListOut, abella, printed_output);
 
 
   return if any_a.isQuit

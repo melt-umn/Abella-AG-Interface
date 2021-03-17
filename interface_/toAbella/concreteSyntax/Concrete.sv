@@ -375,6 +375,8 @@ concrete productions top::Exp_c
   { top.ast = pairTerm(pairBody.ast); }
 | '[' listBody::ListBody_c ']'
   { top.ast = listTerm(listBody.ast); }
+| '[' ']'
+  { top.ast = listTerm(emptyListContents()); }
 
 
 concrete productions top::ExpList_c
@@ -392,9 +394,9 @@ concrete productions top::PairBody_c
 
 
 concrete productions top::ListBody_c
-| 
-  { top.ast = emptyListContents(); }
-| t::Term_c ',' rest::ListBody_c
+| t::Exp_c
+  { top.ast = addListContents(t.ast, emptyListContents()); }
+| t::Exp_c ',' rest::ListBody_c
   { top.ast = addListContents(t.ast, rest.ast); }
 
 

@@ -50,7 +50,10 @@ top::NoOpCommand ::= opt::String val::String
        proverState(currentState.state,
                    if opt == "debug"
                    then val == "on"
-                   else currentState.debug))::top.stateListIn;
+                   else currentState.debug,
+                   currentState.knownAttrs,
+                   currentState.knownAttrOccurrences,
+                   currentState.knownProductions))::top.stateListIn;
 }
 
 

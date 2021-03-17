@@ -49,7 +49,11 @@ top::AnyCommand ::= c::TopCommand
             | just(x) -> x
             | nothing() -> -1
             end, proverState(top.newProofState,
-                             head(top.stateListIn).snd.debug)
+                             head(top.stateListIn).snd.debug,
+                             --Next lines need to change when we actually get it from imports
+                             head(top.stateListIn).snd.knownAttrs,
+                             head(top.stateListIn).snd.knownAttrOccurrences,
+                             head(top.stateListIn).snd.knownProductions)
            )::top.stateListIn;
 }
 
@@ -92,7 +96,10 @@ top::AnyCommand ::= c::ProofCommand
                  | just(x) -> x
                  | nothing() -> -1
                  end, proverState(top.newProofState,
-                                  head(top.stateListIn).snd.debug)
+                                  head(top.stateListIn).snd.debug,
+                                  head(top.stateListIn).snd.knownAttrs,
+                                  head(top.stateListIn).snd.knownAttrOccurrences,
+                                  head(top.stateListIn).snd.knownProductions)
                 )::top.stateListIn;
 }
 
