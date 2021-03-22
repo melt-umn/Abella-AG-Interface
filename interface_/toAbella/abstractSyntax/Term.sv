@@ -160,7 +160,6 @@ top::Metaterm ::= b::Binder bindings::[(String, Maybe<Type>)] body::Metaterm
                 {currentNames = fst(splitList(bindings));
                  boundVarsHere = currentScope;
                  eqTest = error("Should not require eqTest");
-                 currentNames = map(\ p::(String, Maybe<Type>) -> p.fst, bindings);
                 },
               noDupPremises)
         end;

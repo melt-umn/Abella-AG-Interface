@@ -407,23 +407,36 @@ Metaterm ::= prods::[String] original::Metaterm treeName::String
   local fakeIHs::[Metaterm] =
         foldr(\ p::(Type, String) rest::[Metaterm] ->
                 if tysEqual(p.fst, treeTy)
-                then
-                   bindingMetaterm(
-                      originalBinder,
-                      removedBindings,
-                      --replace tree, tree node, and tree child list
-                      decorate
-                         (decorate
-                            (decorate removedWPD with
-                                {replaceName = treeToChildListName(treeName);
-                                 replaceTerm = nameTerm(treeToChildListName(p.snd),
-                                                        nothing());}.replaced)
-                          with {replaceName = treeToNodeName(treeName);
-                                replaceTerm = nameTerm(treeToNodeName(p.snd),
-                                                       nothing());}.replaced)
-                      with {replaceName = treeToStructureName(treeName);
-                            replaceTerm = nameTerm(treeToStructureName(p.snd),
-                                                   nothing());}.replaced)::rest
+                then if null(removedBindings)
+                     then bindingMetaterm(
+                             originalBinder,
+                             removedBindings,
+                                --replace tree, tree node, and tree child list
+                                decorate
+                                   (decorate
+                                      (decorate removedWPD with
+                                          {replaceName = treeToChildListName(treeName);
+                                           replaceTerm = nameTerm(treeToChildListName(p.snd),
+                                                                  nothing());}.replaced)
+                                    with {replaceName = treeToNodeName(treeName);
+                                          replaceTerm = nameTerm(treeToNodeName(p.snd),
+                                                                 nothing());}.replaced)
+                                with {replaceName = treeToStructureName(treeName);
+                                      replaceTerm = nameTerm(treeToStructureName(p.snd),
+                                                             nothing());}.replaced)::rest
+                     else --replace tree, tree node, and tree child list
+                          decorate
+                             (decorate
+                                (decorate removedWPD with
+                                    {replaceName = treeToChildListName(treeName);
+                                     replaceTerm = nameTerm(treeToChildListName(p.snd),
+                                                            nothing());}.replaced)
+                              with {replaceName = treeToNodeName(treeName);
+                                    replaceTerm = nameTerm(treeToNodeName(p.snd),
+                                                           nothing());}.replaced)
+                          with {replaceName = treeToStructureName(treeName);
+                                replaceTerm = nameTerm(treeToStructureName(p.snd),
+                                                       nothing());}.replaced::rest
                 else rest,
               [], children);
   local currentStep::Metaterm =

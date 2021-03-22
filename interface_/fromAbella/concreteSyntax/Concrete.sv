@@ -156,8 +156,8 @@ concrete productions top::Hypothesis_c
 
 concrete productions top::HypNameList_c
 | name::IdColon_t
-  --we need to remove the space and colon from IdColon_t
-  { top.ast = [substring(0, length(name.lexeme) - 2, name.lexeme)]; }
+  --we need to remove the <space colon space> from IdColon_t
+  { top.ast = [substring(0, length(name.lexeme) - 3, name.lexeme)]; }
 | name::IdComma_t rest::HypNameList_c
   --we need to remove the comma from IdComma_t
   { top.ast = [substring(0, length(name.lexeme) - 1, name.lexeme)] ++ rest.ast; }

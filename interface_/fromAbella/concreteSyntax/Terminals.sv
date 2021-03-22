@@ -126,7 +126,7 @@ terminal Number_t  /[0-9]+/;
 
 
 --To fix parsing problems, since it is computer-generated output
-terminal IdColon_t  /[-A-Za-z^=`'?$][-A-Za-z^=`'?$0-9_*@+#!~\/]* :/;
+terminal IdColon_t  /[-A-Za-z^=`'?$][-A-Za-z^=`'?$0-9_*@+#!~\/]* : /;
 terminal IdComma_t  /[-A-Za-z^=`'?$][-A-Za-z^=`'?$0-9_*@+#!~\/]*,/;
 
 

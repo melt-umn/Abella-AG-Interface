@@ -29,7 +29,7 @@ IOVal<Integer> ::= largs::[String] ioin::IO
   local abella::IOVal<ProcessHandle> = spawnProcess("abella", [], ioin);
   --Abella outputs a welcome message, which we want to clean out
   local abella_initial_string::IOVal<String> =
-        read_n_abella_outputs(just(1), abella.iovalue, abella.io);
+        read_abella_outputs(just(1), abella.iovalue, abella.io);
 
   local knownAttrs::[(String, Type)] =
         [  ("env", functorType(nameType("list"),
@@ -48,24 +48,24 @@ IOVal<Integer> ::= largs::[String] ioin::IO
            ("valExists", [nameType("nt_Expr"), nameType("nt_Root")])
         ];
   local knownProds::[(String, Type)] =
-        [  --("prod_intConst", arrowType(nameType("integer"), nameType("nt_Expr")) ),
+        [  ("prod_intConst", arrowType(nameType("integer"), nameType("nt_Expr")) ),
            ("prod_plus", arrowType(nameType("nt_Expr"),
-                            arrowType(nameType("nt_Expr"), nameType("nt_Expr"))) )--,
-           --("prod_minus", arrowType(nameType("nt_Expr"),
-           --                  arrowType(nameType("nt_Expr"), nameType("nt_Expr"))) ),
-           --("prod_mult", arrowType(nameType("nt_Expr"),
-           --                 arrowType(nameType("nt_Expr"), nameType("nt_Expr"))) ),
-           --("prod_letBind", arrowType(functorType(nameType("list"), nameType("$char")),
-           --                    arrowType(nameType("nt_Expr"),
-           --                       arrowType(nameType("nt_Expr"), nameType("nt_Expr")))) ),
-           --("prod_name", arrowType(functorType(nameType("list"), nameType("$char")),
-           --                 nameType("nt_Expr")) ),
-           --("prod_root", arrowType(nameType("nt_Expr"), nameType("nt_Expr")))
+                            arrowType(nameType("nt_Expr"), nameType("nt_Expr"))) ),
+           ("prod_minus", arrowType(nameType("nt_Expr"),
+                             arrowType(nameType("nt_Expr"), nameType("nt_Expr"))) ),
+           ("prod_mult", arrowType(nameType("nt_Expr"),
+                            arrowType(nameType("nt_Expr"), nameType("nt_Expr"))) ),
+           ("prod_letBind", arrowType(functorType(nameType("list"), nameType("$char")),
+                               arrowType(nameType("nt_Expr"),
+                                  arrowType(nameType("nt_Expr"), nameType("nt_Expr")))) ),
+           ("prod_name", arrowType(functorType(nameType("list"), nameType("$char")),
+                            nameType("nt_Expr")) ),
+           ("prod_root", arrowType(nameType("nt_Expr"), nameType("nt_Expr")))
         ];
   local wpdRelations::[(String, Type, [String])] =
         [  ("$wpd_nt_Expr", nameType("nt_Expr"),
-            [{-"prod_intConst",-} "prod_plus"{-, "prod_minus",
-             "prod_mult", "prod_letBind", "prod_name"-}]),
+            ["prod_intConst", "prod_plus", "prod_minus",
+             "prod_mult", "prod_letBind", "prod_name"]),
            ("$wpd_nt_Root", nameType("nt_Root"), ["prod_root"])
         ];
 
@@ -148,7 +148,7 @@ IOVal<Integer> ::=
   local should_count_outputs::Maybe<Integer> = any_a.numCommandsSent;
   local back_from_abella::IOVal<String> =
         if speak_to_abella
-        then read_n_abella_outputs(should_count_outputs, abella, out_to_abella)
+        then read_abella_outputs(should_count_outputs, abella, out_to_abella)
         else ioval(out_to_abella, "");
   local debug_back_output::IO =
         if debug && speak_to_abella
@@ -223,78 +223,50 @@ IOVal<String> ::= ioin::IO
 --Read the given number of Abella outputs (prompt-terminated), if given
 --Otherwise read until one ends with a prompt
 --Returns the text of the last output
-function read_n_abella_outputs
+function read_abella_outputs
 IOVal<String> ::= n::Maybe<Integer> abella::ProcessHandle ioin::IO
 {
-  return read_n_abella_outputs_helper(n, "", abella, ioin);
-}
-function read_n_abella_outputs_helper
-IOVal<String> ::= n::Maybe<Integer> thusFar::String abella::ProcessHandle ioin::IO
-{
-  {-
-    NOTE:  If we ever need to handle an error output in the middle,
-    this will need to check each last-read step to see if it is an
-    error state (requires parsing it), then abort based on that.  In
-    that case, we should also return a pair of the last state and the
-    number of states we mananged to get through.
-  -}
-  local read::IOVal<String> = readAllFromProcess(abella, ioin);
-  local lastComplete::Boolean = endsWith("< ", read.iovalue);
-  local split::[String] = explode("<", thusFar ++ read.iovalue);
-  local noWhiteSpace::[String] = map(stripExternalWhiteSpace, split);
-  local noBlanks::[String] = filter(\ x::String -> x != "", noWhiteSpace);
-  local len::Integer =
-        if null(noBlanks)
-        then 0
-        else length(noBlanks) - (if lastComplete then 0 else 1);
-
-  local newCarry::String =
-        if null(split) || lastComplete
-        then ""
-        else --Terminating whitespace is important, so use split instead of noBlanks
-          last(split);
-
-  {-
-    If we are not counting, we assume that if what we read ends with a
-    prompt. it is actually done.  This could be wrong, but it is
-    unlikely to end up being wrong in any particular case.  We can't
-    do anything better without a count.
-
-    The only reason we wouldn't count should be when we are handling
-    our import problems, described in a comment on the importCommand
-    production in toAbella/abstractSyntax/TopCommand.sv.
-  -}
   return
      case n of
-     | nothing() ->
-       if lastComplete
-       then ioval(read.io, removeLastWord(last(noBlanks)))
-       else read_n_abella_outputs_helper(nothing(), newCarry, abella, read.io)
-     | just(n2) ->
-       if len < n2
-       then --read more
-         read_n_abella_outputs_helper(just(n2 - len), newCarry, abella, read.io)
-       else
-         --We can have more outputs come back, but we'll assume that when
-         --   we get at least the expected number back we are done
-         --We could get less with errors, maybe.
-         ioval(read.io, removeLastWord(last(noBlanks)))
+     | nothing() -> read_abella_outputs_until_done(abella, ioin)
+     | just(x) -> read_n_abella_outputs(x, abella, ioin)
+     end;
+}
+--Read from Abella until reaching the end, known from a theorem called "$$done" which is aborted
+--Can do this because should only be used with an Import Abella itself doesn't like
+function read_abella_outputs_until_done
+IOVal<String> ::= abella::ProcessHandle ioin::IO
+{
+  local read1::IOVal<String> = readUntilFromProcess(abella, "< ", ioin);
+  local readAgain::IOVal<String> = readUntilFromProcess(abella, "< ", ioin);
+
+  return
+     if endsWith("$$done < ", read1.iovalue)
+     then ioval(readAgain.io, "") --get the aborting of $$done, but don't show it
+     else read_abella_outputs_until_done(abella, read1.io);
+}
+--Read the given number of outputs from Abella
+function read_n_abella_outputs
+IOVal<String> ::= n::Integer abella::ProcessHandle ioin::IO
+{
+  local read::IOVal<String> = readUntilFromProcess(abella, "< ", ioin);
+  return
+     case n of
+     | x when x <= 0 -> error("Should not call read_n_abella_outputs with n <= 0")
+     | 1 -> ioval(read.io, removeLastWord(read.iovalue))
+     | x -> read_n_abella_outputs(x - 1, abella, read.io)
      end;
 }
 
 --Remove the last word in a string
---We use this because the Abella prompt has the form "name < "
+--We use this because the Abella prompt has the form "name < ", which
+--   is guaranteed to be the last thing in the given string.
 function removeLastWord
 String ::= str::String
 {
-  local noExtraSpace::String = stripExternalWhiteSpace(str);
-  local space::Integer = lastIndexOf("\n", noExtraSpace);
-  local noWord::String = substring(0, space, noExtraSpace);
-  return
-     --might not have a space, if the last command resulted in blank output
-     if space >= 0
-     then noWord
-     else "";
+  local space::Integer = lastIndexOf("\n", str);
+  local noWord::String = substring(0, space, str);
+  return if space >= 0 then noWord else "";
 }
 
 

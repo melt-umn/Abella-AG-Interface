@@ -20,7 +20,14 @@ top::AnyCommand ::= c::TopCommand
 {
   top.pp = c.pp;
 
-  top.translation = c.translation.pp;
+  top.translation = --c.translation.pp;
+      --This is a hack to correctly read input when we import a file
+      --Any file we import with this had better be correct, or it will crash or hang
+      case c.translation of
+      | textCommand(_) ->
+        c.translation.pp ++ " Theorem $$done : true. abort. "
+      | _ -> c.translation.pp
+      end;
 
   top.isQuit = false;
 
