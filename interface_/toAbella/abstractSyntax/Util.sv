@@ -78,6 +78,17 @@ Boolean ::= ty1::Type ty2::Type
 }
 
 
+function tyIsNonterminal
+Boolean ::= ty::Type
+{
+  return
+     case ty of
+     | nameType(s) -> startsWith("nt_", s)
+     | _ -> false
+     end;
+}
+
+
 
 
 

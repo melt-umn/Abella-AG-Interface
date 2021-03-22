@@ -30,6 +30,27 @@ top::ProofState ::=
 }
 
 
+{-
+  We handle extensible theorems by proving one theorem which is the
+  conjunction of the separate statements we want for the different
+  productions.
+
+  After that proof is finished, we want to split it into separate
+  theorems with names of the form "$<name>_x" where "x" is a number
+  1..numProds.  We also want to admit the original theorem under the
+  original name so it can be used in further proofs.
+-}
+abstract production extensible_proofInProgress
+top::ProofState ::= currentProofState::ProofState originalTheorem::Metaterm
+                    name::String numProds::Integer
+{
+  --We could use this production to figure out what to label with * in the actual proof state
+  --Have a translation attribute to label the things with * as needed
+
+  forwards to currentProofState;
+}
+
+
 
 nonterminal CurrentGoal with pp;
 

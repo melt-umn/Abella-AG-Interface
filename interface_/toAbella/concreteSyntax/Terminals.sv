@@ -24,6 +24,8 @@ terminal Show_t           'Show'           lexer classes {COMMAND};
 terminal SSplit_t         'Split'          lexer classes {COMMAND};
 terminal Theorem_t        'Theorem'        lexer classes {COMMAND};
 terminal TType_t          'Type'           lexer classes {COMMAND};
+--New for Silver theorems
+terminal ExtTheorem_t   'Extensible_Theorem'   lexer classes {COMMAND};
 
 
 terminal Abbrev_t       'abbrev'       lexer classes {COMMAND};
@@ -62,6 +64,8 @@ terminal Undo_t         'undo'         lexer classes {TACTIC};
 terminal Unfold_t       'unfold'       lexer classes {TACTIC};
 terminal With_t         'with'         lexer classes {TACTIC};
 terminal Witness_t      'witness'      lexer classes {TACTIC};
+--New for Silver theorems
+terminal ExtInduction_t   'extensible_induction'   lexer classes{TACTIC};
 
 --To show the current state for PG
 terminal ShowCurrent_t  'Show $$current.'  lexer classes {COMMAND};

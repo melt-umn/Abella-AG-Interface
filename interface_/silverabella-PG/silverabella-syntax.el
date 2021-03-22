@@ -11,8 +11,8 @@
 (defconst silverabella-top-commands
   '(
     ;;The actual top commands
-    ;; Theorem | Define | Import | Kind | Split | Type
-    ("\\(Theorem\\)\\|\\(Define\\)\\|\\(Import\\)\\|\\(Kind\\)\\|\\(Split\\)\\|\\(Type\\)"
+    ;; Theorem | Define | Import | Kind | Split | Type | Extensible_Theorem
+    ("\\(Theorem\\)\\|\\(Define\\)\\|\\(Import\\)\\|\\(Kind\\)\\|\\(Split\\)\\|\\(Type\\)\\|\\(Extensible_Theorem\\)"
      . font-lock-keyword-face)
     ;;Auxiliary words to go with them
     ;; as | by
@@ -35,11 +35,11 @@
   )
 (defconst silverabella-proof-commands
   '(
-    ;;The actual proof commands
+    ;;The actual proof commands (minus exists)
     ;; apply | assert | backchain | case | clear | induction | intros | left |
     ;; rename | right | search | split | split* | unfold |
-    ;; witness | exists
-    ("\\(apply\\)\\|\\(assert\\)\\|\\(backchain\\)\\|\\(case\\)\\|\\(clear\\)\\|\\(induction\\)\\|\\(intros\\)\\|\\(left\\)\\|\\(rename\\)\\|\\(right\\)\\|\\(search\\)\\|\\(split\\)\\|\\(split*\\)\\|\\(unfold\\)\\|\\(witness\\)\\|\\(exists\\)"
+    ;; witness | extensible_induction
+    ("\\(apply\\)\\|\\(assert\\)\\|\\(backchain\\)\\|\\(case\\)\\|\\(clear\\)\\|\\(induction\\)\\|\\(intros\\)\\|\\(left\\)\\|\\(rename\\)\\|\\(right\\)\\|\\(search\\)\\|\\(split\\)\\|\\(split*\\)\\|\\(unfold\\)\\|\\(witness\\)\\|\\(extensible_induction\\)"
      . font-lock-function-name-face)
     ;;Auxiliary words to go with them
     ;; keep | on | to
@@ -86,6 +86,9 @@
     ;; Error: | Syntax error. | Search failed | Warning:
     ("\\(Error:\\)\\|\\(Syntax error.\\)\\|\\(Search failed\\)\\|\\(Warning:\\)"
      . font-lock-warning-face)
+    ;;Highlight debug output prefix to separate it from the actual output
+    ("Command sent:"
+     . font-lock-string-face)
     )
   )
 

@@ -53,7 +53,8 @@ top::NoOpCommand ::= opt::String val::String
                    else currentState.debug,
                    currentState.knownAttrs,
                    currentState.knownAttrOccurrences,
-                   currentState.knownProductions))::top.stateListIn;
+                   currentState.knownProductions,
+                   currentState.knownWPDRelations))::top.stateListIn;
 }
 
 

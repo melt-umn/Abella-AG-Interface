@@ -11,6 +11,7 @@ imports interface_:common;
   there is any reason we need to examine it somehow.
 -}
 synthesized attribute translation<a>::a;
+flowtype translation {} on Metaterm;
 
 --Whether a hypothesis should be hidden from the user (determined from the metaterm)
 synthesized attribute shouldHide::Boolean;

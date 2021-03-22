@@ -6,8 +6,9 @@ grammar interface_:toAbella:abstractSyntax;
 nonterminal TopCommand with
    --pp should always end with a newline
    pp,
-   translation<TopCommand>, attrOccurrences,
-   errors, sendCommand, ownOutput;
+   translation<TopCommand>, currentState,
+   errors, sendCommand, ownOutput,
+   translatedTheorem, numRelevantProds;
 
 
 
@@ -16,8 +17,55 @@ top::TopCommand ::=
 {
   top.sendCommand = true;
   top.ownOutput = "";
+
+  --These are only relevant to extensible theorems
+  top.translatedTheorem = error("Should only access translatedTheorem on extensibleTheoremDeclaration");
+  top.numRelevantProds = error("Should only access numRelevantProds on extensibleTheoremDeclaration");
 }
 
+
+
+abstract production extensibleTheoremDeclaration
+top::TopCommand ::= name::String depth::Integer body::Metaterm tree::String
+{
+  top.pp =
+      "Extensible_Theorem " ++ name ++ "[" ++ toString(depth) ++ "]" ++
+      " : " ++ body.pp ++ " on " ++ tree ++ ".\n";
+
+  body.attrOccurrences = top.currentState.knownAttrOccurrences;
+  body.boundVars = [];
+
+  top.errors <-
+      case treeTy of
+      | left(msg) -> [errorMsg(msg)]
+      | right(ty) ->
+        if tyIsNonterminal(ty)
+        then --This needs to be in here (not separate) because it relies on treeTy = right(_)
+             case correctWPDRelation of
+             | just(_) -> []
+             | nothing() ->
+               [errorMsg("Unknown nonterminal type " ++ ty.pp ++
+                         "; did you modify the definition file?")]
+             end
+        else [errorMsg("Cannot prove an extensible theorem based on a " ++
+                       "variable of type " ++ ty.pp ++ "; must be a tree")]
+      end;
+
+  body.findNameType = tree;
+  local treeTy::Either<String Type> = body.foundNameType;
+  local correctWPDRelation::Maybe<(Type, [String])> =
+        findAssociated(wpdTypeName(treeTy.fromRight), top.currentState.knownWPDRelations);
+  local expandedBody::Metaterm =
+        buildExtensibleTheoremBody(
+           body.translation, tree, treeTy.fromRight,
+           correctWPDRelation.fromJust, nub(body.usedNames),
+           top.currentState.knownProductions);
+  top.translation = theoremDeclaration("$" ++ name, [], expandedBody);
+  --we probably also want to send a "split" after this
+
+  top.translatedTheorem = body.translation;
+  top.numRelevantProds = length(correctWPDRelation.fromJust.snd);
+}
 
 
 abstract production theoremDeclaration
@@ -41,14 +89,15 @@ top::TopCommand ::= name::String params::[String] body::Metaterm
       " : " ++ body.pp ++ ".\n";
 
   body.boundVars = [];
+  body.attrOccurrences = top.currentState.knownAttrOccurrences;
   top.translation = theoremDeclaration(name, params, body.translation);
 }
 
 
 abstract production definitionDeclaration
-top::TopCommand ::= preds::[Pair<String Type>] defs::Defs
+top::TopCommand ::= preds::[(String, Type)] defs::Defs
 {
-  local buildPreds::(String ::= [Pair<String Type>]) =
+  local buildPreds::(String ::= [(String, Type)]) =
      \ w::[Pair<String Type>] ->
        case w of
        | [] ->
@@ -68,9 +117,9 @@ top::TopCommand ::= preds::[Pair<String Type>] defs::Defs
 
 
 abstract production codefinitionDeclaration
-top::TopCommand ::= preds::[Pair<String Type>] defs::Defs
+top::TopCommand ::= preds::[(String, Type)] defs::Defs
 {
-  local buildPreds::(String ::= [Pair<String Type>]) =
+  local buildPreds::(String ::= [(String, Type)]) =
      \ w::[Pair<String Type>] ->
        case w of
        | [] ->
@@ -90,9 +139,9 @@ top::TopCommand ::= preds::[Pair<String Type>] defs::Defs
 
 
 abstract production importCommand
-top::TopCommand ::= importFile::String withs::[Pair<String String>]
+top::TopCommand ::= importFile::String withs::[(String, String)]
 {
-  local buildWiths::(String ::= [Pair<String String>]) =
+  local buildWiths::(String ::= [(String, String)]) =
      \ w::[Pair<String String>] ->
        case w of
        | [] ->
@@ -140,6 +189,7 @@ top::TopCommand ::= m::Metaterm
 {
   top.pp = "Query " ++ m.pp ++ ".\n";
 
+  m.attrOccurrences = top.currentState.knownAttrOccurrences;
   m.boundVars = [];
 
   top.translation = error("Translation not done in queryCommand yet");

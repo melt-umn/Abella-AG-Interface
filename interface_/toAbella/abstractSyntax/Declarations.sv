@@ -22,7 +22,8 @@ top::Kind ::= k::Kind
 
 attribute
    translation<Type>,
-   eqTest<Type>, isEq
+   eqTest<Type>, isEq,
+   argumentTypes, headTypeName
 occurs on Type;
 
 aspect production arrowType
@@ -46,6 +47,15 @@ top::Type ::= ty1::Type ty2::Type
      end;
 
   top.translation = arrowType(ty1.translation, ty2.translation);
+
+  top.argumentTypes =
+      ty1.argumentTypes ++
+      case ty2 of
+      | arrowType(_, _) -> ty2.argumentTypes
+      | _ -> []
+      end;
+
+  top.headTypeName = nothing();
 }
 
 
@@ -63,6 +73,10 @@ top::Type ::= name::String
       if name == "string"
       then functorType(nameType("list"), nameType("$char"))
       else nameType(name);
+
+  top.argumentTypes = [top];
+
+  top.headTypeName = just(name);
 }
 
 
@@ -87,6 +101,10 @@ top::Type ::= functorTy::Type argTy::Type
      end;
 
   top.translation = functorType(functorTy.translation, argTy.translation);
+
+  top.argumentTypes = [top];
+
+  top.headTypeName = functorTy.headTypeName;
 }
 
 
@@ -96,6 +114,10 @@ top::Type ::=
   top.isEq = true;
 
   top.translation = underscoreType();
+
+  top.argumentTypes = [top];
+
+  top.headTypeName = nothing();
 }
 
 

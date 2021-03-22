@@ -1,7 +1,7 @@
 grammar interface_:composed;
 
-imports interface_:toAbella;
 imports interface_:fromAbella;
+imports interface_:toAbella;
 imports interface_:common;
 
 imports silver:util:subprocess;
@@ -30,40 +30,49 @@ IOVal<Integer> ::= largs::[String] ioin::IO
   --Abella outputs a welcome message, which we want to clean out
   local abella_initial_string::IOVal<String> =
         read_n_abella_outputs(just(1), abella.iovalue, abella.io);
-  return run_step([(-1,
-                    proverState(
-                       noProof(),
-                       false,
-                       [  ("env", functorType(nameType("list"),
-                                     functorType(functorType(nameType("$pair"),
-                                        functorType(nameType("list"), nameType("$char"))),
-                                        nameType("integer"))) ), --list (pair string integer)
-                          ("value", nameType("integer")),
-                          ("knownNames", functorType(nameType("list"), --list string
-                                            functorType(nameType("list"), nameType("$char"))) ),
-                          ("valExists", nameType("$bool"))
-                       ],
-                       [  ("env", [nameType("nt_Expr")]),
-                          ("value", [nameType("nt_Expr"), nameType("nt_Root")]),
-                          ("knownNames", [nameType("nt_Expr")]),
-                          ("valExists", [nameType("nt_Expr"), nameType("nt_Root")])
-                       ],
-                       [  ("prod_intConst", arrowType(nameType("integer"), nameType("nt_Expr")) ),
-                          ("prod_plus", arrowType(nameType("nt_Expr"),
-                                           arrowType(nameType("nt_Expr"), nameType("nt_Expr"))) ),
-                          ("prod_minus", arrowType(nameType("nt_Expr"),
-                                            arrowType(nameType("nt_Expr"), nameType("nt_Expr"))) ),
-                          ("prod_mult", arrowType(nameType("nt_Expr"),
-                                           arrowType(nameType("nt_Expr"), nameType("nt_Expr"))) ),
-                          ("prod_letBind", arrowType(functorType(nameType("list"), nameType("$char")),
-                                              arrowType(nameType("nt_Expr"),
-                                                 arrowType(nameType("nt_Expr"), nameType("nt_Expr")))) ),
-                          ("prod_name", arrowType(functorType(nameType("list"), nameType("$char")),
-                                           nameType("nt_Expr")) )
-                       ]
-                    )
-                  )],
-                  abella.iovalue, abella_initial_string.io);
+
+  local knownAttrs::[(String, Type)] =
+        [  ("env", functorType(nameType("list"),
+                      functorType(functorType(nameType("$pair"),
+                         functorType(nameType("list"), nameType("$char"))),
+                         nameType("integer"))) ), --list (pair string integer)
+           ("value", nameType("integer")),
+           ("knownNames", functorType(nameType("list"), --list string
+                             functorType(nameType("list"), nameType("$char"))) ),
+           ("valExists", nameType("$bool"))
+        ];
+  local attrOccurrences::[(String, [Type])] =
+        [  ("env", [nameType("nt_Expr")]),
+           ("value", [nameType("nt_Expr"), nameType("nt_Root")]),
+           ("knownNames", [nameType("nt_Expr")]),
+           ("valExists", [nameType("nt_Expr"), nameType("nt_Root")])
+        ];
+  local knownProds::[(String, Type)] =
+        [  --("prod_intConst", arrowType(nameType("integer"), nameType("nt_Expr")) ),
+           ("prod_plus", arrowType(nameType("nt_Expr"),
+                            arrowType(nameType("nt_Expr"), nameType("nt_Expr"))) )--,
+           --("prod_minus", arrowType(nameType("nt_Expr"),
+           --                  arrowType(nameType("nt_Expr"), nameType("nt_Expr"))) ),
+           --("prod_mult", arrowType(nameType("nt_Expr"),
+           --                 arrowType(nameType("nt_Expr"), nameType("nt_Expr"))) ),
+           --("prod_letBind", arrowType(functorType(nameType("list"), nameType("$char")),
+           --                    arrowType(nameType("nt_Expr"),
+           --                       arrowType(nameType("nt_Expr"), nameType("nt_Expr")))) ),
+           --("prod_name", arrowType(functorType(nameType("list"), nameType("$char")),
+           --                 nameType("nt_Expr")) ),
+           --("prod_root", arrowType(nameType("nt_Expr"), nameType("nt_Expr")))
+        ];
+  local wpdRelations::[(String, Type, [String])] =
+        [  ("$wpd_nt_Expr", nameType("nt_Expr"),
+            [{-"prod_intConst",-} "prod_plus"{-, "prod_minus",
+             "prod_mult", "prod_letBind", "prod_name"-}]),
+           ("$wpd_nt_Root", nameType("nt_Root"), ["prod_root"])
+        ];
+
+  return
+     run_step([(-1, proverState(noProof(),false, knownAttrs, attrOccurrences,
+                                knownProds, wpdRelations))],
+              abella.iovalue, abella_initial_string.io);
 }
 
 
@@ -84,7 +93,7 @@ IOVal<Integer> ::=
   local state::ProofState = head(stateList).snd.state;
   local debug::Boolean = head(stateList).snd.debug;
   local attrs::[(String, Type)] = head(stateList).snd.knownAttrs;
-  local attrOccurrences::[(String, [Type])] = head(stateList).snd.knownAttrOccurrences;
+  --local attrOccurrences::[(String, [Type])] = head(stateList).snd.knownAttrOccurrences;
   local prods::[(String, Type)] = head(stateList).snd.knownProductions;
 
   {-
@@ -102,7 +111,8 @@ IOVal<Integer> ::=
         if result.parseSuccess
         then result.parseTree.ast
         else anyParseFailure(result.parseErrors);
-  any_a.attrOccurrences = attrOccurrences;
+  --any_a.attrOccurrences = attrOccurrences;
+  any_a.currentState = head(stateList).snd;
   any_a.hypList = state.hypList;
   any_a.inProof = state.inProof;
   any_a.stateListIn = stateList;
@@ -118,9 +128,11 @@ IOVal<Integer> ::=
   ----------------------------
   local debug_output::IO =
        if debug
-       then if speak_to_abella
-            then print("Command sent:  " ++ any_a.translation ++ "\n\n", raw_input.io)
-            else print("Nothing to send to Abella\n\n", raw_input.io)
+       then print( (if speak_to_abella
+                    then "Command sent:  " ++ any_a.translation
+                    else "Nothing to send to Abella") ++
+                   "\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n",
+                  raw_input.io)
        else raw_input.io;
   local out_to_abella::IO =
         if speak_to_abella

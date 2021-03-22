@@ -64,6 +64,12 @@ String ::= treeName::String
   return "$" ++ treeName ++ "_ChildList";
 }
 
+function treeToNodeTreeName
+String ::= treeName::String
+{
+  return "$" ++ treeName ++ "_Ntr";
+}
+
 function accessToAccessName
 String ::= treeName::String attrName::String
 {
@@ -86,6 +92,25 @@ function wpdTypeName
 String ::= treeTy::Type
 {
   return "$wpd_" ++ treeTy.pp;
+}
+
+function wpdNodeTypeName
+String ::= treeTy::Type
+{
+  return "$wpd_node_" ++ treeTy.pp;
+}
+
+
+
+--Build a term for an expanded node tree (ntr_treeTy Node ChildList)
+function buildNodeTree
+Term ::= name::String treeTy::Type
+{
+  return
+     buildApplication(
+        nameTerm(nodeTreeConstructorName(treeTy), nothing()),
+        [ nameTerm(treeToNodeName(name), nothing()),
+          nameTerm(treeToChildListName(name), nothing()) ]);
 }
 
 
@@ -249,5 +274,209 @@ top::NewPremise ::= tree::String
      | just(just([_])) -> [tree]
      | _ -> []
      end;
+}
+
+
+
+
+
+
+
+{-
+  This builds the metaterm for an extensible theorem based on the
+  original theorem statement and the productions it works on.
+
+  original:  The original (translated) metaterm
+  treeName:  The name of the tree on which we are doing induction
+  treeTy:  The type of the tree treename
+  wpdRel:  The WPD nonterminal relation on which we are really doing
+           induction (type it is for and production order)
+  usedNames:  Names which were used in the original theorem statement,
+              which we can't use when generating children
+-}
+function buildExtensibleTheoremBody
+Metaterm ::= original::Metaterm treeName::String treeTy::Type
+             wpdRel::(Type, [String]) usedNames::[String] allProds::[(String, Type)]
+{
+  --Remove the binding for treeName from the top
+  local noTreeName::Metaterm =
+        case original of
+        | bindingMetaterm(binder, bindings, body) ->
+          bindingMetaterm(
+             binder,
+             removeBy(\ p1::(String, Maybe<Type>) p2::(String, Maybe<Type>) ->
+                        p1.fst == p2.fst,
+                      (treeName, nothing()), bindings),
+             body)
+        | _ -> error("Should not have anything but a binding to start")
+        end;
+
+  return
+     help_buildExtTheoremBody(wpdRel.snd, original, treeName, treeTy,
+                              usedNames, allProds);
+}
+
+--Walk through the list of productions and fill them in, and adding in
+--their inductive hypotheses and premises for the current case
+function help_buildExtTheoremBody
+Metaterm ::= prods::[String] original::Metaterm treeName::String
+             treeTy::Type usedNames::[String] allProds::[(String, Type)]
+{
+  local prodName::String = head(prods);
+  --The productions referenced in WPD relations had better exist
+  local prodTy::Type = findAssociated(prodName, allProds).fromJust;
+  local children::[(Type, String)] = buildChildNames(prodTy.argumentTypes, usedNames);
+  local newTree::Term =
+        buildApplication(
+           nameTerm(prodName, nothing()),
+           map(\ p::(Type, String) ->
+                 nameTerm( if tyIsNonterminal(p.fst)
+                           then treeToStructureName(p.snd)
+                           else p.snd, nothing()), children));
+  local newChildList::Term =
+        foldr(\ p::(Type, String) rest::Term ->
+                if tyIsNonterminal(p.fst)
+                then consTerm(
+                        buildNodeTree(p.snd, p.fst),
+                        rest)
+                else rest,
+              nilTerm(), children);
+  local newNodeTree::Term =
+        buildApplication(
+           nameTerm(nodeTreeConstructorName(treeTy), nothing()),
+           [nameTerm(treeToNodeName(treeName), nothing()), newChildList]);
+  local originalBinder::Binder =
+        case original of
+        | bindingMetaterm(binder, bindings, body) -> binder
+        | _ -> error("Should not have anything but a binding to start")
+        end;
+  local originalBindings::[(String, Maybe<Type>)] =
+        case original of
+        | bindingMetaterm(binder, bindings, body) -> bindings
+        | _ -> error("Should not have anything but a binding to start")
+        end;
+  local newBindings::[(String, Maybe<Type>)] =
+        flatMap(\ p::(Type, String) ->
+                  if tyIsNonterminal(p.fst)
+                  then [(treeToStructureName(p.snd), just(p.fst)),
+                        (treeToNodeName(p.snd), nothing()),
+                        (treeToChildListName(p.snd), nothing())]
+                  else [(p.snd, just(p.fst))], children) ++
+          removeBy(\ p1::(String, Maybe<Type>) p2::(String, Maybe<Type>) ->
+                     p1.fst == p2.fst,
+                   (treeToChildListName(treeName), nothing()), originalBindings);
+  local originalBody::Metaterm =
+        case original of
+        | bindingMetaterm(binder, bindings, body) -> body
+        | _ -> error("Should not have anything but a binding to start")
+        end;
+  --We'll keep the original WPD relation in there, but replace treeName with newTree
+  originalBody.replaceName = treeToStructureName(treeName);
+  originalBody.replaceTerm = newTree;
+  local replaceTree::Metaterm = originalBody.replaced;
+  replaceTree.replaceName = treeToChildListName(treeName);
+  replaceTree.replaceTerm = newChildList;
+  local replaceTreeNode::Metaterm = replaceTree.replaced;
+  local thisCase::[Metaterm] =
+        --WPD node relation for root
+        [ termMetaterm(
+             buildApplication(nameTerm(wpdNodeTypeName(treeTy), nothing()),
+                              [newTree, newNodeTree]),
+             emptyRestriction()) ] ++
+        --WPD nonterminal relations for children
+        foldr(\ p::(Type, String) rest::[Metaterm] ->
+                if tyIsNonterminal(p.fst)
+                then termMetaterm(
+                        buildApplication(
+                           nameTerm(wpdTypeName(p.fst), nothing()),
+                           [nameTerm(treeToStructureName(p.snd), nothing()),
+                            buildNodeTree(p.snd, p.fst)]),
+                        emptyRestriction())::rest
+                else rest,
+              [], children);
+  --fake IHs remove WPD nonterminal relation, and replace original tree with child tree
+  originalBody.removeWPDTree = treeName;
+  local removedWPD::Metaterm = originalBody.removedWPD;
+  local removedBindings::[(String, Maybe<Type>)] =
+        removeAllBy(\ p1::(String, Maybe<Type>) p2::(String, Maybe<Type>) ->
+                      p1.fst == p2.fst,
+                    [(treeToStructureName(treeName), nothing()),
+                     (treeToNodeName(treeName), nothing()),
+                     (treeToChildListName(treeName), nothing())],
+                    originalBindings);
+  local fakeIHs::[Metaterm] =
+        foldr(\ p::(Type, String) rest::[Metaterm] ->
+                if tysEqual(p.fst, treeTy)
+                then
+                   bindingMetaterm(
+                      originalBinder,
+                      removedBindings,
+                      --replace tree, tree node, and tree child list
+                      decorate
+                         (decorate
+                            (decorate removedWPD with
+                                {replaceName = treeToChildListName(treeName);
+                                 replaceTerm = nameTerm(treeToChildListName(p.snd),
+                                                        nothing());}.replaced)
+                          with {replaceName = treeToNodeName(treeName);
+                                replaceTerm = nameTerm(treeToNodeName(p.snd),
+                                                       nothing());}.replaced)
+                      with {replaceName = treeToStructureName(treeName);
+                            replaceTerm = nameTerm(treeToStructureName(p.snd),
+                                                   nothing());}.replaced)::rest
+                else rest,
+              [], children);
+  local currentStep::Metaterm =
+        bindingMetaterm(originalBinder, newBindings,
+           foldr(\ m::Metaterm rest::Metaterm ->
+                   impliesMetaterm(m, rest),
+                 replaceTreeNode, fakeIHs ++ thisCase));
+  return
+     case prods of
+     | [] -> error("Should not call help_buildExtTheoremBody with an empty list")
+     | [_] -> currentStep
+     | _::t ->
+       andMetaterm(currentStep,
+          help_buildExtTheoremBody(t, original, treeName, treeTy, usedNames, allProds))
+     end;
+}
+
+
+--Build names for each element of tys which do not occur in usedNames
+function buildChildNames
+[(Type, String)] ::= tys::[Type] usedNames::[String]
+{
+  local base::String =
+        if tyIsNonterminal(head(tys))
+        then substring(3, 4, head(tys).headTypeName.fromJust)
+        else case head(tys).headTypeName of
+             | nothing() -> "A"
+             | just("integer") -> "N"
+             | just(str) ->
+               if isAlpha(substring(0, 1, str))
+               then --capitalize the first character
+                    charsToString([head(stringToChars(substring(0, 1, str))) - 32])
+               else substring(0, 1, str)
+             end;
+  local uniqueName::String =
+        if contains(base, usedNames)
+        then makeUniqueName(base, 1, usedNames)
+        else base;
+  return
+     case tys of
+     | [] -> []
+     | h::t -> (h, uniqueName)::buildChildNames(t, uniqueName::usedNames)
+     end;
+}
+
+
+--Make a name starting with base that isn't in usedNames
+function makeUniqueName
+String ::= base::String index::Integer usedNames::[String]
+{
+  return
+     if contains(base ++ toString(index), usedNames)
+     then makeUniqueName(base, index + 1, usedNames)
+     else base ++ toString(index);
 }
 

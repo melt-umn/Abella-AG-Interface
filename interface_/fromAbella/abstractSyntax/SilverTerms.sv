@@ -179,13 +179,27 @@ top::Term ::= i::Integer
 
 
 {-
-  LIST CONSTANTS
+  LIST SYNTAX
 -}
 
 aspect production listTerm
 top::Term ::= contents::ListContents
 {
   top.translation = error("Should never be translating a listTerm");
+  top.shouldHide = false;
+}
+
+
+
+
+{-
+  PAIR SYNTAX
+-}
+
+aspect production pairTerm
+top::Term ::= contents::PairContents
+{
+  top.translation = error("Should never be translating a pairTerm");
   top.shouldHide = false;
 }
 

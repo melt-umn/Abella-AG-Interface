@@ -9,7 +9,7 @@ grammar interface_:toAbella:abstractSyntax;
 
 nonterminal AnyCommand with
    pp,
-   translation<String>, attrOccurrences, hypList, inProof,
+   translation<String>, currentState, hypList, inProof,
    isQuit,
    sendCommand, ownOutput, numCommandsSent,
    stateListIn, stateListOut, newProofState, wasError;
@@ -42,18 +42,28 @@ top::AnyCommand ::= c::TopCommand
            end
       else just(0);
 
+  local currentState::ProverState = head(top.stateListIn).snd;
+  local newProofState::ProofState =
+        case c of
+        | extensibleTheoremDeclaration(name, depth, metaterm, tree) ->
+          extensible_proofInProgress(top.newProofState, c.translatedTheorem,
+                                     name, c.numRelevantProds)
+        | _ -> top.newProofState
+        end;
   top.stateListOut =
       if top.wasError || top.inProof || !null(c.errors)
       then top.stateListIn
       else (case top.numCommandsSent of
             | just(x) -> x
             | nothing() -> -1
-            end, proverState(top.newProofState,
-                             head(top.stateListIn).snd.debug,
-                             --Next lines need to change when we actually get it from imports
-                             head(top.stateListIn).snd.knownAttrs,
-                             head(top.stateListIn).snd.knownAttrOccurrences,
-                             head(top.stateListIn).snd.knownProductions)
+            end, proverState(
+                    newProofState,
+                    currentState.debug,
+                    --Next lines need to change when we actually get it from imports
+                    currentState.knownAttrs,
+                    currentState.knownAttrOccurrences,
+                    currentState.knownProductions,
+                    currentState.knownWPDRelations)
            )::top.stateListIn;
 }
 
@@ -87,6 +97,16 @@ top::AnyCommand ::= c::ProofCommand
       else just(0);
 
   c.stateListIn = top.stateListIn;
+  c.attrOccurrences = top.currentState.knownAttrOccurrences;
+  local currentState::ProverState = head(top.stateListIn).snd;
+  local newProofState::ProofState =
+        case currentState.state, top.newProofState of
+        | extensible_proofInProgress(_, oMt, name, numProds), proofInProgress(_, _, _) ->
+          extensible_proofInProgress(top.newProofState, oMt, name, numProds)
+        | extensible_proofInProgress(_, oMt, name, numProds), noProof() ->
+          noProof() --In this case, we need to send the cleanup commands (split and axiom), but I don't know how yet
+        | _, _ -> top.newProofState
+        end;
   top.stateListOut =
       if top.wasError || !top.inProof || !null(c.errors)
       then top.stateListIn
@@ -95,11 +115,13 @@ top::AnyCommand ::= c::ProofCommand
            else (case top.numCommandsSent of
                  | just(x) -> x
                  | nothing() -> -1
-                 end, proverState(top.newProofState,
-                                  head(top.stateListIn).snd.debug,
-                                  head(top.stateListIn).snd.knownAttrs,
-                                  head(top.stateListIn).snd.knownAttrOccurrences,
-                                  head(top.stateListIn).snd.knownProductions)
+                 end, proverState(
+                         newProofState,
+                         currentState.debug,
+                         currentState.knownAttrs,
+                         currentState.knownAttrOccurrences,
+                         currentState.knownProductions,
+                         currentState.knownWPDRelations)
                 )::top.stateListIn;
 }
 

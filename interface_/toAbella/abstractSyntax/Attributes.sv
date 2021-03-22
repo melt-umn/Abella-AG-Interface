@@ -9,6 +9,7 @@ imports interface_:common;
   structured tree, then use pp to get the text to send to Abella.
 -}
 synthesized attribute translation<a>::a;
+flowtype translation {attrOccurrences, boundVars} on Metaterm;
 
 --new premises we are adding to the current theorem being defined
 monoid attribute newPremises::[NewPremise] with [], ++;
@@ -61,12 +62,29 @@ inherited attribute wasError::Boolean;
   the inner a is separate from the outer a, and we don't want to mix
   such bindings up if they are truly separate.
 -}
-inherited attribute boundVars::[[Pair<String Maybe<[Type]>>]];
-synthesized attribute boundVarsOut::[[Pair<String Maybe<[Type]>>]];
+inherited attribute boundVars::[[(String, Maybe<[Type]>)]];
+synthesized attribute boundVarsOut::[[(String, Maybe<[Type]>)]];
 
 
 --Pairs of (attribute name, types it occurs on)
-autocopy attribute attrOccurrences::[Pair<String [Type]>];
+autocopy attribute attrOccurrences::[(String, [Type])];
+--Tuples of (WPD relation name, nonterminal type it is for, productions in order)
+autocopy attribute wpdRelations::[(String, Type, [String])];
+--
+autocopy attribute currentState::ProverState;
+
+
+--Replace a given name with a given term
+autocopy attribute replaceName::String;
+autocopy attribute replaceTerm::Term;
+functor attribute replaced;
+propagate replaced on Metaterm, Term, TermList, PairContents, ListContents
+   excluding nameTerm, bindingMetaterm;
+
+
+--Remove the WPD nonterminal relation for the given tree
+autocopy attribute removeWPDTree::String;
+synthesized attribute removedWPD::Metaterm;
 
 
 --The hypotheses in the current context (name and term)
@@ -93,4 +111,33 @@ synthesized attribute isUndo::Boolean;
 
 --Name of a hypothesis given as an argument
 synthesized attribute name::String;
+
+
+
+--Names which occur anywhere in a term or metaterm, including uses and bindings
+--(May include unbound names or names which are bound but used nowhere)
+synthesized attribute usedNames::[String];
+
+
+
+--Search for the type of a variable by a particular name at the top level of a metaterm
+inherited attribute findNameType::String;
+--The type if the name was found at the top level, or a message about not found/no certain type
+synthesized attribute foundNameType::Either<String Type>;
+
+
+
+--These are just for handling extensible theorems
+synthesized attribute translatedTheorem::Metaterm;
+synthesized attribute numRelevantProds::Integer;
+
+
+
+--A list of types from an arrow type, not including the result
+--e.g. A -> B C D -> E F   would give   [A, B C D]
+synthesized attribute argumentTypes::[Type];
+
+--Ultimate head of a type---nothing() on arrows or underscores
+--e.g.  f A B C   would give   f
+synthesized attribute headTypeName::Maybe<String>;
 
