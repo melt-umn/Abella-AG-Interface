@@ -179,50 +179,6 @@ synthesized attribute newBindingNames::[Pair<String Maybe<Type>>];
 --These new names will replace some old names
 synthesized attribute removeBindingNames::[String];
 
-abstract production attrAccessNewPremise
-top::NewPremise ::= tree::String attr::String
-{
-  local treeNode::Term = nameTerm(treeToNodeName(tree), nothing());
-  local valueName::Term = nameTerm(accessToAccessName(tree, attr), nothing());
-  local valAttr::Term =
-        buildApplication(nameTerm(attributeExistsName, nothing()), [valueName]);
-  local accessRel::Term = nameTerm(accessRelationName(ty, attr), nothing());
-  top.translation =
-     case findty of
-     | just(just([_])) ->
-       -- <accessRel> <treeNode> (<attributeExistsName> <valueName>)
-       termMetaterm(
-          buildApplication(accessRel, [treeNode, valAttr]),
-          emptyRestriction())
-     | just(just(_)) -> trueMetaterm() --no type, so can't actually translate this
-     | _ -> trueMetaterm() --error case, but I think it is caught elsewhere
-     end;
-
-  local findty::Maybe<Maybe<[Type]>> = findAssociated(tree, top.boundVarsHere);
-  local ty::Type =
-        case findty of
-        | just(just([ty])) -> ty
-        | _ -> error("Shouldn't access local ty if local findty is " ++
-                     "the wrong shape (attrAccessNewPremise)")
-        end;
-
-  top.addPremiseHere = containsBy(\ x::String y::String -> x == y, tree, top.currentNames);
-
-  top.isEq =
-     case top.eqTest of
-     | attrAccessNewPremise(t, a) -> t == tree && a == attr
-     | _ -> false
-     end;
-
-  --We don't want to add the name if we can't find a type for it.
-  top.newBindingNames =
-     case findty of
-     | just(just(_)) -> [pair(accessToAccessName(tree, attr), nothing())]
-     | _ -> []
-     end;
-  top.removeBindingNames = [];
-}
-
 
 abstract production wpdNewPremise
 top::NewPremise ::= tree::String
@@ -298,19 +254,6 @@ function buildExtensibleTheoremBody
 Metaterm ::= original::Metaterm treeName::String treeTy::Type
              wpdRel::(Type, [String]) usedNames::[String] allProds::[(String, Type)]
 {
-  --Remove the binding for treeName from the top
-  local noTreeName::Metaterm =
-        case original of
-        | bindingMetaterm(binder, bindings, body) ->
-          bindingMetaterm(
-             binder,
-             removeBy(\ p1::(String, Maybe<Type>) p2::(String, Maybe<Type>) ->
-                        p1.fst == p2.fst,
-                      (treeName, nothing()), bindings),
-             body)
-        | _ -> error("Should not have anything but a binding to start")
-        end;
-
   return
      help_buildExtTheoremBody(wpdRel.snd, original, treeName, treeTy,
                               usedNames, allProds);
@@ -378,8 +321,10 @@ Metaterm ::= prods::[String] original::Metaterm treeName::String
   replaceTree.replaceTerm = newChildList;
   local replaceTreeNode::Metaterm = replaceTree.replaced;
   local thisCase::[Metaterm] =
-        --WPD node relation for root
-        [ termMetaterm(
+          --Show user the structure
+        [ eqMetaterm(nameTerm(treeToStructureName(treeName), nothing()), newTree),
+          --WPD node relation for root
+          termMetaterm(
              buildApplication(nameTerm(wpdNodeTypeName(treeTy), nothing()),
                               [newTree, newNodeTree]),
              emptyRestriction()) ] ++
@@ -408,7 +353,20 @@ Metaterm ::= prods::[String] original::Metaterm treeName::String
         foldr(\ p::(Type, String) rest::[Metaterm] ->
                 if tysEqual(p.fst, treeTy)
                 then if null(removedBindings)
-                     then bindingMetaterm(
+                     then --replace tree, tree node, and tree child list
+                          decorate
+                             (decorate
+                                (decorate removedWPD with
+                                    {replaceName = treeToChildListName(treeName);
+                                     replaceTerm = nameTerm(treeToChildListName(p.snd),
+                                                            nothing());}.replaced)
+                              with {replaceName = treeToNodeName(treeName);
+                                    replaceTerm = nameTerm(treeToNodeName(p.snd),
+                                                           nothing());}.replaced)
+                          with {replaceName = treeToStructureName(treeName);
+                                replaceTerm = nameTerm(treeToStructureName(p.snd),
+                                                       nothing());}.replaced::rest
+                     else bindingMetaterm(
                              originalBinder,
                              removedBindings,
                                 --replace tree, tree node, and tree child list
@@ -424,19 +382,6 @@ Metaterm ::= prods::[String] original::Metaterm treeName::String
                                 with {replaceName = treeToStructureName(treeName);
                                       replaceTerm = nameTerm(treeToStructureName(p.snd),
                                                              nothing());}.replaced)::rest
-                     else --replace tree, tree node, and tree child list
-                          decorate
-                             (decorate
-                                (decorate removedWPD with
-                                    {replaceName = treeToChildListName(treeName);
-                                     replaceTerm = nameTerm(treeToChildListName(p.snd),
-                                                            nothing());}.replaced)
-                              with {replaceName = treeToNodeName(treeName);
-                                    replaceTerm = nameTerm(treeToNodeName(p.snd),
-                                                           nothing());}.replaced)
-                          with {replaceName = treeToStructureName(treeName);
-                                replaceTerm = nameTerm(treeToStructureName(p.snd),
-                                                       nothing());}.replaced::rest
                 else rest,
               [], children);
   local currentStep::Metaterm =

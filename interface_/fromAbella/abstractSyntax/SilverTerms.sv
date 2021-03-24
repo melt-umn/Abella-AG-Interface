@@ -141,6 +141,20 @@ top::Metaterm ::= arg::Term result::Term
 
 
 {-
+  ATTRIBUTE ACCESS
+-}
+
+aspect production attrAccessMetaterm
+top::Metaterm ::= tree::String attr::String val::Term
+{
+  top.translation = error("Should never be translating an attrAccessMetaterm");
+  top.shouldHide = false;
+}
+
+
+
+
+{-
   BOOLEAN CONSTANTS
 -}
 
@@ -223,20 +237,6 @@ aspect production charTerm
 top::Term ::= char::String
 {
   top.translation = error("Should never be translating a charTerm");
-  top.shouldHide = false;
-}
-
-
-
-
-{-
-  ATTRIBUTE ACCESS
--}
-
-aspect production attrAccessTerm
-top::Term ::= treename::String attr::String
-{
-  top.translation = error("Should not be translating attrAccessTerm");
   top.shouldHide = false;
 }
 

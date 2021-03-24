@@ -142,6 +142,14 @@ top::Term ::= f::Term args::TermList
      | nameTerm("$not_bool", _),
        consTermList(arg1, singleTermList(arg2)) ->
        right(notBoolMetaterm(arg1, arg2))
+     --Attribute Access
+     | nameTerm(str, _),
+       consTermList(nameTerm(treeNodeName, _),
+                    singleTermList(applicationTerm(nameTerm("$attr_ex", _),
+                                                   singleTermList(val))))
+       when nameIsAccessRelation(str) ->
+       right(attrAccessMetaterm(treeNodeToVar(treeNodeName),
+                                accessRelationToAttr(str), val))
      --Integer Constants
      | nameTerm("$posInt", _), singleTermList(intTerm(i)) ->
        left(intTerm(i))
@@ -158,8 +166,7 @@ top::Term ::= f::Term args::TermList
   top.shouldHide =
       case f of
       | nameTerm(name, _) ->
-        startsWith("$wpd_", name) ||
-        startsWith("$access_", name)
+        startsWith("$wpd_", name)
       | _ -> false
       end;
 }
@@ -175,17 +182,16 @@ top::Term ::= name::String ty::Maybe<Type>
           | "$bfalse" -> falseTerm()
           --Integers
           | "$zero" -> intTerm(0)
+          --Tree structure variable
+          | x when varIsTreeStructure(x) ->
+            nameTerm(treeStructureToVar(x), ty)
           --Other
           | _ ->
-            if findDot > 0
-            --Value of Attribute Access:  $<tree>_DOT_<attr>
-            then attrAccessTerm(substring(1, findDot, name),
-                                substring(findDot + 5, length(name), name))
-            else if startsWith("$c_", name)
-                 --Character for string
-                 then charTerm(charsToString([toInteger(substring(3, 5, name))]))
-                 --Nothing Special
-                 else nameTerm(name, ty)
+            if startsWith("$c_", name)
+            --Character for string
+            then charTerm(charsToString([toInteger(substring(3, 5, name))]))
+            --Nothing Special
+            else nameTerm(name, ty)
           end);
   local findDot::Integer = indexOf("_DOT_", name);
   top.shouldHide = false;

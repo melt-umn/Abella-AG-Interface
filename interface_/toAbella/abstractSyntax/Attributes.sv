@@ -15,7 +15,7 @@ flowtype translation {attrOccurrences, boundVars} on Metaterm;
 monoid attribute newPremises::[NewPremise] with [], ++;
 propagate newPremises on
    Metaterm, Term, TermList, ListContents, PairContents
-   excluding bindingMetaterm, attrAccessTerm;
+   excluding bindingMetaterm, attrAccessMetaterm;
 
 
 monoid attribute errors::[Error] with [], ++;

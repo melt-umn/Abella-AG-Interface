@@ -115,7 +115,7 @@ top::Subgoal ::= num::[Integer] goal::Metaterm
 abstract production hiddenSubgoals
 top::Subgoal ::= num::Integer
 {
-  top.pp = toString(num) ++ " other subgoal" ++ (if num == 1 then "s." else ".");
+  top.pp = toString(num) ++ " other subgoal" ++ (if num == 1 then "." else "s.");
 }
 
 

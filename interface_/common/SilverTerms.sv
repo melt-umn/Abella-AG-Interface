@@ -111,16 +111,26 @@ top::Metaterm ::= t::Term result::Term
   top.isAtomic = true;
 }
 
-
-
---TERMS
-abstract production attrAccessTerm
-top::Term ::= treename::String attr::String
+{-
+  We were going to handle attribute access implicitly, with t.a being
+  a Term and inserting an access Metaterm earlier in the theorem.
+  However, that is difficult to handle when an attribute occurs only
+  in the head.  Should we assume the attribute has a value (insert the
+  access assumption earlier), or should we have to prove it has a
+  value?  If it is the latter, how do we do that implicitly and still
+  interact well?  Therefore we make the values of attributes be
+  explicitly bound by using this instead.
+-}
+abstract production attrAccessMetaterm
+top::Metaterm ::= tree::String attr::String val::Term
 {
-  top.pp = treename ++ "." ++ attr;
+  top.pp = tree ++ "." ++ attr ++ " = " ++ val.pp;
   top.isAtomic = true;
 }
 
+
+
+--TERMS
 abstract production intTerm
 top::Term ::= i::Integer
 {

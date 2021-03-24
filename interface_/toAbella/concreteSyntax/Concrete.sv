@@ -10,12 +10,12 @@ synthesized attribute count::Integer;
 
 --split an AttrAccess_t into the tree name and attr name
 function split_AttrAccess_t
-Pair<String String> ::= a::AttrAccess_t
+(String, String) ::= a::AttrAccess_t
 {
   local lexeme::String = a.lexeme;
   local dotLoc::Integer = indexOf(".", a.lexeme);
-  return pair(substring(0, dotLoc, lexeme),
-              substring(dotLoc + 1, length(lexeme), lexeme));
+  return (substring(0, dotLoc, lexeme),
+          substring(dotLoc + 1, length(lexeme), lexeme));
 }
 
 
@@ -278,6 +278,9 @@ concrete productions top::SubMetaterm_c
 | t::Term_c h::Hashes_c
   { top.ast = termMetaterm(t.ast, h.ast); }
 --Things for Silver (for special relations)
+| a::AttrAccess_t '=' val::Term_c
+  { local pieces::(String, String) = split_AttrAccess_t(a);
+    top.ast = attrAccessMetaterm(pieces.1, pieces.2, val.ast); }
 | t1::Term_c '+' t2::Term_c '=' t3::Term_c
   { top.ast = plusMetaterm(t1.ast, t2.ast, t3.ast); }
 | t1::Term_c '-' t2::Term_c '=' t3::Term_c
@@ -305,6 +308,9 @@ concrete productions top::SubMetaterm_c
 | '!' t1::Term_c '=' t2::Term_c
   { top.ast = notBoolMetaterm(t1.ast, t2.ast); }
 --Symmetry for the same
+| val::Term_c '=' a::AttrAccess_t
+  { local pieces::(String, String) = split_AttrAccess_t(a);
+    top.ast = attrAccessMetaterm(pieces.1, pieces.2, val.ast); }
 | t3::Term_c '=' t1::Term_c '+' t2::Term_c
   { top.ast = plusMetaterm(t1.ast, t2.ast, t3.ast); }
 | t3::Term_c '=' t1::Term_c '-' t2::Term_c
@@ -361,12 +367,6 @@ concrete productions top::Exp_c
 | 'nil'
   { top.ast = nilTerm(); }
 --New for Silver:
-| a::AttrAccess_t
-  { local dotLoc::Integer = indexOf(".", a.lexeme);
-    top.ast =
-       attrAccessTerm(substring(0, dotLoc, a.lexeme),
-                      substring(dotLoc + 1, length(a.lexeme),
-                                a.lexeme)); }
 | i::Number_t
   { top.ast = intTerm(toInteger(i.lexeme)); }
 | i::SilverNegativeInteger_t

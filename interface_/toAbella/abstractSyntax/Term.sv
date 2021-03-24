@@ -22,7 +22,7 @@ top::Metaterm ::= t::Term r::Restriction
   -}
   top.translation =
       case t of
-      | attrAccessTerm(_, _) -> trueMetaterm()
+      --| attrAccessTerm(_, _) -> trueMetaterm()
       | _ -> termMetaterm(t.translation, r)
       end;
 
@@ -242,6 +242,70 @@ top::Metaterm ::= b::Binder bindings::[(String, Maybe<Type>)] body::Metaterm
                end,
              [], currentScope)
      end;
+}
+
+
+aspect production attrAccessMetaterm
+top::Metaterm ::= tree::String attr::String val::Term
+{
+  top.translation =
+      case possibleTys of
+      | [ty] ->
+        termMetaterm(
+           buildApplication(
+              nameTerm(accessRelationName(ty, attr), nothing()),
+              [nameTerm(treeToNodeName(tree), nothing()),
+               buildApplication(nameTerm(attributeExistsName, nothing()),
+                                [val.translation])]),
+           emptyRestriction())
+      | _ ->
+        error("Should not access translation in the presence of errors (attrAccessMetaterm)")
+      end;
+  top.newPremises := [wpdNewPremise(tree)] ++ val.newPremises;
+
+  local occursOnTypes::[Type] =
+        case findAssociated(attr, top.attrOccurrences) of
+        | just(tys) -> tys
+        | nothing() -> [] --unknown attribute
+        end;
+  local possibleTys::[Type] =
+        case findAssociatedScopes(tree, top.boundVars) of
+        | just(just(l)) -> intersectBy(tysEqual, occursOnTypes, l)
+        | just(nothing()) -> occursOnTypes
+        | nothing() -> []
+        end;
+
+  val.boundVars = replaceAssociatedScopes(tree, just(possibleTys), top.boundVars);
+  top.boundVarsOut = val.boundVarsOut;
+
+  top.errors <-
+      --check whether the attribute exists
+      case findAssociated(attr, top.attrOccurrences) of
+      | just(tys) -> []
+      | nothing() -> [errorMsg("Unknown attribute " ++ attr)]
+      end ++
+      --check whether the tree exists
+      case findAssociatedScopes(tree, top.boundVars) of
+      | nothing() -> [errorMsg("Unbound name " ++ tree)]
+      | _ -> []
+      end ++
+      --check attribute occurrence of trees of type t
+      case findAssociated(attr, top.attrOccurrences),
+           possibleTys of
+      | just(atys), ttys ->
+        if null(ttys)
+        then [errorMsg("Attribute " ++ attr ++ " does not occur on " ++ tree)]
+        else if length(ttys) > 1
+             then [errorMsg("Could not determine type of tree " ++ tree)]
+             else []
+      | _, _ -> []
+      end;
+
+  top.foundNameType = left("Did not find name " ++ top.findNameType);
+
+  top.usedNames = tree::val.usedNames;
+
+  top.removedWPD = top;
 }
 
 
@@ -641,52 +705,6 @@ top::Term ::= ty::Maybe<Type>
   top.boundVarsOut = top.boundVars;
 
   top.usedNames = [];
-}
-
-
-aspect production attrAccessTerm
-top::Term ::= treename::String attr::String
-{
-  top.translation = nameTerm(accessToAccessName(treename, attr), nothing());
-  top.newPremises := [attrAccessNewPremise(treename, attr), wpdNewPremise(treename)];
-
-  local occursOnTypes::[Type] =
-        case findAssociated(attr, top.attrOccurrences) of
-        | just(tys) -> tys
-        | nothing() -> [] --unknown attribute
-        end;
-  local possibleTys::[Type] =
-        case findAssociatedScopes(treename, top.boundVars) of
-        | just(just(l)) -> intersectBy(tysEqual, occursOnTypes, l)
-        | just(nothing()) -> occursOnTypes
-        | _ -> error("Should not access local possibleTys if there are errors (attrAccessTerm)")
-        end;
-
-  top.boundVarsOut = replaceAssociatedScopes(treename, just(possibleTys), top.boundVars);
-
-  top.errors <-
-      --check whether the attribute exists
-      case findAssociated(attr, top.attrOccurrences) of
-      | just(tys) -> []
-      | nothing() -> [errorMsg("Unknown attribute " ++ attr)]
-      end ++
-      --check whether the tree exists
-      case findAssociatedScopes(treename, top.boundVars) of
-      | nothing() -> [errorMsg("Unbound name " ++ treename)]
-      | _ -> []
-      end ++
-      --check attribute occurrence of trees of type t
-      --maybe this should go on the new premise production
-      case findAssociated(attr, top.attrOccurrences),
-           findAssociatedScopes(treename, top.boundVars) of
-      | just(atys), just(just(ttys)) ->
-        if null(intersectBy(tysEqual, atys, ttys))
-        then [errorMsg("Attribute " ++ attr ++ " does not occur on " ++ treename)]
-        else []
-      | _, _ -> []
-      end;
-
-  top.usedNames = [treename];
 }
 
 
