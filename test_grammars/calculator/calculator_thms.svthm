@@ -52,7 +52,13 @@ split.
    %letBind
     intros IH1 IH2 Structure. skip.
    %name
-    intros Structure. skip.
+    intros Structure. case T.value.
+      %Value exists
+       exists Ret. search.
+      %No environment
+       skip.
+      %No return from lookup
+       skip.
 
 
 Extensible_Theorem valExists__implies__value__Root :

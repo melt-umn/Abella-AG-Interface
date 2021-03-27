@@ -470,6 +470,8 @@ concrete productions top::ProcessingErrorMessage_c
   { top.ast = unknownSettingsValueExpectMany(stripQuotes(val.lexeme), stripQuotes(key.lexeme)); }
 | 'Not enough arguments to apply' '(' 'Expected' exp::Number_t 'but got' got::Number_t ')'
   { top.ast = applyWrongArgsNumber(toInteger(exp.lexeme), toInteger(got.lexeme)); }
+| 'Found logic variable at toplevel'
+  { top.ast = logicVariableToplevel(); }
 
 
 concrete productions top::TypingErrorMessage_c

@@ -209,7 +209,7 @@ Maybe<(String, Term)> ::= treename::String hyps::[(String, Metaterm)]
      case hyps of
      | [] -> nothing()
      | (hyp, eqMetaterm(nameTerm(str, _), structure))::_
-       when isTreeStructureName(str) && contains(treename, structure.usedNames) ->
+       when contains(treename, structure.usedNames) ->
        just((str, new(structure)))
      | _::tl -> find_parent_tree(treename, tl)
      end;

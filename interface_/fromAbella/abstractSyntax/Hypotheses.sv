@@ -41,7 +41,7 @@ top::Hypothesis ::= name::String body::Metaterm
 {
   top.translation =
       if body.shouldHide || startsWith("$", name)
-      then hiddenHypothesis(name, body)
+      then hiddenHypothesis(name, body.translation)
       else metatermHyp(name, body.translation);
 
   top.hypList = [(name, new(body))];

@@ -175,7 +175,7 @@ top::ProofCommand ::= depth::Maybe<Integer> theorem::Clearable withs::[Pair<Stri
 abstract production caseTactic
 top::ProofCommand ::= h::HHint hyp::String keep::Boolean
 {
-  top.pp = h.pp ++ "case " ++ hyp ++ if keep then "(keep).  " else ".  ";
+  top.pp = h.pp ++ "case " ++ hyp ++ if keep then " (keep).  " else ".  ";
 
   top.translation = --error("Translation not done in caseTactic yet");
       [caseTactic(h, hyp, keep)];
@@ -241,15 +241,19 @@ top::ProofCommand ::= h::HHint tree::String attr::String
   local isInherited::Boolean =
         contains(attr, top.currentState.knownInheritedAttrs);
   local findParent::Maybe<(String, Term)> =
-        find_parent_tree(treeToStructureName(tree), top.hypList);
+        find_parent_tree(tree, top.hypList);
   local associatedTree::String =
         if isInherited
-        then findParent.fromJust.fst
+        then case findParent of
+             | just((tr, _)) -> tr
+             | nothing() -> error("findParent should not be nothing")
+             end
         else tree;
   local associatedProd::String =
-        case find_structure_hyp(associatedTree, top.hypList).fromJust of
-        | applicationTerm(nameTerm(prod, _), _) -> prod
-        | _ -> error("It should be a production")
+        case find_structure_hyp(associatedTree, top.hypList) of
+        | just(applicationTerm(nameTerm(prod, _), _)) -> prod
+        | just(_) -> error("It should be a production (associatedProd)")
+        | nothing() -> error("It should have a value (associatedProd)")
         end;
   local makeEqHypThm::Clearable =
         clearable(false, wpdNode_to_AttrEq(attr, treeTy), []);
@@ -258,12 +262,14 @@ top::ProofCommand ::= h::HHint tree::String attr::String
   local treeTy::Type =
         if isInherited
         then case decorate findParent.fromJust.snd with
-                  {findParentOf = treeToStructureName(tree);}.foundParent of
-             | nothing() -> error("We picked ths term based on it being included")
+                  {findParentOf = tree;}.foundParent of
+             | nothing() -> error("We picked this term based on it being included")
              | just((prod, index)) ->
                elemAtIndex(
-                  findAssociated(prod,
-                                 top.currentState.knownProductions).fromJust.argumentTypes,
+                  case findAssociated(prod, top.currentState.knownProductions) of
+                  | just(val) -> val.argumentTypes
+                  | nothing() -> error("Could not find production " ++ prod)
+                  end,
                   index)
              end
         else case wpdNodeHyp of
@@ -279,7 +285,7 @@ top::ProofCommand ::= h::HHint tree::String attr::String
                    [hypApplyArg(wpdNodeHyp.fromJust.1, [])], []),
        applyTactic(nameHint(componentHypName), nothing(), pcTheorem,
                    [hypApplyArg(eqHypName, [])], []),
-       caseTactic(h, componentHypName, false)]; --,
+       caseTactic(h, componentHypName, true)]; --,
        --clearCommand([eqHypName, componentHypName], false)];
 }
 

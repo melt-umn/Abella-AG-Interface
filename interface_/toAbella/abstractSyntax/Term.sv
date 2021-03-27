@@ -1046,7 +1046,8 @@ top::TermList ::= t::Term
   top.foundParent = t.foundParent;
   top.isArgHere =
       case t of
-      | nameTerm(str, _) when str == top.findParentOf -> just(1)
+      | nameTerm(str, _) when str == top.findParentOf ->
+        just(0) --0-based indexing
       | _ -> nothing()
       end;
 }
@@ -1080,7 +1081,8 @@ top::TermList ::= t::Term rest::TermList
       end;
   top.isArgHere =
       case t of
-      | nameTerm(str, _) when str == top.findParentOf -> just(1)
+      | nameTerm(str, _) when str == top.findParentOf ->
+        just(0) --0-based indexing
       | _ -> bind(rest.isArgHere, \x::Integer -> just(x + 1))
       end;
 }

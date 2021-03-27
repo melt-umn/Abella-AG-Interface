@@ -391,6 +391,15 @@ top::ProcessingErrorMessage ::= expected::Integer got::Integer
 }
 
 
+abstract production logicVariableToplevel
+top::ProcessingErrorMessage ::=
+{
+  top.pp = "Found logic variable at toplevel";
+
+  top.translation = logicVariableToplevel();
+}
+
+
 
 
 

@@ -229,7 +229,15 @@ Define $value__nt_Expr__host : nt_Expr -> $node_tree -> prop by
         $access__value__nt_Expr Node ($attr_ex Ret) /\
         $access__env__nt_Expr Node ($attr_ex Env) /\
         fun__lookup Env N Ret /\
-        is_integer Ret.
+        is_integer Ret;
+  $value__nt_Expr__host (prod_name N) ($ntr_nt_Expr Node nil) :=
+     $access__value__nt_Expr Node $attr_no /\
+     $access__env__nt_Expr Node $attr_no;
+  $value__nt_Expr__host (prod_name N) ($ntr_nt_Expr Node nil) :=
+     exists Env,
+        $access__value__nt_Expr Node $attr_no /\
+        $access__env__nt_Expr Node ($attr_ex Env) /\
+        ((exists Ret, fun__lookup Env N Ret) -> false).
 
 Define $knownNames__nt_Expr__host : nt_Expr -> $node_tree -> prop by
   %intConst
@@ -691,6 +699,11 @@ Theorem $value__nt_Expr__prod_letBind :
      $value__nt_Expr (prod_letBind N E Body) Node ->
      $value__nt_Expr__host (prod_letBind N E Body) Node.
 skip.
+Theorem $value__nt_Expr__prod_name :
+  forall N Node,
+     $value__nt_Expr (prod_name N) Node ->
+     $value__nt_Expr__host (prod_name N) Node.
+skip.
 
 Theorem $knownNames__nt_Expr__prod_intConst :
   forall I Node,
@@ -717,6 +730,11 @@ Theorem $knownNames__nt_Expr__prod_letBind :
      $knownNames__nt_Expr (prod_letBind N E Body) Node ->
      $knownNames__nt_Expr__host (prod_letBind N E Body) Node.
 skip.
+Theorem $knownNames__nt_Expr__prod_name :
+  forall N Node,
+     $knownNames__nt_Expr (prod_name N) Node ->
+     $knownNames__nt_Expr__host (prod_name N) Node.
+skip.
 
 Theorem $valExists__nt_Expr__prod_intConst :
   forall I Node,
@@ -742,6 +760,11 @@ Theorem $valExists__nt_Expr__prod_letBind :
   forall N E Body Node,
      $valExists__nt_Expr (prod_letBind N E Body) Node ->
      $valExists__nt_Expr__host (prod_letBind N E Body) Node.
+skip.
+Theorem $valExists__nt_Expr__prod_name :
+  forall N Node,
+     $valExists__nt_Expr (prod_name N) Node ->
+     $valExists__nt_Expr__host (prod_name N) Node.
 skip.
 
 Theorem $env__nt_Root__prod_root :

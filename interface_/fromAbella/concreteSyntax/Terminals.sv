@@ -87,6 +87,7 @@ terminal ExpectMany_t        /expected 'on', 'off', non-negative integer, or dep
 terminal NotEnoughArgs_t     'Not enough arguments to apply'                                        lexer classes {ERROR};
 terminal Expected_t          'Expected'                                                             lexer classes {ERROR};
 terminal ButGot_t            'but got'                                                              lexer classes {ERROR};
+terminal LogicVarTopLev_t    'Found logic variable at toplevel'                                     lexer classes {ERROR};
 
 
 terminal Exists_t       'exists'       lexer classes {LOGIC};
