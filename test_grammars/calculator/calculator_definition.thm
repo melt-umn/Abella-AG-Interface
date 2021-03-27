@@ -76,7 +76,10 @@ Define fun__contains :
 
 Define $env__nt_Expr__host : nt_Expr -> $node_tree -> prop by
   %intConst
-  $env__nt_Expr__host (prod_intConst I) ($ntr_nt_Expr Node nil);
+  $env__nt_Expr__host (prod_intConst I) ($ntr_nt_Expr Node nil) :=
+     exists AVal,
+        $access__env__nt_Expr Node AVal /\
+        $is_attrVal (is_list (is_pair is_string is_integer)) AVal;
   %plus
   $env__nt_Expr__host (prod_plus E1 E2)
                    ($ntr_nt_Expr Node (($ntr_nt_Expr E1Node L1)::
@@ -114,8 +117,7 @@ Define $env__nt_Expr__host : nt_Expr -> $node_tree -> prop by
         $access__value__nt_Expr ENode ($attr_ex EVal) /\
         $append (($pair_c N EVal)::nil) LTop LSub /\
         $access__env__nt_Expr BodyNode ($attr_ex LSub) /\
-        is_list (is_pair is_string is_integer) LTop /\
-        is_list (is_pair is_string is_integer) LSub;
+        is_list (is_pair is_string is_integer) LTop;
   $env__nt_Expr__host (prod_letBind N E Body)
                    ($ntr_nt_Expr Node (($ntr_nt_Expr ENode EL)::
                                    ($ntr_nt_Expr BodyNode BL)::nil)) :=
@@ -132,7 +134,10 @@ Define $env__nt_Expr__host : nt_Expr -> $node_tree -> prop by
         $access__env__nt_Expr BodyNode $attr_no /\
         is_list (is_pair is_string is_integer) LTop;
   %name
-  $env__nt_Expr__host (prod_name N) ($ntr_nt_Expr Node nil).
+  $env__nt_Expr__host (prod_name N) ($ntr_nt_Expr Node nil) :=
+     exists AVal,
+        $access__env__nt_Expr Node AVal /\
+        $is_attrVal (is_list (is_pair is_string is_integer)) AVal.
 
 Define $value__nt_Expr__host : nt_Expr -> $node_tree -> prop by
   %intConst
@@ -228,7 +233,10 @@ Define $value__nt_Expr__host : nt_Expr -> $node_tree -> prop by
 
 Define $knownNames__nt_Expr__host : nt_Expr -> $node_tree -> prop by
   %intConst
-  $knownNames__nt_Expr__host (prod_intConst I) ($ntr_nt_Expr Node nil);
+  $knownNames__nt_Expr__host (prod_intConst I) ($ntr_nt_Expr Node nil) :=
+     exists AVal,
+        $access__knownNames__nt_Expr Node AVal /\
+        $is_attrVal (is_list is_string) AVal;
   %plus
   $knownNames__nt_Expr__host (prod_plus E1 E2)
                    ($ntr_nt_Expr Node (($ntr_nt_Expr E1Node L1)::
@@ -265,8 +273,7 @@ Define $knownNames__nt_Expr__host : nt_Expr -> $node_tree -> prop by
         $access__knownNames__nt_Expr ENode ($attr_ex LTop) /\
         $append (N::nil) LTop LSub /\
         $access__knownNames__nt_Expr BodyNode ($attr_ex LSub) /\
-        is_list is_string LTop /\
-        is_list is_string LSub;
+        is_list is_string LTop;
   $knownNames__nt_Expr__host (prod_letBind N E Body)
                    ($ntr_nt_Expr Node (($ntr_nt_Expr ENode EL)::
                                    ($ntr_nt_Expr BodyNode BL)::nil)) :=
@@ -274,7 +281,10 @@ Define $knownNames__nt_Expr__host : nt_Expr -> $node_tree -> prop by
      $access__knownNames__nt_Expr ENode $attr_no /\
      $access__knownNames__nt_Expr BodyNode $attr_no;
   %name
-  $knownNames__nt_Expr__host (prod_name N) ($ntr_nt_Expr Node nil).
+  $knownNames__nt_Expr__host (prod_name N) ($ntr_nt_Expr Node nil) :=
+     exists AVal,
+        $access__knownNames__nt_Expr Node AVal /\
+        $is_attrVal (is_list is_string) AVal.
 
 Define $valExists__nt_Expr__host : nt_Expr -> $node_tree -> prop by
   $valExists__nt_Expr__host (prod_intConst I) ($ntr_nt_Expr Node nil) :=
@@ -547,29 +557,35 @@ skip.
 
 
 %Access Is Axioms
-Theorem $access__env__nt_Expr__is : forall Node V,
+Theorem $access__env__nt_Expr__is : forall Tree Node ChildList V,
+  $wpd_nt_Expr Tree ($ntr_nt_Expr Node ChildList) ->
   $access__env__nt_Expr Node ($attr_ex V) ->
   is_list (is_pair is_string is_integer) V.
 skip.
-Theorem $access__value__nt_Expr__is : forall Node V,
+Theorem $access__value__nt_Expr__is : forall Tree Node ChildList V,
+  $wpd_nt_Expr Tree ($ntr_nt_Expr Node ChildList) ->
   $access__value__nt_Expr Node ($attr_ex V) ->
   is_integer V.
 skip.
-Theorem $access__knownNames__nt_Expr__is : forall Node V,
+Theorem $access__knownNames__nt_Expr__is : forall Tree Node ChildList V,
+  $wpd_nt_Expr Tree ($ntr_nt_Expr Node ChildList) ->
   $access__knownNames__nt_Expr Node ($attr_ex V) ->
   is_list is_string V.
 skip.
-Theorem $access__valExists__nt_Expr__is : forall Node V,
+Theorem $access__valExists__nt_Expr__is : forall Tree Node ChildList V,
+  $wpd_nt_Expr Tree ($ntr_nt_Expr Node ChildList) ->
   $access__valExists__nt_Expr Node ($attr_ex V) ->
   is_bool V.
 skip.
 
-Theorem $access__value__nt_Root__is : forall Node V,
-  $access__value__nt_Expr Node ($attr_ex V) ->
+Theorem $access__value__nt_Root__is : forall Tree Node ChildList V,
+  $wpd_nt_Root Tree ($ntr_nt_Root Node ChildList) ->
+  $access__value__nt_Root Node ($attr_ex V) ->
   is_integer V.
 skip.
-Theorem $access__valExists__nt_Root__is : forall Node V,
-  $access__valExists__nt_Expr Node ($attr_ex V) ->
+Theorem $access__valExists__nt_Root__is : forall Tree Node ChildList V,
+  $wpd_nt_Root Tree ($ntr_nt_Root Node ChildList) ->
+  $access__valExists__nt_Root Node ($attr_ex V) ->
   is_bool V.
 skip.
 
@@ -801,3 +817,38 @@ Theorem $wpd_node_nt_Root__prod_root :
     $wpd_nt_Root__host (prod_root E) NodeTree.
 skip.
 
+
+%WPD Node to Attribute Equations
+Theorem $wpd_node__to__env__nt_Expr : forall Tree NodeTree,
+  $wpd_node_nt_Expr Tree NodeTree ->
+  $env__nt_Expr Tree NodeTree.
+skip.
+Theorem $wpd_node__to__value__nt_Expr : forall Tree NodeTree,
+  $wpd_node_nt_Expr Tree NodeTree ->
+  $value__nt_Expr Tree NodeTree.
+skip.
+Theorem $wpd_node__to__knownNames__nt_Expr : forall Tree NodeTree,
+  $wpd_node_nt_Expr Tree NodeTree ->
+  $knownNames__nt_Expr Tree NodeTree.
+skip.
+Theorem $wpd_node__to__valExists__nt_Expr : forall Tree NodeTree,
+  $wpd_node_nt_Expr Tree NodeTree ->
+  $valExists__nt_Expr Tree NodeTree.
+skip.
+
+Theorem $wpd_node__to__env__nt_Root : forall Tree NodeTree,
+  $wpd_node_nt_Root Tree NodeTree ->
+  $env__nt_Root Tree NodeTree.
+skip.
+Theorem $wpd_node__to__value__nt_Root : forall Tree NodeTree,
+  $wpd_node_nt_Root Tree NodeTree ->
+  $value__nt_Root Tree NodeTree.
+skip.
+Theorem $wpd_node__to__knownNames__nt_Root : forall Tree NodeTree,
+  $wpd_node_nt_Root Tree NodeTree ->
+  $knownNames__nt_Root Tree NodeTree.
+skip.
+Theorem $wpd_node__to__valExists__nt_Root : forall Tree NodeTree,
+  $wpd_node_nt_Root Tree NodeTree ->
+  $valExists__nt_Root Tree NodeTree.
+skip.

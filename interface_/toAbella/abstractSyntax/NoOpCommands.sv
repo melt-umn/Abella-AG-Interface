@@ -54,7 +54,8 @@ top::NoOpCommand ::= opt::String val::String
                    currentState.knownAttrs,
                    currentState.knownAttrOccurrences,
                    currentState.knownProductions,
-                   currentState.knownWPDRelations))::top.stateListIn;
+                   currentState.knownWPDRelations,
+                   currentState.knownInheritedAttrs))::top.stateListIn;
 }
 
 
@@ -131,7 +132,6 @@ top::NoOpCommand ::=
 
   --I don't understand what this does, so I can't be sure about translating it
   top.translation = error("Translation not done in resetCommand yet");
-      --resetCommand();
 
   top.isQuit = false;
   top.isUndo = false;
@@ -155,7 +155,8 @@ top::NoOpCommand ::=
   top.isUndo = false;
 
   top.sendCommand = false;
-  top.ownOutput = head(top.stateListIn).snd.state.pp;
+  --Don't need to show anything, because current state will be shown by main
+  top.ownOutput = "";
   top.numCommandsSent = just(0);
 
   top.stateListOut = top.stateListIn;

@@ -37,7 +37,7 @@ top::AnyCommand ::= c::TopCommand
       else null(c.errors) && c.sendCommand;
   top.ownOutput =
       if top.inProof
-      then "Error:  Cannot use top commands in a proof\n"
+      then "Error:  Cannot use top commands in a proof\n\n"
       else if null(c.errors)
            then c.ownOutput
            else errors_to_string(c.errors);
@@ -70,7 +70,8 @@ top::AnyCommand ::= c::TopCommand
                     currentState.knownAttrs,
                     currentState.knownAttrOccurrences,
                     currentState.knownProductions,
-                    currentState.knownWPDRelations)
+                    currentState.knownWPDRelations,
+                    currentState.knownInheritedAttrs)
            )::top.stateListIn;
 }
 
@@ -96,15 +97,15 @@ top::AnyCommand ::= c::ProofCommand
       if top.inProof
       then if null(c.errors)
            then c.ownOutput
-           else errors_to_string(c.errors)
-      else "Error:  Cannot use proof commands outside a proof\n";
+           else errors_to_string(c.errors) ++ "\n\n"
+      else "Error:  Cannot use proof commands outside a proof\n\n";
   top.numCommandsSent =
       if top.sendCommand
       then just(length(c.translation))
       else just(0);
 
   c.stateListIn = top.stateListIn;
-  c.attrOccurrences = top.currentState.knownAttrOccurrences;
+  c.currentState = top.currentState;
   local currentState::ProverState = head(top.stateListIn).snd;
   local newProofState::ProofState =
         case currentState.state, top.newProofState of
@@ -128,7 +129,8 @@ top::AnyCommand ::= c::ProofCommand
                          currentState.knownAttrs,
                          currentState.knownAttrOccurrences,
                          currentState.knownProductions,
-                         currentState.knownWPDRelations)
+                         currentState.knownWPDRelations,
+                         currentState.knownInheritedAttrs)
                 )::top.stateListIn;
 }
 
@@ -146,7 +148,7 @@ top::AnyCommand ::= c::NoOpCommand
   top.ownOutput =
       if null(c.errors)
       then c.ownOutput
-      else errors_to_string(c.errors);
+      else errors_to_string(c.errors) ++ "\n\n";
   top.numCommandsSent =
       if top.sendCommand
       then c.numCommandsSent

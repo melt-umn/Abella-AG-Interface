@@ -46,10 +46,16 @@ global falseName::String = "$bfalse";
   use functions to do this.
 -}
 
+--Decorated Trees
 function treeToStructureName
 String ::= treeName::String
 {
   return "$" ++ treeName ++ "_Tm";
+}
+function isTreeStructureName
+Boolean ::= str::String
+{
+  return startsWith("$", str) && endsWith("_Tm", str);
 }
 
 function treeToNodeName
@@ -70,16 +76,17 @@ String ::= treeName::String
   return "$" ++ treeName ++ "_Ntr";
 }
 
-function accessToAccessName
-String ::= treeName::String attrName::String
-{
-  return "$" ++ treeName ++ "_DOT_" ++ attrName;
-}
-
 function nodeTreeConstructorName
 String ::= treeTy::Type
 {
   return "$ntr_" ++ treeTy.pp;
+}
+
+--Attribute Access
+function accessToAccessName
+String ::= treeName::String attrName::String
+{
+  return "$" ++ treeName ++ "_DOT_" ++ attrName;
 }
 
 function accessRelationName
@@ -88,16 +95,41 @@ String ::= treeTy::Type attrName::String
   return "$access__" ++ attrName ++ "__" ++ treeTy.pp;
 }
 
+--WPD Nonterminal
 function wpdTypeName
 String ::= treeTy::Type
 {
   return "$wpd_" ++ treeTy.pp;
 }
 
+--WPD Node
 function wpdNodeTypeName
 String ::= treeTy::Type
 {
   return "$wpd_node_" ++ treeTy.pp;
+}
+function isWPD_NodeRelName
+Boolean ::= str::String
+{
+  return startsWith("$wpd_node_", str);
+}
+function wpdNode_type
+Type ::= str::String
+{
+  --$wpd_node_<type name>
+  return nameType(substring(10, length(str), str));
+}
+
+--Attribute Equations
+function wpdNode_to_AttrEq
+String ::= attr::String ty::Type
+{
+  return "$wpd_node__to__" ++ attr ++ "__" ++ ty.pp;
+}
+function primaryComponent
+String ::= attr::String ty::Type prod::String
+{
+  return "$" ++ attr ++ "__" ++ ty.pp ++ "__" ++ prod;
 }
 
 

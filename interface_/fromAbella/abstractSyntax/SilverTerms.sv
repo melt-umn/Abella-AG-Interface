@@ -152,6 +152,14 @@ top::Metaterm ::= tree::String attr::String val::Term
 }
 
 
+aspect production attrAccessEmptyMetaterm
+top::Metaterm ::= tree::String attr::String
+{
+  top.translation = error("Should enver be translating an attrAccessEmptyMetaterm");
+  top.shouldHide = false;
+}
+
+
 
 
 {-

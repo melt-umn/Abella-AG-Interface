@@ -120,6 +120,15 @@ synthesized attribute usedNames::[String];
 
 
 
+--Find the immediate parent of a tree with a given name in a Term
+--Gives both the production name and the index which child it is
+--e.g. prod_foo (prod_bar A B) C   gives   ("prod_bar, 2)   when looking for B
+inherited attribute findParentOf::String;
+synthesized attribute foundParent::Maybe<(String, Integer)>;
+synthesized attribute isArgHere::Maybe<Integer>;
+
+
+
 --Search for the type of a variable by a particular name at the top level of a metaterm
 inherited attribute findNameType::String;
 --The type if the name was found at the top level, or a message about not found/no certain type

@@ -5,7 +5,7 @@ grammar interface_:toAbella:abstractSyntax;
 
 nonterminal ProofCommand with
    pp, --pp should end with two spaces
-   translation<[ProofCommand]>, attrOccurrences, hypList,
+   translation<[ProofCommand]>, currentState, hypList,
    errors, sendCommand, ownOutput,
    isUndo,
    stateListIn, stateListOut;
@@ -179,6 +179,30 @@ top::ProofCommand ::= h::HHint hyp::String keep::Boolean
 
   top.translation = --error("Translation not done in caseTactic yet");
       [caseTactic(h, hyp, keep)];
+
+  top.errors <-
+      case findAssociated(hyp, top.hypList) of
+      --Unknown hypotheses---could also let it go through and Abella catch it
+      | nothing() -> [errorMsg("Unknown hypothesis " ++ hyp)]
+      --Hidden hypotheses should be left alone
+      | just(termMetaterm(applicationTerm(nameTerm(str, _), _), _))
+        when startsWith("$", str) ->
+        [errorMsg("Unknown hypothesis " ++ hyp)]
+      --Disallow case analysis on structure-showing "$<tree>_Tm = <structure>"
+      | just(eqMetaterm(nameTerm(str, _), structure)) ->
+        [errorMsg("Cannot do case analysis on tree structure hypothesis")]
+      --Case analysis on an access doesn't make sense
+      | just(attrAccessMetaterm(tree, attr, _)) ->
+        [errorMsg("Cannot do case analysis on this hypothesis; to do case " ++
+                  "analysis on equation for " ++ tree ++ "." ++ attr ++
+                  ", use \"case " ++ tree ++ "." ++ attr ++ "\"")]
+      | just(attrAccessEmptyMetaterm(tree, attr)) ->
+        [errorMsg("Cannot do case analysis on this hypothesis; to do case " ++
+                  "analysis on equation for " ++ tree ++ "." ++ attr ++
+                  ", use \"case " ++ tree ++ "." ++ attr)]
+      --Anything else is fine
+      | just(_) -> []
+      end;
 }
 
 
@@ -187,8 +211,76 @@ top::ProofCommand ::= h::HHint tree::String attr::String
 {
   top.pp = h.pp ++ "case " ++ tree ++ "." ++ attr ++ ".  ";
 
-  top.translation = --error("Translation not done in caseAttrAccess yet");
-      [caseAttrAccess(h, tree, attr)];
+  top.errors <- --need to check for tree existing, as a tree
+      if !contains(attr, map(fst, top.currentState.knownAttrs))
+      then [errorMsg("Unknown attribute " ++ attr)]
+      else case findAssociated(attr, top.currentState.knownAttrOccurrences) of
+           | nothing() -> [] --covered by checking if attr exists, so impossible here
+           | just(nts) ->
+             if containsBy(tysEqual, treeTy, nts)
+             then if isInherited
+                  then case findParent of
+                       | nothing() ->
+                         [errorMsg("Cannot do case analysis on inherited attribute "++
+                                   "equation when parent of tree is unknown")]
+                       | just(_) ->
+                         case wpdNodeHyp of
+                         | nothing() ->
+                           [errorMsg("Cannot do case analysis on " ++ tree ++ "." ++ attr ++ " for reasons I can't come up with at the moment; please report this error")]
+                         | just(_) -> []
+                         end
+                       end
+                  else []
+             else [errorMsg("Attribute " ++ attr ++ " does not occur on " ++ tree)]
+           end;
+
+  local newNum::String = toString(genInt());
+  local eqHypName::String = "$Eq_" ++ newNum;
+  local componentHypName::String = "$EqComp_" ++ newNum;
+  --
+  local isInherited::Boolean =
+        contains(attr, top.currentState.knownInheritedAttrs);
+  local findParent::Maybe<(String, Term)> =
+        find_parent_tree(treeToStructureName(tree), top.hypList);
+  local associatedTree::String =
+        if isInherited
+        then findParent.fromJust.fst
+        else tree;
+  local associatedProd::String =
+        case find_structure_hyp(associatedTree, top.hypList).fromJust of
+        | applicationTerm(nameTerm(prod, _), _) -> prod
+        | _ -> error("It should be a production")
+        end;
+  local makeEqHypThm::Clearable =
+        clearable(false, wpdNode_to_AttrEq(attr, treeTy), []);
+  local wpdNodeHyp::Maybe<(String, Metaterm)> =
+        find_WPD_node_hyp(associatedTree, top.hypList);
+  local treeTy::Type =
+        if isInherited
+        then case decorate findParent.fromJust.snd with
+                  {findParentOf = treeToStructureName(tree);}.foundParent of
+             | nothing() -> error("We picked ths term based on it being included")
+             | just((prod, index)) ->
+               elemAtIndex(
+                  findAssociated(prod,
+                                 top.currentState.knownProductions).fromJust.argumentTypes,
+                  index)
+             end
+        else case wpdNodeHyp of
+             | just((_, termMetaterm(applicationTerm(nameTerm(rel, _), _), _))) ->
+               wpdNode_type(rel)
+             | just((_, tm)) -> error("Should not get here (caseAttrAccess bad just)")
+             | nothing() -> error("Should not get here (caseAttrAccess nothing)")
+             end;
+  local pcTheorem::Clearable =
+        clearable(false, primaryComponent(attr, treeTy, associatedProd), []);
+  top.translation =
+      [applyTactic(nameHint(eqHypName), nothing(), makeEqHypThm,
+                   [hypApplyArg(wpdNodeHyp.fromJust.1, [])], []),
+       applyTactic(nameHint(componentHypName), nothing(), pcTheorem,
+                   [hypApplyArg(eqHypName, [])], []),
+       caseTactic(h, componentHypName, false)]; --,
+       --clearCommand([eqHypName, componentHypName], false)];
 }
 
 

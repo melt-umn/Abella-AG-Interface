@@ -309,6 +309,17 @@ top::Metaterm ::= tree::String attr::String val::Term
 }
 
 
+aspect production attrAccessEmptyMetaterm
+top::Metaterm ::= tree::String attr::String
+{
+  top.translation = error("This shouldn't be appearing here");
+  top.boundVarsOut = error("This shouldn't be appearing here");
+  top.foundNameType = error("This shouldn't be appearing here");
+  top.usedNames = error("This shouldn't be appearing here");
+  top.removedWPD = error("This shouldn't be appearing here");
+}
+
+
 aspect production plusMetaterm
 top::Metaterm ::= t1::Term t2::Term result::Term
 {
@@ -635,7 +646,9 @@ attribute
    boundVars, boundVarsOut, attrOccurrences,
    usedNames,
    replaceName, replaceTerm, replaced,
-   errors
+   errors,
+   eqTest<Term>, isEq,
+   findParentOf, foundParent
 occurs on Term;
 
 aspect production applicationTerm
@@ -648,6 +661,23 @@ top::Term ::= f::Term args::TermList
   top.boundVarsOut = args.boundVarsOut;
 
   top.usedNames = f.usedNames ++ args.usedNames;
+
+  top.isEq =
+      case top.eqTest of
+      | applicationTerm(f2, args2) ->
+        decorate f with {eqTest = f2;}.isEq &&
+        decorate args with {eqTest = args2;}.isEq
+      | _ -> false
+      end;
+
+  args.findParentOf = top.findParentOf;
+  top.foundParent =
+      if args.isArgHere.isJust
+      then case f of
+           | nameTerm(str, _) -> just((str, args.isArgHere.fromJust))
+           | _ -> error("Should not find anything but nameTerm for foundParent")
+           end
+      else args.foundParent;
 }
 
 
@@ -670,6 +700,14 @@ top::Term ::= name::String ty::Maybe<Type>
       if top.replaceName == name
       then top.replaceTerm
       else top;
+
+  top.isEq =
+      case top.eqTest of
+      | nameTerm(name2, _) -> name == name2
+      | _ -> false
+      end;
+
+  top.foundParent = nothing();
 }
 
 
@@ -683,6 +721,16 @@ top::Term ::= t1::Term t2::Term
   top.boundVarsOut = t2.boundVarsOut;
 
   top.usedNames = t1.usedNames ++ t2.usedNames;
+
+  top.isEq =
+      case top.eqTest of
+      | consTerm(t1_2, t2_2) ->
+        decorate t1 with {eqTest = t1_2;}.isEq &&
+        decorate t2 with {eqTest = t2_2;}.isEq
+      | _ -> false
+      end;
+
+  top.foundParent = nothing();
 }
 
 
@@ -694,6 +742,14 @@ top::Term ::=
   top.boundVarsOut = top.boundVars;
 
   top.usedNames = [];
+
+  top.isEq =
+      case top.eqTest of
+      | nilTerm() -> true
+      | _ -> false
+      end;
+
+  top.foundParent = nothing();
 }
 
 
@@ -705,6 +761,10 @@ top::Term ::= ty::Maybe<Type>
   top.boundVarsOut = top.boundVars;
 
   top.usedNames = [];
+
+  top.isEq = true;
+
+  top.foundParent = nothing();
 }
 
 
@@ -716,6 +776,14 @@ top::Term ::= i::Integer
   top.boundVarsOut = top.boundVars;
 
   top.usedNames = [];
+
+  top.isEq =
+      case top.eqTest of
+      | intTerm(i2) -> i == i2
+      | _ -> false
+      end;
+
+  top.foundParent = nothing();
 }
 
 
@@ -730,6 +798,14 @@ top::Term ::= contents::String
   top.boundVarsOut = top.boundVars;
 
   top.usedNames = [];
+
+  top.isEq =
+      case top.eqTest of
+      | stringTerm(contents2) -> contents == contents2
+      | _ -> false
+      end;
+
+  top.foundParent = nothing();
 }
 
 
@@ -741,6 +817,14 @@ top::Term ::=
   top.boundVarsOut = top.boundVars;
 
   top.usedNames = [];
+
+  top.isEq =
+      case top.eqTest of
+      | trueTerm() -> true
+      | _ -> false
+      end;
+
+  top.foundParent = nothing();
 }
 
 
@@ -752,6 +836,14 @@ top::Term ::=
   top.boundVarsOut = top.boundVars;
 
   top.usedNames = [];
+
+  top.isEq =
+      case top.eqTest of
+      | falseTerm() -> true
+      | _ -> false
+      end;
+
+  top.foundParent = nothing();
 }
 
 
@@ -763,6 +855,14 @@ top::Term ::= c::String
   top.boundVarsOut = error("Should not have charTerm in toAbella");
 
   top.usedNames = [];
+
+  top.isEq =
+      case top.eqTest of
+      | charTerm(c2) -> c == c2
+      | _ -> false
+      end;
+
+  top.foundParent = nothing();
 }
 
 
@@ -775,6 +875,15 @@ top::Term ::= contents::PairContents
   top.boundVarsOut = contents.boundVarsOut;
 
   top.usedNames = contents.usedNames;
+
+  top.isEq =
+      case top.eqTest of
+      | pairTerm(contents2) ->
+        decorate contents with {eqTest = contents2;}.isEq
+      | _ -> false
+      end;
+
+  top.foundParent = nothing();
 }
 
 
@@ -787,6 +896,15 @@ top::Term ::= contents::ListContents
   top.boundVarsOut = contents.boundVarsOut;
 
   top.usedNames = contents.usedNames;
+
+  top.isEq =
+      case top.eqTest of
+      | listTerm(contents2) ->
+        decorate contents with {eqTest = contents2;}.isEq
+      | _ -> false
+      end;
+
+  top.foundParent = nothing();
 }
 
 
@@ -798,7 +916,8 @@ attribute
    boundVars, boundVarsOut, attrOccurrences,
    usedNames,
    replaceName, replaceTerm, replaced,
-   errors
+   errors,
+   eqTest<ListContents>, isEq
 occurs on ListContents;
 
 aspect production emptyListContents
@@ -809,6 +928,12 @@ top::ListContents ::=
   top.boundVarsOut = top.boundVars;
 
   top.usedNames = [];
+
+  top.isEq =
+      case top.eqTest of
+      | emptyListContents() -> true
+      | _ -> false
+      end;
 }
 
 
@@ -822,6 +947,14 @@ top::ListContents ::= hd::Term tl::ListContents
   top.boundVarsOut = tl.boundVarsOut;
 
   top.usedNames = hd.usedNames ++ tl.usedNames;
+
+  top.isEq =
+      case top.eqTest of
+      | addListContents(hd2, tl2) ->
+        decorate hd with {eqTest = hd2;}.isEq &&
+        decorate tl with {eqTest = tl2;}.isEq
+      | _ -> false
+      end;
 }
 
 
@@ -833,7 +966,8 @@ attribute
    boundVars, boundVarsOut, attrOccurrences,
    usedNames,
    replaceName, replaceTerm, replaced,
-   errors
+   errors,
+   eqTest<PairContents>, isEq
 occurs on PairContents;
 
 aspect production singlePairContents
@@ -845,6 +979,13 @@ top::PairContents ::= t::Term
   top.boundVarsOut = t.boundVarsOut;
 
   top.usedNames = t.usedNames;
+
+  top.isEq =
+      case top.eqTest of
+      | singlePairContents(t2) ->
+        decorate t with {eqTest = t2;}.isEq
+      | _ -> false
+      end;
 }
 
 
@@ -860,6 +1001,14 @@ top::PairContents ::= t::Term rest::PairContents
   top.boundVarsOut = rest.boundVarsOut;
 
   top.usedNames = t.usedNames ++ rest.usedNames;
+
+  top.isEq =
+      case top.eqTest of
+      | addPairContents(t2, rest2) ->
+        decorate t with {eqTest = t2;}.isEq &&
+        decorate rest with {eqTest = rest2;}.isEq
+      | _ -> false
+      end;
 }
 
 
@@ -871,7 +1020,9 @@ attribute
    boundVars, boundVarsOut, attrOccurrences,
    usedNames,
    replaceName, replaceTerm, replaced,
-   errors
+   errors,
+   eqTest<TermList>, isEq,
+   findParentOf, foundParent, isArgHere
 occurs on TermList;
 
 aspect production singleTermList
@@ -883,6 +1034,21 @@ top::TermList ::= t::Term
   top.boundVarsOut = t.boundVarsOut;
 
   top.usedNames = t.usedNames;
+
+  top.isEq =
+      case top.eqTest of
+      | singleTermList(t2) ->
+        decorate t with {eqTest = t2;}.isEq
+      | _ -> false
+      end;
+
+  t.findParentOf = top.findParentOf;
+  top.foundParent = t.foundParent;
+  top.isArgHere =
+      case t of
+      | nameTerm(str, _) when str == top.findParentOf -> just(1)
+      | _ -> nothing()
+      end;
 }
 
 
@@ -896,5 +1062,26 @@ top::TermList ::= t::Term rest::TermList
   top.boundVarsOut = rest.boundVarsOut;
 
   top.usedNames = t.usedNames ++ rest.usedNames;
+
+  top.isEq =
+      case top.eqTest of
+      | consTermList(t2, rest2) ->
+        decorate t with {eqTest = t2;}.isEq &&
+        decorate rest with {eqTest = rest2;}.isEq
+      | _ -> false
+      end;
+
+  t.findParentOf = top.findParentOf;
+  rest.findParentOf = top.findParentOf;
+  top.foundParent =
+      case t.foundParent of
+      | just(_) -> t.foundParent
+      | nothing() -> rest.foundParent
+      end;
+  top.isArgHere =
+      case t of
+      | nameTerm(str, _) when str == top.findParentOf -> just(1)
+      | _ -> bind(rest.isArgHere, \x::Integer -> just(x + 1))
+      end;
 }
 

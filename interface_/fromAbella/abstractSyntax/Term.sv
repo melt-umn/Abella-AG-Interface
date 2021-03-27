@@ -150,6 +150,12 @@ top::Term ::= f::Term args::TermList
        when nameIsAccessRelation(str) ->
        right(attrAccessMetaterm(treeNodeToVar(treeNodeName),
                                 accessRelationToAttr(str), val))
+     | nameTerm(str, _),
+       consTermList(nameTerm(treeNodeName, _),
+                    singleTermList(nameTerm("$attr_no", _)))
+       when nameIsAccessRelation(str) ->
+       right(attrAccessEmptyMetaterm(treeNodeToVar(treeNodeName),
+                                     accessRelationToAttr(str)))
      --Integer Constants
      | nameTerm("$posInt", _), singleTermList(intTerm(i)) ->
        left(intTerm(i))

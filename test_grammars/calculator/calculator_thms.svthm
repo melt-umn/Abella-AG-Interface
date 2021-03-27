@@ -1,0 +1,92 @@
+
+Import "calculator_definition".
+
+
+Set debug on.
+
+
+Theorem fun__contains__member : forall E N,
+   member N E -> is_list is_string E -> fun__contains N E true.
+induction on 1. intros. case H1.
+  %Subgoal 1
+   search.
+  %Subgoal 2
+   case H2. apply IH to H3 H5. apply is_list_member to H5 H3.
+   apply is_string_eq_or_not to H7 H4. case H8.
+     %Subgoal 2.2
+      search.
+     %Subgoal 2.3
+      search.
+
+
+Theorem fun__contains__total : forall E N,
+  is_list is_string E -> is_string N -> exists B, fun__contains N E B.
+induction on 1. intros. case H1 (keep).
+  %Subgoal 1
+   exists false. search.
+  %Subgoal 2
+   apply is_string_eq_or_not to H2 H3. case H5.
+     %Subgoal 2.1
+      search.
+     %Subgoal 2.2
+      apply IH to H4 H2. search.
+
+
+Set subgoals off.
+
+Extensible_Theorem valExists__implies__value__Expr : forall T,
+  (forall KNames Name, T.knownNames = KNames -> member Name KNames ->
+   exists Env Val, T.env = Env /\ member (Name, Val) Env) ->
+  T.valExists = true ->
+  exists V, T.value = V
+on T.
+split.
+   %intConst
+    intros Structure. exists N. case T.value. search.
+   %plus
+    intros IH1 IH2 Structure. case E.env.
+   %minus
+    intros IH1 IH2 Structure. skip.
+   %mult
+    intros IH1 IH2 Structure. skip.
+   %letBind
+    intros IH1 IH2 Structure. skip.
+   %name
+    intros Structure. skip.
+
+
+Extensible_Theorem valExists__implies__value__Root :
+  forall (T : nt_Root),
+     T.valExists = true -> exists V, T.value = V
+on T.
+%root
+ intros Structure. skip.
+%Need to use Expr version for this, which requires asserting it when done
+
+
+
+Extensible_Theorem x : forall T,
+  (exists KnownNames, T.knownNames = KnownNames) ->
+  exists B, T.valExists = B
+on T.
+split.
+   %intConst
+    intros Structure. skip.
+   %plus
+    intros IH1 IH2 Structure. skip.
+   %minus
+    intros IH1 IH2 Structure. skip.
+   %mult
+    intros IH1 IH2 Structure. skip.
+   %letBind
+    intros IH1 IH2 Structure. skip.
+   %name
+    intros Structure. skip.
+
+
+Extensible_Theorem x : forall (T : nt_Root),
+  exists B, T.valExists = B
+on T.
+%root
+ intros Structure. skip.
+

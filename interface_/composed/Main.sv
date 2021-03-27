@@ -68,10 +68,11 @@ IOVal<Integer> ::= largs::[String] ioin::IO
              "prod_mult", "prod_letBind", "prod_name"]),
            ("$wpd_nt_Root", nameType("nt_Root"), ["prod_root"])
         ];
+  local knownInheritedAttrs::[String] = ["env", "knownNames"];
 
   return
      run_step([(-1, proverState(noProof(),false, knownAttrs, attrOccurrences,
-                                knownProds, wpdRelations))],
+                                knownProds, wpdRelations, knownInheritedAttrs))],
               abella.iovalue, abella_initial_string.io);
 }
 
@@ -111,9 +112,9 @@ IOVal<Integer> ::=
         if result.parseSuccess
         then result.parseTree.ast
         else anyParseFailure(result.parseErrors);
-  --any_a.attrOccurrences = attrOccurrences;
   any_a.currentState = head(stateList).snd;
-  any_a.hypList = state.hypList;
+  --easier to work with translation, where we have Silver-specific terms
+  any_a.hypList = state.translation.hypList;
   any_a.inProof = state.inProof;
   any_a.stateListIn = stateList;
   local is_blank::Boolean = isSpace(input);
