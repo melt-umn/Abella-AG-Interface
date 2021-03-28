@@ -70,8 +70,11 @@ synthesized attribute boundVarsOut::[[(String, Maybe<[Type]>)]];
 autocopy attribute attrOccurrences::[(String, [Type])];
 --Tuples of (WPD relation name, nonterminal type it is for, productions in order)
 autocopy attribute wpdRelations::[(String, Type, [String])];
---
+
+--The current prover state and the translation of the proof state
+--We give both because it can be useful to have one or the other at different times
 autocopy attribute currentState::ProverState;
+autocopy attribute translatedState::ProofState;
 
 
 --Replace a given name with a given term
@@ -86,9 +89,6 @@ propagate replaced on Metaterm, Term, TermList, PairContents, ListContents
 autocopy attribute removeWPDTree::String;
 synthesized attribute removedWPD::Metaterm;
 
-
---The hypotheses in the current context (name and term)
-inherited attribute hypList::[Pair<String Metaterm>];
 
 --Whether we are currently in a proof or not
 inherited attribute inProof::Boolean;

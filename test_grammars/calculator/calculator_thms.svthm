@@ -18,6 +18,13 @@ induction on 1. intros. case H1.
      %Subgoal 2.3
       search.
 
+Theorem fun__contains__to__member : forall E N,
+   fun__contains N E true -> member N E.
+induction on 1. intros. case H1.
+  %contains here
+   search.
+  %contains later
+   apply IH to H3. search.
 
 Theorem fun__contains__total : forall E N,
   is_list is_string E -> is_string N -> exists B, fun__contains N E B.
@@ -44,7 +51,11 @@ split.
    %intConst
     intros Structure. exists N. case T.value. search.
    %plus
-    intros IH1 IH2 Structure. case E.env.
+    intros IH1 IH2 Structure. case E.knownNames.
+      %E.knownNames, E1.knownNames exist
+       case T.valExists. skip. skip. skip. skip.
+      %E.knownNames, E1.knownNames do not exist
+       skip.
    %minus
     intros IH1 IH2 Structure. skip.
    %mult
@@ -54,10 +65,18 @@ split.
    %name
     intros Structure. case T.value.
       %Value exists
-       exists Ret. search.
+       exists Ret. search. Set subgoals on.
       %No environment
-       skip.
-      %No return from lookup
+       case T.valExists.
+         %
+          apply attr_unique to H4 H7.
+          apply fun__contains__to__member to H9.
+          apply H3 to H8 H11. apply attr_unique to H12 H6.
+         %
+          apply attr_unique to H4 H7.
+         %
+          apply attr_unique to H4 H7.
+     %No return from lookup
        skip.
 
 

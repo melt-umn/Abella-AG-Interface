@@ -88,11 +88,28 @@ String ::= treeName::String attrName::String
 {
   return "$" ++ treeName ++ "_DOT_" ++ attrName;
 }
-
 function accessRelationName
 String ::= treeTy::Type attrName::String
 {
-  return "$access__" ++ attrName ++ "__" ++ treeTy.pp;
+  return "$access_$_" ++ attrName ++ "_$_" ++ treeTy.pp;
+}
+function isAccessRelation
+Boolean ::= str::String
+{
+  return startsWith("$access_$_", str);
+}
+function accessRelationToAttr
+String ::= str::String
+{
+  local firstSplit::Integer = indexOf("_$_", str);
+  local lastSplit::Integer = lastIndexOf("_$_", str);
+  return substring(firstSplit + 3, lastSplit, str);
+}
+function accessRelationToType
+String ::= str::String
+{
+  local lastSplit::Integer = lastIndexOf("_$_", str);
+  return substring(lastSplit + 3, length(str), str);
 }
 
 --WPD Nonterminal

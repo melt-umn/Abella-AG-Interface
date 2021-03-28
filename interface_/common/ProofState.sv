@@ -7,7 +7,9 @@ grammar interface_:common;
   state, but we still need the type for typechecking.
 -}
 
-nonterminal ProofState with pp;
+synthesized attribute hypList::[(String, Metaterm)];
+
+nonterminal ProofState with pp, hypList;
 
 abstract production proofInProgress
 top::ProofState ::= subgoalNum::[Integer] currGoal::CurrentGoal futureGoals::[Subgoal]
@@ -20,6 +22,8 @@ top::ProofState ::= subgoalNum::[Integer] currGoal::CurrentGoal futureGoals::[Su
         foldr(\ a::Subgoal b::String -> a.pp ++ "\n\n" ++ b,
               "", futureGoals);
   top.pp = subgoalString ++ "\n" ++ currGoal.pp ++ "\n" ++ futureGoalsString;
+
+  top.hypList = currGoal.hypList;
 }
 
 
@@ -27,6 +31,8 @@ abstract production noProof
 top::ProofState ::=
 {
   top.pp = "";
+
+  top.hypList = [];
 }
 
 
@@ -52,7 +58,7 @@ top::ProofState ::= currentProofState::ProofState originalTheorem::Metaterm
 
 
 
-nonterminal CurrentGoal with pp;
+nonterminal CurrentGoal with pp, hypList;
 
 abstract production currentGoal
 top::CurrentGoal ::= vars::[String] ctx::Context goal::Metaterm
@@ -62,17 +68,21 @@ top::CurrentGoal ::= vars::[String] ctx::Context goal::Metaterm
         then ""
         else "Variables: " ++ foldr1(\ x::String y::String -> x ++ " " ++ y, vars) ++ "\n";
   top.pp = varsString ++ ctx.pp ++ "============================\n " ++ goal.pp ++ "\n";
+
+  top.hypList = ctx.hypList;
 }
 
 
 
 --A context is the hypotheses available for proving the current goal
-nonterminal Context with pp;
+nonterminal Context with pp, hypList;
 
 abstract production emptyContext
 top::Context ::=
 {
   top.pp = "";
+
+  top.hypList = [];
 }
 
 
@@ -81,6 +91,8 @@ top::Context ::= h::Hypothesis
 {
   --We don't want to put blank lines for hidden hypotheses
   top.pp = if h.pp == "" then "" else h.pp ++ "\n";
+
+  top.hypList = h.hypList;
 }
 
 
@@ -88,16 +100,20 @@ abstract production branchContext
 top::Context ::= c1::Context c2::Context
 {
   top.pp = c1.pp ++ c2.pp;
+
+  top.hypList = c1.hypList ++ c2.hypList;
 }
 
 
 
-nonterminal Hypothesis with pp;
+nonterminal Hypothesis with pp, hypList;
 
 abstract production metatermHyp
 top::Hypothesis ::= name::String body::Metaterm
 {
   top.pp = name ++ " : " ++ body.pp;
+
+  top.hypList = [(name, new(body))];
 }
 
 

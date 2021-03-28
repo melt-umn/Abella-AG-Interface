@@ -131,7 +131,7 @@ top::Metaterm ::= tree::String attr::String val::Term
 abstract production attrAccessEmptyMetaterm
 top::Metaterm ::= tree::String attr::String
 {
-  top.pp = tree ++ "." ++ attr ++ " = ⊥";
+  top.pp = tree ++ "." ++ attr ++ " = <no value>";
   top.isAtomic = true;
 }
 

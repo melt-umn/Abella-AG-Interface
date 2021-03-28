@@ -113,8 +113,7 @@ IOVal<Integer> ::=
         then result.parseTree.ast
         else anyParseFailure(result.parseErrors);
   any_a.currentState = head(stateList).snd;
-  --easier to work with translation, where we have Silver-specific terms
-  any_a.hypList = state.translation.hypList;
+  any_a.translatedState = head(stateList).snd.state.translation;
   any_a.inProof = state.inProof;
   any_a.stateListIn = stateList;
   local is_blank::Boolean = isSpace(input);

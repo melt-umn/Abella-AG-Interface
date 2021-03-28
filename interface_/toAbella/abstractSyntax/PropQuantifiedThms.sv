@@ -17,7 +17,7 @@ Either<String [ProofCommand]> ::=
    hyps::[(String, Metaterm)]
 {
   --forall L E, is_list subrel L -> member E L -> subrel E
-  
+
   local name_Assert::String = "$Assert_" ++ toString(genInt());
   local name_IH::String = "$IH_" ++ toString(genInt());
   local name_H1::String = "$H1_" ++ toString(genInt());

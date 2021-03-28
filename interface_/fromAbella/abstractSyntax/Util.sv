@@ -52,15 +52,15 @@ String ::= nodeName::String
 function nameIsAccessRelation
 Boolean ::= name::String
 {
-  return startsWith("$access__", name);
+  return startsWith("$access_$_", name);
 }
 
 function accessRelationToAttr
 String ::= accessRel::String
 {
-  -- $access__<attr>__<ty>
-  local frontRemoved::String = substring(9, length(accessRel), accessRel);
-  local loc__::Integer = indexOf("__", frontRemoved);
+  -- $access_$_<attr>_$<ty>
+  local frontRemoved::String = substring(10, length(accessRel), accessRel);
+  local loc__::Integer = indexOf("_$_", frontRemoved);
   return substring(0, loc__, frontRemoved);
 }
 

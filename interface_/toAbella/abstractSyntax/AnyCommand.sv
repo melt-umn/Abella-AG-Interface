@@ -9,7 +9,7 @@ grammar interface_:toAbella:abstractSyntax;
 
 nonterminal AnyCommand with
    pp,
-   translation<String>, currentState, hypList, inProof,
+   translation<String>, currentState, translatedState, inProof,
    isQuit,
    sendCommand, ownOutput, numCommandsSent,
    stateListIn, stateListOut, newProofState, wasError;
@@ -82,8 +82,6 @@ top::AnyCommand ::= c::ProofCommand
   top.pp = c.pp;
 
   top.isQuit = false;
-
-  c.hypList = top.hypList;
 
   top.translation =
       foldr(\ p::ProofCommand rest::String -> p.pp ++ rest,

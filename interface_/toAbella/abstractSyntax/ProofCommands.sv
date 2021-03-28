@@ -5,7 +5,7 @@ grammar interface_:toAbella:abstractSyntax;
 
 nonterminal ProofCommand with
    pp, --pp should end with two spaces
-   translation<[ProofCommand]>, currentState, hypList,
+   translation<[ProofCommand]>, currentState, translatedState,
    errors, sendCommand, ownOutput,
    isUndo,
    stateListIn, stateListOut;
@@ -79,7 +79,8 @@ top::ProofCommand ::= names::[String]
 
 
 abstract production applyTactic
-top::ProofCommand ::= h::HHint depth::Maybe<Integer> theorem::Clearable args::[ApplyArg] withs::[Pair<String Term>]
+top::ProofCommand ::= h::HHint depth::Maybe<Integer> theorem::Clearable
+                      args::[ApplyArg] withs::[Pair<String Term>]
 {
   local depthString::String =
      case depth of
@@ -107,41 +108,51 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> theorem::Clearable args::[A
   local withsString::String =
      if null(withs)
      then ""
-     else "with " ++ buildWiths(withs);
+     else " with " ++ buildWiths(withs);
   top.pp = h.pp ++ "apply " ++ depthString ++ theorem.pp ++ argsString ++ withsString ++ ".  ";
 
   top.errors <-
-      case theorem of
-      | clearable(_, "is_list_member", _) ->
-        case theorem__is_list_member(h, depth, args, withs, top.hypList) of
-        | right(prf) -> []
-        | left(err) -> [errorMsg(err)]
-        end
-      | clearable(_, "is_list_append", _) ->
-        case theorem__is_list_append(h, depth, args, withs, top.hypList) of
-        | right(prf) -> []
-        | left(err) -> [errorMsg(err)]
-        end
-      | _ -> []
+      case err_trans of
+      | left(err) -> [errorMsg(err)]
+      | right(_) -> []
       end;
 
-  top.translation = --error("Translation not done in applyTactic yet");
+  top.translation =
+      case err_trans of
+      | left(err) ->
+        error("Should not access translation with errors (applyTactic)")
+      | right(prf) -> prf
+      end;
+
+  local err_trans::Either<String [ProofCommand]> =
       case theorem of
       | clearable(_, "is_list_member", _) ->
-        case theorem__is_list_member(h, depth, args, withs, top.hypList) of
-        | right(prf) -> prf
-        | left(err) ->
-          error("Should not access translation with errors (applyTactic is_list_member)")
+        case theorem__is_list_member(h, depth, args, withs,
+                top.translatedState.hypList) of
+        | right(prf) -> right(prf)
+        | left(err) -> left(err)
         end
       | clearable(_, "is_list_append", _) ->
-        case theorem__is_list_append(h, depth, args, withs, top.hypList) of
-        | right(prf) -> prf
-        | left(err) ->
-          error("Should not access translation with errors (applyTactic is_list_append)")
+        case theorem__is_list_append(h, depth, args, withs,
+                top.translatedState.hypList) of
+        | right(prf) -> right(prf)
+        | left(err) -> left(err)
+        end
+      | clearable(x, "attr_unique", y) ->
+        case theorem__attr_unique(args, withs,
+                top.currentState.state.hypList) of
+        | right(thm) -> right([applyTactic(h, depth, clearable(x, thm, y), args, [])])
+        | left(err) -> left(err)
+        end
+      | clearable(x, "attr_is", y) ->
+        case theorem__attr_is(h, depth, args, withs,
+                top.currentState.state.hypList) of
+        | right(thm) -> right([thm])
+        | left(err) -> left(err)
         end
       | _ ->
-        [applyTactic(h, depth, theorem, args,
-              map(\ p::Pair<String Term> -> pair(p.fst, p.snd.translation), withs))]
+        right([applyTactic(h, depth, theorem, args,
+                 map(\ p::Pair<String Term> -> pair(p.fst, p.snd.translation), withs))])
       end;
 }
 
@@ -181,7 +192,7 @@ top::ProofCommand ::= h::HHint hyp::String keep::Boolean
       [caseTactic(h, hyp, keep)];
 
   top.errors <-
-      case findAssociated(hyp, top.hypList) of
+      case findAssociated(hyp, top.translatedState.hypList) of
       --Unknown hypotheses---could also let it go through and Abella catch it
       | nothing() -> [errorMsg("Unknown hypothesis " ++ hyp)]
       --Hidden hypotheses should be left alone
@@ -241,7 +252,7 @@ top::ProofCommand ::= h::HHint tree::String attr::String
   local isInherited::Boolean =
         contains(attr, top.currentState.knownInheritedAttrs);
   local findParent::Maybe<(String, Term)> =
-        find_parent_tree(tree, top.hypList);
+        find_parent_tree(tree, top.translatedState.hypList);
   local associatedTree::String =
         if isInherited
         then case findParent of
@@ -250,7 +261,8 @@ top::ProofCommand ::= h::HHint tree::String attr::String
              end
         else tree;
   local associatedProd::String =
-        case find_structure_hyp(associatedTree, top.hypList) of
+        case find_structure_hyp(associatedTree,
+                top.translatedState.hypList) of
         | just(applicationTerm(nameTerm(prod, _), _)) -> prod
         | just(_) -> error("It should be a production (associatedProd)")
         | nothing() -> error("It should have a value (associatedProd)")
@@ -258,7 +270,7 @@ top::ProofCommand ::= h::HHint tree::String attr::String
   local makeEqHypThm::Clearable =
         clearable(false, wpdNode_to_AttrEq(attr, treeTy), []);
   local wpdNodeHyp::Maybe<(String, Metaterm)> =
-        find_WPD_node_hyp(associatedTree, top.hypList);
+        find_WPD_node_hyp(associatedTree, top.translatedState.hypList);
   local treeTy::Type =
         if isInherited
         then case decorate findParent.fromJust.snd with
