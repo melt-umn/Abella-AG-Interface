@@ -301,6 +301,15 @@ top::ProcessingErrorMessage ::= argnum::Integer const1::String const2::String
 }
 
 
+abstract production unificationFailure
+top::ProcessingErrorMessage ::=
+{
+  top.pp = "Unification failure";
+
+  top.translation = unificationFailure();
+}
+
+
 abstract production tyConstrInconsistentKinds
 top::ProcessingErrorMessage ::= name::String
 {

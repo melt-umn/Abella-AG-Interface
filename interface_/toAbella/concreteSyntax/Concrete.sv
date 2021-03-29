@@ -281,6 +281,9 @@ concrete productions top::SubMetaterm_c
 | a::AttrAccess_t '=' val::Term_c
   { local pieces::(String, String) = split_AttrAccess_t(a);
     top.ast = attrAccessMetaterm(pieces.1, pieces.2, val.ast); }
+| a::AttrAccess_t '=' '<' 'no' 'value' '>'
+  { local pieces::(String, String) = split_AttrAccess_t(a);
+    top.ast = attrAccessEmptyMetaterm(pieces.1, pieces.2); }
 | t1::Term_c '+' t2::Term_c '=' t3::Term_c
   { top.ast = plusMetaterm(t1.ast, t2.ast, t3.ast); }
 | t1::Term_c '-' t2::Term_c '=' t3::Term_c

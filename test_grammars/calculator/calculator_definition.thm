@@ -111,7 +111,7 @@ Define $env__nt_Expr__host : nt_Expr -> $node_tree -> prop by
      $access_$_env_$_nt_Expr E1Node $attr_no /\
      $access_$_env_$_nt_Expr E2Node $attr_no;
   %mult
-  $env__nt_Expr__host (prod_plus E1 E2)
+  $env__nt_Expr__host (prod_mult E1 E2)
                    ($ntr_nt_Expr Node (($ntr_nt_Expr E1Node L1)::
                                    ($ntr_nt_Expr E2Node L2)::nil)) :=
      exists Val,
@@ -119,7 +119,7 @@ Define $env__nt_Expr__host : nt_Expr -> $node_tree -> prop by
         $access_$_env_$_nt_Expr E1Node ($attr_ex Val) /\
         $access_$_env_$_nt_Expr E2Node ($attr_ex Val) /\
         is_list (is_pair is_string is_integer) Val;
-  $env__nt_Expr__host (prod_plus E1 E2)
+  $env__nt_Expr__host (prod_mult E1 E2)
                    ($ntr_nt_Expr Node (($ntr_nt_Expr E1Node L1)::
                                    ($ntr_nt_Expr E2Node L2)::nil)) :=
      $access_$_env_$_nt_Expr Node $attr_no /\
@@ -294,7 +294,7 @@ Define $knownNames__nt_Expr__host : nt_Expr -> $node_tree -> prop by
      $access_$_knownNames_$_nt_Expr E1Node $attr_no /\
      $access_$_knownNames_$_nt_Expr E2Node $attr_no;
   %mult
-  $knownNames__nt_Expr__host (prod_minus E1 E2)
+  $knownNames__nt_Expr__host (prod_mult E1 E2)
                    ($ntr_nt_Expr Node (($ntr_nt_Expr E1Node L1)::
                                    ($ntr_nt_Expr E2Node L2)::nil)) :=
      exists Val,
@@ -302,7 +302,7 @@ Define $knownNames__nt_Expr__host : nt_Expr -> $node_tree -> prop by
         $access_$_knownNames_$_nt_Expr E1Node ($attr_ex Val) /\
         $access_$_knownNames_$_nt_Expr E2Node ($attr_ex Val) /\
         is_list is_string Val;
-  $knownNames__nt_Expr__host (prod_minus E1 E2)
+  $knownNames__nt_Expr__host (prod_mult E1 E2)
                    ($ntr_nt_Expr Node (($ntr_nt_Expr E1Node L1)::
                                    ($ntr_nt_Expr E2Node L2)::nil)) :=
      $access_$_knownNames_$_nt_Expr Node $attr_no /\

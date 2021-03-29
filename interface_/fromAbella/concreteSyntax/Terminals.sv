@@ -70,6 +70,7 @@ terminal UnknownLabel_t      'Unknown variable or hypothesis label'             
 terminal CannotGoBack_t      'Cannot go that far back!'                                             lexer classes {ERROR};
 terminal WhileMatch_t        'While matching argument #'                                            lexer classes {ERROR};
 terminal UnifFailConst_t     'Unification failure (constant clash between'                          lexer classes {ERROR};
+terminal UnifFail_t          'Unification failure'                                                  lexer classes {ERROR};
 terminal AndErrText_t        'and'                                                                  lexer classes {ERROR};
 terminal TyConstr_t          'Type constructor'                                                     lexer classes {ERROR};
 terminal InconsKinds_t       'has inconsistent kind declarations'                                   lexer classes {ERROR};

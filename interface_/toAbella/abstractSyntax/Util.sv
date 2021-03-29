@@ -55,9 +55,7 @@ function replaceAssociatedScopes
 [[Pair<String a>]] ::= key::String newVal::a scopes::[[Pair<String a>]]
 {
   return case scopes of
-         | [] ->
-           error("Should not call replaceAssociatedScopes with " ++
-                 "scopes which do not contain the replacement key")
+         | [] -> [] --error for an unknown name
          | currentScope::rest ->
            case replaceAssociated(key, newVal, currentScope) of
            | just(newScope) -> newScope::rest

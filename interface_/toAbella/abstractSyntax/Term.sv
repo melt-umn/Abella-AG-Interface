@@ -312,11 +312,62 @@ top::Metaterm ::= tree::String attr::String val::Term
 aspect production attrAccessEmptyMetaterm
 top::Metaterm ::= tree::String attr::String
 {
-  top.translation = error("This shouldn't be appearing here");
-  top.boundVarsOut = error("This shouldn't be appearing here");
-  top.foundNameType = error("This shouldn't be appearing here");
-  top.usedNames = error("This shouldn't be appearing here");
-  top.removedWPD = error("This shouldn't be appearing here");
+  top.translation =
+      case possibleTys of
+      | [ty] ->
+        termMetaterm(
+           buildApplication(
+              nameTerm(accessRelationName(ty, attr), nothing()),
+              [nameTerm(treeToNodeName(tree), nothing()),
+               nameTerm(attributeNotExistsName, nothing())]),
+           emptyRestriction())
+      | _ ->
+        error("Should not access translation in the presence of errors (attrAccessEmptyMetaterm)")
+      end;
+  top.newPremises := [wpdNewPremise(tree)];
+
+  local occursOnTypes::[Type] =
+        case findAssociated(attr, top.attrOccurrences) of
+        | just(tys) -> tys
+        | nothing() -> [] --unknown attribute
+        end;
+  local possibleTys::[Type] =
+        case findAssociatedScopes(tree, top.boundVars) of
+        | just(just(l)) -> intersectBy(tysEqual, occursOnTypes, l)
+        | just(nothing()) -> occursOnTypes
+        | nothing() -> []
+        end;
+
+  top.boundVarsOut = replaceAssociatedScopes(tree, just(possibleTys), top.boundVars);
+
+  top.errors <-
+      --check whether the attribute exists
+      case findAssociated(attr, top.attrOccurrences) of
+      | just(tys) -> []
+      | nothing() -> [errorMsg("Unknown attribute " ++ attr)]
+      end ++
+      --check whether the tree exists
+      case findAssociatedScopes(tree, top.boundVars) of
+      | nothing() -> [errorMsg("Unbound name " ++ tree)]
+      | _ -> []
+      end ++
+      --check attribute occurrence of trees of type t
+      case findAssociated(attr, top.attrOccurrences),
+           possibleTys of
+      | just(atys), ttys ->
+        if null(ttys)
+        then [errorMsg("Attribute " ++ attr ++ " does not occur on " ++ tree)]
+        else if length(ttys) > 1
+             then [errorMsg("Could not determine type of tree " ++ tree)]
+             else []
+      | _, _ -> []
+      end;
+
+  top.foundNameType = left("Did not find name " ++ top.findNameType);
+
+  top.usedNames = [tree];
+
+  top.removedWPD = top;
 }
 
 

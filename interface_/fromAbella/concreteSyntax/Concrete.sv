@@ -252,12 +252,20 @@ concrete productions top::SubMetaterm_c
 
 
 nonterminal Term_c with ast<Term>;
+nonterminal Factor_c with ast<Term>;
 nonterminal Exp_c with ast<Term>;
 nonterminal ExpList_c with ast<TermList>;
 nonterminal PAId_c with ast<Term>;
 
 
 concrete productions top::Term_c
+| t1::Factor_c '::' t2::Term_c
+  { top.ast = consTerm(t1.ast, t2.ast); }
+| e::Factor_c
+  { top.ast = e.ast; }
+
+
+concrete productions top::Factor_c
 | e::Exp_c el::ExpList_c
   { top.ast = applicationTerm(e.ast, el.ast); }
 | e::Exp_c
@@ -271,8 +279,6 @@ concrete productions top::Exp_c
   { top.ast = p.ast; }
 | 'nil'
   { top.ast = nilTerm(); }
-| t1::Exp_c '::' t2::Exp_c
-  { top.ast = consTerm(t1.ast, t2.ast); }
 
 
 concrete productions top::ExpList_c
@@ -450,6 +456,8 @@ concrete productions top::ProcessingErrorMessage_c
   { top.ast = cannotGoBack(); }
 | 'While matching argument #' argnum::Number_t ':' 'Unification failure (constant clash between' name1::ErrorId_t 'and' name2::ErrorId_t ')'
   { top.ast = matchingUnificationFailure(toInteger(argnum.lexeme), name1.lexeme, name2.lexeme); }
+| 'Unification failure'
+  { top.ast = unificationFailure(); }
 | 'Type constructor' name::ErrorId_t 'has inconsistent kind declarations'
   { top.ast = tyConstrInconsistentKinds(name.lexeme); }
 | 'Types may not begin with a capital letter:' name::ErrorId_t

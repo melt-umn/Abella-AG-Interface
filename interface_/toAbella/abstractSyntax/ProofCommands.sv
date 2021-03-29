@@ -312,6 +312,8 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> m::Metaterm
      end;
   top.pp = h.pp ++ "assert " ++ depthString ++ m.pp ++ ".  ";
 
+  m.attrOccurrences = top.currentState.knownAttrOccurrences;
+
   m.boundVars = [];
   top.translation = --error("Translation not done in assertTactic yet");
       [assertTactic(h, depth, m.translation)];
