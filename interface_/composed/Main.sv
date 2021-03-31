@@ -60,7 +60,7 @@ IOVal<Integer> ::= largs::[String] ioin::IO
                                   arrowType(nameType("nt_Expr"), nameType("nt_Expr")))) ),
            ("prod_name", arrowType(functorType(nameType("list"), nameType("$char")),
                             nameType("nt_Expr")) ),
-           ("prod_root", arrowType(nameType("nt_Expr"), nameType("nt_Expr")))
+           ("prod_root", arrowType(nameType("nt_Expr"), nameType("nt_Root")))
         ];
   local wpdRelations::[(String, Type, [String])] =
         [  ("$wpd_nt_Expr", nameType("nt_Expr"),
@@ -128,10 +128,9 @@ IOVal<Integer> ::=
   ----------------------------
   local debug_output::IO =
        if debug
-       then print( (if speak_to_abella
-                    then "Command sent:  " ++ any_a.translation
-                    else "Nothing to send to Abella") ++
-                   "\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n",
+       then print(if speak_to_abella
+                  then "Command sent:  " ++ any_a.translation
+                  else "Nothing to send to Abella",
                   raw_input.io)
        else raw_input.io;
   local out_to_abella::IO =
@@ -150,11 +149,6 @@ IOVal<Integer> ::=
         if speak_to_abella
         then read_abella_outputs(should_count_outputs, abella, out_to_abella)
         else ioval(out_to_abella, "");
-  local debug_back_output::IO =
-        if debug && speak_to_abella
-        then print("***** Read back from Abella: *****\n\n" ++ back_from_abella.iovalue ++
-               "\n\n*****   End Abella output    *****\n\n\n", back_from_abella.io)
-        else back_from_abella.io;
   --Translate output
   ----------------------------
   local full_result::ParseResult<FullDisplay_c> =
@@ -165,11 +159,45 @@ IOVal<Integer> ::=
         then !full_result.parseSuccess || full_a.isError
         else false;
   any_a.newProofState = full_a.proof;
+  --Clean up state
+  ----------------------------
+  local shouldClean::Boolean =
+        full_result.parseSuccess && !full_a.isError && any_a.shouldClean;
+  local cleaned::(String, Integer, FullDisplay, IO) =
+        if shouldClean
+        then cleanState(decorate full_a with
+                        {replaceState = head(any_a.stateListOut).snd.state;}.replacedState,
+                        abella, back_from_abella.io)
+        else ("", 0, decorate full_a with
+                     {replaceState = head(any_a.stateListOut).snd.state;}.replacedState,
+              back_from_abella.io);
+  local outputCleanCommands::IO =
+        if debug
+        then print(cleaned.1 ++
+                   "\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n",
+                   cleaned.4)
+        else cleaned.4;
+  local newStateList::[(Integer, ProverState)] =
+        (head(any_a.stateListOut).fst + cleaned.2,
+         --just replace the proof state in the ProverState
+         decorate head(any_a.stateListOut).snd with
+           {replaceState = cleaned.3.proof;}.replacedState)::tail(any_a.stateListOut);
   --Show to user
   ----------------------------
+  local debug_back_output::IO =
+        if debug && speak_to_abella
+        then print("***** Read back from Abella: *****\n\n" ++
+                 ( if shouldClean
+                   then cleaned.3.pp
+                   else back_from_abella.iovalue ) ++
+                  "\n\n*****   End Abella output    *****\n\n\n",
+                 outputCleanCommands)
+        else outputCleanCommands;
   local output_output::String =
         if speak_to_abella
-        then full_a.translation.pp ++ "\n"
+        then if shouldClean
+             then cleaned.3.translation.pp ++ "\n"
+             else full_a.translation.pp ++ "\n"
         else our_own_output ++ state.translation.pp ++ "\n";
   local printed_output::IO =
         if full_result.parseSuccess
@@ -183,8 +211,8 @@ IOVal<Integer> ::=
     EXIT
   -}
   local wait_on_exit::IO = waitForProcess(abella, out_to_abella);
-  --we can't use our normal read function because that looks for a new prompt
-  --guaranteed to get all the output because we waited for the process to exit first
+  --We can't use our normal read function because that looks for a new prompt
+  --Guaranteed to get all the output because we waited for the process to exit first
   local any_last_words::IOVal<String> = readAllFromProcess(abella, wait_on_exit);
   local output_last::IO = print(any_last_words.iovalue, any_last_words.io);
   local exit_message::IO = print("Quitting.\n", output_last);
@@ -194,12 +222,61 @@ IOVal<Integer> ::=
     RUN REPL AGAIN
   -}
   local again::IOVal<Integer> =
-        run_step(any_a.stateListOut, abella, printed_output);
+        run_step(newStateList, abella, printed_output);
 
 
   return if any_a.isQuit
          then ioval(exit_message, 0)
          else again;
+}
+
+
+{-
+ - Clean up the current proof state by doing actions dictated by the state
+ -
+ - @param currentState   Current state of the proof
+ - @param abella   Process in which Abella is running
+ - @param ioin   IO token
+ - @return   A tuple of a string of the commands sent, the number of
+ -           commands sent, the final FullDisplay including the proof
+ -           state which has been cleaned, and the IO token after cleaning
+-}
+function cleanState
+(String, Integer, FullDisplay, IO) ::=
+         currentDisplay::FullDisplay abella::ProcessHandle ioin::IO
+{
+  local currentState::ProofState = currentDisplay.proof;
+  --Send to Abella
+  local send::IO = sendToProcess(abella, currentState.cleanUpCommands, ioin);
+  --Read back from Abella
+  local back::IOVal<String> =
+        read_abella_outputs(just(currentState.numCleanUpCommands), abella, send);
+  local parsed::ParseResult<FullDisplay_c> =
+        from_parse(back.iovalue, "<<output>>");
+  currentState.nextStateIn =
+     if parsed.parseSuccess
+     then if parsed.parseTree.ast.isError
+          then error("BUG:  Cleaning command \"" ++
+                     currentState.cleanUpCommands ++
+                     "\" resulted in an error:\n\n" ++
+                     parsed.parseTree.ast.pp)
+          else parsed.parseTree.ast.proof
+     else error("BUG:  Unable to parse Abella's output:\n\n" ++
+                back.iovalue ++ "\n\n" ++ parsed.parseErrors ++
+                "\n\nPlease report this");
+  local cleanedDisplay::FullDisplay =
+        decorate parsed.parseTree.ast with
+        {replaceState = currentState.nextStateOut;}.replacedState;
+  --See if there is more to clean
+  local sub::(String, Integer, FullDisplay, IO) =
+        cleanState(cleanedDisplay, abella, back.io);
+
+  return
+     if currentState.numCleanUpCommands == 0
+     then ("", 0, currentDisplay, ioin)
+     else (currentState.cleanUpCommands ++ sub.1,
+           currentState.numCleanUpCommands + sub.2,
+           sub.3, sub.4);
 }
 
 

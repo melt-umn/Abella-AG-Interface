@@ -23,7 +23,7 @@ top::Kind ::= k::Kind
 attribute
    translation<Type>,
    eqTest<Type>, isEq,
-   argumentTypes, headTypeName
+   argumentTypes, headTypeName, resultType
 occurs on Type;
 
 aspect production arrowType
@@ -56,6 +56,8 @@ top::Type ::= ty1::Type ty2::Type
       end;
 
   top.headTypeName = nothing();
+
+  top.resultType = ty2.resultType;
 }
 
 
@@ -77,6 +79,8 @@ top::Type ::= name::String
   top.argumentTypes = [top];
 
   top.headTypeName = just(name);
+
+  top.resultType = top;
 }
 
 
@@ -105,6 +109,8 @@ top::Type ::= functorTy::Type argTy::Type
   top.argumentTypes = [top];
 
   top.headTypeName = functorTy.headTypeName;
+
+  top.resultType = top;
 }
 
 
@@ -118,6 +124,8 @@ top::Type ::=
   top.argumentTypes = [top];
 
   top.headTypeName = nothing();
+
+  top.resultType = top;
 }
 
 

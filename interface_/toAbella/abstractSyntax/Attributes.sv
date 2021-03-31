@@ -107,6 +107,10 @@ synthesized attribute isQuit::Boolean;
 --We let commands determine whether and what to undo
 synthesized attribute isUndo::Boolean;
 
+--Check whether we should try cleaning up after a command
+--Might not want to if it is too confusing, nothing to clean, etc.
+synthesized attribute shouldClean::Boolean;
+
 
 
 --Name of a hypothesis given as an argument
@@ -149,4 +153,22 @@ synthesized attribute argumentTypes::[Type];
 --Ultimate head of a type---nothing() on arrows or underscores
 --e.g.  f A B C   would give   f
 synthesized attribute headTypeName::Maybe<String>;
+
+--Ultimate result type of a type constructor being fully applied
+--e.g. A -> B C D -> E F   would give   E F
+synthesized attribute resultType::Type;
+
+
+
+
+
+
+--Commands to clean up a proof state
+--Point is to do the behind-the-scenes things not immediately part of
+--   the command issued by the user
+synthesized attribute cleanUpCommands::String;
+synthesized attribute numCleanUpCommands::Integer;
+--
+inherited attribute nextStateIn::ProofState;
+synthesized attribute nextStateOut::ProofState;
 

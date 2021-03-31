@@ -58,374 +58,105 @@ induction on 2. intros. case H2.
 
 Set subgoals off.
 
-Extensible_Theorem valExists__emptyKnownNames__implies__value :
-  forall T,
-     T.knownNames = [] -> T.valExists = true -> exists V, T.value = V
-on T.
-split. Set debug off. Set subgoals 1.
-  %intConst
-   intros Structure. exists N. case T.value. search.
-  %plus
-   intros IH1 IH2 Structure. case E.knownNames.
-     %knownNames exists
-      apply attr_unique to H5 H7. case T.valExists.
-        %T.valExists = E1.valExists
-         apply attr_unique to H6 H11. apply IH1 to _ _ _.
-         apply IH2 to _ _ _. case T.value.
-           %T.value exists
-            search.
-           %E.value does not exist
-            apply attr_unique to H15 H18.
-           %E1.value does not exist
-            apply attr_unique to H16 H19.
-        %T.valExists = false
-         apply attr_unique to H6 H11.
-        %T.valExists does not exist because E.valExists does not
-         apply attr_unique to H6 H11.
-        %T.valExists does not exist because E1.valExists does not
-         apply attr_unique to H6 H11.
-     %T.knownNames does not exist
-      apply attr_unique to H5 H7.
-  %minus
-   intros IH1 IH2 Structure. case E.knownNames.
-     %knownNames exists
-      apply attr_unique to H5 H7. case T.valExists.
-        %T.valExists = E1.valExists
-         apply attr_unique to H6 H11. apply IH1 to _ _ _.
-         apply IH2 to _ _ _. case T.value.
-           %T.value exists
-            search.
-           %E.value does not exist
-            apply attr_unique to H15 H18.
-           %E1.value does not exist
-            apply attr_unique to H16 H19.
-        %T.valExists = false
-         apply attr_unique to H6 H11.
-        %T.valExists does not exist because E.valExists does not
-         apply attr_unique to H6 H11.
-        %T.valExists does not exist because E1.valExists does not
-         apply attr_unique to H6 H11.
-     %T.knownNames does not exist
-      apply attr_unique to H5 H7.
-  %mult
-   intros IH1 IH2 Structure. case E.knownNames.
-     %knownNames exists
-      apply attr_unique to H5 H7. case T.valExists.
-        %T.valExists = E1.valExists
-         apply attr_unique to H6 H11. apply IH1 to _ _ _.
-         apply IH2 to _ _ _. case T.value.
-           %T.value exists
-            search.
-           %E.value does not exist
-            apply attr_unique to H15 H18.
-           %E1.value does not exist
-            apply attr_unique to H16 H19.
-        %T.valExists = false
-         apply attr_unique to H6 H11.
-        %T.valExists does not exist because E.valExists does not
-         apply attr_unique to H6 H11.
-        %T.valExists does not exist because E1.valExists does not
-         apply attr_unique to H6 H11.
-     %T.knownNames does not exist
-      apply attr_unique to H5 H7.
-  %letBind
-   skip.
-  %name
-   intros Structure. case T.valExists.
-     %T.valExists exists
-      apply attr_unique to H4 H5. apply attr_unique to H3 H6. case H7.
-     %T.valExists does not exist because T.knownNames does not
-      apply attr_unique to H4 H5.
-     %T.valExists does not exist because contains does not return
-      apply attr_unique to H3 H6.
-      assert exists Val, fun__contains L [] Val. apply H7 to H8.
-
-
 
 
 Extensible_Theorem valExists__implies__value__Expr : forall T,
-  (forall KNames Name, T.knownNames = KNames -> member Name KNames ->
-   exists Env Val, T.env = Env /\ member (Name, Val) Env) ->
-  T.valExists = true ->
-  exists V, T.value = V
+   T.knownNames = [] -> T.valExists = true -> exists V, T.value = V
 on T.
 split.
-   %intConst
-    intros Structure. exists N. case T.value. search.
-   %plus
-    intros IH1 IH2 Structure. case E.knownNames.
-      %E.knownNames, E1.knownNames exist
-       case T.valExists.
-         %valExists exists and = E1.valExists
-          case E.env.
-            %env exists
-             apply attr_unique to H6 H11. apply IH1 to _ _ H12. intros.
-             apply attr_unique to H8 H19. apply H5 to H7 H20.
-             exists Env, Val3. apply attr_unique to H15 H21. search.
-             apply attr_unique to H6 H11. apply IH2 to _ _ H13. intros.
-             apply attr_unique to H9 H20. apply H5 to H7 H21.
-             exists Env, Val3. apply attr_unique to H15 H22. search.
-             case T.value.
-               %value exists
-                search.
-               %E.value does not exist
-                apply attr_unique to H19 H22.
-               %E1.value does not exist
-                apply attr_unique to H20 H23.
-            %env does not exist
-             apply IH1 to _ _ H12. intros. apply attr_unique to H8 H18.
-             apply H5 to H7 H19. apply attr_unique to H15 H20.
-             apply attr_unique to H6 H11.
-             apply IH2 to _ _ H13. intros. apply attr_unique to H9 H19.
-             apply H5 to H7 H20. apply attr_unique to H15 H21.
-             case T.value.
-               %value exists
-                search.
-               %E.value does not exist
-                apply attr_unique to H18 H21.
-               %E1.value does not exist
-                apply attr_unique to H19 H22.
-         %E.valExists = false by E.valExists
-          apply attr_unique to H6 H11.
-         %valExists does not exist because E.valExists does not exist
-          apply attr_unique to H6 H11.
-         %valExists does not exist because E1.valExists does not exist
-          apply attr_unique to H6 H11.
-      %E.knownNames, E1.knownNames do not exist
-       case T.valExists.
-         %valExists = E1.val
-          apply attr_unique to H6 H10. 
-          apply IH1 to _ _ H11. intros. apply attr_unique to H8 H14.
-          apply IH2 to _ _ H12. intros. apply attr_unique to H9 H15.
-          case T.value.
-            %value exists
-             search.
-            %E.value does not exist
-             apply attr_unique to H14 H17.
-            %E1.value does not exist
-             apply attr_unique to H15 H18.
-         %valExists = false
-          apply attr_unique to H6 H10.
-         %valExists does not exist because E.valExists does not exist
-          apply attr_unique to H6 H10.
-         %valExists does not exist because E1.valExists does not exist
-          apply attr_unique to H6 H10.
-   %minus
-    intros IH1 IH2 Structure. case E.knownNames.
-      %E.knownNames, E1.knownNames exist
-       case T.valExists.
-         %valExists exists and = E1.valExists
-          case E.env.
-            %env exists
-             apply attr_unique to H6 H11. apply IH1 to _ _ H12. intros.
-             apply attr_unique to H8 H19. apply H5 to H7 H20.
-             exists Env, Val3. apply attr_unique to H15 H21. search.
-             apply attr_unique to H6 H11. apply IH2 to _ _ H13. intros.
-             apply attr_unique to H9 H20. apply H5 to H7 H21.
-             exists Env, Val3. apply attr_unique to H15 H22. search.
-             case T.value.
-               %value exists
-                search.
-               %E.value does not exist
-                apply attr_unique to H19 H22.
-               %E1.value does not exist
-                apply attr_unique to H20 H23.
-            %env does not exist
-             apply IH1 to _ _ H12. intros. apply attr_unique to H8 H18.
-             apply H5 to H7 H19. apply attr_unique to H15 H20.
-             apply attr_unique to H6 H11.
-             apply IH2 to _ _ H13. intros. apply attr_unique to H9 H19.
-             apply H5 to H7 H20. apply attr_unique to H15 H21.
-             case T.value.
-               %value exists
-                search.
-               %E.value does not exist
-                apply attr_unique to H18 H21.
-               %E1.value does not exist
-                apply attr_unique to H19 H22.
-         %E.valExists = false by E.valExists
-          apply attr_unique to H6 H11.
-         %valExists does not exist because E.valExists does not exist
-          apply attr_unique to H6 H11.
-         %valExists does not exist because E1.valExists does not exist
-          apply attr_unique to H6 H11.
-      %E.knownNames, E1.knownNames do not exist
-       case T.valExists.
-         %valExists = E1.val
-          apply attr_unique to H6 H10. 
-          apply IH1 to _ _ H11. intros. apply attr_unique to H8 H14.
-          apply IH2 to _ _ H12. intros. apply attr_unique to H9 H15.
-          case T.value.
-            %value exists
-             search.
-            %E.value does not exist
-             apply attr_unique to H14 H17.
-            %E1.value does not exist
-             apply attr_unique to H15 H18.
-         %valExists = false
-          apply attr_unique to H6 H10.
-         %valExists does not exist because E.valExists does not exist
-          apply attr_unique to H6 H10.
-         %valExists does not exist because E1.valExists does not exist
-          apply attr_unique to H6 H10.
-   %mult
-    intros IH1 IH2 Structure. case E.knownNames.
-      %E.knownNames, E1.knownNames exist
-       case T.valExists.
-         %valExists exists and = E1.valExists
-          case E.env.
-            %env exists
-             apply attr_unique to H6 H11. apply IH1 to _ _ H12. intros.
-             apply attr_unique to H8 H19. apply H5 to H7 H20.
-             exists Env, Val3. apply attr_unique to H15 H21. search.
-             apply attr_unique to H6 H11. apply IH2 to _ _ H13. intros.
-             apply attr_unique to H9 H20. apply H5 to H7 H21.
-             exists Env, Val3. apply attr_unique to H15 H22. search.
-             case T.value.
-               %value exists
-                search.
-               %E.value does not exist
-                apply attr_unique to H19 H22.
-               %E1.value does not exist
-                apply attr_unique to H20 H23.
-            %env does not exist
-             apply IH1 to _ _ H12. intros. apply attr_unique to H8 H18.
-             apply H5 to H7 H19. apply attr_unique to H15 H20.
-             apply attr_unique to H6 H11.
-             apply IH2 to _ _ H13. intros. apply attr_unique to H9 H19.
-             apply H5 to H7 H20. apply attr_unique to H15 H21.
-             case T.value.
-               %value exists
-                search.
-               %E.value does not exist
-                apply attr_unique to H18 H21.
-               %E1.value does not exist
-                apply attr_unique to H19 H22.
-         %E.valExists = false by E.valExists
-          apply attr_unique to H6 H11.
-         %valExists does not exist because E.valExists does not exist
-          apply attr_unique to H6 H11.
-         %valExists does not exist because E1.valExists does not exist
-          apply attr_unique to H6 H11.
-      %E.knownNames, E1.knownNames do not exist
-       case T.valExists.
-         %valExists = E1.val
-          apply attr_unique to H6 H10. 
-          apply IH1 to _ _ H11. intros. apply attr_unique to H8 H14.
-          apply IH2 to _ _ H12. intros. apply attr_unique to H9 H15.
-          case T.value.
-            %value exists
-             search.
-            %E.value does not exist
-             apply attr_unique to H14 H17.
-            %E1.value does not exist
-             apply attr_unique to H15 H18.
-         %valExists = false
-          apply attr_unique to H6 H10.
-         %valExists does not exist because E.valExists does not exist
-          apply attr_unique to H6 H10.
-         %valExists does not exist because E1.valExists does not exist
-          apply attr_unique to H6 H10.
-   %letBind
-    intros IH1 IH2 Structure. case E.knownNames.
-      %knownNames exists
-       case T.valExists.
-         %T.valExists = E.valExists
-          apply attr_unique to H6 H12. case E.env.
-            %E.env, E1.env exists
-             apply IH1 to _ _ H13.
-               %IH1
-               intros. apply attr_unique to H8 H22. apply H5 to H7 H23.
-               apply attr_unique to H16 H24. search.
-             apply IH2 to _ _ H14.
-               %IH2
-               intros. apply attr_unique to H10 H23. case H9.
-               case H25. case H19. case H26. case H24.
-                 %member first
-                  exists ((L, EVal)::L1), EVal. search.
-                 %member rest
-                  apply H5 to H7 H27. apply attr_unique to H16 H28.
-                  exists ((L, EVal)::L1), Val1. search.
-             case T.value.
-               %value exists
-                search.
-               %E1.value does not exist
-                apply attr_unique to H23 H25.
-            %T.env does not exist
-             apply attr_is to H7. case H19. Set debug off.
-               %nil
-                skip.
-               %non-nil
-                assert member H (H::T). apply H5 to H7 H22.
-                apply attr_unique to H16 H23.
-            %E.env exists, E1.env does not exist
-             apply IH1 to _ _ H13.
-               %IH1
-               intros. apply attr_unique to H8 H21. apply H5 to H7 H22.
-               apply attr_unique to H16 H23. search.
-             apply attr_unique to H18 H21.
-         %T.valExists = false
-          apply attr_unique to H6 H12.
-         %valExists does not exist
-          apply attr_unique to H6 H12.
-         %valExists does not exist
-          apply attr_unique to H6 H12.
-      %knownNames does not exist
-       case T.valExists.
-         %T.valExists = E1.valExists
-          apply attr_unique to H6 H10. apply IH1 to _ _ H11.
-            %IH1
-            intros. apply attr_unique to H8 H14.
-          apply IH2 to _ _ H12.
-            %IH2
-            intros. apply attr_unique to H9 H15.
-          case T.value.
-            %T.value exists
-             search.
-            %E1.value does not exist
-             apply attr_unique to H15 H17.
-         %T.valExists = false
-          apply attr_unique to H6 H10.
-         %T.valExists does not exist because E.valExists does not
-          apply attr_unique to H6 H10.
-         %T.valExists does not exist because E1.valExists does not
-          apply attr_unique to H6 H10.
-   %name
-    intros Structure. case T.value.
-      %Value exists
-       exists Ret. search.
-      %No environment
-       case T.valExists.
-         %valExists exists
-          apply attr_unique to H4 H7.
-          apply fun__contains__to__member to H9.
-          apply H3 to H8 H11. apply attr_unique to H12 H6.
-         %knownNames does not exist
-          apply attr_unique to H4 H7.
-         %fun__contains does not return
-          apply attr_unique to H4 H7.
-     %No return from lookup
-       case T.valExists.
-         %valExists exists
-          apply attr_unique to H4 H8.
-          apply fun__contains__to__member to H10.
-          apply H3 to H9 H12. apply attr_is to H13.
-          apply fun__lookup__member to H15 H14.
-          assert exists V, fun__lookup Env1 L V.
-          apply attr_unique to H6 H13. apply H7 to H17.
-         %knownNames does not exist
-          apply attr_unique to H4 H8.
-         %fun__contains does not return
-          apply attr_unique to H4 H8.
+  %intConst
+   intros Structure. case T.value. search.
+  %plus
+   intros IH1 IH2 Structure. case E.knownNames. case T.valExists.
+   apply IH1 to _ _ _. apply IH2 to _ _ _. case T.value. search.
+  %minus
+   intros IH1 IH2 Structure. case E.knownNames. case T.valExists.
+   apply IH1 to _ _ _. apply IH2 to _ _ _. case T.value. search.
+  %mult
+   intros IH1 IH2 Structure. case E.knownNames. case T.valExists.
+   apply IH1 to _ _ _. apply IH2 to _ _ _. case T.value. search.
+  %letBind
+   intros IH1 IH2 Structure. case E.knownNames. case T.valExists.
+   apply append_nil_right to H9. apply IH1 to _ _ _. case T.value.
+     %T.value exists
+      search.
+     %E1.value does not exist
+      skip.
+  %name
+   intros Structure. case T.valExists. case H7.
+Show valExists__implies__value__Expr.
+
+%It looks like I'm not getting the WPD assumption removed
+
+
+
+
+
+
+Extensible_Theorem valExists__implies__value__Expr :
+   forall T KNames Env,
+      T.knownNames = KNames -> T.env = Env ->
+      (forall Name, member Name KNames ->
+          exists Val, member (Name, Val) Env) ->
+      T.valExists = true -> exists V, T.value = V
+on T.
+split. Set debug off.
+  %intConst
+   intros Structure. case T.value. exists N. search.
+  %plus
+   intros IH1 IH2 Structure. case E.knownNames. case E.env.
+   case T.valExists. apply IH1 to _ H10 H14 H7 H18.
+   apply IH2 to _ H11 H15 H7 H19. case T.value. search.
+  %minus
+   intros IH1 IH2 Structure. case E.knownNames. case E.env.
+   case T.valExists. apply IH1 to _ H10 H14 H7 H18.
+   apply IH2 to _ H11 H15 H7 H19. case T.value. search.
+  %mult
+   intros IH1 IH2 Structure. case E.knownNames. case E.env.
+   case T.valExists. apply IH1 to _ H10 H14 H7 H18.
+   apply IH2 to _ H11 H15 H7 H19. case T.value. search.
+  %letBind
+   intros IH1 IH2 Structure. case E.knownNames. case H11. case H14.
+   case T.valExists. case T.value.
+     %T.value exists
+      search.
+     %T.value does not exist because E1.value does not exist
+      case E.env.
+        %env exists
+         case H24. case H27. apply IH2 to _ H12 H25 _ H17.
+           %IH2 relate knownNames and env
+            intros. case H28.
+              %member first
+               exists EVal. search.
+              %member rest
+               apply H7 to H29. apply attr_unique to H6 H21.
+               exists Val1. search.
+         apply attr_unique to H20 H28.
+        %env does not exist
+         apply attr_unique to H6 H21.
+        %E1.env does not exist because E.value = <no value>
+         apply attr_unique to H6 H21. apply IH1 to _ H10 H22 H7 H16.
+  %name
+   intros Structure. case T.valExists.
+   apply fun__contains__to__member to H9. apply H5 to H11.
+   apply attr_is to H4. apply fun__lookup__member to H13 H12.
+   case T.value.
+     %T.value exists
+      search.
+     %T.value = <no value> because lookup does not return
+      assert exists Ret, fun__lookup Env1 L Ret. apply H17 to H18.
 
 
 Extensible_Theorem valExists__implies__value__Root :
-  forall (T : nt_Root),
-     T.valExists = true -> exists V, T.value = V
-on T.
+  forall (R : nt_Root),
+     R.valExists = true -> exists V, R.value = V
+on R. Set debug on.
 %root
- intros Structure. skip.
-%Need to use Expr version for this, which requires asserting it when done
+ intros Structure. case R.valExists. case E.knownNames. case E.env.
+ apply valExists__implies__value__Expr to _ H8 H10 _ H6.
+   %member assumption for Expr theorem
+    intros Mem. case Mem.
+ case R.value. search.
 
 
 

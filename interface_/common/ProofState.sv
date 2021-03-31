@@ -36,6 +36,28 @@ top::ProofState ::=
 }
 
 
+abstract production proofCompleted
+top::ProofState ::=
+{
+  top.pp = "Proof completed.";
+
+  top.hypList = [];
+
+  forwards to noProof();
+}
+
+
+abstract production proofAborted
+top::ProofState ::=
+{
+  top.pp = "Proof ABORTED.";
+
+  top.hypList = [];
+
+  forwards to noProof();
+}
+
+
 {-
   We handle extensible theorems by proving one theorem which is the
   conjunction of the separate statements we want for the different
@@ -50,6 +72,7 @@ abstract production extensible_proofInProgress
 top::ProofState ::= currentProofState::ProofState originalTheorem::Metaterm
                     name::String numProds::Integer
 {
+  top.pp = forward.pp;
   --We could use this production to figure out what to label with * in the actual proof state
   --Have a translation attribute to label the things with * as needed
 

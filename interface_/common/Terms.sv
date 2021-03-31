@@ -100,25 +100,25 @@ top::Restriction ::=
 abstract production starRestriction
 top::Restriction ::= n::Integer
 {
-  top.pp = replicate(n, "*");
+  top.pp = " " ++ replicate(n, "*");
 }
 
 abstract production atRestriction
 top::Restriction ::= n::Integer
 {
-  top.pp = replicate(n, "@");
+  top.pp = " " ++ replicate(n, "@");
 }
 
 abstract production plusRestriction
 top::Restriction ::= n::Integer
 {
-  top.pp = replicate(n, "+");
+  top.pp = " " ++ replicate(n, "+");
 }
 
 abstract production hashRestriction
 top::Restriction ::= n::Integer
 {
-  top.pp = replicate(n, "#");
+  top.pp = " " ++ replicate(n, "#");
 }
 
 

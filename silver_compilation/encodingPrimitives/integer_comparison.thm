@@ -1,7 +1,6 @@
 
-Kind $bool   type.
-Kind $nat   type.
-Import "integer_multiplication". %Import "nats".
+Kind nat   type.
+Import "integer_multiplication".
 
 
 
@@ -9,7 +8,7 @@ Import "integer_multiplication". %Import "nats".
 %                                LESS                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Define $less_integer : integer -> integer -> $bool -> prop by
+Define $less_integer : integer -> integer -> bool -> prop by
   $less_integer ($posInt $zero) ($posInt $zero) $bfalse;
   $less_integer ($posInt $zero) ($posInt ($succ N2)) $btrue;
   $less_integer ($posInt ($succ N1)) ($posInt $zero) $bfalse;
@@ -166,7 +165,7 @@ induction on 1. intros. case H1.
 %                               LESSEQ                               %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Define $lesseq_integer : integer -> integer -> $bool -> prop by
+Define $lesseq_integer : integer -> integer -> bool -> prop by
   $lesseq_integer ($posInt $zero) ($posInt $zero) $btrue;
   $lesseq_integer ($posInt $zero) ($posInt ($succ N2)) $btrue;
   $lesseq_integer ($posInt ($succ N1)) ($posInt $zero) $bfalse;
@@ -312,7 +311,7 @@ induction on 1. intros. case H1.
 %                              GREATER                               %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Define $greater_integer : integer -> integer -> $bool -> prop by
+Define $greater_integer : integer -> integer -> bool -> prop by
   $greater_integer N1 N2 B := $less_integer N2 N1 B.
 
 %unique
@@ -341,12 +340,12 @@ Theorem $greater_integer_false_flip : forall N1 N2,
   $greater_integer N1 N2 $bfalse -> $greater_integer N2 N1 $btrue.
 intros. case H1. abort. %apply $less_integer_false_flip to H2. search.
 
-Theorem greater_true_flip_less_integer : forall N1 N2,
+Theorem $greater_true_flip_less_integer : forall N1 N2,
   $greater_integer N1 N2 $btrue -> $less_integer N1 N2 $bfalse.
 induction on 1. intros. case H1.
  apply $less_integer_true_flip to H2. search.
 
-Theorem greater_false_flip_less_integer : forall N1 N2,
+Theorem $greater_false_flip_less_integer : forall N1 N2,
   $greater_integer N1 N2 $bfalse -> $less_integer N1 N2 $btrue.
 induction on 1. intros. case H1.
 abort. % apply $less_integer_false_flip to H2. search.
@@ -357,7 +356,7 @@ abort. % apply $less_integer_false_flip to H2. search.
 %                             GREATEREQ                              %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Define $greatereq_integer : integer -> integer -> $bool -> prop by
+Define $greatereq_integer : integer -> integer -> bool -> prop by
   $greatereq_integer N1 N2 B := $lesseq_integer N2 N1 B.
 
 %unique

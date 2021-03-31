@@ -10,7 +10,8 @@ grammar interface_:common;
 
 nonterminal ProverState with
    state, debug, knownAttrs, knownAttrOccurrences, knownProductions,
-   knownWPDRelations, knownInheritedAttrs;
+   knownWPDRelations, knownInheritedAttrs,
+   replaceState, replacedState<ProverState>;
 
 
 synthesized attribute state::ProofState;
@@ -31,6 +32,11 @@ synthesized attribute knownProductions::[(String, Type)];
 synthesized attribute knownWPDRelations::[(String, Type, [String])];
 
 
+--We often only want to replace the state and leave everything else
+inherited attribute replaceState::ProofState;
+synthesized attribute replacedState<a>::a;
+
+
 abstract production proverState
 top::ProverState ::=
    state::ProofState debugMode::Boolean attrs::[(String, Type)]
@@ -45,5 +51,10 @@ top::ProverState ::=
   top.knownProductions = prods;
   top.knownWPDRelations = wpdRelations;
   top.knownInheritedAttrs = inheritedAttrs;
+
+  top.replacedState =
+      proverState(top.replaceState, debugMode, attrs,
+                  attrOccurrences, prods, wpdRelations,
+                  inheritedAttrs);
 }
 

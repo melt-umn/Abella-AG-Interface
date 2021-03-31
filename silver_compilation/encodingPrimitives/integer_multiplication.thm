@@ -1,5 +1,4 @@
 
-Kind $bool   type.
 Kind nat   type.
 Import "integer_addition".
 
@@ -347,7 +346,7 @@ case H1.
       apply $is_integer_posInt_or_negSuccInt to H2. case H14.
         %Subgoal 2.2.1
          apply negate_integer_total to H2.
-         apply $plus_integer_negatives to _ _ _ H15 H12 H5 H9.
+         apply plus_integer_negatives to _ _ _ H15 H12 H5 H9.
          case H15.
            %Subgoal 2.2.1.1
             case H16. case H7.
@@ -360,7 +359,7 @@ case H1.
             apply $is_integer_posInt__to__negSuccInt to H2. case H18.
             apply plus_integer_comm to _ _ H16. search.
         %Subgoal 2.2.2
-         apply $plus_integer_negatives to _ _ _ _ _ _ H9.
+         apply plus_integer_negatives to _ _ _ _ _ _ H9.
          apply negate_integer_is_integer to _ H12.
          apply $is_integer_negSuccInt__to__posInt to H2.
          apply plus_integer_comm to _ _ H15. search.
@@ -379,7 +378,7 @@ case H1.
       apply negate_integer_total to H10. rename N'1 to -N'.
       apply IH to H7 _ _ H8 H11.
       apply $is_integer_posInt__to__negSuccInt to H2. case H13.
-      apply $plus_integer_negatives to _ _ _ _ _ _ H9.
+      apply plus_integer_negatives to _ _ _ _ _ _ H9.
       apply negate_integer_is_integer to _ H11.
       apply plus_integer_comm to _ _ H15. search.
      %Subgoal 4.3
@@ -387,7 +386,7 @@ case H1.
       apply negate_integer_total to H10. rename N'1 to -N'.
       apply IH to H7 _ _ H8 H11.
       apply $is_integer_negSuccInt__to__posInt to H2.
-      apply $plus_integer_negatives to _ _ _ _ _ _ H9.
+      apply plus_integer_negatives to _ _ _ _ _ _ H9.
       apply negate_integer_is_integer to _ H11.
       apply plus_integer_comm to _ _ H14. search.
 

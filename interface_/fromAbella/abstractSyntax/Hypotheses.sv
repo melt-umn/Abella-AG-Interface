@@ -28,6 +28,26 @@ top::ProofState ::=
 }
 
 
+aspect production proofCompleted
+top::ProofState ::=
+{
+  top.translation = proofCompleted();
+
+  top.inProof = false;
+  top.hypList = [];
+}
+
+
+aspect production proofAborted
+top::ProofState ::=
+{
+  top.translation = proofAborted();
+
+  top.inProof = false;
+  top.hypList = [];
+}
+
+
 
 
 

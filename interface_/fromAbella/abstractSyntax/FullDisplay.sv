@@ -4,7 +4,8 @@ grammar interface_:fromAbella:abstractSyntax;
 nonterminal FullDisplay with
    pp,
    translation<FullDisplay>,
-   proof, isError, isWarning, proofEnded;
+   proof, isError, isWarning, proofEnded,
+   replaceState, replacedState<FullDisplay>;
 
 abstract production fullDisplay
 top::FullDisplay ::= msg::ExtraInformation state::ProofState
@@ -16,35 +17,15 @@ top::FullDisplay ::= msg::ExtraInformation state::ProofState
   top.proof = state;
   top.isError = msg.isError;
   top.isWarning = msg.isWarning;
-  top.proofEnded = false; --proof didn't *just* end
-}
+  top.proofEnded =
+      case state of
+      | noProof() -> false
+      | proofCompleted() -> true
+      | proofAborted() -> true
+      | proofInProgress(_, _, _) -> false
+      end;
 
-
-abstract production displayProofCompleted
-top::FullDisplay ::= msg::ExtraInformation
-{
-  top.pp = msg.pp ++ (if msg.pp != "" then "\n\n" else "") ++ "Proof completed.";
-
-  top.translation = displayProofCompleted(msg.translation);
-
-  top.proof = noProof();
-  top.isError = msg.isError;
-  top.isWarning = msg.isWarning;
-  top.proofEnded = true;
-}
-
-
-abstract production displayProofAborted
-top::FullDisplay ::= msg::ExtraInformation
-{
-  top.pp = msg.pp ++ (if msg.pp != "" then "\n\n" else "") ++ "Proof ABORTED.";
-
-  top.translation = displayProofAborted(msg.translation);
-
-  top.proof = noProof();
-  top.isError = msg.isError;
-  top.isWarning = msg.isWarning;
-  top.proofEnded = true;
+  top.replacedState = fullDisplay(msg, top.replaceState);
 }
 
 
@@ -60,6 +41,9 @@ top::FullDisplay ::= name::String body::Metaterm
   top.isError = false;
   top.isWarning = false;
   top.proofEnded = false;
+
+  --Can't really replace the state if we don't have one
+  top.replacedState = top;
 }
 
 

@@ -6,7 +6,7 @@
 Kind nat   type.
 Import "nats".
 
-Kind $bool   type.
+Kind bool   type.
 Import "bools".
 
 
@@ -93,4 +93,57 @@ intros. case H1.
    search.
   %Subgoal 4
    search.
+
+Theorem is_integer_eq_or_not : forall I1 I2,
+  is_integer I1 -> is_integer I2 ->
+  I1 = I2 \/ (I1 = I2 -> false).
+induction on 1. intros. case H1.
+  %Subgoal 1
+   case H2.
+     %Subgoal 1.1
+      left. search.
+     %Subgoal 1.2
+      right. intros. case H4.
+     %Subgoal 1.3
+      right. intros. case H3.
+     %Subgoal 1.4
+      right. intros. case H4.
+  %Subgoal 2
+   case H2.
+     %Subgoal 2.1
+      right. intros. case H4.
+     %Subgoal 2.2
+      apply IH to H3 H4. case H5.
+        %Subgoal 2.2.1
+         left. search.
+        %Subgoal 2.2.2
+         right. intros. case H7. backchain H6.
+     %Subgoal 2.3
+      right. intros. case H4.
+     %Subgoal 2.4
+      right. intros. case H5.
+  %Subgoal 3
+   case H2.
+     %Subgoal 3.1
+      right. intros. case H3.
+     %Subgoal 3.2
+      right. intros. case H4.
+     %Subgoal 3.3
+      left. search.
+     %Subgoal 3.4
+      right. intros. case H4.
+  %Subgoal 4
+   case H2.
+     %Subgoal 4.1
+      right. intros. case H4.
+     %Subgoal 4.2
+      right. intros. case H5.
+     %Subgoal 4.3
+      right. intros. case H4.
+     %Subgoal 4.4
+      apply IH to H3 H4. case H5.
+        %Subgoal 4.4.1
+         left. search.
+        %Subgoal 4.4.2
+         right. intros. case H7. backchain H6.
 

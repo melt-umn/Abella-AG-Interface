@@ -1,5 +1,4 @@
 
-Kind $bool   type.
 Kind nat   type.
 Import "integers".
 
@@ -1018,7 +1017,7 @@ induction on 1. intros. case H1.
   %Subgoal 5
    apply IH to H2. backchain $negate_integer_step__negSuccInt.
 
-Theorem $plus_integer_negatives : forall A -A B -B C -C,
+Theorem plus_integer_negatives : forall A -A B -B C -C,
   is_integer A -> is_integer B -> is_integer C ->
   $negate_integer A -A -> $negate_integer B -B ->
   $negate_integer C -C -> $plus_integer A B C ->

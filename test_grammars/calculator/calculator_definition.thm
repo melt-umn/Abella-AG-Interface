@@ -1,5 +1,6 @@
 
-Kind $bool   type.
+Kind bool   type.
+Kind nat   type.
 Import "../../silver_compilation/encodingPrimitives/integer_addition".
 Import "../../silver_compilation/encodingPrimitives/integer_multiplication".
 
@@ -42,10 +43,10 @@ Type $access_$_env_$_nt_Expr
 Type $access_$_value_$_nt_Expr   node_Expr -> $attrVal integer -> prop.
 Type $access_$_knownNames_$_nt_Expr
      node_Expr -> $attrVal (list (list $char)) -> prop.
-Type $access_$_valExists_$_nt_Expr   node_Expr -> $attrVal $bool -> prop.
+Type $access_$_valExists_$_nt_Expr   node_Expr -> $attrVal bool -> prop.
 
 Type $access_$_value_$_nt_Root   node_Root -> $attrVal integer -> prop.
-Type $access_$_valExists_$_nt_Root   node_Root -> $attrVal $bool -> prop.
+Type $access_$_valExists_$_nt_Root   node_Root -> $attrVal bool -> prop.
 
 
 
@@ -65,7 +66,7 @@ Define fun__lookup :
      fun__lookup Tail N Result.
 
 Define fun__contains :
-       list $char -> list (list $char) -> $bool -> prop by
+       list $char -> list (list $char) -> bool -> prop by
   fun__contains N nil $bfalse;
   fun__contains N (N::Rest) $btrue;
   fun__contains N (Other::Rest) B :=
@@ -463,18 +464,26 @@ Type $valExists__nt_Root   nt_Root -> $node_tree -> prop.
 Define $value__nt_Root__host : nt_Root -> $node_tree -> prop by
   $value__nt_Root__host (prod_root E)
                  ($ntr_nt_Root Node (($ntr_nt_Expr ENode EL)::nil)) :=
-     exists AVal,
-        $access_$_value_$_nt_Root Node AVal /\
-        $access_$_value_$_nt_Expr ENode AVal /\
-        $is_attrVal is_integer AVal.
+     exists Val,
+        $access_$_value_$_nt_Root Node ($attr_ex Val) /\
+        $access_$_value_$_nt_Expr ENode ($attr_ex Val) /\
+        is_integer Val;
+  $value__nt_Root__host (prod_root E)
+                 ($ntr_nt_Root Node (($ntr_nt_Expr ENode EL)::nil)) :=
+     $access_$_value_$_nt_Root Node $attr_no /\
+     $access_$_value_$_nt_Expr ENode $attr_no.
 
 Define $valExists__nt_Root__host : nt_Root -> $node_tree -> prop by
   $valExists__nt_Root__host (prod_root E)
                  ($ntr_nt_Root Node (($ntr_nt_Expr ENode EL)::nil)) :=
-     exists AVal,
-        $access_$_valExists_$_nt_Root Node AVal /\
-        $access_$_valExists_$_nt_Expr ENode AVal /\
-        $is_attrVal is_bool AVal.
+     exists Val,
+        $access_$_valExists_$_nt_Root Node ($attr_ex Val) /\
+        $access_$_valExists_$_nt_Expr ENode ($attr_ex Val) /\
+        is_bool Val;
+  $valExists__nt_Root__host (prod_root E)
+                 ($ntr_nt_Root Node (($ntr_nt_Expr ENode EL)::nil)) :=
+     $access_$_valExists_$_nt_Root Node $attr_no /\
+     $access_$_valExists_$_nt_Expr ENode $attr_no.
 
 /*
   Even though we don't have env and knownNames on Root, we still need

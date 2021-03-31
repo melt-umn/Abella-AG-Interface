@@ -57,11 +57,23 @@ Boolean ::= str::String
 {
   return startsWith("$", str) && endsWith("_Tm", str);
 }
+function structureToTreeName
+String ::= treeStructure::String
+{
+  --$<tree>_Tm
+  return substring(1, length(treeStructure) - 3, treeStructure);
+}
 
 function treeToNodeName
 String ::= treeName::String
 {
   return "$" ++ treeName ++ "_Node";
+}
+function nodeToTreeName
+String ::= treeName::String
+{
+  --$<tree>_Node
+  return substring(1, length(treeName) - 5, treeName);
 }
 
 function treeToChildListName
@@ -110,6 +122,18 @@ String ::= str::String
 {
   local lastSplit::Integer = lastIndexOf("_$_", str);
   return substring(lastSplit + 3, length(str), str);
+}
+
+--Access Theorems
+function accessUniqueThm
+String ::= attr::String ty::String
+{
+  return "$access_$_" ++ attr ++ "_$_" ++ ty ++ "__unique";
+}
+function accessIsThm
+String ::= attr::String ty::String
+{
+  return "$access_$_" ++ attr ++ "_$_" ++ ty ++ "__is";
 }
 
 --WPD Nonterminal

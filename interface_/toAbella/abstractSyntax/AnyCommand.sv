@@ -10,7 +10,7 @@ grammar interface_:toAbella:abstractSyntax;
 nonterminal AnyCommand with
    pp,
    translation<String>, currentState, translatedState, inProof,
-   isQuit,
+   isQuit, shouldClean,
    sendCommand, ownOutput, numCommandsSent,
    stateListIn, stateListOut, newProofState, wasError;
 
@@ -30,6 +30,7 @@ top::AnyCommand ::= c::TopCommand
       end;
 
   top.isQuit = false;
+  top.shouldClean = false;
 
   top.sendCommand =
       if top.inProof
@@ -53,8 +54,9 @@ top::AnyCommand ::= c::TopCommand
   local newProofState::ProofState =
         case c of
         | extensibleTheoremDeclaration(name, depth, metaterm, tree) ->
-          extensible_proofInProgress(top.newProofState, c.translatedTheorem,
-                                     name, c.numRelevantProds)
+          extensible_proofInProgress(
+             top.newProofState, c.translatedTheorem,
+             name, c.numRelevantProds)
         | _ -> top.newProofState
         end;
   top.stateListOut =
@@ -82,6 +84,7 @@ top::AnyCommand ::= c::ProofCommand
   top.pp = c.pp;
 
   top.isQuit = false;
+  top.shouldClean = c.shouldClean;
 
   top.translation =
       foldr(\ p::ProofCommand rest::String -> p.pp ++ rest,
@@ -106,12 +109,10 @@ top::AnyCommand ::= c::ProofCommand
   c.currentState = top.currentState;
   local currentState::ProverState = head(top.stateListIn).snd;
   local newProofState::ProofState =
-        case currentState.state, top.newProofState of
-        | extensible_proofInProgress(_, oMt, name, numProds), proofInProgress(_, _, _) ->
+        case top.currentState.state of
+        | extensible_proofInProgress(_, oMt, name, numProds) ->
           extensible_proofInProgress(top.newProofState, oMt, name, numProds)
-        | extensible_proofInProgress(_, oMt, name, numProds), noProof() ->
-          noProof() --In this case, we need to send the cleanup commands (split and axiom), but I don't know how yet
-        | _, _ -> top.newProofState
+        | _ -> top.newProofState
         end;
   top.stateListOut =
       if top.wasError || !top.inProof || !null(c.errors)
@@ -137,6 +138,7 @@ abstract production anyNoOpCommand
 top::AnyCommand ::= c::NoOpCommand
 {
   top.pp = c.pp;
+  top.shouldClean = false;
 
   top.translation = c.translation.pp;
 
@@ -169,6 +171,7 @@ top::AnyCommand ::= parseErrors::String
   top.translation = error("Should not translate anyParseFailure");
 
   top.isQuit = false;
+  top.shouldClean = false;
 
   top.sendCommand = false;
   top.ownOutput = "Error:  Could not parse:\n" ++ parseErrors;

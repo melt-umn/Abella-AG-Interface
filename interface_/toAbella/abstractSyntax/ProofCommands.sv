@@ -7,7 +7,7 @@ nonterminal ProofCommand with
    pp, --pp should end with two spaces
    translation<[ProofCommand]>, currentState, translatedState,
    errors, sendCommand, ownOutput,
-   isUndo,
+   isUndo, shouldClean,
    stateListIn, stateListOut;
 
 
@@ -37,8 +37,10 @@ top::ProofCommand ::= h::HHint nl::[Integer]
        end;
   top.pp = h.pp ++ "induction on " ++ buildInts(nl) ++ ".  ";
 
-  top.translation =-- error("Translation not done in inductionTactic yet");
-      [inductionTactic(h, nl)];
+  top.translation = [inductionTactic(h, nl)];
+
+  --no real change to proof state
+  top.shouldClean = false;
 }
 
 
@@ -48,6 +50,9 @@ top::ProofCommand ::= h::HHint
   top.pp = h.pp ++ "coinduction.  ";
 
   top.translation = [coinductionTactic(h)];
+
+  --no real change to proof state
+  top.shouldClean = false;
 }
 
 
@@ -75,6 +80,9 @@ top::ProofCommand ::= names::[String]
   -}
   top.translation = --error("Translation not done in introsTactic yet");
       [introsTactic(names)];
+
+  --it would be confusing if intros killed the proof
+  top.shouldClean = false;
 }
 
 
@@ -154,6 +162,8 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> theorem::Clearable
         right([applyTactic(h, depth, theorem, args,
                  map(\ p::Pair<String Term> -> pair(p.fst, p.snd.translation), withs))])
       end;
+
+  top.shouldClean = true;
 }
 
 
@@ -180,6 +190,8 @@ top::ProofCommand ::= depth::Maybe<Integer> theorem::Clearable withs::[Pair<Stri
 
   top.translation = --error("Translation not done in backchainTactic yet");
       [backchainTactic(depth, theorem, map(\ p::Pair<String Term> -> pair(p.fst, p.snd.translation), withs))];
+
+  top.shouldClean = true;
 }
 
 
@@ -214,6 +226,8 @@ top::ProofCommand ::= h::HHint hyp::String keep::Boolean
       --Anything else is fine
       | just(_) -> []
       end;
+
+  top.shouldClean = true;
 }
 
 
@@ -228,21 +242,21 @@ top::ProofCommand ::= h::HHint tree::String attr::String
       else case findAssociated(attr, top.currentState.knownAttrOccurrences) of
            | nothing() -> [] --covered by checking if attr exists, so impossible here
            | just(nts) ->
-             if containsBy(tysEqual, treeTy, nts)
-             then if isInherited
-                  then case findParent of
-                       | nothing() ->
-                         [errorMsg("Cannot do case analysis on inherited attribute "++
-                                   "equation when parent of tree is unknown")]
-                       | just(_) ->
-                         case wpdNodeHyp of
-                         | nothing() ->
-                           [errorMsg("Cannot do case analysis on " ++ tree ++ "." ++ attr ++ " for reasons I can't come up with at the moment; please report this error")]
-                         | just(_) -> []
-                         end
-                       end
-                  else []
-             else [errorMsg("Attribute " ++ attr ++ " does not occur on " ++ tree)]
+             if isInherited
+             then case findParent of
+                  | nothing() ->
+                    [errorMsg("Cannot do case analysis on inherited attribute "++
+                              "equation when parent of tree is unknown")]
+                  | just(_) ->
+                    case wpdNodeHyp of
+                    | nothing() ->
+                      [errorMsg("Cannot do case analysis on " ++ tree ++ "." ++ attr ++ " for reasons I can't come up with at the moment; please report this error")]
+                    | just(_) -> []
+                    end
+                  end
+             else if containsBy(tysEqual, treeTy, nts)
+                  then []
+                  else [errorMsg("Attribute " ++ attr ++ " does not occur on " ++ tree)]
            end;
 
   local newNum::String = toString(genInt());
@@ -277,12 +291,10 @@ top::ProofCommand ::= h::HHint tree::String attr::String
                   {findParentOf = tree;}.foundParent of
              | nothing() -> error("We picked this term based on it being included")
              | just((prod, index)) ->
-               elemAtIndex(
-                  case findAssociated(prod, top.currentState.knownProductions) of
-                  | just(val) -> val.argumentTypes
-                  | nothing() -> error("Could not find production " ++ prod)
-                  end,
-                  index)
+                case findAssociated(prod, top.currentState.knownProductions) of
+                | just(val) -> val.resultType
+                | nothing() -> error("Production " ++ prod ++ " must exist")
+                end
              end
         else case wpdNodeHyp of
              | just((_, termMetaterm(applicationTerm(nameTerm(rel, _), _), _))) ->
@@ -297,8 +309,10 @@ top::ProofCommand ::= h::HHint tree::String attr::String
                    [hypApplyArg(wpdNodeHyp.fromJust.1, [])], []),
        applyTactic(nameHint(componentHypName), nothing(), pcTheorem,
                    [hypApplyArg(eqHypName, [])], []),
-       caseTactic(h, componentHypName, true)]; --,
-       --clearCommand([eqHypName, componentHypName], false)];
+       caseTactic(h, componentHypName, true),
+       clearCommand([eqHypName, componentHypName], false)];
+
+  top.shouldClean = true;
 }
 
 
@@ -317,6 +331,9 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> m::Metaterm
   m.boundVars = [];
   top.translation = --error("Translation not done in assertTactic yet");
       [assertTactic(h, depth, m.translation)];
+
+  --no real change to proof state, just goal
+  top.shouldClean = false;
 }
 
 
@@ -335,6 +352,9 @@ top::ProofCommand ::= ew::[EWitness]
 
   top.translation = --error("Translation not done in existsTactic yet");
       [existsTactic(map(\ e::EWitness -> e.translation, ew))];
+
+  --no real change to proof state
+  top.shouldClean = false;
 }
 
 
@@ -353,6 +373,9 @@ top::ProofCommand ::= ew::[EWitness]
 
   top.translation = --error("Translation not done in witnessTactic yet");
       [witnessTactic(map(\ e::EWitness -> e.translation, ew))];
+
+  --no real change to proof state
+  top.shouldClean = false;
 }
 
 
@@ -362,6 +385,8 @@ top::ProofCommand ::=
   top.pp = "search.  ";
 
   top.translation = [searchTactic()];
+
+  top.shouldClean = true;
 }
 
 
@@ -371,6 +396,8 @@ top::ProofCommand ::= n::Integer
   top.pp = "search " ++ toString(n) ++ ".  ";
 
   top.translation = [searchDepthTactic(n)];
+
+  top.shouldClean = true;
 }
 
 
@@ -380,6 +407,8 @@ top::ProofCommand ::= sw::SearchWitness
   top.pp = "search with " ++ sw.pp ++ ".  ";
 
   top.translation = error("Translation not done in searchWitnessTactic yet");
+
+  top.shouldClean = true;
 }
 
 
@@ -388,6 +417,8 @@ top::ProofCommand ::=
 {
   top.pp = "async.  ";
   top.translation = [asyncTactic()];
+
+  top.shouldClean = true;
 }
 
 
@@ -397,6 +428,9 @@ top::ProofCommand ::=
   top.pp = "split.  ";
 
   top.translation = [splitTactic()];
+
+  --no real change to proof state
+  top.shouldClean = false;
 }
 
 
@@ -406,6 +440,9 @@ top::ProofCommand ::=
   top.pp = "split*.  ";
 
   top.translation = [splitStarTactic()];
+
+  --no real change to proof state
+  top.shouldClean = false;
 }
 
 
@@ -415,6 +452,9 @@ top::ProofCommand ::=
   top.pp = "left.  ";
 
   top.translation = [leftTactic()];
+
+  --no real change to proof state
+  top.shouldClean = false;
 }
 
 
@@ -424,6 +464,9 @@ top::ProofCommand ::=
   top.pp = "right.  ";
 
   top.translation = [rightTactic()];
+
+  --no real change to proof state
+  top.shouldClean = false;
 }
 
 
@@ -433,6 +476,8 @@ top::ProofCommand ::=
   top.pp = "skip.  ";
 
   top.translation = [skipTactic()];
+
+  top.shouldClean = true;
 }
 
 
@@ -442,6 +487,9 @@ top::ProofCommand ::=
   top.pp = "abort.  ";
 
   top.translation = [abortCommand()];
+
+  --no proof state afterward
+  top.shouldClean = false;
 }
 
 
@@ -455,7 +503,7 @@ top::ProofCommand ::=
     command the user entered.  If that turned into multiple commands,
     we should undo them all.
   -}
-  top.translation = --error("Translation not done in undoTactic yet");
+  top.translation =
       repeat(undoCommand(), head(top.stateListIn).fst);
 
   top.errors <-
@@ -469,6 +517,9 @@ top::ProofCommand ::=
       then --We shouldn't ever have nothing in the undo list
         error("Empty stateListIn (undoCommand)")
       else tail(top.stateListIn);
+
+  --"new" state should already be clean
+  top.shouldClean = false;
 }
 
 
@@ -488,6 +539,9 @@ top::ProofCommand ::= removes::[String] hasArrow::Boolean
 
   --TODO Should be checking this is an actual hypothesis the user can see
   top.translation = [clearCommand(removes, hasArrow)];
+
+  --no real change to proof state
+  top.shouldClean = false;
 }
 
 
@@ -503,6 +557,9 @@ top::ProofCommand ::= original::String renamed::String
   -}
   top.translation = --error("Translation not done in renameTactic yet");
       [renameTactic(original, renamed)];
+
+  --no real change to proof state
+  top.shouldClean = false;
 }
 
 
@@ -521,6 +578,9 @@ top::ProofCommand ::= hyps::[String] newText::String
   top.pp = "abbrev " ++ buildHyps(hyps) ++ " \"" ++ newText ++ "\".  ";
 
   top.translation = [abbrevCommand(hyps, newText)];
+
+  --no real change to proof state
+  top.shouldClean = false;
 }
 
 
@@ -538,6 +598,9 @@ top::ProofCommand ::= hyps::[String]
   top.pp = "unabbrev " ++ buildHyps(hyps) ++ "\".  ";
 
   top.translation = [unabbrevCommand(hyps)];
+
+  --no real change to proof state
+  top.shouldClean = false;
 }
 
 
@@ -548,6 +611,8 @@ top::ProofCommand ::= names::[String] hyp::Maybe<String>
   top.pp = "permute " ++ foldr1(\a::String b::String -> a ++ " " ++ b, names) ++ hypString ++ ".  ";
 
   top.translation = [permuteTactic(names, hyp)];
+
+  top.shouldClean = true;
 }
 
 
@@ -557,6 +622,9 @@ top::ProofCommand ::= steps::Integer all::Boolean
   top.pp = "unfold " ++ toString(steps) ++ if all then "(all).  " else ".  ";
 
   top.translation = error("Translation not done in unfoldStepsTactic yet");
+
+  --no real change to proof state
+  top.shouldClean = false;
 }
 
 
@@ -566,6 +634,9 @@ top::ProofCommand ::= id::String all::Boolean
   top.pp = "unfold " ++ id ++ if all then "(all).  " else ".  ";
 
   top.translation = error("Translation not done in unfoldIdentifierTactic yet");
+
+  --no real change to proof state
+  top.shouldClean = false;
 }
 
 
@@ -575,6 +646,9 @@ top::ProofCommand ::= all::Boolean
   top.pp = "unfold " ++ if all then "(all).  " else ".  ";
 
   top.translation = error("Translation not done in unfoldTactic yet");
+
+  --no real change to proof state
+  top.shouldClean = false;
 }
 
 
