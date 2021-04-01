@@ -115,7 +115,7 @@ top::NoOpCommand ::= n::Integer
            else [];
 
   top.isQuit = false;
-  top.isUndo = false;
+  top.isUndo = true;
 
   top.sendCommand = null(top.errors) && trans_n > 0;
   top.ownOutput = "";

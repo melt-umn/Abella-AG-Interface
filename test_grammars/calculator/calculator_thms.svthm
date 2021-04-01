@@ -58,39 +58,7 @@ induction on 2. intros. case H2.
 
 Set subgoals off.
 
-
-
-Extensible_Theorem valExists__implies__value__Expr : forall T,
-   T.knownNames = [] -> T.valExists = true -> exists V, T.value = V
-on T.
-split.
-  %intConst
-   intros Structure. case T.value. search.
-  %plus
-   intros IH1 IH2 Structure. case E.knownNames. case T.valExists.
-   apply IH1 to _ _ _. apply IH2 to _ _ _. case T.value. search.
-  %minus
-   intros IH1 IH2 Structure. case E.knownNames. case T.valExists.
-   apply IH1 to _ _ _. apply IH2 to _ _ _. case T.value. search.
-  %mult
-   intros IH1 IH2 Structure. case E.knownNames. case T.valExists.
-   apply IH1 to _ _ _. apply IH2 to _ _ _. case T.value. search.
-  %letBind
-   intros IH1 IH2 Structure. case E.knownNames. case T.valExists.
-   apply append_nil_right to H9. apply IH1 to _ _ _. case T.value.
-     %T.value exists
-      search.
-     %E1.value does not exist
-      skip.
-  %name
-   intros Structure. case T.valExists. case H7.
-Show valExists__implies__value__Expr.
-
-%It looks like I'm not getting the WPD assumption removed
-
-
-
-
+%It looks like I'm not getting the WPD assumption removed for IH
 
 
 Extensible_Theorem valExists__implies__value__Expr :
@@ -100,7 +68,7 @@ Extensible_Theorem valExists__implies__value__Expr :
           exists Val, member (Name, Val) Env) ->
       T.valExists = true -> exists V, T.value = V
 on T.
-split. Set debug off.
+split.
   %intConst
    intros Structure. case T.value. exists N. search.
   %plus
@@ -150,7 +118,7 @@ split. Set debug off.
 Extensible_Theorem valExists__implies__value__Root :
   forall (R : nt_Root),
      R.valExists = true -> exists V, R.value = V
-on R. Set debug on.
+on R.
 %root
  intros Structure. case R.valExists. case E.knownNames. case E.env.
  apply valExists__implies__value__Expr to _ H8 H10 _ H6.
@@ -159,29 +127,75 @@ on R. Set debug on.
  case R.value. search.
 
 
-
-Extensible_Theorem x : forall T,
-  (exists KnownNames, T.knownNames = KnownNames) ->
-  exists B, T.valExists = B
+%If knownNames exists, so does valExists
+Extensible_Theorem knownNames__implies__valExists__Expr :
+  forall T KnownNames,
+     T.knownNames = KnownNames ->
+     exists B, T.valExists = B
 on T.
 split.
    %intConst
-    intros Structure. skip.
+    intros Structure. case T.valExists. search.
    %plus
-    intros IH1 IH2 Structure. skip.
+    intros IH1 IH2 Structure. case E.knownNames. case T.valExists.
+      %T.valExists = E1.valExists
+       exists Val1. search.
+      %T.valExists = false
+       exists false. search.
+      %T.valExists = E.valExists = <no value>
+       apply IH1 to _ H7.
+      %T.valExists = E1.valExists = <no value>
+       apply IH2 to _ H8.
    %minus
-    intros IH1 IH2 Structure. skip.
+    intros IH1 IH2 Structure. case E.knownNames. case T.valExists.
+      %T.valExists = E1.valExists
+       exists Val1. search.
+      %T.valExists = false
+       exists false. search.
+      %T.valExists = E.valExists = <no value>
+       apply IH1 to _ H7.
+      %T.valExists = E1.valExists = <no value>
+       apply IH2 to _ H8.
    %mult
-    intros IH1 IH2 Structure. skip.
+    intros IH1 IH2 Structure. case E.knownNames. case T.valExists.
+      %T.valExists = E1.valExists
+       exists Val1. search.
+      %T.valExists = false
+       exists false. search.
+      %T.valExists = E.valExists = <no value>
+       apply IH1 to _ H7.
+      %T.valExists = E1.valExists = <no value>
+       apply IH2 to _ H8.
    %letBind
-    intros IH1 IH2 Structure. skip.
+    intros IH1 IH2 Structure. case E.knownNames. case T.valExists.
+      %T.valExists = E1.valExists
+       exists Val. search.
+      %T.valExists = false
+       exists false. search.
+      %T.valExists = E.valExists = <no value>
+       apply IH1 to _ H7.
+      %T.valExists = E1.valExists = <no value>
+       apply IH2 to _ H9.
    %name
-    intros Structure. skip.
+    intros Structure. case T.valExists.
+      %contains returns a value
+       exists Val. search.
+      %contains does not return
+       apply attr_is to H5. assert is_string L. skip.
+       apply fun__contains__total to H7 H8.
+       assert (exists B, fun__contains L KnownNames1 B).
+       apply H6 to H10.
 
 
-Extensible_Theorem x : forall (T : nt_Root),
-  exists B, T.valExists = B
-on T.
+Extensible_Theorem valExists__Root : forall (R : nt_Root),
+  exists B, R.valExists = B
+on R.
 %root
- intros Structure. skip.
+ intros Structure. case R.valExists.
+   %T.valExists has a value
+    exists Val. search.
+   %T.valExists = E.valExists = <no value>
+    case E.knownNames.
+    apply knownNames__implies__valExists__Expr to _ H6.
+
 

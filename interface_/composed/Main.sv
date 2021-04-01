@@ -163,20 +163,20 @@ IOVal<Integer> ::=
   ----------------------------
   local shouldClean::Boolean =
         full_result.parseSuccess && !full_a.isError && any_a.shouldClean;
-  local cleaned::(String, Integer, FullDisplay, IO) =
+  local cleaned::(String, Integer, FullDisplay, [[Integer]], IO) =
         if shouldClean
         then cleanState(decorate full_a with
                         {replaceState = head(any_a.stateListOut).snd.state;}.replacedState,
                         abella, back_from_abella.io)
         else ("", 0, decorate full_a with
                      {replaceState = head(any_a.stateListOut).snd.state;}.replacedState,
-              back_from_abella.io);
+              [], back_from_abella.io);
   local outputCleanCommands::IO =
         if debug
         then print(cleaned.1 ++
                    "\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n",
-                   cleaned.4)
-        else cleaned.4;
+                   cleaned.5)
+        else cleaned.5;
   local newStateList::[(Integer, ProverState)] =
         (head(any_a.stateListOut).fst + cleaned.2,
          --just replace the proof state in the ProverState
@@ -193,10 +193,20 @@ IOVal<Integer> ::=
                   "\n\n*****   End Abella output    *****\n\n\n",
                  outputCleanCommands)
         else outputCleanCommands;
+  local subgoalCompletedNow::Boolean =
+        subgoalCompleted(state.currentSubgoal,
+                         head(any_a.stateListOut).snd.state.currentSubgoal) &&
+        ! any_a.isUndo;
   local output_output::String =
+      ( if subgoalCompletedNow
+        then "Subgoal " ++ subgoalNumToString(state.currentSubgoal) ++ " completed\n"
+        else "" ) ++
         if speak_to_abella
         then if shouldClean
-             then cleaned.3.translation.pp ++ "\n"
+             then foldr(\ x::[Integer] rest::String ->
+                          "Subgoal " ++ subgoalNumToString(x) ++
+                          " completed automatically\n" ++ rest,
+                        "\n", cleaned.4) ++ cleaned.3.translation.pp ++ "\n"
              else full_a.translation.pp ++ "\n"
         else our_own_output ++ state.translation.pp ++ "\n";
   local printed_output::IO =
@@ -239,10 +249,11 @@ IOVal<Integer> ::=
  - @param ioin   IO token
  - @return   A tuple of a string of the commands sent, the number of
  -           commands sent, the final FullDisplay including the proof
- -           state which has been cleaned, and the IO token after cleaning
+ -           state which has been cleaned, the list of subgoals
+ -           completed automatically, and the IO token after cleaning
 -}
 function cleanState
-(String, Integer, FullDisplay, IO) ::=
+(String, Integer, FullDisplay, [[Integer]], IO) ::=
          currentDisplay::FullDisplay abella::ProcessHandle ioin::IO
 {
   local currentState::ProofState = currentDisplay.proof;
@@ -267,16 +278,22 @@ function cleanState
   local cleanedDisplay::FullDisplay =
         decorate parsed.parseTree.ast with
         {replaceState = currentState.nextStateOut;}.replacedState;
+  --See if we completed a subgoal
+  local subgoalCompletedNow::[[Integer]] =
+        if subgoalCompleted(currentState.currentSubgoal,
+                            currentState.nextStateOut.currentSubgoal)
+        then [currentState.currentSubgoal]
+        else [];
   --See if there is more to clean
-  local sub::(String, Integer, FullDisplay, IO) =
+  local sub::(String, Integer, FullDisplay, [[Integer]], IO) =
         cleanState(cleanedDisplay, abella, back.io);
 
   return
      if currentState.numCleanUpCommands == 0
-     then ("", 0, currentDisplay, ioin)
+     then ("", 0, currentDisplay, [], ioin)
      else (currentState.cleanUpCommands ++ sub.1,
            currentState.numCleanUpCommands + sub.2,
-           sub.3, sub.4);
+           sub.3, subgoalCompletedNow ++ sub.4, sub.5);
 }
 
 

@@ -79,6 +79,9 @@
      ;;There doesn't appear to be any default "success" face, but I'd
      ;;like this to stand out anyway.
      . font-lock-string-face)
+    ;;Messages for subgoals completed
+    ("\\(completed\\)\\|\\(automatically\\)"
+     . font-lock-string-face)
     ;;Bad proof done
     ("Proof ABORTED."
      . font-lock-warning-face)

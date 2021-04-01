@@ -8,8 +8,9 @@ grammar interface_:common;
 -}
 
 synthesized attribute hypList::[(String, Metaterm)];
+synthesized attribute currentSubgoal::[Integer];
 
-nonterminal ProofState with pp, hypList;
+nonterminal ProofState with pp, hypList, currentSubgoal;
 
 abstract production proofInProgress
 top::ProofState ::= subgoalNum::[Integer] currGoal::CurrentGoal futureGoals::[Subgoal]
@@ -24,6 +25,8 @@ top::ProofState ::= subgoalNum::[Integer] currGoal::CurrentGoal futureGoals::[Su
   top.pp = subgoalString ++ "\n" ++ currGoal.pp ++ "\n" ++ futureGoalsString;
 
   top.hypList = currGoal.hypList;
+
+  top.currentSubgoal = subgoalNum;
 }
 
 
@@ -33,6 +36,8 @@ top::ProofState ::=
   top.pp = "";
 
   top.hypList = [];
+
+  top.currentSubgoal = [];
 }
 
 
@@ -42,6 +47,8 @@ top::ProofState ::=
   top.pp = "Proof completed.";
 
   top.hypList = [];
+
+  top.currentSubgoal = [];
 
   forwards to noProof();
 }
@@ -53,6 +60,8 @@ top::ProofState ::=
   top.pp = "Proof ABORTED.";
 
   top.hypList = [];
+
+  top.currentSubgoal = [];
 
   forwards to noProof();
 }
@@ -175,5 +184,46 @@ String ::= subgoalNum::[Integer]
          | [x] -> toString(x)
          | h::t -> toString(h) ++ "." ++ subgoalNumToString(t)
          end;
+}
+
+
+--s1 < s2
+--true if some position (from left) in s1 is less than corresponding
+--   in s2 or s1 runs out first
+function subgoalLess
+Boolean ::= s1::[Integer] s2::[Integer]
+{
+  return
+     case s1, s2 of
+     | h1::tl1, h2::tl2 ->
+       if h1 < h2
+       then true
+       else if h1 == h2
+            then subgoalLess(tl1, tl2)
+            else false
+     | [], _::_ -> true
+     | _::_, [] -> false
+     | [], [] -> false
+     end;
+}
+
+
+--Comparing (possibly empty) subgoals to see if a goal was completed
+function subgoalCompleted
+Boolean ::= oldSubgoal::[Integer] newSubgoal::[Integer]
+{
+  --Catch a subgoal completing and going forward to another one
+  local goalToNewGoal::Boolean =
+        subgoalLess(oldSubgoal, newSubgoal) &&
+        --need to check length to avoid catching e.g. [2] expanding to [2.1]
+        ( length(oldSubgoal) == length(newSubgoal) ||
+          length(oldSubgoal) > length(newSubgoal) );
+  --Catch a subgoal completing and going back to the previous one
+  local goalToPreviousGoal::Boolean =
+        subgoalLess(newSubgoal, oldSubgoal);
+  return
+     ! null(oldSubgoal) &&
+     ( goalToNewGoal ||
+       goalToPreviousGoal );
 }
 

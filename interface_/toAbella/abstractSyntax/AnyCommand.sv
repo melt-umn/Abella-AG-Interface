@@ -10,7 +10,7 @@ grammar interface_:toAbella:abstractSyntax;
 nonterminal AnyCommand with
    pp,
    translation<String>, currentState, translatedState, inProof,
-   isQuit, shouldClean,
+   isQuit, isUndo, shouldClean,
    sendCommand, ownOutput, numCommandsSent,
    stateListIn, stateListOut, newProofState, wasError;
 
@@ -30,6 +30,7 @@ top::AnyCommand ::= c::TopCommand
       end;
 
   top.isQuit = false;
+  top.isUndo = false;
   top.shouldClean = false;
 
   top.sendCommand =
@@ -84,6 +85,7 @@ top::AnyCommand ::= c::ProofCommand
   top.pp = c.pp;
 
   top.isQuit = false;
+  top.isUndo = c.isUndo;
   top.shouldClean = c.shouldClean;
 
   top.translation =
@@ -138,11 +140,12 @@ abstract production anyNoOpCommand
 top::AnyCommand ::= c::NoOpCommand
 {
   top.pp = c.pp;
-  top.shouldClean = false;
 
   top.translation = c.translation.pp;
 
   top.isQuit = c.isQuit;
+  top.isUndo = c.isUndo;
+  top.shouldClean = false;
 
   top.sendCommand = null(c.errors) && c.sendCommand;
   top.ownOutput =
@@ -171,6 +174,7 @@ top::AnyCommand ::= parseErrors::String
   top.translation = error("Should not translate anyParseFailure");
 
   top.isQuit = false;
+  top.isUndo = false;
   top.shouldClean = false;
 
   top.sendCommand = false;
