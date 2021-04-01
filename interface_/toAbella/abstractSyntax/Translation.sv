@@ -401,7 +401,7 @@ Metaterm ::= prods::[String] original::Metaterm treeName::String
              buildApplication(nameTerm(wpdNodeTypeName(treeTy), nothing()),
                               [newTree, newNodeTree]),
              emptyRestriction()) ] ++
-        --WPD nonterminal relations for children
+        --WPD nonterminal relations/is relations for children
         foldr(\ p::(Type, String) rest::[Metaterm] ->
                 if tyIsNonterminal(p.fst)
                 then termMetaterm(
@@ -410,7 +410,15 @@ Metaterm ::= prods::[String] original::Metaterm treeName::String
                            [nameTerm(treeToStructureName(p.snd), nothing()),
                             buildNodeTree(p.snd, p.fst)]),
                         emptyRestriction())::rest
-                else rest,
+                else case p.fst.isRelation of
+                     | right(isRel) ->
+                       termMetaterm(
+                          buildApplication(isRel,
+                                           [nameTerm(p.snd, nothing())]),
+                          emptyRestriction())::rest
+                     | left(err) ->
+                       error("Could not generate is relation:\n" ++ err)
+                     end,
               [], children);
   --fake IHs remove WPD nonterminal relation, and replace original tree with child tree
   originalBody.removeWPDTree = treeName;

@@ -57,8 +57,7 @@ induction on 2. intros. case H2.
 
 
 Set subgoals off.
-
-%It looks like I'm not getting the WPD assumption removed for IH
+Set debug off.
 
 
 Extensible_Theorem valExists__implies__value__Expr :
@@ -67,7 +66,7 @@ Extensible_Theorem valExists__implies__value__Expr :
       (forall Name, member Name KNames ->
           exists Val, member (Name, Val) Env) ->
       T.valExists = true -> exists V, T.value = V
-on T. Set debug off.
+on T.
 split.
   %intConst
    intros Structure. case T.value. exists N. search.
@@ -84,33 +83,31 @@ split.
    case T.valExists. apply IH1 to _ H10 H14 H7 H18.
    apply IH2 to _ H11 H15 H7 H19. case T.value. search.
   %letBind
-   intros IH1 IH2 Structure. case E.knownNames. case H11. case H14.
+   intros IH1 IH2 Structure. case E.knownNames. case H12. case H15.
    case T.valExists. case T.value.
-     %T.value exists
-      search.
      %T.value does not exist because E1.value does not exist
       case E.env.
+        %E1.env does not exist because E.value = <no value>
+         apply IH1 to _ H11 H23 H8 H17.
         %env exists
-         case H24. case H27. apply IH2 to _ H12 H25 _ H17.
+         case H25. case H28. apply IH2 to _ H13 H26 _ H18.
            %IH2 relate knownNames and env
-            intros. case H28.
+            intros Mem. case Mem.
               %member first
                exists EVal. search.
               %member rest
-               apply H7 to H29. apply attr_unique to H6 H21.
-               exists Val1. search.
-        %E1.env does not exist because E.value = <no value>
-         apply attr_unique to H6 H21. apply IH1 to _ H10 H22 H7 H16.
-  %name
-   intros Structure. case T.valExists.
-   apply fun__contains__to__member to H9. apply H5 to H11.
-   apply attr_is to H4. apply fun__lookup__member to H13 H12.
-   case T.value.
+               apply H8 to H29. exists Val1. search.
      %T.value exists
       search.
+  %name
+   intros Structure. case T.valExists.
+   apply fun__contains__to__member to H10. apply H6 to H12.
+   apply attr_is to H5. apply fun__lookup__member to H14 H13.
+   case T.value.
      %T.value = <no value> because lookup does not return
-      apply attr_unique to H4 H16.
-      assert exists Ret, fun__lookup Env1 L Ret. apply H17 to H18.
+      assert exists Ret, fun__lookup Env1 L Ret. apply H18 to H19.
+     %T.value exists
+      search.
 
 
 Extensible_Theorem valExists__implies__value__Root :
@@ -125,6 +122,10 @@ on R.
  case R.value. search.
 
 
+
+
+
+
 %If knownNames exists, so does valExists
 Extensible_Theorem knownNames__implies__valExists__Expr :
   forall T KnownNames,
@@ -136,53 +137,52 @@ split.
     intros Structure. case T.valExists. search.
    %plus
     intros IH1 IH2 Structure. case E.knownNames. case T.valExists.
-      %T.valExists = E1.valExists
-       exists Val1. search.
-      %T.valExists = false
-       exists false. search.
       %T.valExists = E.valExists = <no value>
        apply IH1 to _ H7.
       %T.valExists = E1.valExists = <no value>
        apply IH2 to _ H8.
+      %T.valExists = E1.valExists
+       exists Val1. search.
+      %T.valExists = false
+       exists false. search.
    %minus
     intros IH1 IH2 Structure. case E.knownNames. case T.valExists.
-      %T.valExists = E1.valExists
-       exists Val1. search.
-      %T.valExists = false
-       exists false. search.
       %T.valExists = E.valExists = <no value>
        apply IH1 to _ H7.
       %T.valExists = E1.valExists = <no value>
        apply IH2 to _ H8.
+      %T.valExists = E1.valExists
+       exists Val1. search.
+      %T.valExists = false
+       exists false. search.
    %mult
     intros IH1 IH2 Structure. case E.knownNames. case T.valExists.
-      %T.valExists = E1.valExists
-       exists Val1. search.
-      %T.valExists = false
-       exists false. search.
       %T.valExists = E.valExists = <no value>
        apply IH1 to _ H7.
       %T.valExists = E1.valExists = <no value>
        apply IH2 to _ H8.
+      %T.valExists = E1.valExists
+       exists Val1. search.
+      %T.valExists = false
+       exists false. search.
    %letBind
     intros IH1 IH2 Structure. case E.knownNames. case T.valExists.
+      %T.valExists = E.valExists = <no value>
+       apply IH1 to _ H8.
+      %T.valExists = E1.valExists = <no value>
+       apply IH2 to _ H10.
       %T.valExists = E1.valExists
        exists Val. search.
       %T.valExists = false
        exists false. search.
-      %T.valExists = E.valExists = <no value>
-       apply IH1 to _ H7.
-      %T.valExists = E1.valExists = <no value>
-       apply IH2 to _ H9.
    %name
     intros Structure. case T.valExists.
+      %contains does not return
+       apply attr_is to H6. apply fun__contains__total to H8 H2.
+       assert (exists B, fun__contains L KnownNames1 B).
+       apply H7 to H10.
       %contains returns a value
        exists Val. search.
-      %contains does not return
-       apply attr_is to H5. assert is_string L. skip.
-       apply fun__contains__total to H7 H8.
-       assert (exists B, fun__contains L KnownNames1 B).
-       apply H6 to H10.
 
 
 Extensible_Theorem valExists__Root : forall (R : nt_Root),
@@ -190,10 +190,10 @@ Extensible_Theorem valExists__Root : forall (R : nt_Root),
 on R.
 %root
  intros Structure. case R.valExists.
-   %T.valExists has a value
-    exists Val. search.
    %T.valExists = E.valExists = <no value>
     case E.knownNames.
     apply knownNames__implies__valExists__Expr to _ H6.
+   %T.valExists has a value
+    exists Val. search.
 
 

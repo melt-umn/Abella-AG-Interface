@@ -480,6 +480,9 @@ concrete productions top::ProcessingErrorMessage_c
   { top.ast = applyWrongArgsNumber(toInteger(exp.lexeme), toInteger(got.lexeme)); }
 | 'Found logic variable at toplevel'
   { top.ast = logicVariableToplevel(); }
+| 'Structure of applied term must be a substructure of the following.'
+  'forall A1 ... Ai, nabla z1 ... zj, H1 -> ... -> Hk -> C'
+  { top.ast = appliedStructure(); }
 
 
 concrete productions top::TypingErrorMessage_c

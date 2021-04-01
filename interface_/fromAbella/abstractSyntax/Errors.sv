@@ -409,6 +409,17 @@ top::ProcessingErrorMessage ::=
 }
 
 
+abstract production appliedStructure
+top::ProcessingErrorMessage ::=
+{
+  top.pp =
+      "Structure of applied term must be a substructure of the following.\n" ++
+      "forall A1 ... Ai, nabla z1 ... zj, H1 -> ... -> Hk -> C";
+
+  top.translation = appliedStructure();
+}
+
+
 
 
 

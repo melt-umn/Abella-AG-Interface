@@ -161,6 +161,9 @@ synthesized attribute headTypeName::Maybe<String>;
 --e.g. A -> B C D -> E F   would give   E F
 synthesized attribute resultType::Type;
 
+--Generate the is relation for a type or an error for why we can't
+synthesized attribute isRelation::Either<String Term>;
+
 
 
 

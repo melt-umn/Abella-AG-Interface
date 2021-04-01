@@ -222,7 +222,7 @@ top::ProofCommand ::= h::HHint hyp::String keep::Boolean
       | just(attrAccessEmptyMetaterm(tree, attr)) ->
         [errorMsg("Cannot do case analysis on this hypothesis; to do case " ++
                   "analysis on equation for " ++ tree ++ "." ++ attr ++
-                  ", use \"case " ++ tree ++ "." ++ attr)]
+                  ", use \"case " ++ tree ++ "." ++ attr ++ "\"")]
       --Anything else is fine
       | just(_) -> []
       end;

@@ -89,6 +89,8 @@ terminal NotEnoughArgs_t     'Not enough arguments to apply'                    
 terminal Expected_t          'Expected'                                                             lexer classes {ERROR};
 terminal ButGot_t            'but got'                                                              lexer classes {ERROR};
 terminal LogicVarTopLev_t    'Found logic variable at toplevel'                                     lexer classes {ERROR};
+terminal StructureApp_t      'Structure of applied term must be a substructure of the following.'   lexer classes {ERROR};
+terminal ApplyType_t         'forall A1 ... Ai, nabla z1 ... zj, H1 -> ... -> Hk -> C'              lexer classes {ERROR};
 
 
 terminal Exists_t       'exists'       lexer classes {LOGIC};

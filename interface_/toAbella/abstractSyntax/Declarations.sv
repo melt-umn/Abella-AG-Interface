@@ -23,7 +23,8 @@ top::Kind ::= k::Kind
 attribute
    translation<Type>,
    eqTest<Type>, isEq,
-   argumentTypes, headTypeName, resultType
+   argumentTypes, headTypeName, resultType,
+   isRelation
 occurs on Type;
 
 aspect production arrowType
@@ -58,6 +59,8 @@ top::Type ::= ty1::Type ty2::Type
   top.headTypeName = nothing();
 
   top.resultType = ty2.resultType;
+
+  top.isRelation = left("Is relations are not defined for arrow types");
 }
 
 
@@ -81,6 +84,16 @@ top::Type ::= name::String
   top.headTypeName = just(name);
 
   top.resultType = top;
+
+  top.isRelation =
+      case name of
+      | "string" -> right(nameTerm("is_string", nothing()))
+      | "list" -> right(nameTerm("is_list", nothing()))
+      | "pair" -> right(nameTerm("is_pair", nothing()))
+      | "integer" -> right(nameTerm("is_integer", nothing()))
+      | "bool" -> right(nameTerm("is_bool", nothing()))
+      | _ -> left("Cannot generate is relation for type " ++ name)
+      end;
 }
 
 
@@ -111,6 +124,19 @@ top::Type ::= functorTy::Type argTy::Type
   top.headTypeName = functorTy.headTypeName;
 
   top.resultType = top;
+
+  top.isRelation =
+      case functorTy, argTy of
+      | nameType("list"), nameType("$char") ->
+        right(nameTerm("is_string", nothing()))
+      | _, _ ->
+        case functorTy.isRelation, argTy.isRelation of
+        | right(fis), right(ais) ->
+          right(buildApplication(fis, [ais]))
+        | left(str), _ -> left(str)
+        | _, left(str) -> left(str)
+        end
+      end;
 }
 
 
@@ -126,6 +152,8 @@ top::Type ::=
   top.headTypeName = nothing();
 
   top.resultType = top;
+
+  top.isRelation = left("Cannot generate is relation for underscore type");
 }
 
 

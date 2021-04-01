@@ -740,18 +740,22 @@ would be as follows:
 ```
 Define wpd_Expr__host : nt_Expr -> node_tree -> prop by
   wpd_Expr__host (prod_num N) (ntr_Expr Node []) :=
-     wpd_node_Expr (prod_num N) (ntr_Expr Node []);
+     wpd_node_Expr (prod_num N) (ntr_Expr Node []) /\
+     is_integer N;
   wpd_Expr__host (prod_plus E1 E2) (ntr_Expr Node [E1Ntr, E2Ntr]) :=
      wpd_node_Expr (prod_plus E1 E2) (ntr_Expr Node [E1Ntr, E2Ntr]) /\
      wpd_Expr E1 E1Ntr /\
      wpd_Expr E2 E2Ntr;
   wpd_Expr__host (prod_name N) (ntr_Expr Node nil) :=
-     wpd_node_Expr (prod_name N) (ntr_Expr Node nil);
+     wpd_node_Expr (prod_name N) (ntr_Expr Node nil) /\
+     is_string N;
   wpd_Expr__host (prod_let N E1 E2) (ntr_Expr Node [E1Ntr, E2Ntr]) :=
      wpd_node_Expr (prod_let N E1 E2) (ntr_Expr Node [E1Ntr, E2Ntr]) /\
+     is_string N /\
      wpd_Expr E1 E1Ntr /\
      wpd_Expr E2 E2Ntr.
 ```
+Note that we also have `is` relations for primitive children.
 
 
 ### Composition

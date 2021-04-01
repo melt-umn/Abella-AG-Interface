@@ -221,9 +221,17 @@ Boolean ::= oldSubgoal::[Integer] newSubgoal::[Integer]
   --Catch a subgoal completing and going back to the previous one
   local goalToPreviousGoal::Boolean =
         subgoalLess(newSubgoal, oldSubgoal);
+  --Catch expanding [0]
+  --Either finishing the whole proof or expanding to subgoals
+  local isSubgoal0::Boolean =
+        case oldSubgoal of
+        | [0] -> true
+        | _ -> false
+        end;
   return
      ! null(oldSubgoal) &&
      ( goalToNewGoal ||
-       goalToPreviousGoal );
+       goalToPreviousGoal ) &&
+     ! isSubgoal0;
 }
 
