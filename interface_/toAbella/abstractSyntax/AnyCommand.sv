@@ -10,7 +10,7 @@ grammar interface_:toAbella:abstractSyntax;
 nonterminal AnyCommand with
    pp,
    translation<String>, currentState, translatedState, inProof,
-   isQuit, isUndo, shouldClean,
+   isQuit, isUndo, shouldClean, mustClean,
    sendCommand, ownOutput, numCommandsSent,
    stateListIn, stateListOut, newProofState, wasError;
 
@@ -32,6 +32,7 @@ top::AnyCommand ::= c::TopCommand
   top.isQuit = false;
   top.isUndo = false;
   top.shouldClean = false;
+  top.mustClean = false;
 
   top.sendCommand =
       if top.inProof
@@ -74,8 +75,8 @@ top::AnyCommand ::= c::TopCommand
                     currentState.knownAttrOccurrences,
                     currentState.knownProductions,
                     currentState.knownWPDRelations,
-                    currentState.knownInheritedAttrs)
-           )::top.stateListIn;
+                    currentState.knownInheritedAttrs,
+                    currentState.clean))::top.stateListIn;
 }
 
 
@@ -87,6 +88,14 @@ top::AnyCommand ::= c::ProofCommand
   top.isQuit = false;
   top.isUndo = c.isUndo;
   top.shouldClean = c.shouldClean;
+  top.mustClean =
+      --extensible proof completed, so need to clean to assert it
+      case top.currentState.state, top.newProofState of
+      | extensible_proofInProgress(_, _, _, _),
+        proofCompleted() ->
+        true
+      | _, _ -> false
+      end;
 
   top.translation =
       foldr(\ p::ProofCommand rest::String -> p.pp ++ rest,
@@ -131,8 +140,8 @@ top::AnyCommand ::= c::ProofCommand
                          currentState.knownAttrOccurrences,
                          currentState.knownProductions,
                          currentState.knownWPDRelations,
-                         currentState.knownInheritedAttrs)
-                )::top.stateListIn;
+                         currentState.knownInheritedAttrs,
+                         currentState.clean))::top.stateListIn;
 }
 
 
@@ -146,6 +155,7 @@ top::AnyCommand ::= c::NoOpCommand
   top.isQuit = c.isQuit;
   top.isUndo = c.isUndo;
   top.shouldClean = false;
+  top.mustClean = false;
 
   top.sendCommand = null(c.errors) && c.sendCommand;
   top.ownOutput =
@@ -176,6 +186,7 @@ top::AnyCommand ::= parseErrors::String
   top.isQuit = false;
   top.isUndo = false;
   top.shouldClean = false;
+  top.mustClean = false;
 
   top.sendCommand = false;
   top.ownOutput = "Error:  Could not parse:\n" ++ parseErrors;

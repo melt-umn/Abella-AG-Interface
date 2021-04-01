@@ -25,18 +25,18 @@ top::NoOpCommand ::= opt::String val::String
   top.isUndo = false;
 
   top.errors <-
-      if opt == "debug"
+      if opt == "debug" || opt == "clean"
       then if (val == "on" || val == "off")
            then []
            else [errorMsg("Unknown value '" ++ val ++
-                          "' for key \"debug\"; expected 'on' or 'off'")]
+                          "' for key \"" ++ opt ++ "\"; expected 'on' or 'off'")]
       else [];
 
-  top.sendCommand = opt != "debug";
+  top.sendCommand = opt != "debug" && opt != "clean";
   top.ownOutput =
-      if opt == "debug"
+      if opt == "debug" || opt == "clean"
       then if val == "on" || val == "off"
-           then "Turning debug " ++ val ++ ".\n"
+           then "Turning " ++ opt ++ " " ++ val ++ ".\n"
            else ""
       else "";
   top.numCommandsSent = if top.sendCommand then just(1) else just(0);
@@ -55,7 +55,10 @@ top::NoOpCommand ::= opt::String val::String
                    currentState.knownAttrOccurrences,
                    currentState.knownProductions,
                    currentState.knownWPDRelations,
-                   currentState.knownInheritedAttrs))::top.stateListIn;
+                   currentState.knownInheritedAttrs,
+                   if opt == "clean"
+                   then val == "on"
+                   else currentState.clean))::top.stateListIn;
 }
 
 

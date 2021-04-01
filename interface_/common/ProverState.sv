@@ -9,13 +9,15 @@ grammar interface_:common;
 -}
 
 nonterminal ProverState with
-   state, debug, knownAttrs, knownAttrOccurrences, knownProductions,
+   state, debug, clean,
+   knownAttrs, knownAttrOccurrences, knownProductions,
    knownWPDRelations, knownInheritedAttrs,
    replaceState, replacedState<ProverState>;
 
 
 synthesized attribute state::ProofState;
 synthesized attribute debug::Boolean;
+synthesized attribute clean::Boolean;
 
 synthesized attribute knownAttrs::[(String, Type)];
 synthesized attribute knownAttrOccurrences::[(String, [Type])];
@@ -42,10 +44,11 @@ top::ProverState ::=
    state::ProofState debugMode::Boolean attrs::[(String, Type)]
    attrOccurrences::[(String, [Type])] prods::[(String, Type)]
    wpdRelations::[(String, Type, [String])]
-   inheritedAttrs::[String]
+   inheritedAttrs::[String] cleanMode::Boolean
 {
   top.state = state;
   top.debug = debugMode;
+  top.clean = cleanMode;
   top.knownAttrs = attrs;
   top.knownAttrOccurrences = attrOccurrences;
   top.knownProductions = prods;
@@ -55,6 +58,6 @@ top::ProverState ::=
   top.replacedState =
       proverState(top.replaceState, debugMode, attrs,
                   attrOccurrences, prods, wpdRelations,
-                  inheritedAttrs);
+                  inheritedAttrs, cleanMode);
 }
 

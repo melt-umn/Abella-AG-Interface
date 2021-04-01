@@ -110,6 +110,9 @@ synthesized attribute isUndo::Boolean;
 --Check whether we should try cleaning up after a command
 --Might not want to if it is too confusing, nothing to clean, etc.
 synthesized attribute shouldClean::Boolean;
+--Check whether we *need* to clean, since we can turn cleaning off
+--Need to clean after extensible theorems to assert them
+synthesized attribute mustClean::Boolean;
 
 
 

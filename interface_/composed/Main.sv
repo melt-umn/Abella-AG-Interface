@@ -72,7 +72,7 @@ IOVal<Integer> ::= largs::[String] ioin::IO
 
   return
      run_step([(-1, proverState(noProof(),false, knownAttrs, attrOccurrences,
-                                knownProds, wpdRelations, knownInheritedAttrs))],
+                                knownProds, wpdRelations, knownInheritedAttrs, true))],
               abella.iovalue, abella_initial_string.io);
 }
 
@@ -162,7 +162,8 @@ IOVal<Integer> ::=
   --Clean up state
   ----------------------------
   local shouldClean::Boolean =
-        full_result.parseSuccess && !full_a.isError && any_a.shouldClean;
+        full_result.parseSuccess && !full_a.isError && any_a.shouldClean &&
+        (head(stateList).snd.clean || any_a.mustClean);
   local cleaned::(String, Integer, FullDisplay, [[Integer]], IO) =
         if shouldClean
         then cleanState(decorate full_a with

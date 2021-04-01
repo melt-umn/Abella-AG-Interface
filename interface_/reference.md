@@ -364,6 +364,15 @@ information to the user.
   nothing of the translation.  If the value is changed to `on`, it
   will display the command sent to Abella, as well as the output from
   Abella, in addition to the standard output.
+* **clean**:  This determines whether Abella tries to automatically
+  clear subgoals.  The default value is `on`, which automatically
+  applies `attr_unique` and clears subgoals automatically when
+  possible, such as when attributes are assumed to have unequal
+  values.  If the value is changed to `off`, the user needs to solve
+  all the subgoals manually.  Note that a proof written with `clean`
+  set to `on` will not be valid with `clean` set to `off` and vice
+  versa.  The main purpose of this option is to allow one to see which
+  cases are being handled automatically.
 
 
 

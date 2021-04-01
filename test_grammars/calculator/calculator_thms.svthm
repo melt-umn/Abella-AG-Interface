@@ -109,6 +109,7 @@ split.
      %T.value exists
       search.
      %T.value = <no value> because lookup does not return
+      apply attr_unique to H4 H16.
       assert exists Ret, fun__lookup Env1 L Ret. apply H17 to H18.
 
 
