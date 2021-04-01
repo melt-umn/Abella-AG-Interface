@@ -67,7 +67,7 @@ Extensible_Theorem valExists__implies__value__Expr :
       (forall Name, member Name KNames ->
           exists Val, member (Name, Val) Env) ->
       T.valExists = true -> exists V, T.value = V
-on T.
+on T. Set debug off.
 split.
   %intConst
    intros Structure. case T.value. exists N. search.
@@ -99,9 +99,6 @@ split.
               %member rest
                apply H7 to H29. apply attr_unique to H6 H21.
                exists Val1. search.
-         apply attr_unique to H20 H28.
-        %env does not exist
-         apply attr_unique to H6 H21.
         %E1.env does not exist because E.value = <no value>
          apply attr_unique to H6 H21. apply IH1 to _ H10 H22 H7 H16.
   %name
