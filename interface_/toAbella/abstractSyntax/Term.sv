@@ -101,8 +101,8 @@ top::Metaterm ::= t1::Metaterm t2::Metaterm
       case t1 of
       | termMetaterm(applicationTerm(nameTerm(wpdRel, _),
                      consTermList(nameTerm(tree, _), _)), _)
-           when tree == treeToStructureName(tree) &&
-                startsWith("$wpd_nt_", wpdRel) -> t2
+           when isTreeStructureName(tree) &&
+                isWpdTypeName(wpdRel) -> t2
       | _ -> impliesMetaterm(t1, t2.removedWPD)
       end;
 }

@@ -142,6 +142,11 @@ String ::= treeTy::Type
 {
   return "$wpd_" ++ treeTy.pp;
 }
+function isWpdTypeName
+Boolean ::= rel::String
+{
+  return startsWith("$wpd_", rel) && !startsWith("$wpd_node_", rel);
+}
 
 --WPD Node
 function wpdNodeTypeName

@@ -57,7 +57,6 @@ induction on 2. intros. case H2.
 
 
 Set subgoals off.
-Set debug off.
 
 
 Extensible_Theorem valExists__implies__value__Expr :
@@ -72,25 +71,25 @@ split.
    intros Structure. case T.value. exists N. search.
   %plus
    intros IH1 IH2 Structure. case E.knownNames. case E.env.
-   case T.valExists. apply IH1 to _ H10 H13 H7 H16.
-   apply IH2 to _ H11 H14 H7 H17. case T.value. search.
+   case T.valExists. apply IH1 to H10 H13 H7 H16.
+   apply IH2 to H11 H14 H7 H17. case T.value. search.
   %minus
    intros IH1 IH2 Structure. case E.knownNames. case E.env.
-   case T.valExists. apply IH1 to _ H10 H13 H7 H16.
-   apply IH2 to _ H11 H14 H7 H17. case T.value. search.
+   case T.valExists. apply IH1 to H10 H13 H7 H16.
+   apply IH2 to H11 H14 H7 H17. case T.value. search.
   %mult
    intros IH1 IH2 Structure. case E.knownNames. case E.env.
-   case T.valExists. apply IH1 to _ H10 H13 H7 H16.
-   apply IH2 to _ H11 H14 H7 H17. case T.value. search.
+   case T.valExists. apply IH1 to H10 H13 H7 H16.
+   apply IH2 to H11 H14 H7 H17. case T.value. search.
   %letBind
    intros IH1 IH2 Structure. case E.knownNames. case H12. case H14.
    case T.valExists. case T.value.
      %T.value does not exist because E1.value does not exist
       case E.env.
         %E1.env does not exist because E.value = <no value>
-         apply IH1 to _ H11 H21 H8 H16.
+         apply IH1 to H11 H21 H8 H16.
         %env exists
-         case H23. case H25. apply IH2 to _ H13 H24 _ H17.
+         case H23. case H25. apply IH2 to H13 H24 _ H17.
            %IH2 relate knownNames and env
             intros Mem. case Mem.
               %member first
@@ -138,9 +137,9 @@ split.
    %plus
     intros IH1 IH2 Structure. case E.knownNames. case T.valExists.
       %T.valExists = E.valExists = <no value>
-       apply IH1 to _ H7.
+       apply IH1 to H7.
       %T.valExists = E1.valExists = <no value>
-       apply IH2 to _ H8.
+       apply IH2 to H8.
       %T.valExists = E1.valExists
        exists Val1. search.
       %T.valExists = false
@@ -148,9 +147,9 @@ split.
    %minus
     intros IH1 IH2 Structure. case E.knownNames. case T.valExists.
       %T.valExists = E.valExists = <no value>
-       apply IH1 to _ H7.
+       apply IH1 to H7.
       %T.valExists = E1.valExists = <no value>
-       apply IH2 to _ H8.
+       apply IH2 to H8.
       %T.valExists = E1.valExists
        exists Val1. search.
       %T.valExists = false
@@ -158,9 +157,9 @@ split.
    %mult
     intros IH1 IH2 Structure. case E.knownNames. case T.valExists.
       %T.valExists = E.valExists = <no value>
-       apply IH1 to _ H7.
+       apply IH1 to H7.
       %T.valExists = E1.valExists = <no value>
-       apply IH2 to _ H8.
+       apply IH2 to H8.
       %T.valExists = E1.valExists
        exists Val1. search.
       %T.valExists = false
@@ -168,9 +167,9 @@ split.
    %letBind
     intros IH1 IH2 Structure. case E.knownNames. case T.valExists.
       %T.valExists = E.valExists = <no value>
-       apply IH1 to _ H8.
+       apply IH1 to H8.
       %T.valExists = E1.valExists = <no value>
-       apply IH2 to _ H10.
+       apply IH2 to H10.
       %T.valExists = E1.valExists
        exists Val. search.
       %T.valExists = false

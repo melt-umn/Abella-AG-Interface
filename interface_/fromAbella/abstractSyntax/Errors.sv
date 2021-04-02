@@ -407,7 +407,12 @@ top::ProcessingErrorMessage ::= val::String key::String
 abstract production applyWrongArgsNumber
 top::ProcessingErrorMessage ::= expected::Integer got::Integer
 {
-  top.pp = "Not enough arguments to apply\n(Expected " ++ toString(expected) ++ " but got " ++ toString(got) ++ ")";
+  top.pp =
+      ( if expected > got
+        then "Not enough"
+        else "Too many" ) ++
+      " arguments to apply\n(Expected " ++ toString(expected) ++
+      " but got " ++ toString(got) ++ ")";
 
   top.translation = applyWrongArgsNumber(expected, got);
 }
