@@ -72,40 +72,40 @@ split.
    intros Structure. case T.value. exists N. search.
   %plus
    intros IH1 IH2 Structure. case E.knownNames. case E.env.
-   case T.valExists. apply IH1 to _ H10 H14 H7 H18.
-   apply IH2 to _ H11 H15 H7 H19. case T.value. search.
+   case T.valExists. apply IH1 to _ H10 H13 H7 H16.
+   apply IH2 to _ H11 H14 H7 H17. case T.value. search.
   %minus
    intros IH1 IH2 Structure. case E.knownNames. case E.env.
-   case T.valExists. apply IH1 to _ H10 H14 H7 H18.
-   apply IH2 to _ H11 H15 H7 H19. case T.value. search.
+   case T.valExists. apply IH1 to _ H10 H13 H7 H16.
+   apply IH2 to _ H11 H14 H7 H17. case T.value. search.
   %mult
    intros IH1 IH2 Structure. case E.knownNames. case E.env.
-   case T.valExists. apply IH1 to _ H10 H14 H7 H18.
-   apply IH2 to _ H11 H15 H7 H19. case T.value. search.
+   case T.valExists. apply IH1 to _ H10 H13 H7 H16.
+   apply IH2 to _ H11 H14 H7 H17. case T.value. search.
   %letBind
-   intros IH1 IH2 Structure. case E.knownNames. case H12. case H15.
+   intros IH1 IH2 Structure. case E.knownNames. case H12. case H14.
    case T.valExists. case T.value.
      %T.value does not exist because E1.value does not exist
       case E.env.
         %E1.env does not exist because E.value = <no value>
-         apply IH1 to _ H11 H23 H8 H17.
+         apply IH1 to _ H11 H21 H8 H16.
         %env exists
-         case H25. case H28. apply IH2 to _ H13 H26 _ H18.
+         case H23. case H25. apply IH2 to _ H13 H24 _ H17.
            %IH2 relate knownNames and env
             intros Mem. case Mem.
               %member first
                exists EVal. search.
               %member rest
-               apply H8 to H29. exists Val1. search.
+               apply H8 to H26. exists Val1. search.
      %T.value exists
       search.
   %name
    intros Structure. case T.valExists.
-   apply fun__contains__to__member to H10. apply H6 to H12.
-   apply attr_is to H5. apply fun__lookup__member to H14 H13.
+   apply fun__contains__to__member to H10. apply H6 to H11.
+   apply attr_is to H5. apply fun__lookup__member to H13 H12.
    case T.value.
      %T.value = <no value> because lookup does not return
-      assert exists Ret, fun__lookup Env1 L Ret. apply H18 to H19.
+      assert exists Ret, fun__lookup Env1 L Ret. apply H17 to H18.
      %T.value exists
       search.
 
@@ -116,7 +116,7 @@ Extensible_Theorem valExists__implies__value__Root :
 on R.
 %root
  intros Structure. case R.valExists. case E.knownNames. case E.env.
- apply valExists__implies__value__Expr to _ H8 H10 _ H6.
+ apply valExists__implies__value__Expr to _ H7 H8 _ H6.
    %member assumption for Expr theorem
     intros Mem. case Mem.
  case R.value. search.

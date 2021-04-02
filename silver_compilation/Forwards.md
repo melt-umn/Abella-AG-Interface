@@ -62,13 +62,11 @@ Define forward__Stmt__convenience : nt_Stmt -> node_tree -> prop by
            (attr_ex
               (pair_c (prod_assign N (prod_plus (prod_var N) E))
                       (ntr_Stmt FwdNode FCL))) /\
-        wpd_Stmt (prod_assign N (prod_plus (prod_var N) E))
-                      (ntr_Stmt FwdNode FCL))) /\
         <setting inherited attributes on the forward>.
 ```
 We determine that the forward has the correct form (an assignment, the
-body of which is an addition), that it is well-partially-decorated,
-and that its inherited attributes have the appropriate values.
+body of which is an addition) and that its inherited attributes have
+the appropriate values.
 
 We still need to include an equation in this relation for each
 inherited attribute of which we are aware in the current component but
@@ -188,7 +186,9 @@ As with other attributes, we include the equation relation for the
 forward in the WPD node relation.  Because this is inherently a
 host-introduced attribute, it is included in the host WPD node
 component relation for each nonterminal, regardless of whether the
-host introduces any forwarding productions.
+host introduces any forwarding productions.  We also add the
+assumption of the WPD nonterminal relation on the forward to the WPD
+node relation, as we did with local attributes.
 
 
 

@@ -41,6 +41,11 @@ String ::= structureName::String
 }
 
 
+function varIsTreeNode
+Boolean ::= name::String
+{
+  return startsWith("$", name) && endsWith("_Node", name);
+}
 function treeNodeToVar
 String ::= nodeName::String
 {

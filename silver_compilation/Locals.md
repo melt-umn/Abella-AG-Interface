@@ -114,19 +114,16 @@ Define while_local_subWhile : nt_Stmt -> node_tree -> prop by
         access__while__local_subWhile__Stmt Node
            (attr_ex (pair_c (prod_while Cond Body)
                             (ntr_Stmt LocNode LocCL))) /\
-        wpd_Stmt (prod_while Cond Body) (ntr_Stmt LocNode LocCL) /\
         access__evalctx__Stmt LocNode (attr_ex ECtx) /\
         access__evalctx_out__Stmt BodyNode (attr_ex ECtx);
 ```
-There are four conjuncts in the body of this first clause:
+There are three conjuncts in the body of this first clause:
 1. We access the local on the root's node, getting its structure
    (equal to the root's structure for this local) and its `node_tree`,
    which has the appropriate form for a tree of type `Stmt`.
-2. We require the structure of the local attribute associated with its
-   `node_tree` to be well-partially-decorated.
-3. We access the `evalctx` inherited attribute on the local and ensure
+2. We access the `evalctx` inherited attribute on the local and ensure
    it has a value.
-4. We access the `evalctx_out` synthesized attribute on the body of
+3. We access the `evalctx_out` synthesized attribute on the body of
    the root and ensure it has the same value as the value being
    assigned into the `evalctx` attribute on the local.
 ```
@@ -137,30 +134,26 @@ There are four conjuncts in the body of this first clause:
         access__while__local_subWhile__Stmt Node
            (attr_ex (pair_c (prod_while Cond Body)
                             (ntr_Stmt LocNode LocCL))) /\
-        wpd_Stmt (prod_while Cond Body) (ntr_Stmt LocNode LocCL) /\
         access__evalctx__Stmt LocNode attr_no /\
         access__evalctx_out__Stmt BodyNode attr_no.
 ```
 The second clause has the same first two conjuncts (it describes the
-same term structure, with a well-partially-decorated tree), but the
-`evalctx` attribute on the local has no value and neither does the
-`evalctx_out` attribute.  We need this second clause because the local
-`subWhile` can still be defined even if its `evalctx` inherited
-attribute is not defined.  We do this with all combinations of the
-inherited attributes which are defined on the local (e.g. if we have
-inherited attributes `a` and `b`, we will have clauses for both `a`
-and `b` being assigned, `a` being assigned and `b` being undefined,
-`a` being undefined and `b` being assigned, and both being undefined).
-In use for proofs, since locals tend to be used for one thing, the
-inherited attributes being assigned onto a local are generally going
-to exist or not exist together, so most of the rules won't be used.
+same term structure), but the `evalctx` attribute on the local has no
+value and neither does the `evalctx_out` attribute.  We need this
+second clause because the local `subWhile` can still be defined even
+if its `evalctx` inherited attribute is not defined.  We do this with
+all combinations of the inherited attributes which are defined on the
+local (e.g. if we have inherited attributes `a` and `b`, we will have
+clauses for both `a` and `b` being assigned, `a` being assigned and
+`b` being undefined, `a` being undefined and `b` being assigned, and
+both being undefined).  In use for proofs, since locals tend to be
+used for one thing, the inherited attributes being assigned onto a
+local are generally going to exist or not exist together, so most of
+the rules won't be used.
 
 If the local attribute does not have any inherited attributes defined
 on it, we, of course, do not need to include anything for defining
-inherited attributes.  However, if the local has a nonterminal type,
-we still must include the WPD requirement, since we treat all terms as
-inherently-decorated trees (e.g. its pretty print attribute will still
-be accessible, even if it has no inherited attributes).
+inherited attributes.
 
 We might consider defining any inherited attributes we know about but
 which we do not define on the local to have value `attr_no` (not
@@ -187,17 +180,39 @@ accessing on its local.
 # WPD Node Relations
 
 The equation relation for a local attribute goes into the WPD node
-relation just as any other equation relation does.  For the `Stmt`
-nonterminal above, our WPD node relation for the host would be:
+relation just as any other equation relation does, but, as with other
+attributes, we add an `is` assumption, which in this case is the WPD
+nonterminal relation.  For the `Stmt` nonterminal above, our WPD node
+relation for the host would be:
 ```
 Define wpd_node_Stmt__host : nt_Stmt -> node_tree -> prop by
-  wpd_node_Stmt__host Tree Ntr :=
-    evalctx__Stmt Tree Ntr        /\
-    evalctx_out__Stmt Tree Ntr    /\
-    while_local_subWhile Tree Ntr.
+  wpd_node_Stmt__host Tree (ntr_Stmt Node CL) :=
+    forall AEvalctx AEvalctx_out ASubWhile,
+       evalctx__Stmt Tree (ntr_Stmt Node CL) /\
+       access__evalctx__Stmt Node AEvalctx /\
+       is_attrVal (is_list (is_pair is_string is_integer)) AEvalctx /\
+       %
+       evalctx_out__Stmt Tree (ntr_Stmt Node CL) /\
+       access__evalctx_out__Stmt Node AEvalctx_out /\
+       is_attrVal (is_list (is_pair is_string is_integer))
+                   AEvalctx_out /\
+       %
+       while_local_subWhile Tree (ntr_Stmt Node CL) /\
+       access__while__local_subWhile__Stmt Node ASubWhile /\
+       is_attrVal (split wpd_Stmt) ASubWhile.
 ```
 Building the full relation is not affected by the inclusion of local
 attributes.
+
+The `split` relation seen above takes a subrelation and a pair which
+provides the arguments to it:
+```
+Define split : (A -> B -> prop) -> (pair A B) -> prop by
+  split SubRel (pair_c A B) :=
+     SubRel A B.
+```
+We need this because the local attribute is stored as a pair and the
+WPD nonterminal relation takes the two arguments separately.
 
 
 

@@ -231,10 +231,16 @@ Type attr_no   attrVal A.
 This is a standard `option`/`Maybe` type.  We need to introduce it
 since Abella has nearly no types built in, so I am naming it for its
 purpose of determining whether an attribute value *ex*ists or does
-*no*t exist.
+*no*t exist.  It has an associated `is` relation which takes a
+subrelation as an argument:
+```
+Define is_attrVal : (A -> prop) -> attrVal A -> prop by
+  is_attrVal SubRel attr_no;
+  is_attrVal SubRel (attr_ex V) := SubRel V.
+```
 
-With this in mind, we can encode the declarations of attributes and
-their occurrences from our running example into Abella:
+With this type in mind, we can encode the declarations of attributes
+and their occurrences from our running example into Abella:
 ```
 Type access__ctx__Expr
         node_Expr -> attrVal (list (pair string integer)) -> prop.
@@ -690,18 +696,27 @@ Type wpd_node_Expr   nt_Expr -> node_tree -> prop.
 
 The component relations combine the equation relations for each
 attribute declared by the component.  For each attribute, the equation
-holds.  For our running example, this would be:
+holds.  We also want to add requirements that `is` relations hold for
+attributes of primitive types, which we do by using `is_attrVal` so we
+don't need separate cases for the cases where the attribute has and
+does not have a value.  For our running example, this would be:
 ```
 Define wpd_node_Expr__host : nt_Expr -> node_tree -> prop by
   wpd_node_Expr__host Tree (ntr_Expr Node TreeCL) :=
-    ctx__Expr Tree (ntr_Expr Node TreeCL /\
-    val__Expr Tree (ntr_Expr Node TreeCL.
+    forall ACtx AVal,
+       ctx__Expr Tree (ntr_Expr Node TreeCL /\
+       access__ctx__Expr Node ACtx /\
+       is_attrVal (is_list (is_pair is_string is_integer)) ACtx /\
+       %
+       val__Expr Tree (ntr_Expr Node TreeCL) /\
+       access__val__Expr Node AVal /\
+       is_attrVal is_integer AVal.
 ```
-Note that we use the full relations, not the component relation.  This
-relation is going to be what ensures all productions from all
-components have these host-introduced attributes obeying their
-equations, so we need to use the full relation which governs all the
-component relations.
+Note that we use the full equation relations, not the component
+relations.  This relation is going to be what ensures all productions
+from all components have these host-introduced attributes obeying
+their equations, so we need to use the full relation which governs all
+the component relations.
 
 Most relations built extensibly will replace their declared full
 relation in the composition with a definition with clauses which each

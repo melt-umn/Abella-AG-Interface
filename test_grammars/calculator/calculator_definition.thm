@@ -77,10 +77,7 @@ Define fun__contains :
 
 Define $env__nt_Expr__host : nt_Expr -> $node_tree -> prop by
   %intConst
-  $env__nt_Expr__host (prod_intConst I) ($ntr_nt_Expr Node nil) :=
-     exists AVal,
-        $access_$_env_$_nt_Expr Node AVal /\
-        $is_attrVal (is_list (is_pair is_string is_integer)) AVal;
+  $env__nt_Expr__host (prod_intConst I) ($ntr_nt_Expr Node nil);
   %plus
   $env__nt_Expr__host (prod_plus E1 E2)
                    ($ntr_nt_Expr Node (($ntr_nt_Expr E1Node L1)::
@@ -94,8 +91,7 @@ Define $env__nt_Expr__host : nt_Expr -> $node_tree -> prop by
      exists Val,
         $access_$_env_$_nt_Expr Node ($attr_ex Val) /\
         $access_$_env_$_nt_Expr E1Node ($attr_ex Val) /\
-        $access_$_env_$_nt_Expr E2Node ($attr_ex Val) /\
-        is_list (is_pair is_string is_integer) Val;
+        $access_$_env_$_nt_Expr E2Node ($attr_ex Val);
   %minus
   $env__nt_Expr__host (prod_minus E1 E2)
                    ($ntr_nt_Expr Node (($ntr_nt_Expr E1Node L1)::
@@ -109,8 +105,7 @@ Define $env__nt_Expr__host : nt_Expr -> $node_tree -> prop by
      exists Val,
         $access_$_env_$_nt_Expr Node ($attr_ex Val) /\
         $access_$_env_$_nt_Expr E1Node ($attr_ex Val) /\
-        $access_$_env_$_nt_Expr E2Node ($attr_ex Val) /\
-        is_list (is_pair is_string is_integer) Val;
+        $access_$_env_$_nt_Expr E2Node ($attr_ex Val);
   %mult
   $env__nt_Expr__host (prod_mult E1 E2)
                    ($ntr_nt_Expr Node (($ntr_nt_Expr E1Node L1)::
@@ -124,8 +119,7 @@ Define $env__nt_Expr__host : nt_Expr -> $node_tree -> prop by
      exists Val,
         $access_$_env_$_nt_Expr Node ($attr_ex Val) /\
         $access_$_env_$_nt_Expr E1Node ($attr_ex Val) /\
-        $access_$_env_$_nt_Expr E2Node ($attr_ex Val) /\
-        is_list (is_pair is_string is_integer) Val;
+        $access_$_env_$_nt_Expr E2Node ($attr_ex Val);
   %letBind
   $env__nt_Expr__host (prod_letBind N E Body)
                    ($ntr_nt_Expr Node (($ntr_nt_Expr ENode EL)::
@@ -140,8 +134,7 @@ Define $env__nt_Expr__host : nt_Expr -> $node_tree -> prop by
         $access_$_env_$_nt_Expr Node ($attr_ex LTop) /\
         $access_$_env_$_nt_Expr ENode ($attr_ex LTop) /\
         $access_$_value_$_nt_Expr ENode $attr_no /\
-        $access_$_env_$_nt_Expr BodyNode $attr_no /\
-        is_list (is_pair is_string is_integer) LTop;
+        $access_$_env_$_nt_Expr BodyNode $attr_no;
   $env__nt_Expr__host (prod_letBind N E Body)
                    ($ntr_nt_Expr Node (($ntr_nt_Expr ENode EL)::
                                    ($ntr_nt_Expr BodyNode BL)::nil)) :=
@@ -150,19 +143,14 @@ Define $env__nt_Expr__host : nt_Expr -> $node_tree -> prop by
         $access_$_env_$_nt_Expr ENode ($attr_ex LTop) /\
         $access_$_value_$_nt_Expr ENode ($attr_ex EVal) /\
         $append (($pair_c N EVal)::nil) LTop LSub /\
-        $access_$_env_$_nt_Expr BodyNode ($attr_ex LSub) /\
-        is_list (is_pair is_string is_integer) LTop;
+        $access_$_env_$_nt_Expr BodyNode ($attr_ex LSub);
   %name
-  $env__nt_Expr__host (prod_name N) ($ntr_nt_Expr Node nil) :=
-     exists AVal,
-        $access_$_env_$_nt_Expr Node AVal /\
-        $is_attrVal (is_list (is_pair is_string is_integer)) AVal.
+  $env__nt_Expr__host (prod_name N) ($ntr_nt_Expr Node nil).
 
 Define $value__nt_Expr__host : nt_Expr -> $node_tree -> prop by
   %intConst
   $value__nt_Expr__host (prod_intConst I) ($ntr_nt_Expr Node nil) :=
-     $access_$_value_$_nt_Expr Node ($attr_ex I) /\
-     is_integer I;
+     $access_$_value_$_nt_Expr Node ($attr_ex I);
   %plus
   $value__nt_Expr__host (prod_plus E1 E2)
                      ($ntr_nt_Expr Node (($ntr_nt_Expr E1Node L1)::
@@ -183,8 +171,7 @@ Define $value__nt_Expr__host : nt_Expr -> $node_tree -> prop by
         $access_$_value_$_nt_Expr Node ($attr_ex PlusResult) /\
         $access_$_value_$_nt_Expr E1Node ($attr_ex E1Value) /\
         $access_$_value_$_nt_Expr E2Node ($attr_ex E2Value) /\
-        $plus_integer E1Value E2Value PlusResult /\
-        is_integer PlusResult;
+        $plus_integer E1Value E2Value PlusResult;
   %minus
   $value__nt_Expr__host (prod_minus E1 E2)
                      ($ntr_nt_Expr Node (($ntr_nt_Expr E1Node L1)::
@@ -205,8 +192,7 @@ Define $value__nt_Expr__host : nt_Expr -> $node_tree -> prop by
         $access_$_value_$_nt_Expr Node ($attr_ex MinusResult) /\
         $access_$_value_$_nt_Expr E1Node ($attr_ex E1Value) /\
         $access_$_value_$_nt_Expr E2Node ($attr_ex E2Value) /\
-        $plus_integer E1Value E2Value MinusResult /\
-        is_integer MinusResult;
+        $plus_integer E1Value E2Value MinusResult;
   %mult
   $value__nt_Expr__host (prod_mult E1 E2)
                      ($ntr_nt_Expr Node (($ntr_nt_Expr E1Node L1)::
@@ -227,8 +213,7 @@ Define $value__nt_Expr__host : nt_Expr -> $node_tree -> prop by
         $access_$_value_$_nt_Expr Node ($attr_ex MultResult) /\
         $access_$_value_$_nt_Expr E1Node ($attr_ex E1Value) /\
         $access_$_value_$_nt_Expr E2Node ($attr_ex E2Value) /\
-        $plus_integer E1Value E2Value MultResult /\
-        is_integer MultResult;
+        $plus_integer E1Value E2Value MultResult;
   %letBind
   $value__nt_Expr__host (prod_letBind N E Body)
                      ($ntr_nt_Expr Node (($ntr_nt_Expr ENode EL)::
@@ -240,8 +225,7 @@ Define $value__nt_Expr__host : nt_Expr -> $node_tree -> prop by
                                   ($ntr_nt_Expr BodyNode BL)::nil)) :=
      exists BodyValue,
         $access_$_value_$_nt_Expr Node ($attr_ex BodyValue) /\
-        $access_$_value_$_nt_Expr BodyNode ($attr_ex BodyValue) /\
-        is_integer BodyValue;
+        $access_$_value_$_nt_Expr BodyNode ($attr_ex BodyValue);
   %name
   $value__nt_Expr__host (prod_name N) ($ntr_nt_Expr Node nil) :=
      $access_$_value_$_nt_Expr Node $attr_no /\
@@ -255,15 +239,11 @@ Define $value__nt_Expr__host : nt_Expr -> $node_tree -> prop by
      exists Env Ret,
         $access_$_value_$_nt_Expr Node ($attr_ex Ret) /\
         $access_$_env_$_nt_Expr Node ($attr_ex Env) /\
-        fun__lookup Env N Ret /\
-        is_integer Ret.
+        fun__lookup Env N Ret.
 
 Define $knownNames__nt_Expr__host : nt_Expr -> $node_tree -> prop by
   %intConst
-  $knownNames__nt_Expr__host (prod_intConst I) ($ntr_nt_Expr Node nil) :=
-     exists AVal,
-        $access_$_knownNames_$_nt_Expr Node AVal /\
-        $is_attrVal (is_list is_string) AVal;
+  $knownNames__nt_Expr__host (prod_intConst I) ($ntr_nt_Expr Node nil);
   %plus
   $knownNames__nt_Expr__host (prod_plus E1 E2)
                    ($ntr_nt_Expr Node (($ntr_nt_Expr E1Node L1)::
@@ -277,8 +257,7 @@ Define $knownNames__nt_Expr__host : nt_Expr -> $node_tree -> prop by
      exists Val,
         $access_$_knownNames_$_nt_Expr Node ($attr_ex Val) /\
         $access_$_knownNames_$_nt_Expr E1Node ($attr_ex Val) /\
-        $access_$_knownNames_$_nt_Expr E2Node ($attr_ex Val) /\
-        is_list is_string Val;
+        $access_$_knownNames_$_nt_Expr E2Node ($attr_ex Val);
   %minus
   $knownNames__nt_Expr__host (prod_minus E1 E2)
                    ($ntr_nt_Expr Node (($ntr_nt_Expr E1Node L1)::
@@ -292,8 +271,7 @@ Define $knownNames__nt_Expr__host : nt_Expr -> $node_tree -> prop by
      exists Val,
         $access_$_knownNames_$_nt_Expr Node ($attr_ex Val) /\
         $access_$_knownNames_$_nt_Expr E1Node ($attr_ex Val) /\
-        $access_$_knownNames_$_nt_Expr E2Node ($attr_ex Val) /\
-        is_list is_string Val;
+        $access_$_knownNames_$_nt_Expr E2Node ($attr_ex Val);
   %mult
   $knownNames__nt_Expr__host (prod_mult E1 E2)
                    ($ntr_nt_Expr Node (($ntr_nt_Expr E1Node L1)::
@@ -307,8 +285,7 @@ Define $knownNames__nt_Expr__host : nt_Expr -> $node_tree -> prop by
      exists Val,
         $access_$_knownNames_$_nt_Expr Node ($attr_ex Val) /\
         $access_$_knownNames_$_nt_Expr E1Node ($attr_ex Val) /\
-        $access_$_knownNames_$_nt_Expr E2Node ($attr_ex Val) /\
-        is_list is_string Val;
+        $access_$_knownNames_$_nt_Expr E2Node ($attr_ex Val);
   %letBind
   $knownNames__nt_Expr__host (prod_letBind N E Body)
                    ($ntr_nt_Expr Node (($ntr_nt_Expr ENode EL)::
@@ -323,18 +300,13 @@ Define $knownNames__nt_Expr__host : nt_Expr -> $node_tree -> prop by
         $access_$_knownNames_$_nt_Expr Node ($attr_ex LTop) /\
         $access_$_knownNames_$_nt_Expr ENode ($attr_ex LTop) /\
         $append (N::nil) LTop LSub /\
-        $access_$_knownNames_$_nt_Expr BodyNode ($attr_ex LSub) /\
-        is_list is_string LTop;
+        $access_$_knownNames_$_nt_Expr BodyNode ($attr_ex LSub);
   %name
-  $knownNames__nt_Expr__host (prod_name N) ($ntr_nt_Expr Node nil) :=
-     exists AVal,
-        $access_$_knownNames_$_nt_Expr Node AVal /\
-        $is_attrVal (is_list is_string) AVal.
+  $knownNames__nt_Expr__host (prod_name N) ($ntr_nt_Expr Node nil).
 
 Define $valExists__nt_Expr__host : nt_Expr -> $node_tree -> prop by
   $valExists__nt_Expr__host (prod_intConst I) ($ntr_nt_Expr Node nil) :=
-     $access_$_valExists_$_nt_Expr Node ($attr_ex $btrue) /\
-     is_bool $btrue;
+     $access_$_valExists_$_nt_Expr Node ($attr_ex $btrue);
   %plus
   $valExists__nt_Expr__host (prod_plus E1 E2)
                          ($ntr_nt_Expr Node (($ntr_nt_Expr E1Node L1)::
@@ -353,14 +325,12 @@ Define $valExists__nt_Expr__host : nt_Expr -> $node_tree -> prop by
      exists Val,
         $access_$_valExists_$_nt_Expr Node ($attr_ex Val) /\
         $access_$_valExists_$_nt_Expr E1Node ($attr_ex $btrue) /\
-        $access_$_valExists_$_nt_Expr E2Node ($attr_ex Val) /\
-        is_bool Val;
+        $access_$_valExists_$_nt_Expr E2Node ($attr_ex Val);
   $valExists__nt_Expr__host (prod_plus E1 E2)
                          ($ntr_nt_Expr Node (($ntr_nt_Expr E1Node L1)::
                                     ($ntr_nt_Expr E2Node L2)::nil)) :=
      $access_$_valExists_$_nt_Expr Node ($attr_ex $bfalse) /\
-     $access_$_valExists_$_nt_Expr E1Node ($attr_ex $bfalse) /\
-     is_bool $bfalse;
+     $access_$_valExists_$_nt_Expr E1Node ($attr_ex $bfalse);
   %minus
   $valExists__nt_Expr__host (prod_minus E1 E2)
                          ($ntr_nt_Expr Node (($ntr_nt_Expr E1Node L1)::
@@ -379,14 +349,12 @@ Define $valExists__nt_Expr__host : nt_Expr -> $node_tree -> prop by
      exists Val,
         $access_$_valExists_$_nt_Expr Node ($attr_ex Val) /\
         $access_$_valExists_$_nt_Expr E1Node ($attr_ex $btrue) /\
-        $access_$_valExists_$_nt_Expr E2Node ($attr_ex Val) /\
-        is_bool Val;
+        $access_$_valExists_$_nt_Expr E2Node ($attr_ex Val);
   $valExists__nt_Expr__host (prod_minus E1 E2)
                          ($ntr_nt_Expr Node (($ntr_nt_Expr E1Node L1)::
                                     ($ntr_nt_Expr E2Node L2)::nil)) :=
      $access_$_valExists_$_nt_Expr Node ($attr_ex $bfalse) /\
-     $access_$_valExists_$_nt_Expr E1Node ($attr_ex $bfalse) /\
-     is_bool $bfalse;
+     $access_$_valExists_$_nt_Expr E1Node ($attr_ex $bfalse);
   %mult
   $valExists__nt_Expr__host (prod_mult E1 E2)
                          ($ntr_nt_Expr Node (($ntr_nt_Expr E1Node L1)::
@@ -405,14 +373,12 @@ Define $valExists__nt_Expr__host : nt_Expr -> $node_tree -> prop by
      exists Val,
         $access_$_valExists_$_nt_Expr Node ($attr_ex Val) /\
         $access_$_valExists_$_nt_Expr E1Node ($attr_ex $btrue) /\
-        $access_$_valExists_$_nt_Expr E2Node ($attr_ex Val) /\
-        is_bool Val;
+        $access_$_valExists_$_nt_Expr E2Node ($attr_ex Val);
   $valExists__nt_Expr__host (prod_mult E1 E2)
                          ($ntr_nt_Expr Node (($ntr_nt_Expr E1Node L1)::
                                     ($ntr_nt_Expr E2Node L2)::nil)) :=
      $access_$_valExists_$_nt_Expr Node ($attr_ex $bfalse) /\
-     $access_$_valExists_$_nt_Expr E1Node ($attr_ex $bfalse) /\
-     is_bool $bfalse;
+     $access_$_valExists_$_nt_Expr E1Node ($attr_ex $bfalse);
   %letBind
   $valExists__nt_Expr__host (prod_letBind N E Body)
                         ($ntr_nt_Expr Node (($ntr_nt_Expr ENode EL)::
@@ -431,14 +397,12 @@ Define $valExists__nt_Expr__host : nt_Expr -> $node_tree -> prop by
      exists Val,
         $access_$_valExists_$_nt_Expr Node ($attr_ex Val) /\
         $access_$_valExists_$_nt_Expr ENode ($attr_ex $btrue) /\
-        $access_$_valExists_$_nt_Expr BodyNode ($attr_ex Val) /\
-        is_bool Val;
+        $access_$_valExists_$_nt_Expr BodyNode ($attr_ex Val);
   $valExists__nt_Expr__host (prod_letBind N E Body)
                         ($ntr_nt_Expr Node (($ntr_nt_Expr ENode EL)::
                                    ($ntr_nt_Expr BodyNode BL)::nil)) :=
      $access_$_valExists_$_nt_Expr Node ($attr_ex $bfalse) /\
-     $access_$_valExists_$_nt_Expr ENode ($attr_ex $bfalse) /\
-     is_bool $bfalse;
+     $access_$_valExists_$_nt_Expr ENode ($attr_ex $bfalse);
   %name
   $valExists__nt_Expr__host (prod_name N) ($ntr_nt_Expr Node nil) :=
      $access_$_valExists_$_nt_Expr Node $attr_no /\
@@ -452,8 +416,7 @@ Define $valExists__nt_Expr__host : nt_Expr -> $node_tree -> prop by
      exists KnownNames Val,
        $access_$_valExists_$_nt_Expr Node ($attr_ex Val) /\
        $access_$_knownNames_$_nt_Expr Node ($attr_ex KnownNames) /\
-       fun__contains N KnownNames Val /\
-       is_bool Val.
+       fun__contains N KnownNames Val.
 
 
 Type $env__nt_Root   nt_Root -> $node_tree -> prop.
@@ -470,8 +433,7 @@ Define $value__nt_Root__host : nt_Root -> $node_tree -> prop by
                  ($ntr_nt_Root Node (($ntr_nt_Expr ENode EL)::nil)) :=
      exists Val,
         $access_$_value_$_nt_Root Node ($attr_ex Val) /\
-        $access_$_value_$_nt_Expr ENode ($attr_ex Val) /\
-        is_integer Val.
+        $access_$_value_$_nt_Expr ENode ($attr_ex Val).
 
 Define $valExists__nt_Root__host : nt_Root -> $node_tree -> prop by
   $valExists__nt_Root__host (prod_root E)
@@ -482,8 +444,7 @@ Define $valExists__nt_Root__host : nt_Root -> $node_tree -> prop by
                  ($ntr_nt_Root Node (($ntr_nt_Expr ENode EL)::nil)) :=
      exists Val,
         $access_$_valExists_$_nt_Root Node ($attr_ex Val) /\
-        $access_$_valExists_$_nt_Expr ENode ($attr_ex Val) /\
-        is_bool Val.
+        $access_$_valExists_$_nt_Expr ENode ($attr_ex Val).
 
 /*
   Even though we don't have env and knownNames on Root, we still need
@@ -492,14 +453,12 @@ Define $valExists__nt_Root__host : nt_Root -> $node_tree -> prop by
 Define $env__nt_Root__host : nt_Root -> $node_tree -> prop by
   $env__nt_Root__host (prod_root E)
                  ($ntr_nt_Root Node (($ntr_nt_Expr ENode EL)::nil)) :=
-     $access_$_env_$_nt_Expr ENode ($attr_ex nil) /\
-     is_list (is_pair is_string is_integer) nil.
+     $access_$_env_$_nt_Expr ENode ($attr_ex nil).
 
 Define $knownNames__nt_Root__host : nt_Root -> $node_tree -> prop by
   $knownNames__nt_Root__host (prod_root E)
                  ($ntr_nt_Root Node (($ntr_nt_Expr ENode EL)::nil)) :=
-     $access_$_knownNames_$_nt_Expr ENode ($attr_ex nil) /\
-     is_list is_string nil.
+     $access_$_knownNames_$_nt_Expr ENode ($attr_ex nil).
 
 
 
@@ -508,11 +467,20 @@ Define $knownNames__nt_Root__host : nt_Root -> $node_tree -> prop by
 Type $wpd_node_nt_Expr   nt_Expr -> $node_tree -> prop.
 
 Define $wpd_node_nt_Expr__host : nt_Expr -> $node_tree -> prop by
-  $wpd_node_nt_Expr__host Tree NTr :=
-     $env__nt_Expr Tree NTr /\
-     $value__nt_Expr Tree NTr /\
-     $knownNames__nt_Expr Tree NTr /\
-     $valExists__nt_Expr Tree NTr.
+  $wpd_node_nt_Expr__host Tree ($ntr_nt_Expr Node CL) :=
+     forall AEnv AValue AKnownNames AValExists,
+        $env__nt_Expr Tree ($ntr_nt_Expr Node CL) /\
+           $access_$_env_$_nt_Expr Node AEnv /\
+           $is_attrVal (is_list (is_pair is_string is_integer)) AEnv /\
+        $value__nt_Expr Tree ($ntr_nt_Expr Node CL) /\
+           $access_$_value_$_nt_Expr Node AValue /\
+           $is_attrVal is_integer AValue /\
+        $knownNames__nt_Expr Tree ($ntr_nt_Expr Node CL) /\
+           $access_$_knownNames_$_nt_Expr Node AKnownNames /\
+           $is_attrVal (is_list is_string) AKnownNames /\
+        $valExists__nt_Expr Tree ($ntr_nt_Expr Node CL) /\
+           $access_$_valExists_$_nt_Expr Node AValExists /\
+           $is_attrVal is_bool AValExists.
 
 Type $wpd_nt_Expr   nt_Expr -> $node_tree -> prop.
 
@@ -554,11 +522,16 @@ Define $wpd_nt_Expr__host : nt_Expr -> $node_tree -> prop by
 Type $wpd_node_nt_Root   nt_Root -> $node_tree -> prop.
 
 Define $wpd_node_nt_Root__host : nt_Root -> $node_tree -> prop by
-  $wpd_node_nt_Root__host Tree NTr :=
-     $value__nt_Root Tree NTr /\
-     $valExists__nt_Root Tree NTr /\
-     $env__nt_Root Tree NTr /\
-     $knownNames__nt_Root Tree NTr.
+  $wpd_node_nt_Root__host Tree ($ntr_nt_Root Node CL) :=
+     forall AValue AValExists,
+        $value__nt_Root Tree ($ntr_nt_Root Node CL) /\
+            $access_$_value_$_nt_Root Node AValue /\
+            $is_attrVal is_integer AValue /\
+        $valExists__nt_Root Tree ($ntr_nt_Root Node CL) /\
+            $access_$_valExists_$_nt_Root Node AValExists /\
+            $is_attrVal is_bool AValExists /\
+        $env__nt_Root Tree ($ntr_nt_Root Node CL) /\
+        $knownNames__nt_Root Tree ($ntr_nt_Root Node CL).
 
 Type $wpd_nt_Root   nt_Root -> $node_tree -> prop.
 

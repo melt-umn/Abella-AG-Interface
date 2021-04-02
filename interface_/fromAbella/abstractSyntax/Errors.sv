@@ -297,7 +297,20 @@ top::ProcessingErrorMessage ::= argnum::Integer const1::String const2::String
            ":\nUnification failure (constant clash between " ++
            const1 ++ " and " ++ const2 ++ ")";
 
-  top.translation = matchingUnificationFailure(argnum, const1, const2);
+  top.translation =
+      if varIsTreeStructure(const1)
+      then matchingUnificationFailure(
+              argnum, treeStructureToVar(const1),
+              treeStructureToVar(const2))
+      else if varIsTreeNode(const1)
+      then matchingUnificationFailure(
+              argnum, treeNodeToVar(const1),
+              treeNodeToVar(const2))
+      else if nameIsAccessRelation(const1)
+      then matchingUnificationFailure(
+              argnum, accessRelationToAttr(const1),
+              accessRelationToAttr(const2))
+      else matchingUnificationFailure(argnum, const1, const2);
 }
 
 
