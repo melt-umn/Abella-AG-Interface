@@ -61,7 +61,7 @@
  ;;This will always match the line, rather than taking the earlier choices
  ;;proof-shell-start-goals-regexp      "\\(Variables:\\)\\|\\([a-zA-Z0-9]+ : \\)\\|\\(=+\n\\)"
 
- pg-top-term-regexp  "[a-zA-Z0-9]+ : "
+ pg-top-term-regexp  "[a-zA-Z0-9^=`'?$-_]+ : "
 
  proof-script-font-lock-keywords      silverabella-script-font-lock-keywords
  proof-goals-font-lock-keywords       silverabella-goals-font-lock-keywords
@@ -107,4 +107,14 @@
         (setq ans (cons current-cmd ans))))
     (setq span (next-span span 'type)))
   ans)
+
+
+
+;;This is probably not the best way to make it stop messing with the indentation.
+;;However, it is the only one which has worked.
+;;This makes it start a new line with the same indentation as the previous line
+;;   and not change indentation on new line.
+(add-hook 'silverabella-mode-hook
+          (lambda ()
+            (setq-local indent-line-function #'indent-relative)))
 

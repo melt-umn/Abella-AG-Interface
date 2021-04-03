@@ -106,7 +106,7 @@
     ;; Theorem
     ("Theorem"
      . font-lock-keyword-face)
-    ("[a-zA-Z0-9]+ : "
+    ("^[a-zA-Z0-9^=`'?$-_]+ : "
      . font-lock-type-face)
     )
   )
