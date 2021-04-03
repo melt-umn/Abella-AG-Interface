@@ -307,11 +307,10 @@ IOVal<String> ::= ioin::IO
   local read::IOVal<String> = readLineStdin(ioin);
   local readRest::IOVal<String> = read_full_input(read.io);
   local noWhiteSpace::String = stripExternalWhiteSpace(read.iovalue);
-  local shouldEnd::Boolean =
-        lastIndexOf(".", noWhiteSpace) == length(noWhiteSpace) - 1;
+  local shouldEnd::Boolean = endsWith(".", noWhiteSpace);
   return if shouldEnd
-         then ioval(ioin, read.iovalue)
-         else ioval(readRest.io, read.iovalue ++ readRest.iovalue);
+         then ioval(read.io, read.iovalue)
+         else ioval(readRest.io, read.iovalue ++ "\n" ++ readRest.iovalue);
 }
 
 

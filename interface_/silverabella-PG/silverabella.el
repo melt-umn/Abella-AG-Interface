@@ -40,7 +40,8 @@
  proof-script-command-end-regexp    "\\.\\([ \n\t\r)]\\|$\\)"
  proof-script-comment-start-regexp  "%"
  proof-script-fly-past-comments     t
- proof-script-comment-end           ""
+ proof-script-comment-end           "\n"
+ proof-shell-strip-crs-from-input   nil
 
  proof-undo-n-times-cmd           'silverabella-undo-n
  proof-non-undoables-regexp       "\\(#back\\)\\|\\(#reset\\)\\|\\(undo\\)"
