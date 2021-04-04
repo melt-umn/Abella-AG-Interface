@@ -844,7 +844,7 @@ top::Term ::= contents::String
   local charOrdinals::[Integer] = stringToChars(contents);
   local charConstants::[String] = map(ordinalToCharConstructor, charOrdinals);
   local charTerms::[Term] = map(nameTerm(_, nothing()), charConstants);
-  top.translation = foldl(consTerm, nilTerm(), charTerms);
+  top.translation = foldr(consTerm, nilTerm(), charTerms);
 
   top.boundVarsOut = top.boundVars;
 

@@ -102,7 +102,7 @@ top::ProcessingErrorMessage ::= formula::Metaterm
 abstract production unboundedTyVars
 top::ProcessingErrorMessage ::=
 {
-  top.pp = "Some type variables in the theorem is not bounded";
+  top.pp = "Some type variables in the theorem are not bounded";
 
   top.translation = unboundedTyVars();
 }
@@ -487,7 +487,11 @@ top::Type ::= name::String
 aspect production functorType
 top::Type ::= functorTy::Type argTy::Type
 {
-  top.translation = functorType(functorTy.translation, argTy.translation);
+  top.translation =
+      case functorTy, argTy of
+      | nameType("list"), nameType("$char") -> nameType("string")
+      | _, _ -> functorType(functorTy.translation, argTy.translation)
+      end;
 }
 
 

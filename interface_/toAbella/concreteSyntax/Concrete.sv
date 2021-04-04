@@ -375,7 +375,7 @@ concrete productions top::Exp_c
 | i::SilverNegativeInteger_t
   { top.ast = intTerm(toInteger(i.lexeme)); }
 | s::SilverString_t
-  { top.ast = stringTerm(unescapeString(substring(1, length(s.lexeme)-2, s.lexeme))); }
+  { top.ast = stringTerm(unescapeString(substring(1, length(s.lexeme)-1, s.lexeme))); }
 | 'true'
   { top.ast = trueTerm(); }
 | 'false'

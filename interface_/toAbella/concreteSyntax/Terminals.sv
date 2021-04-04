@@ -108,7 +108,7 @@ terminal Number_t  /[0-9]+/;
 
 --These are the things which we are adding to Abella for Silver
 terminal AttrAccess_t  /[a-zA-Z][A-Za-z0-9\_]*\.[a-zA-Z][A-Za-z0-9\_]*/;
-terminal SilverString_t  /"([^"]|\")*"/;
+terminal SilverString_t  /"([^"]|(\\"))*"/;
 terminal SilverNegativeInteger_t  /-[0-9]+/ dominates Id_t;
 
 terminal Minus_t      '-'    lexer classes {TOKEN}, precedence=9, association=left;
