@@ -10,7 +10,7 @@ grammar interface_:common;
 synthesized attribute hypList::[(String, Metaterm)];
 synthesized attribute currentSubgoal::[Integer];
 
-nonterminal ProofState with pp, hypList, currentSubgoal;
+nonterminal ProofState with pp, hypList, currentSubgoal, goal;
 
 abstract production proofInProgress
 top::ProofState ::= subgoalNum::[Integer] currGoal::CurrentGoal futureGoals::[Subgoal]
@@ -27,6 +27,7 @@ top::ProofState ::= subgoalNum::[Integer] currGoal::CurrentGoal futureGoals::[Su
   top.hypList = currGoal.hypList;
 
   top.currentSubgoal = subgoalNum;
+  top.goal = currGoal.goal;
 }
 
 
@@ -38,6 +39,8 @@ top::ProofState ::=
   top.hypList = [];
 
   top.currentSubgoal = [];
+
+  top.goal = nothing();
 }
 
 
@@ -49,6 +52,8 @@ top::ProofState ::=
   top.hypList = [];
 
   top.currentSubgoal = [];
+
+  top.goal = nothing();
 
   forwards to noProof();
 }
@@ -62,6 +67,8 @@ top::ProofState ::=
   top.hypList = [];
 
   top.currentSubgoal = [];
+
+  top.goal = nothing();
 
   forwards to noProof();
 }
@@ -90,7 +97,7 @@ top::ProofState ::= currentProofState::ProofState originalTheorem::Metaterm
 
 
 
-nonterminal CurrentGoal with pp, hypList;
+nonterminal CurrentGoal with pp, hypList, goal;
 
 abstract production currentGoal
 top::CurrentGoal ::= vars::[String] ctx::Context goal::Metaterm
@@ -102,6 +109,8 @@ top::CurrentGoal ::= vars::[String] ctx::Context goal::Metaterm
   top.pp = varsString ++ ctx.pp ++ "============================\n " ++ goal.pp ++ "\n";
 
   top.hypList = ctx.hypList;
+
+  top.goal = just(new(goal));
 }
 
 
@@ -138,7 +147,7 @@ top::Context ::= c1::Context c2::Context
 
 
 
-nonterminal Hypothesis with pp, hypList;
+nonterminal Hypothesis with pp, hypList, shouldHide;
 
 abstract production metatermHyp
 top::Hypothesis ::= name::String body::Metaterm

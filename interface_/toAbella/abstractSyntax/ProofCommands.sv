@@ -73,13 +73,25 @@ top::ProofCommand ::= names::[String]
      else " " ++ buildNames(names);
   top.pp = "intros" ++ namesString ++ ".  ";
 
-  {-
-    Need to keep track of introduced names for turning them into structures/nodes.
-    e.g. forall (t : nt_Tree), ...
-         We might introduce it as tree, in which case we want $tree_Structure and $tree_Node
-  -}
-  top.translation = --error("Translation not done in introsTactic yet");
-      [introsTactic(names)];
+  top.errors <-
+      --must have a goal if we are in a proof
+      case top.currentState.state.goal of
+      | nothing() -> [errorMsg("Cannot use proof commands outside of a proof")]
+      | just(_) -> []
+      end;
+
+  local goalPremises::[Metaterm] =
+        top.currentState.state.goal.fromJust.implicationPremises;
+  local hidePremises::[Boolean] = map((.shouldHide), goalPremises);
+  local setUpPremises::([String] ::= [String] [Boolean]) =
+        \ names::[String] hides::[Boolean] ->
+          case names, hides of
+          | [], _ -> []
+          | names, true::rest -> "_"::setUpPremises(names, rest)
+          | nm::tl, false::rest -> nm::setUpPremises(tl, rest)
+          | names, [] -> names
+          end;
+  top.translation = [introsTactic(setUpPremises(names, hidePremises))];
 
   --it would be confusing if intros killed the proof
   top.shouldClean = false;

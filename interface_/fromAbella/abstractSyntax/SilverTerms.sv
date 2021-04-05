@@ -18,7 +18,6 @@ aspect production plusMetaterm
 top::Metaterm ::= arg1::Term arg2::Term result::Term
 {
   top.translation = error("Should never be translating an plusMetaterm");
-  top.shouldHide = false;
 }
 
 
@@ -26,7 +25,6 @@ aspect production minusMetaterm
 top::Metaterm ::= arg1::Term arg2::Term result::Term
 {
   top.translation = error("Should never be translating an minusMetaterm");
-  top.shouldHide = false;
 }
 
 
@@ -34,7 +32,6 @@ aspect production multiplyMetaterm
 top::Metaterm ::= arg1::Term arg2::Term result::Term
 {
   top.translation = error("Should never be translating an multiplyMetaterm");
-  top.shouldHide = false;
 }
 
 
@@ -42,7 +39,6 @@ aspect production divideMetaterm
 top::Metaterm ::= arg1::Term arg2::Term result::Term
 {
   top.translation = error("Should never be translating an divideMetaterm");
-  top.shouldHide = false;
 }
 
 
@@ -50,7 +46,6 @@ aspect production modulusMetaterm
 top::Metaterm ::= arg1::Term arg2::Term result::Term
 {
   top.translation = error("Should never be translating an modulusMetaterm");
-  top.shouldHide = false;
 }
 
 
@@ -58,7 +53,6 @@ aspect production lessMetaterm
 top::Metaterm ::= arg1::Term arg2::Term result::Term
 {
   top.translation = error("Should never be translating an lessMetaterm");
-  top.shouldHide = false;
 }
 
 
@@ -66,7 +60,6 @@ aspect production lessEqMetaterm
 top::Metaterm ::= arg1::Term arg2::Term result::Term
 {
   top.translation = error("Should never be translating an lessEqMetaterm");
-  top.shouldHide = false;
 }
 
 
@@ -74,7 +67,6 @@ aspect production greaterMetaterm
 top::Metaterm ::= arg1::Term arg2::Term result::Term
 {
   top.translation = error("Should never be translating an greaterMetaterm");
-  top.shouldHide = false;
 }
 
 
@@ -82,7 +74,6 @@ aspect production greaterEqMetaterm
 top::Metaterm ::= arg1::Term arg2::Term result::Term
 {
   top.translation = error("Should never be translating an greaterEqMetaterm");
-  top.shouldHide = false;
 }
 
 
@@ -90,7 +81,6 @@ aspect production negateMetaterm
 top::Metaterm ::= arg::Term result::Term
 {
   top.translation = error("Should never be translating an negateMetaterm");
-  top.shouldHide = false;
 }
 
 
@@ -104,7 +94,6 @@ aspect production appendMetaterm
 top::Metaterm ::= arg1::Term arg2::Term result::Term
 {
   top.translation = error("Should never be translating an appendMetaterm");
-  top.shouldHide = false;
 }
 
 
@@ -118,7 +107,6 @@ aspect production orBoolMetaterm
 top::Metaterm ::= arg1::Term arg2::Term result::Term
 {
   top.translation = error("Should never be translating a orBoolMetaterm");
-  top.shouldHide = false;
 }
 
 
@@ -126,7 +114,6 @@ aspect production andBoolMetaterm
 top::Metaterm ::= arg1::Term arg2::Term result::Term
 {
   top.translation = error("Should never be translating a andBoolMetaterm");
-  top.shouldHide = false;
 }
 
 
@@ -134,7 +121,6 @@ aspect production notBoolMetaterm
 top::Metaterm ::= arg::Term result::Term
 {
   top.translation = error("Should never be translating a notBoolMetaterm");
-  top.shouldHide = false;
 }
 
 
@@ -148,7 +134,6 @@ aspect production attrAccessMetaterm
 top::Metaterm ::= tree::String attr::String val::Term
 {
   top.translation = error("Should never be translating an attrAccessMetaterm");
-  top.shouldHide = false;
 }
 
 
@@ -156,7 +141,6 @@ aspect production attrAccessEmptyMetaterm
 top::Metaterm ::= tree::String attr::String
 {
   top.translation = error("Should enver be translating an attrAccessEmptyMetaterm");
-  top.shouldHide = false;
 }
 
 
@@ -170,7 +154,6 @@ aspect production trueTerm
 top::Term ::=
 {
   top.translation = error("Should never be translatiing a trueTerm");
-  top.shouldHide = false;
 }
 
 
@@ -178,7 +161,6 @@ aspect production falseTerm
 top::Term ::=
 {
   top.translation = error("Should never be translatiing a falseTerm");
-  top.shouldHide = false;
 }
 
 
@@ -194,7 +176,6 @@ aspect production intTerm
 top::Term ::= i::Integer
 {
   top.translation = error("Should never be translating an intTerm");
-  top.shouldHide = false;
 }
 
 
@@ -208,7 +189,6 @@ aspect production listTerm
 top::Term ::= contents::ListContents
 {
   top.translation = error("Should never be translating a listTerm");
-  top.shouldHide = false;
 }
 
 
@@ -222,7 +202,6 @@ aspect production pairTerm
 top::Term ::= contents::PairContents
 {
   top.translation = error("Should never be translating a pairTerm");
-  top.shouldHide = false;
 }
 
 
@@ -236,7 +215,6 @@ aspect production stringTerm
 top::Term ::= contents::String
 {
   top.translation = error("Should never be translating a stringTerm");
-  top.shouldHide = false;
 }
 
 
@@ -245,7 +223,6 @@ aspect production charTerm
 top::Term ::= char::String
 {
   top.translation = error("Should never be translating a charTerm");
-  top.shouldHide = false;
 }
 
 

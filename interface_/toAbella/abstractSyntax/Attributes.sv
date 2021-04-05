@@ -90,6 +90,11 @@ autocopy attribute removeWPDTree::String;
 synthesized attribute removedWPD::Metaterm;
 
 
+--Get all the premises of an implication
+--e.g. A -> B -> C   gives   [A, B]
+synthesized attribute implicationPremises::[Metaterm];
+
+
 --Whether we are currently in a proof or not
 inherited attribute inProof::Boolean;
 

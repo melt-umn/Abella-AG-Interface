@@ -3,13 +3,14 @@ grammar interface_:common;
 
 
 
-nonterminal Metaterm with pp, isAtomic;
+nonterminal Metaterm with pp, isAtomic, shouldHide;
 
 abstract production termMetaterm
 top::Metaterm ::= t::Term r::Restriction
 {
   top.pp = t.pp ++ r.pp;
   top.isAtomic = true;
+  top.shouldHide = t.shouldHide;
 }
 
 abstract production trueMetaterm
@@ -17,6 +18,7 @@ top::Metaterm ::=
 {
   top.pp = "true";
   top.isAtomic = true;
+  top.shouldHide = false;
 }
 
 abstract production falseMetaterm
@@ -24,6 +26,7 @@ top::Metaterm ::=
 {
   top.pp = "false";
   top.isAtomic = true;
+  top.shouldHide = false;
 }
 
 abstract production eqMetaterm
@@ -31,6 +34,7 @@ top::Metaterm ::= t1::Term t2::Term
 {
   top.pp = t1.pp ++ " = " ++ t2.pp;
   top.isAtomic = true;
+  top.shouldHide = false;
 }
 
 abstract production impliesMetaterm
@@ -40,6 +44,7 @@ top::Metaterm ::= t1::Metaterm t2::Metaterm
             then t1.pp
             else "(" ++ t1.pp ++ ")") ++ " -> " ++ t2.pp;
   top.isAtomic = false;
+  top.shouldHide = false;
 }
 
 abstract production orMetaterm
@@ -53,6 +58,7 @@ top::Metaterm ::= t1::Metaterm t2::Metaterm
       then t2.pp
       else "(" ++ t2.pp ++ ")" );
   top.isAtomic = false;
+  top.shouldHide = false;
 }
 
 abstract production andMetaterm
@@ -66,6 +72,7 @@ top::Metaterm ::= t1::Metaterm t2::Metaterm
       then t2.pp
       else "(" ++ t2.pp ++ ")" );
   top.isAtomic = false;
+  top.shouldHide = false;
 }
 
 abstract production bindingMetaterm
@@ -84,6 +91,7 @@ top::Metaterm ::= b::Binder nameBindings::[Pair<String Maybe<Type>>] body::Metat
      else foldr1(\ a::String b::String -> a ++ " " ++ b, bindings);
   top.pp = b.pp ++ " " ++ bindingsString ++ ", " ++ body.pp;
   top.isAtomic = false;
+  top.shouldHide = false;
 }
 
 
@@ -147,7 +155,7 @@ top::Binder::=
 
 
 
-nonterminal Term with pp, isAtomic;
+nonterminal Term with pp, isAtomic, shouldHide;
 
 abstract production applicationTerm
 top::Term ::= f::Term args::TermList
@@ -157,6 +165,12 @@ top::Term ::= f::Term args::TermList
       then f.pp
       else "(" ++ f.pp ++ ")" ) ++ " " ++ args.pp;
   top.isAtomic = false;
+  top.shouldHide =
+      case f of
+      | nameTerm(name, _) ->
+        startsWith("$wpd_", name)
+      | _ -> false
+      end;
 }
 
 abstract production nameTerm
@@ -168,6 +182,7 @@ top::Term ::= name::String ty::Maybe<Type>
       | nothing() -> name
       end;
   top.isAtomic = true;
+  top.shouldHide = false;
 }
 
 abstract production consTerm
@@ -181,6 +196,7 @@ top::Term ::= t1::Term t2::Term
       then t2.pp
       else "(" ++ t2.pp ++ ")" );
   top.isAtomic = false;
+  top.shouldHide = false;
 }
 
 abstract production nilTerm
@@ -188,6 +204,7 @@ top::Term ::=
 {
   top.pp = "nil";
   top.isAtomic = true;
+  top.shouldHide = false;
 }
 
 abstract production underscoreTerm
@@ -200,6 +217,7 @@ top::Term ::= ty::Maybe<Type>
       end;
 
   top.isAtomic = true;
+  top.shouldHide = false;
 }
 
 

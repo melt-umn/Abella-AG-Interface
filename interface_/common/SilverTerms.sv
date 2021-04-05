@@ -18,6 +18,7 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 {
   top.pp = t1.pp ++ " + " ++ t2.pp ++ " = " ++ result.pp;
   top.isAtomic = true;
+  top.shouldHide = false;
 }
 
 abstract production minusMetaterm
@@ -25,6 +26,7 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 {
   top.pp = t1.pp ++ " - " ++ t2.pp ++ " = " ++ result.pp;
   top.isAtomic = true;
+  top.shouldHide = false;
 }
 
 abstract production multiplyMetaterm
@@ -32,6 +34,7 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 {
   top.pp = t1.pp ++ " * " ++ t2.pp ++ " = " ++ result.pp;
   top.isAtomic = true;
+  top.shouldHide = false;
 }
 
 abstract production divideMetaterm
@@ -39,6 +42,7 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 {
   top.pp = t1.pp ++ " / " ++ t2.pp ++ " = " ++ result.pp;
   top.isAtomic = true;
+  top.shouldHide = false;
 }
 
 abstract production modulusMetaterm
@@ -46,6 +50,7 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 {
   top.pp = t1.pp ++ " mod " ++ t2.pp ++ " = " ++ result.pp;
   top.isAtomic = true;
+  top.shouldHide = false;
 }
 
 abstract production negateMetaterm
@@ -53,6 +58,7 @@ top::Metaterm ::= t::Term result::Term
 {
   top.pp = "- " ++ t.pp ++ " = " ++ result.pp;
   top.isAtomic = true;
+  top.shouldHide = false;
 }
 
 abstract production lessMetaterm
@@ -60,6 +66,7 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 {
   top.pp = t1.pp ++ " < " ++ t2.pp ++ " = " ++ result.pp;
   top.isAtomic = true;
+  top.shouldHide = false;
 }
 
 abstract production lessEqMetaterm
@@ -67,6 +74,7 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 {
   top.pp = t1.pp ++ " <= " ++ t2.pp ++ " = " ++ result.pp;
   top.isAtomic = true;
+  top.shouldHide = false;
 }
 
 abstract production greaterMetaterm
@@ -74,6 +82,7 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 {
   top.pp = t1.pp ++ " > " ++ t2.pp ++ " = " ++ result.pp;
   top.isAtomic = true;
+  top.shouldHide = false;
 }
 
 abstract production greaterEqMetaterm
@@ -81,6 +90,7 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 {
   top.pp = t1.pp ++ " >= " ++ t2.pp ++ " = " ++ result.pp;
   top.isAtomic = true;
+  top.shouldHide = false;
 }
 
 abstract production appendMetaterm
@@ -88,6 +98,7 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 {
   top.pp = t1.pp ++ " ++ " ++ t2.pp ++ " = " ++ result.pp;
   top.isAtomic = true;
+  top.shouldHide = false;
 }
 
 abstract production orBoolMetaterm
@@ -95,6 +106,7 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 {
   top.pp = t1.pp ++ " || " ++ t2.pp ++ " = " ++ result.pp;
   top.isAtomic = true;
+  top.shouldHide = false;
 }
 
 abstract production andBoolMetaterm
@@ -102,6 +114,7 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 {
   top.pp = t1.pp ++ " && " ++ t2.pp ++ " = " ++ result.pp;
   top.isAtomic = true;
+  top.shouldHide = false;
 }
 
 abstract production notBoolMetaterm
@@ -109,6 +122,7 @@ top::Metaterm ::= t::Term result::Term
 {
   top.pp = "! " ++ t.pp ++ " = " ++ result.pp;
   top.isAtomic = true;
+  top.shouldHide = false;
 }
 
 {-
@@ -126,6 +140,7 @@ top::Metaterm ::= tree::String attr::String val::Term
 {
   top.pp = tree ++ "." ++ attr ++ " = " ++ val.pp;
   top.isAtomic = true;
+  top.shouldHide = false;
 }
 
 abstract production attrAccessEmptyMetaterm
@@ -133,6 +148,7 @@ top::Metaterm ::= tree::String attr::String
 {
   top.pp = tree ++ "." ++ attr ++ " = <no value>";
   top.isAtomic = true;
+  top.shouldHide = false;
 }
 
 
@@ -143,6 +159,7 @@ top::Term ::= i::Integer
 {
   top.pp = toString(i);
   top.isAtomic = true;
+  top.shouldHide = false;
 }
 
 abstract production stringTerm
@@ -150,6 +167,7 @@ top::Term ::= contents::String
 {
   top.pp = "\"" ++ contents ++ "\"";
   top.isAtomic = true;
+  top.shouldHide = false;
 }
 
 abstract production trueTerm
@@ -157,6 +175,7 @@ top::Term ::=
 {
   top.pp = "true";
   top.isAtomic = true;
+  top.shouldHide = false;
 }
 
 abstract production falseTerm
@@ -164,6 +183,7 @@ top::Term ::=
 {
   top.pp = "false";
   top.isAtomic = true;
+  top.shouldHide = false;
 }
 
 abstract production listTerm
@@ -171,6 +191,7 @@ top::Term ::= contents::ListContents
 {
   top.pp = "[" ++ contents.pp ++ "]";
   top.isAtomic = true;
+  top.shouldHide = false;
 }
 
 abstract production pairTerm
@@ -178,6 +199,7 @@ top::Term ::= contents::PairContents
 {
   top.pp = "(" ++ contents.pp ++ ")";
   top.isAtomic = true;
+  top.shouldHide = false;
 }
 
 abstract production charTerm
@@ -185,6 +207,7 @@ top::Term ::= char::String
 {
   top.pp = "\"" ++ char ++ "\"";
   top.isAtomic = true;
+  top.shouldHide = false;
 }
 
 

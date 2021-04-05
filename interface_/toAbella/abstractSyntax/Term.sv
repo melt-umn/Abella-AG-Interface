@@ -8,8 +8,17 @@ attribute
    usedNames,
    replaceName, replaceTerm, replaced,
    removeWPDTree, removedWPD,
+   implicationPremises,
    errors
 occurs on Metaterm;
+
+
+aspect default production
+top::Metaterm ::=
+{
+  top.implicationPremises = [];
+}
+
 
 aspect production termMetaterm
 top::Metaterm ::= t::Term r::Restriction
@@ -105,6 +114,8 @@ top::Metaterm ::= t1::Metaterm t2::Metaterm
                 isWpdTypeName(wpdRel) -> t2
       | _ -> impliesMetaterm(t1, t2.removedWPD)
       end;
+
+  top.implicationPremises = [t1] ++ t2.implicationPremises;
 }
 
 
@@ -242,6 +253,12 @@ top::Metaterm ::= b::Binder bindings::[(String, Maybe<Type>)] body::Metaterm
                end,
              [], currentScope)
      end;
+
+  top.implicationPremises =
+      case b of
+      | forallBinder() -> body.implicationPremises
+      | _ -> []
+      end;
 }
 
 

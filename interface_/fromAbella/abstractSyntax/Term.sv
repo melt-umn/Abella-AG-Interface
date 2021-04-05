@@ -2,7 +2,7 @@ grammar interface_:fromAbella:abstractSyntax;
 
 
 attribute
-   translation<Metaterm>, shouldHide
+   translation<Metaterm>
 occurs on Metaterm;
 
 aspect production termMetaterm
@@ -13,7 +13,6 @@ top::Metaterm ::= t::Term r::Restriction
       | left(tm) -> termMetaterm(tm, r)
       | right(mtm) -> mtm
       end;
-  top.shouldHide = t.shouldHide;
 }
 
 
@@ -21,7 +20,6 @@ aspect production trueMetaterm
 top::Metaterm ::=
 {
   top.translation = trueMetaterm();
-  top.shouldHide = false;
 }
 
 
@@ -29,7 +27,6 @@ aspect production falseMetaterm
 top::Metaterm ::=
 {
   top.translation = falseMetaterm();
-  top.shouldHide = false;
 }
 
 
@@ -41,7 +38,6 @@ top::Metaterm ::= t1::Term t2::Term
       | left(tm1), left(tm2) -> eqMetaterm(tm1, tm2)
       | _, _ -> error("Should not have metaterm translations in eqMetaterm")
       end;
-  top.shouldHide = false;
 }
 
 
@@ -52,7 +48,6 @@ top::Metaterm ::= t1::Metaterm t2::Metaterm
       if t1.shouldHide
       then t2.translation
       else impliesMetaterm(t1.translation, t2.translation);
-  top.shouldHide = false;
 }
 
 
@@ -60,7 +55,6 @@ aspect production orMetaterm
 top::Metaterm ::= t1::Metaterm t2::Metaterm
 {
   top.translation = orMetaterm(t1.translation, t2.translation);
-  top.shouldHide = false;
 }
 
 
@@ -68,7 +62,6 @@ aspect production andMetaterm
 top::Metaterm ::= t1::Metaterm t2::Metaterm
 {
   top.translation = andMetaterm(t1.translation, t2.translation);
-  top.shouldHide = false;
 }
 
 
@@ -80,7 +73,6 @@ top::Metaterm ::= b::Binder nameBindings::[(String, Maybe<Type>)] body::Metaterm
         filter(\ p::(String, Maybe<Type>) -> p.fst != "",
                map(\ p::(String, Maybe<Type>) -> (cleanVariable(p.fst), p.snd), nameBindings));
   top.translation = bindingMetaterm(b, cleanedNames, body.translation);
-  top.shouldHide = false;
 }
 
 
@@ -89,7 +81,7 @@ top::Metaterm ::= b::Binder nameBindings::[(String, Maybe<Type>)] body::Metaterm
 
 attribute
    --Either because some applied relations need to become metaterms
-   translation<Either<Term Metaterm>>, shouldHide
+   translation<Either<Term Metaterm>>
 occurs on Term;
 
 aspect production applicationTerm
@@ -169,12 +161,6 @@ top::Term ::= f::Term args::TermList
      --Nothing Special
      | ftm, atm -> left(applicationTerm(ftm, atm))
      end;
-  top.shouldHide =
-      case f of
-      | nameTerm(name, _) ->
-        startsWith("$wpd_", name)
-      | _ -> false
-      end;
 }
 
 
@@ -200,7 +186,6 @@ top::Term ::= name::String ty::Maybe<Type>
             else nameTerm(name, ty)
           end);
   local findDot::Integer = indexOf("_DOT_", name);
-  top.shouldHide = false;
 }
 
 
@@ -220,7 +205,6 @@ top::Term ::= t1::Term t2::Term
            | left(tm1), left(tm2) -> consTerm(tm1, tm2)
            | _, _ -> error("Should not have metaterm translations in consTerm")
            end);
-  top.shouldHide = false;
 }
 
 
@@ -228,7 +212,6 @@ aspect production nilTerm
 top::Term ::=
 {
   top.translation = left(listTerm(emptyListContents()));
-  top.shouldHide = false;
 }
 
 
@@ -236,7 +219,6 @@ aspect production underscoreTerm
 top::Term ::= ty::Maybe<Type>
 {
   top.translation = error("Should not translate underscoreTerm");
-  top.shouldHide = false;
 }
 
 
