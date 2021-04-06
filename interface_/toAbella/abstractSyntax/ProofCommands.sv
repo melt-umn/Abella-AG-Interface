@@ -172,7 +172,10 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> theorem::Clearable
         end
       | _ ->
         right([applyTactic(h, depth, theorem, args,
-                 map(\ p::Pair<String Term> -> pair(p.fst, p.snd.translation), withs))])
+                 map(\ p::Pair<String Term> ->
+                       pair(p.fst, decorate p.snd with
+                         {knownTrees = top.currentState.state.gatheredTrees;
+                         }.translation), withs))])
       end;
 
   top.shouldClean = true;
@@ -201,7 +204,13 @@ top::ProofCommand ::= depth::Maybe<Integer> theorem::Clearable withs::[Pair<Stri
   top.pp = "backchain " ++ depthString ++ theorem.pp ++ withsString ++ ".  ";
 
   top.translation = --error("Translation not done in backchainTactic yet");
-      [backchainTactic(depth, theorem, map(\ p::Pair<String Term> -> pair(p.fst, p.snd.translation), withs))];
+      [backchainTactic(depth, theorem,
+          map(\ p::Pair<String Term> ->
+                pair(p.fst,
+                     decorate p.snd with
+                       {knownTrees = top.currentState.state.gatheredTrees;
+                       }.translation),
+              withs))];
 
   top.shouldClean = true;
 }
@@ -341,6 +350,7 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> m::Metaterm
   m.attrOccurrences = top.currentState.knownAttrOccurrences;
 
   m.boundVars = [];
+  m.knownTrees = m.gatheredTrees;
   top.translation = --error("Translation not done in assertTactic yet");
       [assertTactic(h, depth, m.translation)];
 
@@ -362,8 +372,12 @@ top::ProofCommand ::= ew::[EWitness]
      end;
   top.pp = "exists " ++ buildWitnesses(ew) ++ ".  ";
 
-  top.translation = --error("Translation not done in existsTactic yet");
-      [existsTactic(map(\ e::EWitness -> e.translation, ew))];
+  top.translation =
+      [witnessTactic(
+          map(\ e::EWitness ->
+                decorate e with
+                {knownTrees = top.currentState.state.gatheredTrees;
+                }.translation, ew))];
 
   --no real change to proof state
   top.shouldClean = false;
@@ -383,8 +397,12 @@ top::ProofCommand ::= ew::[EWitness]
      end;
   top.pp = "witness " ++ buildWitnesses(ew) ++ ".  ";
 
-  top.translation = --error("Translation not done in witnessTactic yet");
-      [witnessTactic(map(\ e::EWitness -> e.translation, ew))];
+  top.translation =
+      [witnessTactic(
+          map(\ e::EWitness ->
+                decorate e with
+                {knownTrees = top.currentState.state.gatheredTrees;
+                }.translation, ew))];
 
   --no real change to proof state
   top.shouldClean = false;
@@ -721,7 +739,7 @@ top::ApplyArg ::= name::String instantiation::[Type]
 
 nonterminal EWitness with
    pp,
-   translation<EWitness>;
+   translation<EWitness>, knownTrees;
 
 abstract production termEWitness
 top::EWitness ::= t::Term

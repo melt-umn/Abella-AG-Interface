@@ -3,13 +3,14 @@ grammar interface_:toAbella:abstractSyntax;
 
 attribute
    translation<Metaterm>, newPremises,
-   boundVars, boundVarsOut, attrOccurrences,
+   boundVars, boundVarsOut, attrOccurrences, knownTrees,
    findNameType, foundNameType,
    usedNames,
    replaceName, replaceTerm, replaced,
    removeWPDTree, removedWPD,
    implicationPremises,
-   errors
+   errors,
+   gatheredTrees
 occurs on Metaterm;
 
 
@@ -208,6 +209,16 @@ top::Metaterm ::= b::Binder bindings::[(String, Maybe<Type>)] body::Metaterm
       | [] -> error("We lost a scope somewhere (bindingMetaterm production)")
       | _::otherScopes -> otherScopes
       end;
+  body.knownTrees =
+       foldr(\ p::(String, Maybe<Type>) rest::[String] ->
+               case p of
+               | (s, just(ty)) when tyIsNonterminal(ty) ->
+                 s::rest
+               | _ -> rest
+               end,
+             filter(\ s::String -> contains(s, map(fst, bindings)),
+                    top.knownTrees),
+             bindings);
 
   top.foundNameType =
       if containsBy(\ p1::(String, Maybe<Type>) p2::(String, Maybe<Type>) ->
@@ -259,6 +270,13 @@ top::Metaterm ::= b::Binder bindings::[(String, Maybe<Type>)] body::Metaterm
       | forallBinder() -> body.implicationPremises
       | _ -> []
       end;
+
+  top.gatheredTrees :=
+      foldr(\ p::(String, Maybe<Type>) rest::[String] ->
+              if isTreeStructureName(p.1)
+              then structureToTreeName(p.1)::rest
+              else rest,
+            body.gatheredTrees, bindings);
 }
 
 
@@ -323,6 +341,8 @@ top::Metaterm ::= tree::String attr::String val::Term
   top.usedNames = tree::val.usedNames;
 
   top.removedWPD = top;
+
+  top.gatheredTrees := [tree];
 }
 
 
@@ -385,6 +405,8 @@ top::Metaterm ::= tree::String attr::String
   top.usedNames = [tree];
 
   top.removedWPD = top;
+
+  top.gatheredTrees := [tree];
 }
 
 
@@ -711,12 +733,13 @@ top::Metaterm ::= t::Term result::Term
 
 attribute
    translation<Term>, newPremises,
-   boundVars, boundVarsOut, attrOccurrences,
+   boundVars, boundVarsOut, attrOccurrences, knownTrees,
    usedNames,
    replaceName, replaceTerm, replaced,
    errors,
    eqTest<Term>, isEq,
-   findParentOf, foundParent
+   findParentOf, foundParent,
+   gatheredTrees
 occurs on Term;
 
 aspect production applicationTerm
@@ -746,13 +769,29 @@ top::Term ::= f::Term args::TermList
            | _ -> error("Should not find anything but nameTerm for foundParent")
            end
       else args.foundParent;
+
+  top.gatheredTrees :=
+      f.gatheredTrees ++ args.gatheredTrees ++
+      case f, args of
+      | nameTerm(access, _), consTermList(nameTerm(treeNode, _), _)
+        when isAccessRelation(access) ->
+        [nodeToTreeName(treeNode)]
+      | _, _ -> []
+      end;
 }
 
 
 aspect production nameTerm
 top::Term ::= name::String ty::Maybe<Type>
 {
-  top.translation = nameTerm(name, ty);
+  top.translation =
+      if contains(name, top.knownTrees)
+      then nameTerm(treeToStructureName(name), ty)
+      else case ty of
+           | just(t) when tyIsNonterminal(t) ->
+             nameTerm(treeToStructureName(name), ty)
+           | _ -> nameTerm(name, ty)
+           end;
 
   top.boundVarsOut = top.boundVars;
 
@@ -776,6 +815,11 @@ top::Term ::= name::String ty::Maybe<Type>
       end;
 
   top.foundParent = nothing();
+
+  top.gatheredTrees :=
+      if isTreeStructureName(name)
+      then [structureToTreeName(name)]
+      else [];
 }
 
 
@@ -981,11 +1025,12 @@ top::Term ::= contents::ListContents
 
 attribute
    translation<Term>, newPremises,
-   boundVars, boundVarsOut, attrOccurrences,
+   boundVars, boundVarsOut, attrOccurrences, knownTrees,
    usedNames,
    replaceName, replaceTerm, replaced,
    errors,
-   eqTest<ListContents>, isEq
+   eqTest<ListContents>, isEq,
+   gatheredTrees
 occurs on ListContents;
 
 aspect production emptyListContents
@@ -1031,11 +1076,12 @@ top::ListContents ::= hd::Term tl::ListContents
 
 attribute
    translation<Term>, newPremises,
-   boundVars, boundVarsOut, attrOccurrences,
+   boundVars, boundVarsOut, attrOccurrences, knownTrees,
    usedNames,
    replaceName, replaceTerm, replaced,
    errors,
-   eqTest<PairContents>, isEq
+   eqTest<PairContents>, isEq,
+   gatheredTrees
 occurs on PairContents;
 
 aspect production singlePairContents
@@ -1085,12 +1131,13 @@ top::PairContents ::= t::Term rest::PairContents
 
 attribute
    translation<TermList>, newPremises,
-   boundVars, boundVarsOut, attrOccurrences,
+   boundVars, boundVarsOut, attrOccurrences, knownTrees,
    usedNames,
    replaceName, replaceTerm, replaced,
    errors,
    eqTest<TermList>, isEq,
-   findParentOf, foundParent, isArgHere
+   findParentOf, foundParent, isArgHere,
+   gatheredTrees
 occurs on TermList;
 
 aspect production singleTermList

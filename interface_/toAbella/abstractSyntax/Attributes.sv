@@ -9,7 +9,7 @@ imports interface_:common;
   structured tree, then use pp to get the text to send to Abella.
 -}
 synthesized attribute translation<a>::a;
-flowtype translation {attrOccurrences, boundVars} on Metaterm;
+flowtype translation {attrOccurrences, boundVars, knownTrees} on Metaterm;
 
 --new premises we are adding to the current theorem being defined
 monoid attribute newPremises::[NewPremise] with [], ++;
@@ -64,6 +64,9 @@ inherited attribute wasError::Boolean;
 -}
 inherited attribute boundVars::[[(String, Maybe<[Type]>)]];
 synthesized attribute boundVarsOut::[[(String, Maybe<[Type]>)]];
+
+--Names which are known to be trees of any type
+autocopy attribute knownTrees::[String];
 
 
 --Pairs of (attribute name, types it occurs on)
@@ -179,7 +182,16 @@ synthesized attribute isRelation::Either<String Term>;
 --   the command issued by the user
 synthesized attribute cleanUpCommands::String;
 synthesized attribute numCleanUpCommands::Integer;
---
+--Let state decide how to handle making the next state
 inherited attribute nextStateIn::ProofState;
 synthesized attribute nextStateOut::ProofState;
+
+
+--Names of trees used in a proof state
+monoid attribute gatheredTrees::[String] with [], ++;
+propagate gatheredTrees on
+   Metaterm, Term, TermList, ListContents, PairContents,
+   ProofState, Context, Hypothesis
+   excluding bindingMetaterm, attrAccessMetaterm, attrAccessEmptyMetaterm,
+             nameTerm, applicationTerm;
 

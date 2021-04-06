@@ -3,7 +3,8 @@ grammar interface_:toAbella:abstractSyntax;
 
 attribute
    cleanUpCommands, numCleanUpCommands,
-   nextStateIn, nextStateOut
+   nextStateIn, nextStateOut,
+   gatheredTrees
 occurs on ProofState;
 
 
@@ -128,17 +129,27 @@ top::ProofState ::=
 
 
 
---nonterminal CurrentGoal
+attribute
+   gatheredTrees
+occurs on CurrentGoal;
 
 aspect production currentGoal
 top::CurrentGoal ::= vars::[String] ctx::Context goal::Metaterm
 {
-
+  top.gatheredTrees :=
+      ctx.gatheredTrees ++ goal.gatheredTrees ++
+      foldr(\ s::String rest::[String] ->
+              if isTreeStructureName(s)
+              then structureToTreeName(s)::rest
+              else rest,
+            [], vars);
 }
 
 
 
---nonterminal Context
+attribute
+   gatheredTrees
+occurs on Context;
 
 aspect production emptyContext
 top::Context ::=
@@ -162,7 +173,9 @@ top::Context ::= c1::Context c2::Context
 
 
 
---nonterminal Hypothesis
+attribute
+   gatheredTrees
+occurs on Hypothesis;
 
 aspect production metatermHyp
 top::Hypothesis ::= name::String body::Metaterm

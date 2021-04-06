@@ -64,6 +64,7 @@ top::TopCommand ::= name::String depth::Integer body::Metaterm tree::String
   --we probably also want to send a "split" after this
 
   top.translatedTheorem = body.translation;
+  body.knownTrees = tree::body.gatheredTrees;
   top.numRelevantProds = length(correctWPDRelation.fromJust.snd);
 }
 
@@ -90,6 +91,7 @@ top::TopCommand ::= name::String params::[String] body::Metaterm
 
   body.boundVars = [];
   body.attrOccurrences = top.currentState.knownAttrOccurrences;
+  body.knownTrees = body.gatheredTrees;
   top.translation = theoremDeclaration(name, params, body.translation);
 }
 

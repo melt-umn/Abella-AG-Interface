@@ -155,6 +155,8 @@ top::Hypothesis ::= name::String body::Metaterm
   top.pp = name ++ " : " ++ body.pp;
 
   top.hypList = [(name, new(body))];
+
+  top.shouldHide = body.shouldHide;
 }
 
 
