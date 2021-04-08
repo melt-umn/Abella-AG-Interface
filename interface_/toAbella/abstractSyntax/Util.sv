@@ -154,46 +154,83 @@ TermList ::= args::[Term]
 
 
 
---Find the WPD node relation for a given treename, if it exists
-function find_WPD_node_hyp
+--Find the WPD nonterminal relation for a given treename, if it exists
+function find_WPD_nt_hyp
 Maybe<(String, Metaterm)> ::= treename::String hyps::[(String, Metaterm)]
 {
   local structure::Term =
         case find_structure_hyp(treename, hyps) of
-        | just(s) -> s
+        | just((_, s)) -> s
         | nothing() -> nameTerm(treename, nothing())
         end;
-  return find_WPD_node_help(structure, hyps);
+  return find_WPD_nt_help(structure, treename, hyps);
 }
 
 
-function find_WPD_node_help
-Maybe<(String, Metaterm)> ::= tree::Term hyps::[(String, Metaterm)]
+function find_WPD_nt_help
+Maybe<(String, Metaterm)> ::= tree::Term treename::String hyps::[(String, Metaterm)]
 {
   return
      case hyps of
      | [] -> nothing()
-     | (hyp, termMetaterm(applicationTerm(nameTerm(str, x), consTermList(tr, y)), _))::_
-       when isWPD_NodeRelName(str) && termsEqual(tree, tr) ->
-       just((hyp, termMetaterm(applicationTerm(nameTerm(str, x), consTermList(tr, y)),
-                               emptyRestriction())))
-     | (hyp, termMetaterm(applicationTerm(nameTerm(str, x), consTermList(tr, y)), _))::tl ->
-       find_WPD_node_help(tree, tl)
-     | _::tl -> find_WPD_node_help(tree, tl)
+       --(hyp, wpd_<ty> tr (ntr_<ty> treeNode childList))
+     | (hyp, termMetaterm(applicationTerm(nameTerm(str, x),
+                consTermList(tr,
+                singleTermList(
+                   applicationTerm(nameTerm(ntr, ntrty),
+                      consTermList(
+                         nameTerm(treeNode, treeNodeTy),
+                      singleTermList(childList)))))),
+                _))::_
+       when isWpdTypeName(str) && termsEqual(tree, tr) &&
+            nodeToTreeName(treeNode) == treename ->
+       just((hyp,
+          termMetaterm(applicationTerm(nameTerm(str, x),
+                consTermList(tr,
+                singleTermList(
+                   applicationTerm(nameTerm(ntr, ntrty),
+                      consTermList(
+                         nameTerm(treeNode, treeNodeTy),
+                      singleTermList(childList)))))),
+                emptyRestriction())))
+       --(hyp, wpd_<ty> tr (ntr_<ty> treeNode childList)) where tr is a tree name
+     | (hyp, termMetaterm(applicationTerm(nameTerm(str, x),
+                consTermList(nameTerm(tr, trty),
+                singleTermList(
+                   applicationTerm(nameTerm(ntr, ntrty),
+                      consTermList(
+                         nameTerm(treeNode, treeNodeTy),
+                      singleTermList(childList)))))),
+                _))::_
+       when isWpdTypeName(str) && tr == treename &&
+            nodeToTreeName(treeNode) == treename ->
+       just((hyp,
+          termMetaterm(applicationTerm(nameTerm(str, x),
+                consTermList(nameTerm(tr, trty),
+                singleTermList(
+                   applicationTerm(nameTerm(ntr, ntrty),
+                      consTermList(
+                         nameTerm(treeNode, treeNodeTy),
+                      singleTermList(childList)))))),
+                emptyRestriction())))
+     | (hyp, mt)::tl -> find_WPD_nt_help(tree, treename, tl)
      end;
 }
 
 
---find a hypthesis of the form "<treename> = ___"
+--find a hypthesis of the form "<treename> = ___" or "___ = <treename>"
 function find_structure_hyp
-Maybe<Term> ::= treename::String hyps::[(String, Metaterm)]
+Maybe<(String, Term)> ::= treename::String hyps::[(String, Metaterm)]
 {
   return
      case hyps of
      | [] -> nothing()
      | (hyp, eqMetaterm(nameTerm(str, _), structure))::_
        when str == treename ->
-       just(structure)
+       just((hyp, new(structure)))
+     | (hyp, eqMetaterm(structure, nameTerm(str, _)))::_
+       when str == treename ->
+       just((hyp, new(structure)))
      | (hyp, mt)::tl -> find_structure_hyp(treename, tl)
      end;
 }

@@ -74,7 +74,7 @@ top::ProofCommand ::= names::[String]
   top.pp = "intros" ++ namesString ++ ".  ";
 
   top.errors <-
-      --must have a goal if we are in a proof
+      --must have a goal if we are in a proof, so we shouldn't get an error here
       case top.currentState.state.goal of
       | nothing() -> [errorMsg("Cannot use proof commands outside of a proof")]
       | just(_) -> []
@@ -221,8 +221,7 @@ top::ProofCommand ::= h::HHint hyp::String keep::Boolean
 {
   top.pp = h.pp ++ "case " ++ hyp ++ if keep then " (keep).  " else ".  ";
 
-  top.translation = --error("Translation not done in caseTactic yet");
-      [caseTactic(h, hyp, keep)];
+  top.translation = [caseTactic(h, hyp, keep)];
 
   top.errors <-
       case findAssociated(hyp, top.translatedState.hypList) of
@@ -233,7 +232,11 @@ top::ProofCommand ::= h::HHint hyp::String keep::Boolean
         when startsWith("$", str) ->
         [errorMsg("Unknown hypothesis " ++ hyp)]
       --Disallow case analysis on structure-showing "$<tree>_Tm = <structure>"
-      | just(eqMetaterm(nameTerm(str, _), structure)) ->
+      | just(eqMetaterm(nameTerm(str, _), structure))
+        when contains(str, top.currentState.state.gatheredTrees) ->
+        [errorMsg("Cannot do case analysis on tree structure hypothesis")]
+      | just(eqMetaterm(structure, nameTerm(str, _)))
+        when contains(str, top.currentState.state.gatheredTrees) ->
         [errorMsg("Cannot do case analysis on tree structure hypothesis")]
       --Case analysis on an access doesn't make sense
       | just(attrAccessMetaterm(tree, attr, _)) ->
@@ -257,32 +260,64 @@ top::ProofCommand ::= h::HHint tree::String attr::String
 {
   top.pp = h.pp ++ "case " ++ tree ++ "." ++ attr ++ ".  ";
 
-  top.errors <- --need to check for tree existing, as a tree
-      if !contains(attr, map(fst, top.currentState.knownAttrs))
-      then [errorMsg("Unknown attribute " ++ attr)]
-      else case findAssociated(attr, top.currentState.knownAttrOccurrences) of
+  --We could do this error checking nested, but that gets hard to follow
+  top.errors <-
+      if treeExists
+      then []
+      else [errorMsg("Unknown tree " ++ tree)];
+  top.errors <-
+      if attrExists
+      then []
+      else [errorMsg("Unknown attribute " ++ attr)];
+  top.errors <-
+      if attrExists && treeExists
+      then case findAssociated(attr, top.currentState.knownAttrOccurrences) of
            | nothing() -> [] --covered by checking if attr exists, so impossible here
            | just(nts) ->
-             if isInherited
-             then case findParent of
-                  | nothing() ->
-                    [errorMsg("Cannot do case analysis on inherited attribute "++
-                              "equation when parent of tree is unknown")]
-                  | just(_) ->
-                    case wpdNodeHyp of
-                    | nothing() ->
-                      [errorMsg("Cannot do case analysis on " ++ tree ++ "." ++ attr ++ " for reasons I can't come up with at the moment; please report this error")]
-                    | just(_) -> []
-                    end
-                  end
-             else if containsBy(tysEqual, treeTy, nts)
+             if  wpdNtHyp.isJust
+             then if containsBy(tysEqual, treeTy, nts)
                   then []
                   else [errorMsg("Attribute " ++ attr ++ " does not occur on " ++ tree)]
-           end;
+             else []
+           end
+      else [];
+  top.errors <-
+      if treeExists && attrExists
+      then if isInherited
+           then case findParent of
+                | nothing() ->
+                  [errorMsg("Cannot do case analysis on inherited attribute "++
+                            "equation when parent of tree is unknown")]
+                | just(_) -> []
+                end
+           else []
+      else [];
+  top.errors <-
+      if treeExists && attrExists
+      then if (isInherited && findParent.isJust) || !isInherited
+           then case wpdNtHyp of
+                | nothing() ->
+                  [errorMsg("Cannot do case analysis on " ++ tree ++ "." ++ attr ++ " for reasons I can't come up with at the moment; please report this error")]
+                | just(_) -> []
+                end
+           else []
+      else [];
+  top.errors <-
+      if treeExists && attrExists
+      then case structure of
+           | nothing() ->
+             [errorMsg("Cannot do case analysis on attribute access for tree of unknown structure")]
+           | just(_) -> []
+           end
+      else [];
 
+  local treeExists::Boolean = contains(tree, top.currentState.state.gatheredTrees);
+  local attrExists::Boolean = contains(attr, map(fst, top.currentState.knownAttrs));
+  --
   local newNum::String = toString(genInt());
   local eqHypName::String = "$Eq_" ++ newNum;
   local componentHypName::String = "$EqComp_" ++ newNum;
+  local equalityName::String = "$Equality_" ++ newNum;
   --
   local isInherited::Boolean =
         contains(attr, top.currentState.knownInheritedAttrs);
@@ -295,17 +330,18 @@ top::ProofCommand ::= h::HHint tree::String attr::String
              | nothing() -> error("findParent should not be nothing")
              end
         else tree;
+  local structure::Maybe<(String, Term)> =
+        find_structure_hyp(associatedTree, top.translatedState.hypList);
   local associatedProd::String =
-        case find_structure_hyp(associatedTree,
-                top.translatedState.hypList) of
-        | just(applicationTerm(nameTerm(prod, _), _)) -> prod
-        | just(_) -> error("It should be a production (associatedProd)")
+        case structure of
+        | just((_, applicationTerm(nameTerm(prod, _), _))) -> prod
+        | just((_, tm)) -> error("It should be a production (associatedProd):  " ++ tm.pp)
         | nothing() -> error("It should have a value (associatedProd)")
         end;
   local makeEqHypThm::Clearable =
-        clearable(false, wpdNode_to_AttrEq(attr, treeTy), []);
-  local wpdNodeHyp::Maybe<(String, Metaterm)> =
-        find_WPD_node_hyp(associatedTree, top.translatedState.hypList);
+        clearable(false, wpdNt_to_AttrEq(attr, treeTy), []);
+  local wpdNtHyp::Maybe<(String, Metaterm)> =
+        find_WPD_nt_hyp(associatedTree, top.translatedState.hypList);
   local treeTy::Type =
         if isInherited
         then case decorate findParent.fromJust.snd with
@@ -317,21 +353,44 @@ top::ProofCommand ::= h::HHint tree::String attr::String
                 | nothing() -> error("Production " ++ prod ++ " must exist")
                 end
              end
-        else case wpdNodeHyp of
+        else case wpdNtHyp of
              | just((_, termMetaterm(applicationTerm(nameTerm(rel, _), _), _))) ->
-               wpdNode_type(rel)
+               wpdNt_type(rel)
              | just((_, tm)) -> error("Should not get here (caseAttrAccess bad just)")
              | nothing() -> error("Should not get here (caseAttrAccess nothing)")
              end;
   local pcTheorem::Clearable =
         clearable(false, primaryComponent(attr, treeTy, associatedProd), []);
   top.translation =
-      [applyTactic(nameHint(eqHypName), nothing(), makeEqHypThm,
-                   [hypApplyArg(wpdNodeHyp.fromJust.1, [])], []),
+      [
+       --Get structure assumption of correct form (treename = prod_<name> <children>)
+       assertTactic(nameHint(equalityName), nothing(),
+                    eqMetaterm(nameTerm(treeToStructureName(associatedTree), nothing()),
+                               structure.fromJust.2))
+      ] ++
+       --Need to solve previous goal by case analysis if structure hyp is backward
+      ( case findAssociated(structure.fromJust.fst, top.translatedState.hypList) of
+        | nothing() -> error("This hypothesis must exist")
+        | just(eqMetaterm(nameTerm(str, _), _)) -> []
+        | just(eqMetaterm(_, nameTerm(str, _))) ->
+          [ caseTactic(noHint(), structure.fromJust.fst, false),
+            searchTactic() ]
+        | just(_) ->
+          error("This hypothesis must be \"<tree> = structure\" or \"structure = <tree>\"")
+        end
+      ) ++
+      [
+       --Go from WPD nonterminal to full equation relation
+       applyTactic(nameHint(eqHypName), nothing(), makeEqHypThm,
+                   [hypApplyArg(wpdNtHyp.fromJust.1, [])], []),
+       --Go from full equation relation to component equation relation
        applyTactic(nameHint(componentHypName), nothing(), pcTheorem,
-                   [hypApplyArg(eqHypName, [])], []),
+                   [hypApplyArg(equalityName, []), hypApplyArg(eqHypName, [])], []),
+       --Actual case analysis on component equation relation
        caseTactic(h, componentHypName, true),
-       clearCommand([eqHypName, componentHypName], false)];
+       --Remove our extra assumptions (unnecessary, but nice)
+       clearCommand([eqHypName, equalityName, componentHypName], false)
+      ];
 
   top.shouldClean = true;
 }

@@ -147,6 +147,12 @@ Boolean ::= rel::String
 {
   return startsWith("$wpd_", rel) && !startsWith("$wpd_node_", rel);
 }
+function wpdNt_type
+Type ::= rel::String
+{
+  --$wpd_<type name>
+  return nameType(substring(5, length(rel), rel));
+}
 
 --WPD Node
 function wpdNodeTypeName
@@ -171,6 +177,11 @@ function wpdNode_to_AttrEq
 String ::= attr::String ty::Type
 {
   return "$wpd_node__to__" ++ attr ++ "__" ++ ty.pp;
+}
+function wpdNt_to_AttrEq
+String ::= attr::String ty::Type
+{
+  return "$wpd__to__" ++ attr ++ "__" ++ ty.pp;
 }
 function primaryComponent
 String ::= attr::String ty::Type prod::String
@@ -391,40 +402,52 @@ Metaterm ::= prods::[String] original::Metaterm treeName::String
         | bindingMetaterm(binder, bindings, body) -> body
         | _ -> error("Should not have anything but a binding to start")
         end;
-  --We'll keep the original WPD relation in there, but replace treeName with newTree
-  originalBody.replaceName = treeToStructureName(treeName);
-  originalBody.replaceTerm = newTree;
-  local replaceTree::Metaterm = originalBody.replaced;
+  --Remove original WPD assumption
+  local copyOriginalBody::Metaterm = originalBody;
+  copyOriginalBody.removeWPDTree = treeName;
+  local noWPD::Metaterm = copyOriginalBody.removedWPD;
+  --Replace the original tree and child list
+  noWPD.replaceName = treeToStructureName(treeName);
+  noWPD.replaceTerm = newTree;
+  local replaceTree::Metaterm = noWPD.replaced;
   replaceTree.replaceName = treeToChildListName(treeName);
   replaceTree.replaceTerm = newChildList;
   local replaceTreeNode::Metaterm = replaceTree.replaced;
+  --
   local thisCase::[Metaterm] =
           --Show user the structure
         [ eqMetaterm(nameTerm(treeToStructureName(treeName), nothing()), newTree),
+          --WPD nonterminal relation for root
+          --Add back after removal to get just the name, not the structure, in it
+          termMetaterm(
+             buildApplication(nameTerm(wpdTypeName(treeTy), nothing()),
+                              [nameTerm(treeToStructureName(treeName), nothing()),
+                               newNodeTree]),
+             emptyRestriction()),
           --WPD node relation for root
           termMetaterm(
              buildApplication(nameTerm(wpdNodeTypeName(treeTy), nothing()),
                               [newTree, newNodeTree]),
              emptyRestriction()) ] ++
-        --WPD nonterminal relations/is relations for children
-        foldr(\ p::(Type, String) rest::[Metaterm] ->
-                if tyIsNonterminal(p.fst)
-                then termMetaterm(
-                        buildApplication(
-                           nameTerm(wpdTypeName(p.fst), nothing()),
-                           [nameTerm(treeToStructureName(p.snd), nothing()),
-                            buildNodeTree(p.snd, p.fst)]),
-                        emptyRestriction())::rest
-                else case p.fst.isRelation of
-                     | right(isRel) ->
-                       termMetaterm(
-                          buildApplication(isRel,
-                                           [nameTerm(p.snd, nothing())]),
+          --WPD nonterminal relations/is relations for children
+          foldr(\ p::(Type, String) rest::[Metaterm] ->
+                  if tyIsNonterminal(p.fst)
+                  then termMetaterm(
+                          buildApplication(
+                             nameTerm(wpdTypeName(p.fst), nothing()),
+                             [nameTerm(treeToStructureName(p.snd), nothing()),
+                              buildNodeTree(p.snd, p.fst)]),
                           emptyRestriction())::rest
-                     | left(err) ->
-                       error("Could not generate is relation:\n" ++ err)
-                     end,
-              [], children);
+                  else case p.fst.isRelation of
+                       | right(isRel) ->
+                         termMetaterm(
+                            buildApplication(isRel,
+                                             [nameTerm(p.snd, nothing())]),
+                            emptyRestriction())::rest
+                       | left(err) ->
+                         error("Could not generate is relation:\n" ++ err)
+                       end,
+                [], children);
   --fake IHs remove WPD nonterminal relation, and replace original tree with child tree
   originalBody.removeWPDTree = treeName;
   local removedWPD::Metaterm = originalBody.removedWPD;
