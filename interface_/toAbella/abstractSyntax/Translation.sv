@@ -159,6 +159,12 @@ String ::= prod::String builtTy::Type
   return "$wpd_" ++ builtTy.pp ++ "__" ++ prod;
 }
 
+function wpdNodeTreeForm
+String ::= ty::Type
+{
+  return "$wpd_" ++ ty.pp ++ "__ntr_" ++ ty.pp;
+}
+
 --WPD Node
 function wpdNodeTypeName
 String ::= treeTy::Type

@@ -612,7 +612,8 @@ top::ProofCommand ::=
           | just(eqMetaterm(nameTerm(tr1, _), nameTerm(tr2, _))) ->
             if tr1 == tree
             then [
-                  assertTactic(nameHint(correctDirectionName), just(length(newChildren) + 3),
+                  assertTactic(
+                     nameHint(correctDirectionName), nothing(), --just(length(newChildren) + 3),
                      termMetaterm(
                         buildApplication(
                            nameTerm(typeToStructureEqName(
@@ -708,7 +709,33 @@ top::ProofCommand ::=
         ];
   --Turn the child node trees into appropriate forms
   local nodeStructName::String = "$NodeStruct_" ++ newIndex;
-  local nodeStructCommands::[ProofCommand] = []; --TODO
+  local nodeStructCommands::[ProofCommand] =
+        foldr(\ p::(Term, String, Term, Type) rest::[ProofCommand] ->
+                if tyIsNonterminal(p.4)
+                then assertTactic(
+                        nameHint(nodeStructName), nothing(),
+                        bindingMetaterm(
+                           existsBinder(),
+                           [(treeToNodeName(p.2), nothing()),
+                            (treeToChildListName(p.2), nothing())],
+                           eqMetaterm(
+                              nameTerm(treeToNodeTreeName(p.2),
+                                       nothing()),
+                              buildApplication(
+                                 nameTerm(nodeTreeConstructorName(p.4),
+                                          nothing()),
+                                 [nameTerm(treeToNodeName(p.2),
+                                           nothing()),
+                                  nameTerm(treeToChildListName(p.2),
+                                           nothing())]))))::
+                     backchainTactic(
+                        nothing(),
+                        clearable(false, wpdNodeTreeForm(p.4), []),
+                        [])::
+                     caseTactic(noHint(), nodeStructName, false)::
+                     rest
+                else rest,
+              [], newChildren);
   --
   top.translation =
       eqCommands ++ wpdCompCommands ++ clCommands ++ nodeStructCommands;
