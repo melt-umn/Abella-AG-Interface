@@ -52,6 +52,22 @@ induction on 2. intros. case H2.
      %not equal
       exists V'. search.
 
+Theorem fun__lookup__unique : forall E V N N',
+  fun__lookup E V N -> fun__lookup E V N' -> N = N'.
+induction on 1. intros. case H1.
+  %lookup 1 here
+   case H2.
+     %lookup 2 here
+      search.
+     %lookup 2 later
+      assert V = V. apply H3 to H5.
+  %lookup 1 later
+   case H2.
+     %lookup 2 here
+      assert V = V. apply H3 to H5.
+     %lookup 2 later
+      apply IH to H4 H6. search.
+
 
 
 
@@ -70,9 +86,22 @@ Extensible_Theorem value_unique__Expr :
 on T1.
 split.
 %intConst
- intros Structure N_Is Eq. case T1.value. case T2.value. search.
+ intros Structure N_Is Eq. case T1.value.
+ case_structure T2 in Eq with Structure. case T2.value. search.
 %plus
- intros IH1 IH2 Structure.
+ intros IH1 IH2 Structure Eq. case_structure T2 in Eq with Structure.
+ case E.env. case E2.env. rename Val1 to Env. case T1.value.
+ case T2.value. skip. %Equalities for children wrong direction here.
+%minus
+ skip.
+%mult
+ skip.
+%letBind
+ skip.
+%name
+ intros Structure L_Is Eq. case_structure T2 in Eq with Structure.
+ case T1.value. case T2.value. apply fun__lookup__unique to H13 H16.
+ search.
 
 
 Extensible_Theorem value_unique__Root :

@@ -336,7 +336,29 @@ top::ProofCommand ::= h::HHint tree::String attr::String
              end
         else tree;
   local structure::Maybe<(String, Term)> =
-        find_structure_hyp(associatedTree, top.translatedState.hypList);
+        case find_structure_hyp(associatedTree,
+                                top.translatedState.hypList) of
+        | nothing() -> nothing()
+        | just((hyp, _)) ->
+          --This must exist and have the form of "$structure_eq T Structure" or symm
+          case findAssociated(hyp, top.currentState.state.hypList) of
+          | just(termMetaterm(
+                    applicationTerm(_,
+                       consTermList(
+                          nameTerm(tr, _),
+                          singleTermList(structure))), _))
+            when tr == treeToStructureName(associatedTree) ->
+            just((hyp, new(structure)))
+          | just(termMetaterm(
+                    applicationTerm(_,
+                       consTermList(
+                          structure,
+                          singleTermList(nameTerm(tr, _)))), _))
+            when tr == treeToStructureName(associatedTree) ->
+            just((hyp, new(structure)))
+          | _ -> nothing()
+          end
+        end;
   local associatedProd::String =
         case structure of
         | just((_, applicationTerm(nameTerm(prod, _), _))) -> prod
