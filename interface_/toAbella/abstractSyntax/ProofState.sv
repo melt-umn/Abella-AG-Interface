@@ -4,7 +4,7 @@ grammar interface_:toAbella:abstractSyntax;
 attribute
    cleanUpCommands, numCleanUpCommands,
    nextStateIn, nextStateOut,
-   gatheredTrees
+   gatheredTrees, usedNames
 occurs on ProofState;
 
 
@@ -70,6 +70,8 @@ top::ProofState ::=
       else 1;
 
   top.nextStateOut = top.nextStateIn;
+
+  top.usedNames = currGoal.usedNames;
 }
 
 
@@ -80,6 +82,8 @@ top::ProofState ::=
   top.numCleanUpCommands = 0;
 
   top.nextStateOut = top.nextStateIn;
+
+  top.usedNames = [];
 }
 
 
@@ -125,12 +129,14 @@ top::ProofState ::=
       then top.nextStateIn
       else extensible_proofInProgress(
               top.nextStateIn, originalTheorem, name, numProds);
+
+  top.usedNames = currentProofState.usedNames;
 }
 
 
 
 attribute
-   gatheredTrees
+   gatheredTrees, usedNames
 occurs on CurrentGoal;
 
 aspect production currentGoal
@@ -143,6 +149,8 @@ top::CurrentGoal ::= vars::[String] ctx::Context goal::Metaterm
               then structureToTreeName(s)::rest
               else rest,
             [], vars);
+
+  top.usedNames = vars;
 }
 
 

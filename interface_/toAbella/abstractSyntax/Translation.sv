@@ -153,6 +153,11 @@ Type ::= rel::String
   --$wpd_<type name>
   return nameType(substring(5, length(rel), rel));
 }
+function wpdPrimaryComponent
+String ::= prod::String builtTy::Type
+{
+  return "$wpd_" ++ builtTy.pp ++ "__" ++ prod;
+}
 
 --WPD Node
 function wpdNodeTypeName
@@ -187,6 +192,45 @@ function primaryComponent
 String ::= attr::String ty::Type prod::String
 {
   return "$" ++ attr ++ "__" ++ ty.pp ++ "__" ++ prod;
+}
+
+--Structure Equality
+function typeToStructureEqName
+String ::= ty::Type
+{
+  return "$structure_eq__" ++ ty.pp;
+}
+function structureEqToType
+Type ::= s::String
+{
+  return nameType(substring(15, length(s), s));
+}
+function structureEqWPD
+String ::= ty::Type
+{
+  return "$structure_eq__" ++ ty.pp ++ "__wpd";
+}
+function structureEqEqualTheorem
+String ::= ty::Type
+{
+  return "$structure_eq__" ++ ty.pp ++ "__equal";
+}
+function typeToStructureEq_Symm
+String ::= ty::Type
+{
+  return "$structure_eq__" ++ ty.pp ++ "__symm";
+}
+function structureEqProdComponent
+String ::= prod::String
+{
+  return "$structure_eq__" ++ prod;
+}
+
+--Productions
+function isProd
+Boolean ::= name::String
+{
+  return startsWith("prod_", name);
 }
 
 
@@ -407,16 +451,21 @@ Metaterm ::= prods::[String] original::Metaterm treeName::String
   copyOriginalBody.removeWPDTree = treeName;
   local noWPD::Metaterm = copyOriginalBody.removedWPD;
   --Replace the original tree and child list
-  noWPD.replaceName = treeToStructureName(treeName);
-  noWPD.replaceTerm = newTree;
-  local replaceTree::Metaterm = noWPD.replaced;
+   --noWPD.replaceName = treeToStructureName(treeName);
+   --noWPD.replaceTerm = newTree;
+  local replaceTree::Metaterm = noWPD; --.replaced;
   replaceTree.replaceName = treeToChildListName(treeName);
   replaceTree.replaceTerm = newChildList;
   local replaceTreeNode::Metaterm = replaceTree.replaced;
   --
   local thisCase::[Metaterm] =
           --Show user the structure
-        [ eqMetaterm(nameTerm(treeToStructureName(treeName), nothing()), newTree),
+        [ termMetaterm(
+             buildApplication(
+                nameTerm(typeToStructureEqName(prodTy.resultType), nothing()),
+                [nameTerm(treeToStructureName(treeName), nothing()),
+                 newTree]),
+             emptyRestriction()),
           --WPD nonterminal relation for root
           --Add back after removal to get just the name, not the structure, in it
           termMetaterm(
@@ -513,10 +562,24 @@ Metaterm ::= prods::[String] original::Metaterm treeName::String
 function buildChildNames
 [(Type, String)] ::= tys::[Type] usedNames::[String]
 {
+  local uniqueName::String = makeUniqueNameFromTy(head(tys), usedNames);
+  return
+     case tys of
+     | [] -> []
+     | h::t -> (h, makeUniqueNameFromTy(head(tys), usedNames))::
+               buildChildNames(t, uniqueName::usedNames)
+     end;
+}
+
+
+--Make a name that isn't in usedNames, based on the type
+function makeUniqueNameFromTy
+String ::= ty::Type usedNames::[String]
+{
   local base::String =
-        if tyIsNonterminal(head(tys))
-        then substring(3, 4, head(tys).headTypeName.fromJust)
-        else case head(tys).headTypeName of
+        if tyIsNonterminal(ty)
+        then substring(3, 4, ty.headTypeName.fromJust)
+        else case ty.headTypeName of
              | nothing() -> "A"
              | just("integer") -> "N"
              | just(str) ->
@@ -525,15 +588,10 @@ function buildChildNames
                     charsToString([head(stringToChars(substring(0, 1, str))) - 32])
                else substring(0, 1, str)
              end;
-  local uniqueName::String =
-        if contains(base, usedNames)
-        then makeUniqueName(base, 1, usedNames)
-        else base;
   return
-     case tys of
-     | [] -> []
-     | h::t -> (h, uniqueName)::buildChildNames(t, uniqueName::usedNames)
-     end;
+     if contains(base, usedNames)
+     then makeUniqueName(base, 1, usedNames)
+     else base;
 }
 
 

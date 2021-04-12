@@ -34,6 +34,7 @@ top::TopCommand ::= name::String depth::Integer body::Metaterm tree::String
 
   body.attrOccurrences = top.currentState.knownAttrOccurrences;
   body.boundVars = [];
+  body.finalTys = [];
 
   top.errors <-
       case treeTy of
@@ -90,6 +91,7 @@ top::TopCommand ::= name::String params::[String] body::Metaterm
       " : " ++ body.pp ++ ".\n";
 
   body.boundVars = [];
+  body.finalTys = [];
   body.attrOccurrences = top.currentState.knownAttrOccurrences;
   body.knownTrees = body.gatheredTrees;
   top.translation = theoremDeclaration(name, params, body.translation);

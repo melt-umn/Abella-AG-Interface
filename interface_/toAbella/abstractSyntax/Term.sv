@@ -3,7 +3,7 @@ grammar interface_:toAbella:abstractSyntax;
 
 attribute
    translation<Metaterm>, newPremises,
-   boundVars, boundVarsOut, attrOccurrences, knownTrees,
+   boundVars, boundVarsOut, attrOccurrences, knownTrees, finalTys,
    findNameType, foundNameType,
    usedNames,
    replaceName, replaceTerm, replaced,
@@ -80,7 +80,29 @@ top::Metaterm ::=
 aspect production eqMetaterm
 top::Metaterm ::= t1::Term t2::Term
 {
-  top.translation = eqMetaterm(t1.translation, t2.translation);
+  top.translation =
+      case t1.translation, t2.translation of
+      | nameTerm(t1n, _), _ when isTreeStructureName(t1n) ->
+        case findAssociatedScopes(structureToTreeName(t1n), top.finalTys) of
+        | just(just(ty)) ->
+          termMetaterm(
+             buildApplication(nameTerm(typeToStructureEqName(ty), nothing()),
+                              [t1.translation, t2.translation]),
+             emptyRestriction())
+        | _ -> eqMetaterm(t1.translation, t2.translation)
+        end
+      | _, nameTerm(t2n, _) when isTreeStructureName(t2n) ->
+        case findAssociatedScopes(structureToTreeName(t2n), top.finalTys) of
+        | just(just(ty)) ->
+          termMetaterm(
+             buildApplication(nameTerm(typeToStructureEqName(ty), nothing()),
+                              [t1.translation, t2.translation]),
+             emptyRestriction())
+        | _ -> eqMetaterm(t1.translation, t2.translation)
+        end
+      | _, _ -> eqMetaterm(t1.translation, t2.translation)
+      end;
+
 
   t1.boundVars = top.boundVars;
   t2.boundVars = t1.boundVarsOut;
@@ -219,6 +241,14 @@ top::Metaterm ::= b::Binder bindings::[(String, Maybe<Type>)] body::Metaterm
              filter(\ s::String -> contains(s, map(fst, bindings)),
                     top.knownTrees),
              bindings);
+
+  body.finalTys =
+       map(\ p::(String, Maybe<[Type]>) ->
+             case p of
+             | (n, nothing()) -> (n, nothing())
+             | (n, just([])) -> (n, nothing())
+             | (n, just(h::t)) -> (n, just(h))
+             end, head(body.boundVarsOut))::top.finalTys;
 
   top.foundNameType =
       if containsBy(\ p1::(String, Maybe<Type>) p2::(String, Maybe<Type>) ->
@@ -739,7 +769,8 @@ attribute
    errors,
    eqTest<Term>, isEq,
    findParentOf, foundParent,
-   gatheredTrees
+   gatheredTrees,
+   isProdStructure
 occurs on Term;
 
 aspect production applicationTerm
@@ -777,6 +808,12 @@ top::Term ::= f::Term args::TermList
         when isAccessRelation(access) ->
         [nodeToTreeName(treeNode)]
       | _, _ -> []
+      end;
+
+  top.isProdStructure =
+      case f of
+      | nameTerm(prod, _) -> isProd(prod)
+      | _ -> false
       end;
 }
 
@@ -820,6 +857,8 @@ top::Term ::= name::String ty::Maybe<Type>
       if isTreeStructureName(name)
       then [structureToTreeName(name)]
       else [];
+
+  top.isProdStructure = isProd(name);
 }
 
 
@@ -843,6 +882,8 @@ top::Term ::= t1::Term t2::Term
       end;
 
   top.foundParent = nothing();
+
+  top.isProdStructure = false;
 }
 
 
@@ -862,6 +903,8 @@ top::Term ::=
       end;
 
   top.foundParent = nothing();
+
+  top.isProdStructure = false;
 }
 
 
@@ -877,6 +920,8 @@ top::Term ::= ty::Maybe<Type>
   top.isEq = true;
 
   top.foundParent = nothing();
+
+  top.isProdStructure = false;
 }
 
 
@@ -896,6 +941,8 @@ top::Term ::= i::Integer
       end;
 
   top.foundParent = nothing();
+
+  top.isProdStructure = false;
 }
 
 
@@ -918,6 +965,8 @@ top::Term ::= contents::String
       end;
 
   top.foundParent = nothing();
+
+  top.isProdStructure = false;
 }
 
 
@@ -937,6 +986,8 @@ top::Term ::=
       end;
 
   top.foundParent = nothing();
+
+  top.isProdStructure = false;
 }
 
 
@@ -956,6 +1007,8 @@ top::Term ::=
       end;
 
   top.foundParent = nothing();
+
+  top.isProdStructure = false;
 }
 
 
@@ -975,6 +1028,8 @@ top::Term ::= c::String
       end;
 
   top.foundParent = nothing();
+
+  top.isProdStructure = false;
 }
 
 
@@ -996,6 +1051,8 @@ top::Term ::= contents::PairContents
       end;
 
   top.foundParent = nothing();
+
+  top.isProdStructure = false;
 }
 
 
@@ -1017,6 +1074,8 @@ top::Term ::= contents::ListContents
       end;
 
   top.foundParent = nothing();
+
+  top.isProdStructure = false;
 }
 
 
@@ -1137,7 +1196,8 @@ attribute
    errors,
    eqTest<TermList>, isEq,
    findParentOf, foundParent, isArgHere,
-   gatheredTrees
+   gatheredTrees,
+   argList
 occurs on TermList;
 
 aspect production singleTermList
@@ -1165,6 +1225,8 @@ top::TermList ::= t::Term
         just(0) --0-based indexing
       | _ -> nothing()
       end;
+
+  top.argList = [t];
 }
 
 
@@ -1200,5 +1262,7 @@ top::TermList ::= t::Term rest::TermList
         just(0) --0-based indexing
       | _ -> bind(rest.isArgHere, \x::Integer -> just(x + 1))
       end;
+
+  top.argList = t::rest.argList;
 }
 

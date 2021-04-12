@@ -87,7 +87,7 @@ top::Metaterm ::= b::Binder nameBindings::[Pair<String Maybe<Type>>] body::Metat
             nameBindings);
   local bindingsString::String =
      if null(bindings)
-     then error("Empty bindings not allowed; production bindingsMetaterm")
+     then error("Empty bindings not allowed; production bindingsMetaterm (" ++ body.pp ++ ")")
      else foldr1(\ a::String b::String -> a ++ " " ++ b, bindings);
   top.pp = b.pp ++ " " ++ bindingsString ++ ", " ++ body.pp;
   top.isAtomic = false;

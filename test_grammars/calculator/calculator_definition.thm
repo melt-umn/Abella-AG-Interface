@@ -544,6 +544,35 @@ Define $wpd_nt_Root__host : nt_Root -> $node_tree -> prop by
 
 
 
+Type $structure_eq__nt_Expr   nt_Expr -> nt_Expr -> prop.
+
+Define $structure_eq__nt_Expr__host : nt_Expr -> nt_Expr -> prop by
+  $structure_eq__nt_Expr__host (prod_intConst N) (prod_intConst N);
+  $structure_eq__nt_Expr__host (prod_plus E1x E2x)
+                               (prod_plus E3x E4x) :=
+     $structure_eq__nt_Expr E1x E3x /\
+     $structure_eq__nt_Expr E2x E4x;
+  $structure_eq__nt_Expr__host (prod_minus E1x E2x)
+                               (prod_minus E3x E4x) :=
+     $structure_eq__nt_Expr E1x E3x /\
+     $structure_eq__nt_Expr E2x E4x;
+  $structure_eq__nt_Expr__host (prod_mult E1x E2x)
+                               (prod_mult E3x E4x) :=
+     $structure_eq__nt_Expr E1x E3x /\
+     $structure_eq__nt_Expr E2x E4x;
+  $structure_eq__nt_Expr__host (prod_letBind N E1x E2x)
+                               (prod_letBind N E3x E4x) :=
+     $structure_eq__nt_Expr E1x E3x /\
+     $structure_eq__nt_Expr E2x E4x;
+  $structure_eq__nt_Expr__host (prod_name N) (prod_name N).
+
+Type $structure_eq__nt_Root   nt_Root -> nt_Root -> prop.
+
+Define $structure_eq__nt_Root__host : nt_Root -> nt_Root -> prop by
+  $structure_eq__nt_Root__host (prod_root E1x) (prod_root E2x) :=
+     $structure_eq__nt_Expr E1x E2x.
+
+
 
 /*
   I was going to put these axioms in another file.  However, it turns
@@ -671,176 +700,176 @@ skip.
 */   
 Theorem $env__nt_Expr__prod_intConst :
   forall I Node T,
-     T = prod_intConst I ->
+     $structure_eq__nt_Expr T (prod_intConst I) ->
      $env__nt_Expr T Node ->
      $env__nt_Expr__host (prod_intConst I) Node.
 skip.
 Theorem $env__nt_Expr__prod_plus :
   forall E1 E2 Node T,
-     T = prod_plus E1 E2 ->
+     $structure_eq__nt_Expr T (prod_plus E1 E2) ->
      $env__nt_Expr T Node ->
      $env__nt_Expr__host (prod_plus E1 E2) Node.
 skip.
 Theorem $env__nt_Expr__prod_minus :
   forall E1 E2 Node T,
-     T = prod_minus E1 E2 ->
+     $structure_eq__nt_Expr T (prod_minus E1 E2) ->
      $env__nt_Expr T Node ->
      $env__nt_Expr__host (prod_minus E1 E2) Node.
 skip.
 Theorem $env__nt_Expr__prod_mult :
   forall E1 E2 Node T,
-     T = prod_mult E1 E2 ->
+     $structure_eq__nt_Expr T (prod_mult E1 E2) ->
      $env__nt_Expr T Node ->
      $env__nt_Expr__host (prod_mult E1 E2) Node.
 skip.
 Theorem $env__nt_Expr__prod_letBind :
   forall N E Body Node T,
-     T = prod_letBind N E Body ->
+     $structure_eq__nt_Expr T (prod_letBind N E Body) ->
      $env__nt_Expr T Node ->
      $env__nt_Expr__host (prod_letBind N E Body) Node.
 skip.
 Theorem $env__nt_Expr__prod_name :
   forall N Node T,
-     T = prod_name N ->
+     $structure_eq__nt_Expr T (prod_name N) ->
      $env__nt_Expr T Node ->
      $env__nt_Expr__host (prod_name N) Node.
 skip.
 
 Theorem $value__nt_Expr__prod_intConst :
   forall I Node T,
-     T = prod_intConst I ->
+     $structure_eq__nt_Expr T (prod_intConst I) ->
      $value__nt_Expr T Node ->
      $value__nt_Expr__host (prod_intConst I) Node.
 skip.
 Theorem $value__nt_Expr__prod_plus :
   forall E1 E2 Node T,
-     T = prod_plus E1 E2 ->
+     $structure_eq__nt_Expr T (prod_plus E1 E2) ->
      $value__nt_Expr T Node ->
      $value__nt_Expr__host (prod_plus E1 E2) Node.
 skip.
 Theorem $value__nt_Expr__prod_minus :
   forall E1 E2 Node T,
-     T = prod_minus E1 E2 ->
+     $structure_eq__nt_Expr T (prod_minus E1 E2) ->
      $value__nt_Expr T Node ->
      $value__nt_Expr__host (prod_minus E1 E2) Node.
 skip.
 Theorem $value__nt_Expr__prod_mult :
   forall E1 E2 Node T,
-     T = prod_mult E1 E2 ->
+     $structure_eq__nt_Expr T (prod_mult E1 E2) ->
      $value__nt_Expr T Node ->
      $value__nt_Expr__host (prod_mult E1 E2) Node.
 skip.
 Theorem $value__nt_Expr__prod_letBind :
   forall N E Body Node T,
-     T = prod_letBind N E Body ->
+     $structure_eq__nt_Expr T (prod_letBind N E Body) ->
      $value__nt_Expr T Node ->
      $value__nt_Expr__host (prod_letBind N E Body) Node.
 skip.
 Theorem $value__nt_Expr__prod_name :
   forall N Node T,
-     T = prod_name N ->
+     $structure_eq__nt_Expr T (prod_name N) ->
      $value__nt_Expr T Node ->
      $value__nt_Expr__host (prod_name N) Node.
 skip.
 
 Theorem $knownNames__nt_Expr__prod_intConst :
   forall I Node T,
-     T = prod_intConst I ->
+     $structure_eq__nt_Expr T (prod_intConst I) ->
      $knownNames__nt_Expr T Node ->
      $knownNames__nt_Expr__host (prod_intConst I) Node.
 skip.
 Theorem $knownNames__nt_Expr__prod_plus :
   forall E1 E2 Node T,
-     T = prod_plus E1 E2 ->
+     $structure_eq__nt_Expr T (prod_plus E1 E2) ->
      $knownNames__nt_Expr T Node ->
      $knownNames__nt_Expr__host (prod_plus E1 E2) Node.
 skip.
 Theorem $knownNames__nt_Expr__prod_minus :
   forall E1 E2 Node T,
-     T = prod_minus E1 E2 ->
+     $structure_eq__nt_Expr T (prod_minus E1 E2) ->
      $knownNames__nt_Expr T Node ->
      $knownNames__nt_Expr__host (prod_minus E1 E2) Node.
 skip.
 Theorem $knownNames__nt_Expr__prod_mult :
   forall E1 E2 Node T,
-     T = prod_mult E1 E2 ->
+     $structure_eq__nt_Expr T (prod_mult E1 E2) ->
      $knownNames__nt_Expr T Node ->
      $knownNames__nt_Expr__host (prod_mult E1 E2) Node.
 skip.
 Theorem $knownNames__nt_Expr__prod_letBind :
   forall N E Body Node T,
-     T = prod_letBind N E Body ->
+     $structure_eq__nt_Expr T (prod_letBind N E Body) ->
      $knownNames__nt_Expr T Node ->
      $knownNames__nt_Expr__host (prod_letBind N E Body) Node.
 skip.
 Theorem $knownNames__nt_Expr__prod_name :
   forall N Node T,
-     T = prod_name N ->
+     $structure_eq__nt_Expr T (prod_name N) ->
      $knownNames__nt_Expr T Node ->
      $knownNames__nt_Expr__host (prod_name N) Node.
 skip.
 
 Theorem $valExists__nt_Expr__prod_intConst :
   forall I Node T,
-     T = prod_intConst I ->
+     $structure_eq__nt_Expr T (prod_intConst I) ->
      $valExists__nt_Expr T Node ->
      $valExists__nt_Expr__host (prod_intConst I) Node.
 skip.
 Theorem $valExists__nt_Expr__prod_plus :
   forall E1 E2 Node T,
-     T = prod_plus E1 E2 ->
+     $structure_eq__nt_Expr T (prod_plus E1 E2) ->
      $valExists__nt_Expr T Node ->
      $valExists__nt_Expr__host (prod_plus E1 E2) Node.
 skip.
 Theorem $valExists__nt_Expr__prod_minus :
   forall E1 E2 Node T,
-     T = prod_minus E1 E2 ->
+     $structure_eq__nt_Expr T (prod_minus E1 E2) ->
      $valExists__nt_Expr T Node ->
      $valExists__nt_Expr__host (prod_minus E1 E2) Node.
 skip.
 Theorem $valExists__nt_Expr__prod_mult :
   forall E1 E2 Node T,
-     T = prod_mult E1 E2 ->
+     $structure_eq__nt_Expr T (prod_mult E1 E2) ->
      $valExists__nt_Expr T Node ->
      $valExists__nt_Expr__host (prod_mult E1 E2) Node.
 skip.
 Theorem $valExists__nt_Expr__prod_letBind :
   forall N E Body Node T,
-     T = prod_letBind N E Body ->
+     $structure_eq__nt_Expr T (prod_letBind N E Body) ->
      $valExists__nt_Expr T Node ->
      $valExists__nt_Expr__host (prod_letBind N E Body) Node.
 skip.
 Theorem $valExists__nt_Expr__prod_name :
   forall N Node T,
-     T = prod_name N ->
+     $structure_eq__nt_Expr T (prod_name N) ->
      $valExists__nt_Expr T Node ->
      $valExists__nt_Expr__host (prod_name N) Node.
 skip.
 
 Theorem $env__nt_Root__prod_root :
   forall E Node T,
-     T = prod_root E ->
+     $structure_eq__nt_Root T (prod_root E) ->
      $env__nt_Root T Node ->
      $env__nt_Root__host (prod_root E) Node.
 skip.
 
 Theorem $value__nt_Root__prod_root :
   forall E Node T,
-     T = prod_root E ->
+     $structure_eq__nt_Root T (prod_root E) ->
      $value__nt_Root T Node ->
      $value__nt_Root__host (prod_root E) Node.
 skip.
 
 Theorem $knownNames__nt_Root__prod_root :
   forall E Node T,
-     T = prod_root E ->
+     $structure_eq__nt_Root T (prod_root E) ->
      $knownNames__nt_Root T Node ->
      $knownNames__nt_Root__host (prod_root E) Node.
 skip.
 
 Theorem $valExists__nt_Root__prod_root :
   forall E Node T,
-     T = prod_root E ->
+     $structure_eq__nt_Root T (prod_root E) ->
      $valExists__nt_Root T Node ->
      $valExists__nt_Root__host (prod_root E) Node.
 skip.
@@ -858,39 +887,46 @@ Theorem $wpd_node_nt_Root__wpd_node_nt_Root__host :
     $wpd_node_nt_Root__host R NodeTree.
 skip.
 
-Theorem $wpd_node_nt_Expr__prod_intConst :
-  forall N NodeTree,
-    $wpd_nt_Expr (prod_intConst N) NodeTree ->
+Theorem $wpd_nt_Expr__prod_intConst :
+  forall T N NodeTree,
+    $structure_eq__nt_Expr T (prod_intConst N) ->
+    $wpd_nt_Expr T NodeTree ->
     $wpd_nt_Expr__host (prod_intConst N) NodeTree.
 skip.
-Theorem $wpd_node_nt_Expr__prod_plus :
-  forall E1 E2 NodeTree,
-    $wpd_nt_Expr (prod_plus E1 E2) NodeTree ->
+Theorem $wpd_nt_Expr__prod_plus :
+  forall T E1 E2 NodeTree,
+    $structure_eq__nt_Expr T (prod_plus E1 E2) ->
+    $wpd_nt_Expr T NodeTree ->
     $wpd_nt_Expr__host (prod_plus E1 E2) NodeTree.
 skip.
-Theorem $wpd_node_nt_Expr__prod_minus :
-  forall E1 E2 NodeTree,
-    $wpd_nt_Expr (prod_minus E1 E2) NodeTree ->
+Theorem $wpd_nt_Expr__prod_minus :
+  forall T E1 E2 NodeTree,
+    $structure_eq__nt_Expr T (prod_minus E1 E2) ->
+    $wpd_nt_Expr T NodeTree ->
     $wpd_nt_Expr__host (prod_minus E1 E2) NodeTree.
 skip.
-Theorem $wpd_node_nt_Expr__prod_mult :
-  forall E1 E2 NodeTree,
-    $wpd_nt_Expr (prod_mult E1 E2) NodeTree ->
+Theorem $wpd_nt_Expr__prod_mult :
+  forall T E1 E2 NodeTree,
+    $structure_eq__nt_Expr T (prod_mult E1 E2) ->
+    $wpd_nt_Expr T NodeTree ->
     $wpd_nt_Expr__host (prod_mult E1 E2) NodeTree.
 skip.
-Theorem $wpd_node_nt_Expr__prod_letBind :
-  forall N E Body NodeTree,
-    $wpd_nt_Expr (prod_letBind N E Body) NodeTree ->
+Theorem $wpd_nt_Expr__prod_letBind :
+  forall T N E Body NodeTree,
+    $structure_eq__nt_Expr T (prod_letBind N E Body) ->
+    $wpd_nt_Expr T NodeTree ->
     $wpd_nt_Expr__host (prod_letBind N E Body) NodeTree.
 skip.
-Theorem $wpd_node_nt_Expr__prod_name :
-  forall N NodeTree,
-    $wpd_nt_Expr (prod_name N) NodeTree ->
+Theorem $wpd_nt_Expr__prod_name :
+  forall T N NodeTree,
+    $structure_eq__nt_Expr T (prod_name N) ->
+    $wpd_nt_Expr T NodeTree ->
     $wpd_nt_Expr__host (prod_name N) NodeTree.
 skip.
-Theorem $wpd_node_nt_Root__prod_root :
-  forall E NodeTree,
-    $wpd_nt_Root (prod_root E) NodeTree ->
+Theorem $wpd_nt_Root__prod_root :
+  forall T E NodeTree,
+    $structure_eq__nt_Root T (prod_root E) ->
+    $wpd_nt_Root T NodeTree ->
     $wpd_nt_Root__host (prod_root E) NodeTree.
 skip.
 
@@ -965,3 +1001,139 @@ Theorem $wpd__to__valExists__nt_Root : forall Tree NodeTree,
   $wpd_nt_Root Tree NodeTree ->
   $valExists__nt_Root Tree NodeTree.
 skip.
+
+
+%Structural Equality
+Theorem $structure_eq__nt_Expr__equal : forall T1 T2,
+  $structure_eq__nt_Expr T1 T2 -> T1 = T2.
+skip.
+Theorem $structure_eq__nt_Root__equal : forall T1 T2,
+  $structure_eq__nt_Root T1 T2 -> T1 = T2.
+skip.
+
+Theorem $structure_eq__nt_Expr__wpd : forall T NTr,
+  $wpd_nt_Expr T NTr -> $structure_eq__nt_Expr T T.
+skip.
+Theorem $structure_eq__nt_Root__wpd : forall T NTr,
+  $wpd_nt_Root T NTr -> $structure_eq__nt_Root T T.
+skip.
+
+Theorem $structure_eq__nt_Expr__symm : forall T1 T2,
+  $structure_eq__nt_Expr T1 T2 -> $structure_eq__nt_Expr T2 T1.
+skip.
+Theorem $structure_eq__nt_Root__symm : forall T1 T2,
+  $structure_eq__nt_Root T1 T2 -> $structure_eq__nt_Root T2 T1.
+skip.
+
+Theorem $structure_eq__prod_intConst : forall T N,
+  $structure_eq__nt_Expr T (prod_intConst N) ->
+  $structure_eq__nt_Expr__host T (prod_intConst N).
+skip.
+Theorem $structure_eq__prod_plus : forall T E1 E2,
+  $structure_eq__nt_Expr T (prod_plus E1 E2) ->
+  $structure_eq__nt_Expr__host T (prod_plus E1 E2).
+skip.
+Theorem $structure_eq__prod_minus : forall T E1 E2,
+  $structure_eq__nt_Expr T (prod_minus E1 E2) ->
+  $structure_eq__nt_Expr__host T (prod_minus E1 E2).
+skip.
+Theorem $structure_eq__prod_mult : forall T E1 E2,
+  $structure_eq__nt_Expr T (prod_mult E1 E2) ->
+  $structure_eq__nt_Expr__host T (prod_mult E1 E2).
+skip.
+Theorem $structure_eq__prod_letBind : forall T N E1 E2,
+  $structure_eq__nt_Expr T (prod_letBind N E1 E2) ->
+  $structure_eq__nt_Expr__host T (prod_letBind N E1 E2).
+skip.
+Theorem $structure_eq__prod_name : forall T N,
+  $structure_eq__nt_Expr T (prod_name N) ->
+  $structure_eq__nt_Expr__host T (prod_name N).
+skip.
+Theorem $structure_eq__prod_root : forall T E,
+  $structure_eq__nt_Root T (prod_root E) ->
+  $structure_eq__nt_Root__host T (prod_root E).
+skip.
+
+
+
+
+
+
+%This is example stuff for a tactic for working with decorated trees,
+%not actually part of the encoding itself.
+
+Define $structure_eq : nt_Expr -> nt_Expr -> prop by
+  $structure_eq (prod_intConst N) (prod_intConst N);
+  $structure_eq (prod_plus E1 E2) (prod_plus E3 E4) :=
+    $structure_eq E1 E3 /\ $structure_eq E2 E4;
+  $structure_eq (prod_minus E1 E2) (prod_plus E3 E4) :=
+    $structure_eq E1 E3 /\ $structure_eq E2 E4;
+  $structure_eq (prod_mult E1 E2) (prod_plus E3 E4) :=
+    $structure_eq E1 E3 /\ $structure_eq E2 E4;
+  $structure_eq (prod_letBind N E1 E2) (prod_letBind N E3 E4) :=
+    $structure_eq E1 E3 /\ $structure_eq E2 E4;
+  $structure_eq (prod_name N) (prod_name N).
+
+Theorem $structure_eq_eq : forall T1 T2,
+  $structure_eq T1 T2 -> T1 = T2.
+skip.
+
+Theorem $structure_eq_by_eq : forall T NTr,
+  $wpd_nt_Expr T NTr -> $structure_eq T T.
+skip.
+
+
+Theorem $wpd_nt_Expr__prod_plus2 : forall T E1 E2 NTr,
+  $structure_eq T (prod_plus E1 E2) ->
+  $wpd_nt_Expr T NTr ->
+  $wpd_nt_Expr__host (prod_plus E1 E2) NTr.
+skip.
+
+Theorem $wpd_nt_Expr__ntr_nt_Expr : forall T NTr,
+  $wpd_nt_Expr T NTr ->
+  exists Node CL, NTr = $ntr_nt_Expr Node CL.
+skip.
+
+
+
+
+Theorem $x :
+  forall T1 T2 E1 E2 T1_Node T2_Node T2CL E1_Node E1CL E2_Node E2CL,
+    $structure_eq T1 (prod_plus E1 E2) ->
+    $structure_eq T1 T2 ->
+    $wpd_nt_Expr T1 ($ntr_nt_Expr T1_Node
+                     (($ntr_nt_Expr E1_Node E1CL)::
+                      ($ntr_nt_Expr E2_Node E2CL)::nil)) ->
+    $wpd_nt_Expr T2 ($ntr_nt_Expr T2_Node T2CL) ->
+    true.
+intros Structure H6.
+Eq : assert (exists E3 E4,
+               $structure_eq T2 (prod_plus E3 E4) /\
+               $structure_eq E1 E3 /\ $structure_eq E2 E4).
+     apply $structure_eq_eq to Structure.
+     case H6 (keep). %Need to drop to component rel first
+     apply $structure_eq_by_eq to H2. %H2 is WPD NT for T2
+     search.
+case Eq.
+WPD_Comp : apply $wpd_nt_Expr__prod_plus2 to _ H2.
+%Need this to get predictable names for child NodeTrees to
+%   show structure later
+CL_Form : assert (exists E3NTr E4NTr,
+                     T2CL = E3NTr::E4NTr::nil).
+  case WPD_Comp. search.
+case CL_Form.
+case WPD_Comp.
+NodeStruct3 : assert (exists E3_Node E3_CL,
+                         E3NTr = $ntr_nt_Expr E3_Node E3_CL).
+  backchain $wpd_nt_Expr__ntr_nt_Expr.
+case NodeStruct3.
+NodeStruct4 : assert (exists E4_Node E4_CL,
+                         E4NTr = $ntr_nt_Expr E4_Node E4_CL).
+  backchain $wpd_nt_Expr__ntr_nt_Expr.
+case NodeStruct4.
+%Maybe we could shorten it by moving NodeStruct3 and NodeStruct4 into
+%CL_Form, but that would probably end up complicating the proof,
+%which is the absolute last thing I want to do.
+
+
+search. %complete the proof for importing

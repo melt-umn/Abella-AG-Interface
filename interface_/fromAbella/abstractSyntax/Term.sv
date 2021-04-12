@@ -148,6 +148,10 @@ top::Term ::= f::Term args::TermList
        when nameIsAccessRelation(str) ->
        right(attrAccessEmptyMetaterm(treeNodeToVar(treeNodeName),
                                      accessRelationToAttr(str)))
+     --Structural Equality
+     | nameTerm(str, _), consTermList(t1, singleTermList(t2))
+       when nameIsStructureEq(str) ->
+       right(eqMetaterm(t1, t2))
      --Integer Constants
      | nameTerm("$posInt", _), singleTermList(intTerm(i)) ->
        left(intTerm(i))

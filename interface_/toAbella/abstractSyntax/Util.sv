@@ -226,10 +226,10 @@ Maybe<(String, Term)> ::= treename::String hyps::[(String, Metaterm)]
      case hyps of
      | [] -> nothing()
      | (hyp, eqMetaterm(nameTerm(str, _), structure))::_
-       when str == treename ->
+       when str == treename && structure.isProdStructure ->
        just((hyp, new(structure)))
      | (hyp, eqMetaterm(structure, nameTerm(str, _)))::_
-       when str == treename ->
+       when str == treename && structure.isProdStructure ->
        just((hyp, new(structure)))
      | (hyp, mt)::tl -> find_structure_hyp(treename, tl)
      end;

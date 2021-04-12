@@ -69,3 +69,9 @@ String ::= accessRel::String
   return substring(0, loc__, frontRemoved);
 }
 
+function nameIsStructureEq
+Boolean ::= name::String
+{
+  return startsWith("$structure_eq__", name);
+}
+

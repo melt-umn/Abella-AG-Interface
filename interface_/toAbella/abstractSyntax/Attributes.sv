@@ -9,7 +9,7 @@ imports interface_:common;
   structured tree, then use pp to get the text to send to Abella.
 -}
 synthesized attribute translation<a>::a;
-flowtype translation {attrOccurrences, boundVars, knownTrees} on Metaterm;
+flowtype translation {attrOccurrences, boundVars, finalTys, knownTrees} on Metaterm;
 
 --new premises we are adding to the current theorem being defined
 monoid attribute newPremises::[NewPremise] with [], ++;
@@ -64,6 +64,9 @@ inherited attribute wasError::Boolean;
 -}
 inherited attribute boundVars::[[(String, Maybe<[Type]>)]];
 synthesized attribute boundVarsOut::[[(String, Maybe<[Type]>)]];
+--A final list of known types for variables
+--This is mostly so we know the correct types of trees in structure equality
+autocopy attribute finalTys::[[(String, Maybe<Type>)]];
 
 --Names which are known to be trees of any type
 autocopy attribute knownTrees::[String];
@@ -142,6 +145,9 @@ inherited attribute findParentOf::String;
 synthesized attribute foundParent::Maybe<(String, Integer)>;
 synthesized attribute isArgHere::Maybe<Integer>;
 
+--To get a list of term arguments from a TermList
+synthesized attribute argList::[Term];
+
 
 
 --Search for the type of a variable by a particular name at the top level of a metaterm
@@ -194,4 +200,8 @@ propagate gatheredTrees on
    ProofState, Context, Hypothesis
    excluding bindingMetaterm, attrAccessMetaterm, attrAccessEmptyMetaterm,
              nameTerm, applicationTerm;
+
+
+--Whether a term is built by a production at the root
+synthesized attribute isProdStructure::Boolean;
 

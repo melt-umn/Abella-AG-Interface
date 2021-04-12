@@ -17,6 +17,6 @@ calculator_definition.thc: calculator_definition.thm
 part-clean:
 	rm *.out *~ build.xml
 
-full-clean:
+clean:
 	rm *.out *~ build.xml *.thc calculator.jar
 

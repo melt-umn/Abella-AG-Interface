@@ -228,8 +228,7 @@ top::ProofCommand ::= h::HHint hyp::String keep::Boolean
       --Unknown hypotheses---could also let it go through and Abella catch it
       | nothing() -> [errorMsg("Unknown hypothesis " ++ hyp)]
       --Hidden hypotheses should be left alone
-      | just(termMetaterm(applicationTerm(nameTerm(str, _), _), _))
-        when startsWith("$", str) ->
+      | just(mt) when mt.shouldHide ->
         [errorMsg("Unknown hypothesis " ++ hyp)]
       --Disallow case analysis on structure-showing "$<tree>_Tm = <structure>"
       | just(eqMetaterm(nameTerm(str, _), structure))
@@ -305,9 +304,15 @@ top::ProofCommand ::= h::HHint tree::String attr::String
   top.errors <-
       if treeExists && attrExists
       then case structure of
+           | just((_, applicationTerm(nameTerm(prod, _), _)))
+             when isProd(prod) -> []
+           | just((_, nameTerm(prod, _))) when isProd(prod) -> []
+           | just((hyp, tm)) ->
+             [errorMsg("Cannot do case analysis on attribute access" ++
+                       " for tree of unknown structure (" ++ hyp ++ ", just(" ++ tm.pp ++ "))")]
            | nothing() ->
-             [errorMsg("Cannot do case analysis on attribute access for tree of unknown structure")]
-           | just(_) -> []
+             [errorMsg("Cannot do case analysis on attribute access" ++
+                       " for tree of unknown structure (nothing)")]
            end
       else [];
 
@@ -335,6 +340,7 @@ top::ProofCommand ::= h::HHint tree::String attr::String
   local associatedProd::String =
         case structure of
         | just((_, applicationTerm(nameTerm(prod, _), _))) -> prod
+        | just((_, nameTerm(prod, _))) -> prod
         | just((_, tm)) -> error("It should be a production (associatedProd):  " ++ tm.pp)
         | nothing() -> error("It should have a value (associatedProd)")
         end;
@@ -365,16 +371,20 @@ top::ProofCommand ::= h::HHint tree::String attr::String
       [
        --Get structure assumption of correct form (treename = prod_<name> <children>)
        assertTactic(nameHint(equalityName), nothing(),
-                    eqMetaterm(nameTerm(treeToStructureName(associatedTree), nothing()),
-                               structure.fromJust.2))
+                    termMetaterm(
+                       buildApplication(
+                          nameTerm(typeToStructureEqName(treeTy), nothing()),
+                          [nameTerm(treeToStructureName(associatedTree), nothing()),
+                           structure.fromJust.2]),
+                       emptyRestriction()))
       ] ++
        --Need to solve previous goal by case analysis if structure hyp is backward
       ( case findAssociated(structure.fromJust.fst, top.translatedState.hypList) of
         | nothing() -> error("This hypothesis must exist")
         | just(eqMetaterm(nameTerm(str, _), _)) -> []
         | just(eqMetaterm(_, nameTerm(str, _))) ->
-          [ caseTactic(noHint(), structure.fromJust.fst, false),
-            searchTactic() ]
+          [ backchainTactic(nothing(),
+               clearable(false, typeToStructureEq_Symm(treeTy), []), []) ]
         | just(_) ->
           error("This hypothesis must be \"<tree> = structure\" or \"structure = <tree>\"")
         end
@@ -396,6 +406,317 @@ top::ProofCommand ::= h::HHint tree::String attr::String
 }
 
 
+abstract production caseStructure
+top::ProofCommand ::=
+     h::HHint tree::String hyp::String otherTreeHyp::String keep::Boolean
+{
+  {-
+    There is a question of whether this ought to be a tactic or a fake
+    theorem.  Given that its result is to generate an indetermine
+    number of conclusions (one for the root and one for each
+    tree-typed child, I don't think a fake theorem is a good choice.
+  -}
+  top.pp = h.pp ++ "case_structure " ++ tree ++ " in " ++ hyp ++ ".  ";
+
+  top.errors <-
+      if contains(tree, top.currentState.state.gatheredTrees)
+      then []
+      else [errorMsg("Unknown tree " ++ tree)];
+  top.errors <-
+      if startsWith("$", hyp)
+      then [errorMsg("Unknown hypothesis " ++ hyp)]
+      else case hypBody of
+           | nothing() -> [errorMsg("Unknown hypothesis " ++ hyp)]
+           | just(mt) when mt.shouldHide ->
+             [errorMsg("Unknown hypothesis " ++ hyp)]
+           | just(eqMetaterm(nameTerm(tr1, _), nameTerm(tr2, _)))
+             when tr1 == tree || tr2 == tree -> []
+           | just(eqMetaterm(_, _)) ->
+             [errorMsg("Hypothesis " ++ hyp ++ " is not an equality of " ++
+                       tree ++ " and another tree")]
+           | just(_) ->
+             [errorMsg("Hypothesis " ++ hyp ++ " is not an equality")]
+           end;
+  local hypOkay::Boolean = --Don't check more unless this is true
+        !startsWith("$", hyp) && hyp != "_" &&
+        case hypBody of
+        | just(eqMetaterm(nameTerm(tr1, _), nameTerm(tr2, _))) ->
+          tr1 == tree || tr2 == tree
+        | _ -> false
+        end;
+  top.errors <-
+      if startsWith("$", otherTreeHyp)
+      then [errorMsg("Unknown hypothesis " ++ otherTreeHyp)]
+      else case otherTreeHypBody of
+           | nothing() -> [errorMsg("Unknown hypothesis " ++ otherTreeHyp)]
+           | just(mt) when mt.shouldHide ->
+             [errorMsg("Unknown hypothesis " ++ otherTreeHyp)]
+           | just(eqMetaterm(nameTerm(tr, _), trm))
+             when hypOkay && otherTree == tr && trm.isProdStructure ->
+             []
+           | just(eqMetaterm(trm, nameTerm(tr, _)))
+             when hypOkay && otherTree == tr && trm.isProdStructure ->
+             []
+           | just(eqMetaterm(nameTerm(tr, _), trm))
+             when hypOkay && otherTree == tr ->
+             [errorMsg(otherTreeHyp ++ " does not equate " ++ otherTree ++ " to a structure")]
+           | just(eqMetaterm(trm, nameTerm(tr, _)))
+             when hypOkay && otherTree == tr ->
+             [errorMsg(otherTreeHyp ++ " does not equate " ++ otherTree ++ " to a structure")]
+           | just(eqMetaterm(_, _)) when hypOkay ->
+             [errorMsg("Hypothesis " ++ otherTreeHyp ++ " is not an equality of " ++
+                       tree ++ " another tree")]
+           | just(_) ->
+             [errorMsg("Hypothesis " ++ otherTreeHyp ++ " is not an equality")]
+           end;
+  local hypsOkay::Boolean = --Don't check more unless this is true
+        hypOkay && !startsWith("$", otherTreeHyp) && otherTreeHyp != "_" &&
+        case otherTreeHypBody of
+        | just(eqMetaterm(nameTerm(tr, _), trm)) when tree == tr -> trm.isProdStructure
+        | just(eqMetaterm(trm, nameTerm(tr, _))) when tree == tr -> trm.isProdStructure
+        | _ -> false
+        end;
+  top.errors <-
+      if hypsOkay
+      then case prodTy of
+           | nothing() -> [errorMsg("Unknown production " ++ prod)]
+           | _ -> []
+           end
+      else [];
+
+  --Index to make sure the names we use here are new
+  local newIndex::String = toString(genInt());
+  --Find the hypothesis, the other tree, and the structure for the other tree
+  local hypBody::Maybe<Metaterm> =
+        findAssociated(hyp, top.translatedState.hypList);
+  local otherTree::String =
+        case hypBody of
+        | just(eqMetaterm(nameTerm(tr1, _), nameTerm(tr2, _))) ->
+          if tr1 == tree
+          then tr2
+          else tr1
+        | _ -> error("Should not access otherTree with errors")
+        end;
+  local otherTreeHypBody::Maybe<Metaterm> =
+        findAssociated(otherTreeHyp, top.translatedState.hypList);
+  local structure::Term =
+        case findAssociated(otherTreeHyp, top.currentState.state.hypList) of
+        | just(termMetaterm(
+                  applicationTerm(
+                     _,
+                     consTermList(
+                        nameTerm(tr, _),
+                        singleTermList(struct))),
+                  _))
+          when tr == treeToStructureName(otherTree) ->
+          struct
+        | just(termMetaterm(
+                  applicationTerm(
+                     _,
+                     consTermList(
+                        struct,
+                        singleTermList(nameTerm(tr, _)))),
+                  _))
+          when tr == treeToStructureName(otherTree) ->
+          struct
+        | just(other) -> error("This must be eqMetaterm because of how it was found (just(" ++ other.pp ++ "))")
+        | nothing() -> error("This must be eqMetaterm because of how it was found (nothing)")
+        end;
+  local wpdTreeHyp::Maybe<(String, Metaterm)> =
+        find_WPD_nt_hyp(tree, top.translatedState.hypList);
+  --Find the production, its type, its children, etc.
+  local prod::String =
+        case structure of
+        | applicationTerm(nameTerm(str, _), _) -> str
+        | nameTerm(str, _) -> str
+        | _ -> error("This must be one of these because of error checking")
+        end;
+  local prodTy::Maybe<Type> =
+        findAssociated(prod, top.currentState.knownProductions);
+  local prodChildren::[Term] =
+        case structure of
+        | applicationTerm(_, args) -> args.argList
+        | nameTerm(_, _) -> []
+        | _ -> error("This must be one of these because of error checking")
+        end;
+  local buildNewChildren::([(Term, String, Term, Type)] ::= [Term] [Type] [String]) =
+        \ children::[Term] types::[Type] usedNames::[String] ->
+          case children, types of
+          | [], [] -> []
+          | c::ctl, ty::tytl ->
+            if tyIsNonterminal(ty)
+            then let newName::String = makeUniqueNameFromTy(ty, usedNames)
+                 in
+                   (nameTerm(
+                       treeToStructureName(newName),
+                       nothing()),
+                    newName, c, ty)::buildNewChildren(ctl, tytl, newName::usedNames)
+                  end
+            else (c, "_", c, ty)::buildNewChildren(ctl, tytl, usedNames)
+          | _, _ ->
+            error("Must be the same length because children came from output")
+          end;
+      --(New child, new child name, original child, type of child)
+  local newChildren::[(Term, String, Term, Type)] =
+        buildNewChildren(prodChildren, prodTy.fromJust.argumentTypes,
+                         top.translatedState.usedNames);
+  --Generate commands to get the correct structures
+  local eqName::String = "$Eq_" ++ newIndex;
+  local tempName::String = "$Temp_" ++ newIndex;
+  local correctDirectionName::String = "$CorrectDirection_" ++ newIndex;
+  local componentName::String = "$Component_" ++ newIndex;
+  local eqTheoremBody::Metaterm =
+        foldl(\ rest::Metaterm p::(Term, String, Term, Type) ->
+                if tyIsNonterminal(p.4)
+                then andMetaterm(
+                        rest,
+                        termMetaterm(
+                           buildApplication(
+                              nameTerm(typeToStructureEqName(p.4), nothing()),
+                              [p.1, p.3]),
+                           emptyRestriction()))
+                else rest,
+              termMetaterm(
+                 buildApplication(
+                    nameTerm(typeToStructureEqName(prodTy.fromJust.resultType),
+                             nothing()),
+                    [nameTerm(treeToStructureName(tree), nothing()),
+                     buildApplication(nameTerm(prod, nothing()),
+                        map(fst, newChildren))]),
+                 emptyRestriction()), newChildren);
+  local newBindings::[(String, Maybe<Type>)] =
+        foldr(\ p::(Term, String, Term, Type) rest::[(String, Maybe<Type>)] ->
+                if tyIsNonterminal(p.4)
+                then (treeToStructureName(p.2), nothing())::rest
+                else rest,
+              [], newChildren);
+  local eqCommands::[ProofCommand] =
+        [
+         assertTactic(
+            if null(newBindings)
+            then h
+            else nameHint(eqName),
+            nothing(),
+            if null(newBindings)
+            then eqTheoremBody
+            else bindingMetaterm(existsBinder(), newBindings,
+                                 eqTheoremBody)),
+         --prove our assertion
+         applyTactic(
+            noHint(), nothing(),
+            clearable(false, structureEqEqualTheorem(
+                                prodTy.fromJust.resultType), []),
+            [hypApplyArg(otherTreeHyp, [])], [])
+        ] ++
+        ( case hypBody of
+          | just(eqMetaterm(nameTerm(tr1, _), nameTerm(tr2, _))) ->
+            if tr1 == tree
+            then [
+                  assertTactic(nameHint(correctDirectionName), just(length(newChildren) + 3),
+                     termMetaterm(
+                        buildApplication(
+                           nameTerm(typeToStructureEqName(
+                                       prodTy.fromJust.resultType), nothing()),
+                           [nameTerm(treeToStructureName(tr1), nothing()),
+                            nameTerm(treeToStructureName(tr2), nothing())]),
+                        emptyRestriction()))
+                 ]
+            else [
+                  applyTactic(
+                     nameHint(correctDirectionName), nothing(),
+                     clearable(false, typeToStructureEq_Symm(
+                                         prodTy.fromJust.resultType), []),
+                     [hypApplyArg(hyp, [])], [])
+                 ]
+          | _ -> error("Should not access eqCommands with errors")
+          end
+         ) ++
+         [
+          applyTactic(
+             nameHint(componentName), nothing(),
+             clearable(false, structureEqProdComponent(prod), []),
+             [hypApplyArg(correctDirectionName, [])], []),
+          caseTactic(noHint(), componentName, true),
+          applyTactic(
+             noHint(), nothing(),
+             clearable(false, structureEqWPD(prodTy.fromJust.resultType), []),
+             [hypApplyArg(wpdTreeHyp.fromJust.1, [])], []),
+          searchTactic()
+        ] ++
+        --clean it up by case analysis on what we just proved if NT children exist
+        if null(newBindings)
+        then []
+        else [caseTactic(h, eqName, false)];
+  --Get WPD of structure
+  local wpdCompName::String = "$WPD_Comp_" ++ newIndex;
+  local wpdCompCommands::[ProofCommand] =
+        [
+         applyTactic(
+            nameHint(wpdCompName), nothing(),
+            clearable(false, wpdPrimaryComponent(prod,
+                                prodTy.fromJust.resultType), []),
+             --First argument comes from previous assertion---structure equality
+            [hypApplyArg("_", []),
+             hypApplyArg(wpdTreeHyp.fromJust.1, [])],
+            [])
+        ];
+  --Get the form of the child list
+  local clFormName::String = "$CL_Form_" ++ newIndex;
+  local clFormBody::Metaterm =
+        let built::([(String, Maybe<Type>)], Term) =
+            foldr(\ p::(Term, String, Term, Type)
+                    rest::([(String, Maybe<Type>)], Term) ->
+                    if tyIsNonterminal(p.4)
+                    then ((treeToNodeTreeName(p.2), nothing())::rest.1,
+                          consTerm(nameTerm(treeToNodeTreeName(p.2),
+                                            nothing()), rest.2))
+                    else rest,
+                  ([], nilTerm()), newChildren)
+        in
+          let innerBody::Metaterm =
+             eqMetaterm(
+                --find the child list for the tree
+                case wpdTreeHyp of
+                | just((_, termMetaterm(
+                              applicationTerm(
+                                 wpdNT,
+                                 consTermList(tree,
+                                    singleTermList(
+                                       applicationTerm(ntrConstructor,
+                                          consTermList(node,
+                                          singleTermList(childList)))))),
+                              _))) ->
+                  childList
+                | _ -> error("Must have above form")
+                end,
+                built.2)
+          in
+            if null(built.1)
+            then innerBody
+            else bindingMetaterm(existsBinder(), built.1, innerBody)
+          end
+        end;
+  local clCommands::[ProofCommand] =
+        [
+         assertTactic(nameHint(clFormName), nothing(), clFormBody),
+         --Prove assertion
+         caseTactic(noHint(), wpdCompName, false),
+         searchTactic(),
+         --Case analysis after proof to get correct forms
+         caseTactic(noHint(), clFormName, false),
+         caseTactic(noHint(), wpdCompName, false)
+        ];
+  --Turn the child node trees into appropriate forms
+  local nodeStructName::String = "$NodeStruct_" ++ newIndex;
+  local nodeStructCommands::[ProofCommand] = []; --TODO
+  --
+  top.translation =
+      eqCommands ++ wpdCompCommands ++ clCommands ++ nodeStructCommands;
+
+  top.shouldClean = true;
+}
+
+
 abstract production assertTactic
 top::ProofCommand ::= h::HHint depth::Maybe<Integer> m::Metaterm
 {
@@ -409,6 +730,7 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> m::Metaterm
   m.attrOccurrences = top.currentState.knownAttrOccurrences;
 
   m.boundVars = [];
+  m.finalTys = [];
   m.knownTrees = m.gatheredTrees;
   top.translation = --error("Translation not done in assertTactic yet");
       [assertTactic(h, depth, m.translation)];
@@ -626,7 +948,16 @@ top::ProofCommand ::= removes::[String] hasArrow::Boolean
      end;
   top.pp = "clear " ++ (if hasArrow then "-> " else "") ++ buildHyps(removes) ++ ".  ";
 
-  --TODO Should be checking this is an actual hypothesis the user can see
+  top.errors <-
+      foldr(\ n::String rest::[Error] ->
+              case findAssociated(n, top.currentState.state.hypList) of
+              | just(mt) when !mt.shouldHide -> rest
+              | _ -> errorMsg("Unknown hypothesis " ++ n)::rest
+              end,
+            [], removes);
+  --some things we can't eliminate---tree structure hypotheses
+  top.errors <- [];
+
   top.translation = [clearCommand(removes, hasArrow)];
 
   --no real change to proof state
@@ -666,7 +997,9 @@ top::ProofCommand ::= hyps::[String] newText::String
      end;
   top.pp = "abbrev " ++ buildHyps(hyps) ++ " \"" ++ newText ++ "\".  ";
 
-  top.translation = [abbrevCommand(hyps, newText)];
+  --disallow this for now, since we need to know the shape of all terms
+  top.translation = --[abbrevCommand(hyps, newText)];
+      error("Translation not done in abbrev command");
 
   --no real change to proof state
   top.shouldClean = false;

@@ -65,7 +65,9 @@ terminal Unfold_t       'unfold'       lexer classes {TACTIC};
 terminal With_t         'with'         lexer classes {TACTIC};
 terminal Witness_t      'witness'      lexer classes {TACTIC};
 --New for Silver theorems
-terminal ExtInduction_t   'extensible_induction'   lexer classes{TACTIC};
+terminal ExtInduction_t   'extensible_induction'   lexer classes {TACTIC};
+terminal CaseStruct_t     'case_structure'         lexer classes {TACTIC};
+terminal In_t             'in'                     lexer classes {TACTIC};
 
 --To show the current state for PG
 terminal ShowCurrent_t  'Show $$current.'  lexer classes {COMMAND};

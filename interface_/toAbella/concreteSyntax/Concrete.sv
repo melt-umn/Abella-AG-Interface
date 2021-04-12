@@ -71,6 +71,10 @@ concrete productions top::PureCommand_c
   { local treeName::String = case split_AttrAccess_t(a) of | pair(trn, _) -> trn end;
     local attrName::String = case split_AttrAccess_t(a) of | pair(_, atn) -> atn end;
     top.ast = caseAttrAccess(h.ast, treeName, attrName); }
+| h::HHint_c 'case_structure' tree::Id_t 'in' hy::Hyp_c 'with' hy2::Hyp_c '.'
+  { top.ast = caseStructure(h.ast, tree.lexeme, hy.ast, hy2.ast, false); }
+| h::HHint_c 'case_structure' tree::Id_t 'in' hy::Hyp_c 'with' hy2::Hyp_c '(' 'keep' ')' '.'
+  { top.ast = caseStructure(h.ast, tree.lexeme, hy.ast, hy2.ast, true); }
 --| h::HHint_c 'assert' md::MaybeDepth_c m::Metaterm_c '.'
 --  { top.ast = assertTactic(h.ast, md.ast, m.ast); }
 {-The above is the original rule.  Once I added Silver things, this

@@ -25,3 +25,9 @@ This grammar brings together translation of commands to send to Abella
 and translation of Abella's output in a REPL for an interactive
 theorem prover.
 
+
+## silverabella-PG
+This directory holds the Proof General instance for the interface.  To
+use it, its files need to be copied to a directory named
+`silverabella` in the Proof General directory.
+
