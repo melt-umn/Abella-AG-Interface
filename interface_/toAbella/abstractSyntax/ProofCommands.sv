@@ -136,6 +136,17 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> theorem::Clearable
       | left(err) -> [errorMsg(err)]
       | right(_) -> []
       end;
+  top.errors <-
+      foldr(\ a::ApplyArg rest::[Error]->
+              if a.name == "_"
+              then []
+              else case findAssociated(a.name, top.translatedState.hypList) of
+                   --Hidden hypotheses cannot be what the user meant
+                   | just(mt) when !mt.shouldHide -> rest
+                   | _ ->
+                     errorMsg("Unknown hypothesis " ++ a.name)::rest
+                   end,
+            [], args);
 
   top.translation =
       case err_trans of
