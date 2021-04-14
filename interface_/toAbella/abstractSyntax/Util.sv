@@ -253,16 +253,19 @@ Maybe<(String, Term)> ::= treename::String hyps::[(String, Metaterm)]
 }
 
 
---Find the tree which is the parent of the given tree and the term it is in
+--Find the tree which is the immediate parent of the given tree and the term it is in
 function find_parent_tree
 Maybe<(String, Term)> ::= treename::String hyps::[(String, Metaterm)]
 {
   return
      case hyps of
      | [] -> nothing()
-     | (hyp, eqMetaterm(nameTerm(str, _), structure))::_
-       when contains(treename, structure.usedNames) ->
-       just((str, new(structure)))
+     | (hyp, eqMetaterm(nameTerm(prod, _), applicationTerm(f, args)))::_
+       when decorate args with {findParentOf = treename;}.isArgHere.isJust ->
+       just((prod, applicationTerm(f, args)))
+     | (hyp, eqMetaterm(applicationTerm(f, args), nameTerm(prod, _)))::_
+       when decorate args with {findParentOf = treename;}.isArgHere.isJust ->
+       just((prod, applicationTerm(f, args)))
      | _::tl -> find_parent_tree(treename, tl)
      end;
 }

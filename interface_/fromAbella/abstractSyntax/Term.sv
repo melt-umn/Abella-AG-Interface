@@ -139,18 +139,18 @@ top::Term ::= f::Term args::TermList
        consTermList(nameTerm(treeNodeName, _),
                     singleTermList(applicationTerm(nameTerm("$attr_ex", _),
                                                    singleTermList(val))))
-       when nameIsAccessRelation(str) ->
-       right(attrAccessMetaterm(treeNodeToVar(treeNodeName),
+       when isAccessRelation(str) ->
+       right(attrAccessMetaterm(nodeToTreeName(treeNodeName),
                                 accessRelationToAttr(str), val))
      | nameTerm(str, _),
        consTermList(nameTerm(treeNodeName, _),
                     singleTermList(nameTerm("$attr_no", _)))
-       when nameIsAccessRelation(str) ->
-       right(attrAccessEmptyMetaterm(treeNodeToVar(treeNodeName),
+       when isAccessRelation(str) ->
+       right(attrAccessEmptyMetaterm(nodeToTreeName(treeNodeName),
                                      accessRelationToAttr(str)))
      --Structural Equality
      | nameTerm(str, _), consTermList(t1, singleTermList(t2))
-       when nameIsStructureEq(str) ->
+       when isStructureEqName(str) ->
        right(eqMetaterm(t1, t2))
      --Integer Constants
      | nameTerm("$posInt", _), singleTermList(intTerm(i)) ->
@@ -179,8 +179,8 @@ top::Term ::= name::String ty::Maybe<Type>
           --Integers
           | "$zero" -> intTerm(0)
           --Tree structure variable
-          | x when varIsTreeStructure(x) ->
-            nameTerm(treeStructureToVar(x), ty)
+          | x when isTreeStructureName(x) ->
+            nameTerm(structureToTreeName(x), ty)
           --Other
           | _ ->
             if startsWith("$c_", name)

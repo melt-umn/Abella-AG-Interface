@@ -524,7 +524,7 @@ concrete productions top::BindingVars_c
 | i::Id_t
   { top.ast = [i.lexeme]; }
 | i::Id_t rest::BindingVars_c
-  { top.ast = [i.lexeme]; }
+  { top.ast = i.lexeme::rest.ast; }
 
 
 concrete productions top::ExistsBinds_c

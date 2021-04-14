@@ -298,15 +298,15 @@ top::ProcessingErrorMessage ::= argnum::Integer const1::String const2::String
            const1 ++ " and " ++ const2 ++ ")";
 
   top.translation =
-      if varIsTreeStructure(const1)
+      if isTreeStructureName(const1)
       then matchingUnificationFailure(
-              argnum, treeStructureToVar(const1),
-              treeStructureToVar(const2))
-      else if varIsTreeNode(const1)
+              argnum, structureToTreeName(const1),
+              structureToTreeName(const2))
+      else if isTreeNodeName(const1)
       then matchingUnificationFailure(
-              argnum, treeNodeToVar(const1),
-              treeNodeToVar(const2))
-      else if nameIsAccessRelation(const1)
+              argnum, nodeToTreeName(const1),
+              nodeToTreeName(const2))
+      else if isAccessRelation(const1)
       then matchingUnificationFailure(
               argnum, accessRelationToAttr(const1),
               accessRelationToAttr(const2))

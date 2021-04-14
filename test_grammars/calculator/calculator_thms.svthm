@@ -73,7 +73,6 @@ induction on 1. intros. case H1.
 
 
 Set subgoals off.
-Set debug off.
 
 
 Extensible_Theorem value_nonexistence_unique__Expr :
@@ -157,7 +156,8 @@ split.
  apply IH1 to _ H30 H17 H20 H23 H27. apply IH2 to _ H31 H18 H21 H24 H28.
  apply multiply_integer_unique to H25 H29. search.
 %letBind
- intros IH1 IH2 Structure L_Is Eq. case_structure T2 in Eq with Structure.
+ intros IH1 IH2 Structure L_Is Eq.
+ case_structure T2 in Eq with Structure.
  case E.env.
    %E.value does not exist
     skip.
@@ -178,12 +178,12 @@ split.
 
 
 Extensible_Theorem value_unique__Root :
-  forall R1 R2 V1 V2,
+  forall (R1 R2 : nt_Root) V1 V2,
     R1 = R2 ->
     R1.value = V1 -> R2.value = V2 ->
     V1 = V2
 on R1.
-
+skip.
 
 
 
@@ -305,7 +305,7 @@ split.
 %name
  intros Structure. case T.valExists.
    %contains does not return
-    apply attr_is to H6. apply fun__contains__total to H8 H2.
+    apply attr_is to H6. apply fun__contains__total to H8 H3.
     assert (exists B, fun__contains L KnownNames1 B).
     apply H7 to H10.
    %contains returns a value
@@ -322,11 +322,4 @@ on R.
     apply knownNames__implies__valExists__Expr to _ H6.
    %T.valExists has a value
     exists Val. search.
-
-
-
-
-
-
-
 

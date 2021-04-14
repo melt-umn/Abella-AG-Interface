@@ -281,12 +281,12 @@ top::ProofCommand ::= h::HHint tree::String attr::String
       then []
       else [errorMsg("Unknown attribute " ++ attr)];
   top.errors <-
-      if attrExists && treeExists
+      if treeExists && attrExists
       then case findAssociated(attr, top.currentState.knownAttrOccurrences) of
            | nothing() -> [] --covered by checking if attr exists, so impossible here
            | just(nts) ->
              if  wpdNtHyp.isJust
-             then if containsBy(tysEqual, treeTy, nts)
+             then if containsBy(tysEqual, errCheckTy, nts)
                   then []
                   else [errorMsg("Attribute " ++ attr ++ " does not occur on " ++ tree)]
              else []
@@ -399,6 +399,22 @@ top::ProofCommand ::= h::HHint tree::String attr::String
              | just((_, tm)) -> error("Should not get here (caseAttrAccess bad just)")
              | nothing() -> error("Should not get here (caseAttrAccess nothing)")
              end;
+  --We need this to check that the attribute occurs on the tree we said, not the associated tree
+  local errCheckTy::Type =
+        if isInherited
+        then case findParent of
+             | just((_, applicationTerm(nameTerm(prod, _), args))) ->
+               case decorate args with {findParentOf = tree;}.isArgHere of
+               | nothing() -> error("Must exist because of where this came from")
+               | just(ind) ->
+                 case findAssociated(prod, top.currentState.knownProductions) of
+                 | nothing() -> error("Production must exist (" ++ prod ++ ")")
+                 | just(prodTy) -> elemAtIndex(prodTy.argumentTypes, ind)
+                 end
+               end
+             | _ -> error("Should not access errCheckTy with other errors")
+             end
+        else treeTy;
   local pcTheorem::Clearable =
         clearable(false, primaryComponent(attr, treeTy, associatedProd), []);
   top.translation =
