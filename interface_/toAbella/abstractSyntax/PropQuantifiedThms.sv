@@ -227,7 +227,7 @@ Either<String [ProofCommand]> ::=
           | _, _, _ ->
             just("Could not find an instantiation for SubRel in is_list_append")
           end
-        | _ -> just("is_list_append expects 2 arguments but has " ++
+        | _ -> just("is_list_append expects 2 arguments but was given " ++
                     toString(length(args)))
         end;
 
@@ -255,16 +255,192 @@ Maybe<Term> ::= tm::Metaterm
 
 
 
---Find the metaterm which is the body of a hypothesis
-function get_arg_hyp_metaterm
-Maybe<Metaterm> ::= arg::ApplyArg hyps::[(String, Metaterm)]
+{-
+  This is not strictly necessary to handle in the interface in all
+  cases.  For types which are not nonterminals, this theorem can be
+  written in Abella.  However, since equality of trees (really their
+  underlying terms) is handled by a relation which is only shown to
+  the user as equality, we need to figure out the correct theorem to
+  actually use, which requires this to be a fake theorem.
+-}
+function theorem__symmetry
+Either<String [ProofCommand]> ::=
+   h::HHint depth::Maybe<Integer> args::[ApplyArg] withs::[(String, Term)]
+   --The hypotheses in the current context
+   hyps::[(String, Metaterm)]
+   --Types of known productions
+   knownProds::[(String, Type)]
 {
+  --Theorem symmetry[A] : forall (A B : A), A = B -> B = A
+
+  local num::String = toString(genInt());
+  local name_Assert::String = "$Assert_" ++ num;
+  local hyp1::String = "$Hyp_" ++ num;
+
+  local trms::(Term, Term) =
+        case get_arg_hyp_metaterm(head(args), hyps),
+             findAssociated("A", withs),
+             findAssociated("B", withs) of
+          | _, just(atrm), just(btrm) -> (atrm, btrm)
+          | just(eqMetaterm(atrm, btrm)), _, _ ->(new(atrm), new(btrm))
+          | just(termMetaterm(applicationTerm(_,
+                    consTermList(atrm, singleTermList(btrm))), _)), _, _ ->
+            (new(atrm), new(btrm))
+          | _, _, _ -> error("Should not access trms in presence of errors")
+          end;
+  local isNt::Boolean =
+        case get_arg_hyp_metaterm(head(args), hyps) of
+        | just(eqMetaterm(_, _)) -> false
+        | just(termMetaterm(applicationTerm(_,
+                  consTermList(atrm, singleTermList(btrm))), _)) ->
+          true
+        | nothing() ->
+          case trms of
+          | (nameTerm(str, _), _)
+            when isTreeStructureName(str) || isProd(str) -> true
+          | (_, nameTerm(str, _))
+            when isTreeStructureName(str) || isProd(str) -> true
+          | (applicationTerm(nameTerm(str, _), _), _)
+            when isProd(str) -> true
+          | (_, applicationTerm(nameTerm(str, _), _))
+            when isProd(str) -> true
+          | _ -> false
+          end
+        | _ -> false
+        end;
+  local tyNT::Maybe<Type> =
+      case get_arg_hyp_metaterm(head(args), hyps) of
+      | just(termMetaterm(applicationTerm(nameTerm(str, _), _), _)) ->
+        just(structureEqToType(str))
+      | nothing() -> --check trms for productions
+        case trms of
+        | (nameTerm(str, _), _) when isProd(str) ->
+          case findAssociated(str, knownProds) of
+          | nothing() -> nothing()
+          | just(ty) -> just(ty.resultType)
+          end
+        | (_, nameTerm(str, _)) when isProd(str) ->
+          case findAssociated(str, knownProds) of
+          | nothing() -> nothing()
+          | just(ty) -> just(ty.resultType)
+          end
+        | (applicationTerm(nameTerm(str, _), _), _) when isProd(str) ->
+          case findAssociated(str, knownProds) of
+          | nothing() -> nothing()
+          | just(ty) -> just(ty.resultType)
+          end
+        | (_, applicationTerm(nameTerm(str, _), _)) when isProd(str) ->
+          case findAssociated(str, knownProds) of
+          | nothing() -> nothing()
+          | just(ty) -> just(ty.resultType)
+          end
+        | (nameTerm(tr1, _), nameTerm(tr2, _)) -> --go search for WPD assumptions
+          case find_WPD_nt_hyp(structureToTreeName(tr1), hyps) of
+          | just((_, termMetaterm(applicationTerm(nameTerm(str, _), _), _))) -> 
+            just(wpdNt_type(str))
+          | _ -> 
+            case find_WPD_nt_hyp(structureToTreeName(tr1), hyps) of
+            | just((_, termMetaterm(applicationTerm(nameTerm(str, _), _), _))) -> 
+              just(wpdNt_type(str))
+            | _ -> nothing()
+            end
+          end
+        | _ -> nothing()
+        end
+      | _ -> nothing()
+      end;
+  local proof::[ProofCommand] =
+        if isNt
+        then [
+              applyTactic(h, depth,
+                 clearable(false, typeToStructureEq_Symm(tyNT.fromJust), []),
+                 args, [("T1", trms.1), ("T2", trms.2)])
+             ]
+        else [
+              assertTactic(
+                 nameHint(name_Assert), nothing(),
+                 bindingMetaterm(
+                    forallBinder(),
+                    [("$A" ++ num, nothing()), ("$B" ++ num, nothing())],
+                    eqMetaterm(
+                       nameTerm("$A" ++ num, nothing()),
+                       nameTerm("$B" ++ num, nothing())))),
+              --prove assertion
+              introsTactic([hyp1]),
+              caseTactic(noHint(), hyp1, false),
+              searchTactic(),
+              --use assertion
+              applyTactic(h, depth,
+                 clearable(false, name_Assert, []), args,
+                 [("$A" ++ num, trms.1), ("$B" ++ num, trms.2)])
+             ];
+
+  local errorMsg::Maybe<String> =
+        case args of
+        | [arg1] ->
+          case get_arg_hyp_metaterm(arg1, hyps),
+               findAssociated("A", withs),
+               findAssociated("B", withs) of
+          | nothing(), _, _ when arg1.name != "_" ->
+            just("Could not find hypothesis " ++ arg1.name)
+          | nothing(), nothing(), _ ->
+            just("Logic variable found at top level")
+          | nothing(), _, nothing() ->
+            just("Logic variable found at top level")
+          | just(eqMetaterm(atrm1, btrm1)), just(atrm2), just(btrm2) ->
+            if termsEqual(atrm1, atrm2)
+            then if termsEqual(btrm1, btrm2)
+                 then nothing()
+                 else just("While matching argument #1:\nUnification failure for argument B")
+            else just("While matching argument #1:\nUnification failure for argument A")
+          | just(eqMetaterm(atrm1, btrm1)), just(atrm2), nothing() ->
+            if termsEqual(atrm1, atrm2)
+            then nothing()
+            else just("While matching argument #1:\nUnification failure for argument A")
+          | just(eqMetaterm(atrm1, btrm1)), nothing(), just(btrm2) ->
+            if termsEqual(btrm1, btrm2)
+            then nothing()
+            else just("While matching argument #1:\nUnification failure for argument B")
+          | just(eqMetaterm(atrm1, btrm1)), nothing(), nothing() ->
+            nothing()
+          | just(termMetaterm(applicationTerm(nameTerm(structEq, _),
+                    consTermList(atrm1, singleTermList(btrm1))), _)),
+            just(atrm2), just(btrm2) when isStructureEqName(structEq) ->
+            if termsEqual(atrm1, atrm2)
+            then if termsEqual(btrm1, btrm2)
+                 then nothing()
+                 else just("While matching argument #1:\nUnification failure for argument B")
+            else just("While matching argument #1:\nUnification failure for argument A")
+          | just(termMetaterm(applicationTerm(nameTerm(structEq, _),
+                    consTermList(atrm1, singleTermList(btrm1))), _)),
+            just(atrm2), nothing() when isStructureEqName(structEq) ->
+            if termsEqual(atrm1, atrm2)
+            then nothing()
+            else just("While matching argument #1:\nUnification failure for argument A")
+          | just(termMetaterm(applicationTerm(nameTerm(structEq, _),
+                    consTermList(atrm1, singleTermList(btrm1))), _)),
+            nothing(), just(btrm2) when isStructureEqName(structEq) ->
+            if termsEqual(btrm1, btrm2)
+            then nothing()
+            else just("While matching argument #1:\nUnification failure for argument B")
+          | just(termMetaterm(applicationTerm(nameTerm(structEq, _),
+                    consTermList(atrm1, singleTermList(btrm1))), _)),
+            nothing(), nothing() when isStructureEqName(structEq) ->
+            nothing()
+          | just(_), _, _ -> just("While matching argument #1:\nUnification failure")
+          | nothing(), just(atrm), just(btrm) -> nothing()
+          end
+        | _ -> just("symmetry expects 1 argument but was given " ++
+                    toString(length(args)))
+        end;
+
   return
-     case arg of
-     | hypApplyArg(hyp_name, instantiation) ->
-       findAssociated(hyp_name, hyps)
-     | starApplyArg(hyp_name, instantiation) ->
-       findAssociated(hyp_name, hyps)
+     case errorMsg of
+     | just(str) -> left(str)
+     | nothing() ->
+       if (isNt && tyNT.isJust) || !isNt
+       then right(proof)
+       else left("Could not determine tree type for symmetry")
      end;
 }
 

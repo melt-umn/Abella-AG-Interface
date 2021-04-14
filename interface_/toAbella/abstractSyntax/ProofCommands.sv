@@ -158,6 +158,18 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> theorem::Clearable
         | right(prf) -> right(prf)
         | left(err) -> left(err)
         end
+      | clearable(x, "symmetry", y) ->
+        case theorem__symmetry(h, depth, args,
+                map(\ p::(String, Term) ->
+                      (p.1, decorate p.2 with
+                            {knownTrees =
+                             top.currentState.state.gatheredTrees;}.translation),
+                    withs),
+                top.currentState.state.hypList,
+                top.currentState.knownProductions) of
+        | right(prf) -> right(prf)
+        | left(err) -> left(err)
+        end
       | clearable(x, "attr_unique", y) ->
         case theorem__attr_unique(args, withs,
                 top.currentState.state.hypList) of

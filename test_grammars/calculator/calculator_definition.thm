@@ -192,7 +192,7 @@ Define $value__nt_Expr__host : nt_Expr -> $node_tree -> prop by
         $access_$_value_$_nt_Expr Node ($attr_ex MinusResult) /\
         $access_$_value_$_nt_Expr E1Node ($attr_ex E1Value) /\
         $access_$_value_$_nt_Expr E2Node ($attr_ex E2Value) /\
-        $plus_integer E1Value E2Value MinusResult;
+        $minus_integer E1Value E2Value MinusResult;
   %mult
   $value__nt_Expr__host (prod_mult E1 E2)
                      ($ntr_nt_Expr Node (($ntr_nt_Expr E1Node L1)::
@@ -213,7 +213,7 @@ Define $value__nt_Expr__host : nt_Expr -> $node_tree -> prop by
         $access_$_value_$_nt_Expr Node ($attr_ex MultResult) /\
         $access_$_value_$_nt_Expr E1Node ($attr_ex E1Value) /\
         $access_$_value_$_nt_Expr E2Node ($attr_ex E2Value) /\
-        $plus_integer E1Value E2Value MultResult;
+        $multiply_integer E1Value E2Value MultResult;
   %letBind
   $value__nt_Expr__host (prod_letBind N E Body)
                      ($ntr_nt_Expr Node (($ntr_nt_Expr ENode EL)::
@@ -1027,6 +1027,8 @@ Theorem $structure_eq__nt_Root__wpd : forall T NTr,
   $wpd_nt_Root T NTr -> $structure_eq__nt_Root T T.
 skip.
 
+   %These need the arguments to be named T1 and T2
+   %The interface uses T1 and T2 for applying these
 Theorem $structure_eq__nt_Expr__symm : forall T1 T2,
   $structure_eq__nt_Expr T1 T2 -> $structure_eq__nt_Expr T2 T1.
 skip.

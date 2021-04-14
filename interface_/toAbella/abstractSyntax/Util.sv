@@ -154,6 +154,23 @@ TermList ::= args::[Term]
 
 
 
+
+--Find the metaterm which is the body of a hypothesis
+function get_arg_hyp_metaterm
+Maybe<Metaterm> ::= arg::ApplyArg hyps::[(String, Metaterm)]
+{
+  return
+     case arg of
+     | hypApplyArg(hyp_name, instantiation) ->
+       findAssociated(hyp_name, hyps)
+     | starApplyArg(hyp_name, instantiation) ->
+       findAssociated(hyp_name, hyps)
+     end;
+}
+
+
+
+
 --Find the WPD nonterminal relation for a given treename, if it exists
 function find_WPD_nt_hyp
 Maybe<(String, Metaterm)> ::= treename::String hyps::[(String, Metaterm)]

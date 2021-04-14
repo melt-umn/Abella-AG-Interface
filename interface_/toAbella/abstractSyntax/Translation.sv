@@ -206,6 +206,11 @@ String ::= ty::Type
 {
   return "$structure_eq__" ++ ty.pp;
 }
+function isStructureEqName
+Boolean ::= rel::String
+{
+  return startsWith("$structure_eq__", rel);
+}
 function structureEqToType
 Type ::= s::String
 {
