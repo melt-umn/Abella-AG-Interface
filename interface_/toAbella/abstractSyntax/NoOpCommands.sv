@@ -58,7 +58,9 @@ top::NoOpCommand ::= opt::String val::String
                    currentState.knownInheritedAttrs,
                    if opt == "clean"
                    then val == "on"
-                   else currentState.clean))::top.stateListIn;
+                   else currentState.clean,
+                   currentState.knownTheorems)
+      )::top.stateListIn;
 }
 
 

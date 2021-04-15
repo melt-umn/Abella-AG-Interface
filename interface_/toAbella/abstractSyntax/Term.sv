@@ -8,7 +8,7 @@ attribute
    usedNames,
    replaceName, replaceTerm, replaced,
    removeWPDTree, removedWPD,
-   implicationPremises,
+   implicationPremises, conjunctionSplit,
    errors,
    gatheredTrees
 occurs on Metaterm;
@@ -18,6 +18,7 @@ aspect default production
 top::Metaterm ::=
 {
   top.implicationPremises = [];
+  top.conjunctionSplit = [top];
 }
 
 
@@ -139,6 +140,8 @@ top::Metaterm ::= t1::Metaterm t2::Metaterm
       end;
 
   top.implicationPremises = [t1] ++ t2.implicationPremises;
+
+  top.conjunctionSplit = map(impliesMetaterm(t1, _), t2.conjunctionSplit);
 }
 
 
@@ -173,6 +176,8 @@ top::Metaterm ::= t1::Metaterm t2::Metaterm
   top.usedNames = t1.usedNames ++ t2.usedNames;
 
   top.removedWPD = top;
+
+  top.conjunctionSplit = t1.conjunctionSplit ++ t2.conjunctionSplit;
 }
 
 
@@ -307,6 +312,9 @@ top::Metaterm ::= b::Binder bindings::[(String, Maybe<Type>)] body::Metaterm
               then structureToTreeName(p.1)::rest
               else rest,
             body.gatheredTrees, bindings);
+
+  top.conjunctionSplit =
+      map(bindingMetaterm(b, bindings, _), body.conjunctionSplit);
 }
 
 

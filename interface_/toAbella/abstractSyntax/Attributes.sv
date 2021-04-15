@@ -100,6 +100,9 @@ synthesized attribute removedWPD::Metaterm;
 --e.g. A -> B -> C   gives   [A, B]
 synthesized attribute implicationPremises::[Metaterm];
 
+--Split a metaterm around conjunctions
+synthesized attribute conjunctionSplit::[Metaterm];
+
 
 --Whether we are currently in a proof or not
 inherited attribute inProof::Boolean;
@@ -160,6 +163,11 @@ synthesized attribute foundNameType::Either<String Type>;
 --These are just for handling extensible theorems
 synthesized attribute translatedTheorem::Metaterm;
 synthesized attribute numRelevantProds::Integer;
+
+--For any new theorems being added, the name and count of added, hidden WPD premises
+--It is fine to add these before the theorem is proven, since Abella
+--   will still not allow applying it
+synthesized attribute newKnownTheorems::[(String, Metaterm)];
 
 
 

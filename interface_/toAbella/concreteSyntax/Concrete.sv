@@ -37,6 +37,14 @@ concrete productions top::AnyCommand_c
   { top.ast = anyProofCommand(c.ast); }
 | c::CommonCommand_c
   { top.ast = anyNoOpCommand(c.ast); }
+  --These are to get errors which are more helpful, because I forget
+  --   the trees a lot and can't figure out why it doesn't work.
+| 'Extensible_Theorem' name::Id_t ':' body::Metaterm_c '.'
+  { top.ast =
+        anyParseFailure("Must include a tree or trees on which to do induction"); }
+| 'Extensible_Theorem' '[' depth::Number_t ']' name::Id_t ':' body::Metaterm_c '.'
+  { top.ast =
+        anyParseFailure("Must include a tree or trees on which to do induction"); }
 
 {-
 concrete productions top::Command_c

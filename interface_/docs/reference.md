@@ -177,7 +177,10 @@ information to the user.
   all the subgoals manually.  Note that a proof written with `clean`
   set to `on` will not be valid with `clean` set to `off` and vice
   versa.  The main purpose of this option is to allow one to see which
-  cases are being handled automatically.
+  cases are being handled automatically, and thus it should generally
+  be turned on to see what is happening and then turned off without
+  actually solving the case oneself, especially when proofs are being
+  saved.
 
 
 

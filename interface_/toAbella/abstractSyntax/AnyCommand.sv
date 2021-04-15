@@ -61,6 +61,8 @@ top::AnyCommand ::= c::TopCommand
              name, c.numRelevantProds)
         | _ -> top.newProofState
         end;
+  local newKnownTheorems::[(String, Metaterm)] =
+        c.newKnownTheorems ++ currentState.knownTheorems;
   top.stateListOut =
       if top.wasError || top.inProof || !null(c.errors)
       then top.stateListIn
@@ -76,7 +78,9 @@ top::AnyCommand ::= c::TopCommand
                     currentState.knownProductions,
                     currentState.knownWPDRelations,
                     currentState.knownInheritedAttrs,
-                    currentState.clean))::top.stateListIn;
+                    currentState.clean,
+                    newKnownTheorems)
+           )::top.stateListIn;
 }
 
 
@@ -141,7 +145,9 @@ top::AnyCommand ::= c::ProofCommand
                          currentState.knownProductions,
                          currentState.knownWPDRelations,
                          currentState.knownInheritedAttrs,
-                         currentState.clean))::top.stateListIn;
+                         currentState.clean,
+                         currentState.knownTheorems)
+                )::top.stateListIn;
 }
 
 

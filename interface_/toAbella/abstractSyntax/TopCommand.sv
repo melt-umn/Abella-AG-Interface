@@ -8,7 +8,8 @@ nonterminal TopCommand with
    pp,
    translation<TopCommand>, currentState,
    errors, sendCommand, ownOutput,
-   translatedTheorem, numRelevantProds;
+   translatedTheorem, numRelevantProds,
+   newKnownTheorems;
 
 
 
@@ -21,6 +22,9 @@ top::TopCommand ::=
   --These are only relevant to extensible theorems
   top.translatedTheorem = error("Should only access translatedTheorem on extensibleTheoremDeclaration");
   top.numRelevantProds = error("Should only access numRelevantProds on extensibleTheoremDeclaration");
+
+  --Most commands aren't adding any new theorems
+  top.newKnownTheorems = [];
 }
 
 
@@ -62,11 +66,12 @@ top::TopCommand ::= name::String depth::Integer body::Metaterm tree::String
            correctWPDRelation.fromJust, nub(body.usedNames),
            top.currentState.knownProductions);
   top.translation = theoremDeclaration("$" ++ name, [], expandedBody);
-  --we probably also want to send a "split" after this
 
   top.translatedTheorem = body.translation;
   body.knownTrees = tree::body.gatheredTrees;
   top.numRelevantProds = length(correctWPDRelation.fromJust.snd);
+
+  top.newKnownTheorems = [(name, body.translation)];
 }
 
 
@@ -95,6 +100,8 @@ top::TopCommand ::= name::String params::[String] body::Metaterm
   body.attrOccurrences = top.currentState.knownAttrOccurrences;
   body.knownTrees = body.gatheredTrees;
   top.translation = theoremDeclaration(name, params, body.translation);
+
+  top.newKnownTheorems = [(name, body.translation)];
 }
 
 
@@ -218,6 +225,22 @@ top::TopCommand ::= theoremName::String newTheoremNames::[String]
   top.pp = "Split " ++ theoremName ++ namesString ++ ".\n";
 
   top.translation = splitTheorem(theoremName, newTheoremNames);
+
+  local buildnames::([(String, Metaterm)] ::= [Metaterm] [String] Integer) =
+        \ splits::[Metaterm] givenNames::[String] i::Integer ->
+          case splits, givenNames of
+          | [], _ -> []
+          | mt::mttl, [] ->
+            (theoremName ++ toString(i), mt)::buildnames(mttl, [], i + 1)
+          | mt::mttl, n::ntl ->
+            (n, mt)::buildnames(mttl, ntl, i)
+          end;  
+  top.newKnownTheorems =
+      case findAssociated(theoremName, top.currentState.knownTheorems) of
+      | nothing() -> []
+      | just(mt) ->
+        buildnames(mt.conjunctionSplit, newTheoremNames, 1)
+      end;
 }
 
 

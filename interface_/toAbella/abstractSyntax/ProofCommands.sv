@@ -155,6 +155,29 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> theorem::Clearable
       | right(prf) -> prf
       end;
 
+  local foundTheorem::Maybe<Metaterm> =
+        case findAssociated(theorem.name, top.currentState.state.hypList) of
+        | just(mt) -> just(mt)
+        | nothing() ->
+          findAssociated(theorem.name, top.currentState.knownTheorems)
+        end;
+  --Add an extra arg for each WPD assumption
+  --Only hidden premises should be WPD NT, but include WPD node to be safe
+  local buildExpandedArgs::([ApplyArg] ::= [Metaterm]) =
+        \ l::[Metaterm] ->
+          case l of
+          | termMetaterm(applicationTerm(nameTerm(rel, _), _), _)::tl
+            when isWpdTypeName(rel) || isWPD_NodeRelName(rel) ->
+            hypApplyArg("_", [])::buildExpandedArgs(tl)
+          | _ -> args
+          end;
+  local expandedArgs::[ApplyArg] =
+        case foundTheorem of
+        | nothing() ->
+          error("Should not access expandedArgs without known theorem/hyp")
+        | just(mt) ->
+          buildExpandedArgs(mt.implicationPremises)
+        end;
   local err_trans::Either<String [ProofCommand]> =
       case theorem of
       | clearable(_, "is_list_member", _) ->
@@ -193,8 +216,14 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> theorem::Clearable
         | right(thm) -> right([thm])
         | left(err) -> left(err)
         end
-      | _ ->
+      | _ when foundTheorem matches nothing()->
         right([applyTactic(h, depth, theorem, args,
+                 map(\ p::Pair<String Term> ->
+                       pair(p.fst, decorate p.snd with
+                         {knownTrees = top.currentState.state.gatheredTrees;
+                         }.translation), withs))])
+      | _ ->
+        right([applyTactic(h, depth, theorem, expandedArgs,
                  map(\ p::Pair<String Term> ->
                        pair(p.fst, decorate p.snd with
                          {knownTrees = top.currentState.state.gatheredTrees;
@@ -1165,7 +1194,9 @@ top::ProofCommand ::= all::Boolean
 
 
 
-nonterminal Clearable with pp;
+nonterminal Clearable with
+   pp,
+   name;
 
 --I don't know what the star is, but some have it
 abstract production clearable
@@ -1177,6 +1208,8 @@ top::Clearable ::= star::Boolean hyp::String instantiation::[Type]
      else "[" ++ foldr1(\a::String b::String -> a ++ ", " ++ b,
                         map((.pp), instantiation)) ++ "]";
   top.pp = (if star then "*" else "") ++ hyp ++ instString;
+
+  top.name = hyp;
 }
 
 

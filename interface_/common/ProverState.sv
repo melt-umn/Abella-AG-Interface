@@ -11,7 +11,7 @@ grammar interface_:common;
 nonterminal ProverState with
    state, debug, clean,
    knownAttrs, knownAttrOccurrences, knownProductions,
-   knownWPDRelations, knownInheritedAttrs,
+   knownWPDRelations, knownInheritedAttrs, knownTheorems,
    replaceState, replacedState<ProverState>;
 
 
@@ -33,6 +33,11 @@ synthesized attribute knownProductions::[(String, Type)];
 --   going to be helpful in composition.
 synthesized attribute knownWPDRelations::[(String, Type, [String])];
 
+--Theorems we have proven and available
+--Not all theorems are included, but anything with trees visible to user is
+--Also, not everything in here is guaranteed to be available
+synthesized attribute knownTheorems::[(String, Metaterm)];
+
 
 --We often only want to replace the state and leave everything else
 inherited attribute replaceState::ProofState;
@@ -45,6 +50,7 @@ top::ProverState ::=
    attrOccurrences::[(String, [Type])] prods::[(String, Type)]
    wpdRelations::[(String, Type, [String])]
    inheritedAttrs::[String] cleanMode::Boolean
+   knownTheorems::[(String, Metaterm)]
 {
   top.state = state;
   top.debug = debugMode;
@@ -54,10 +60,11 @@ top::ProverState ::=
   top.knownProductions = prods;
   top.knownWPDRelations = wpdRelations;
   top.knownInheritedAttrs = inheritedAttrs;
+  top.knownTheorems = knownTheorems;
 
   top.replacedState =
       proverState(top.replaceState, debugMode, attrs,
                   attrOccurrences, prods, wpdRelations,
-                  inheritedAttrs, cleanMode);
+                  inheritedAttrs, cleanMode, knownTheorems);
 }
 
