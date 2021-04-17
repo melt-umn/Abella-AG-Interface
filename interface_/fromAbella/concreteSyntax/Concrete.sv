@@ -21,12 +21,19 @@ synthesized attribute count::Integer;
 
 
 nonterminal FullDisplay_c with ast<FullDisplay>;
+nonterminal TheoremList_c with ast<TheoremList>;
 
 concrete productions top::FullDisplay_c
 | ei::ExtraInformation_c ps::ProofState_c
   { top.ast = fullDisplay(ei.ast, ps.ast); }
+| tl::TheoremList_c
+  { top.ast = showDisplay(tl.ast); }
+
+concrete productions top::TheoremList_c
 | 'Theorem' name::Id_t ':' body::Metaterm_c '.'
-  { top.ast = showDisplay(name.lexeme, body.ast); }
+  { top.ast = theoremListAdd(name.lexeme, body.ast, theoremListEmpty()); }
+| 'Theorem' name::Id_t ':' body::Metaterm_c '.' rest::TheoremList_c
+  { top.ast = theoremListAdd(name.lexeme, body.ast, rest.ast); }
 
 
 

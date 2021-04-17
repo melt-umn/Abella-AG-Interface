@@ -188,19 +188,41 @@ top::NewPremise ::= tree::String
               which we can't use when generating children
 -}
 function buildExtensibleTheoremBody
-Metaterm ::= original::Metaterm treeName::String treeTy::Type
-             wpdRel::(Type, [String]) usedNames::[String] allProds::[(String, Type)]
+Metaterm ::= thms::[(Metaterm, String, Type, [String])]
+             usedNames::[String] allProds::[(String, Type)]
 {
-  return
-     help_buildExtTheoremBody(wpdRel.snd, original, treeName, treeTy,
-                              usedNames, allProds);
+  return buildAllTheoremBodies(thms, thms, usedNames, allProds);
 }
+
+--We need to know all the theorems to make IH's for the body, so we
+--   have the list we are walking through and the full, original list
+function buildAllTheoremBodies
+Metaterm ::= walkThroughThms::[(Metaterm, String, Type, [String])]
+             allThms::[(Metaterm, String, Type, [String])]
+             usedNames::[String] allProds::[(String, Type)]
+{
+  local thm::(Metaterm, String, Type, [String]) = head(walkThroughThms);
+  local thisThm::Metaterm =
+        buildProdBodies(thm.4, thm.1, thm.2, thm.3, allThms, usedNames, allProds);
+
+  return
+     case walkThroughThms of
+     | [] -> error("Should not be called with an empty list of thms")
+     | [hd] -> thisThm
+     | hd::tl ->
+       andMetaterm(thisThm,
+          buildAllTheoremBodies(tl, allThms, usedNames, allProds))
+     end;
+}
+
+
 
 --Walk through the list of productions and fill them in, and adding in
 --their inductive hypotheses and premises for the current case
-function help_buildExtTheoremBody
+function buildProdBodies
 Metaterm ::= prods::[String] original::Metaterm treeName::String
-             treeTy::Type usedNames::[String] allProds::[(String, Type)]
+             treeTy::Type allThms::[(Metaterm, String, Type, [String])]
+             usedNames::[String] allProds::[(String, Type)]
 {
   local prodName::String = head(prods);
   --The productions referenced in WPD relations had better exist
@@ -302,6 +324,46 @@ Metaterm ::= prods::[String] original::Metaterm treeName::String
                        end,
                 [], children);
   --fake IHs remove WPD nonterminal relation, and replace original tree with child tree
+  local fakeIHs::[Metaterm] =
+        buildFakeIHs(allThms, children);
+  local currentStep::Metaterm =
+        bindingMetaterm(originalBinder, newBindings,
+           foldr(\ m::Metaterm rest::Metaterm ->
+                   impliesMetaterm(m, rest),
+                 replaceTreeNode, fakeIHs ++ thisCase));
+  return
+     case prods of
+     | [] -> error("Should not call buildProdBodies with an empty list")
+     | [_] -> currentStep
+     | _::t ->
+       andMetaterm(currentStep,
+          buildProdBodies(t, original, treeName, treeTy, allThms, usedNames, allProds))
+     end;
+}
+
+function buildFakeIHs
+[Metaterm] ::= thms::[(Metaterm, String, Type, [String])]
+               children::[(Type, String)]
+{
+  local first::(Metaterm, String, Type, [String]) = head(thms);
+  local treeTy::Type = first.3;
+  local treeName::String = first.2;
+  local original::Metaterm = first.1;
+  local originalBinder::Binder =
+        case original of
+        | bindingMetaterm(binder, bindings, body) -> binder
+        | _ -> error("Should not have anything but a binding to start")
+        end;
+  local originalBindings::[(String, Maybe<Type>)] =
+        case original of
+        | bindingMetaterm(binder, bindings, body) -> bindings
+        | _ -> error("Should not have anything but a binding to start")
+        end;
+  local originalBody::Metaterm =
+        case original of
+        | bindingMetaterm(binder, bindings, body) -> body
+        | _ -> error("Should not have anything but a binding to start")
+        end;
   originalBody.removeWPDTree = treeName;
   local removedWPD::Metaterm = originalBody.removedWPD;
   local removedBindings::[(String, Maybe<Type>)] =
@@ -311,7 +373,7 @@ Metaterm ::= prods::[String] original::Metaterm treeName::String
                      (treeToNodeName(treeName), nothing()),
                      (treeToChildListName(treeName), nothing())],
                     originalBindings);
-  local fakeIHs::[Metaterm] =
+  local firstIHs::[Metaterm] =
         foldr(\ p::(Type, String) rest::[Metaterm] ->
                 if tysEqual(p.fst, treeTy)
                 then if null(removedBindings)
@@ -346,18 +408,11 @@ Metaterm ::= prods::[String] original::Metaterm treeName::String
                                                              nothing());}.replaced)::rest
                 else rest,
               [], children);
-  local currentStep::Metaterm =
-        bindingMetaterm(originalBinder, newBindings,
-           foldr(\ m::Metaterm rest::Metaterm ->
-                   impliesMetaterm(m, rest),
-                 replaceTreeNode, fakeIHs ++ thisCase));
+
   return
-     case prods of
-     | [] -> error("Should not call help_buildExtTheoremBody with an empty list")
-     | [_] -> currentStep
-     | _::t ->
-       andMetaterm(currentStep,
-          help_buildExtTheoremBody(t, original, treeName, treeTy, usedNames, allProds))
+     case thms of
+     | [] -> []
+     | hd::tl -> firstIHs ++ buildFakeIHs(tl, children)
      end;
 }
 

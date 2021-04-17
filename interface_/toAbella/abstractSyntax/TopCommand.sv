@@ -30,46 +30,92 @@ top::TopCommand ::=
 
 
 abstract production extensibleTheoremDeclaration
-top::TopCommand ::= name::String depth::Integer body::Metaterm tree::String
+top::TopCommand ::= name::String depth::Integer body::Metaterm trees::[String]
 {
+  local join::(String ::= [String]) =
+        \ l::[String] ->
+          case l of
+          | [] -> ""
+          | [h] -> h
+          | h::t -> h ++ " " ++ join(t)
+          end;
   top.pp =
       "Extensible_Theorem " ++ name ++ "[" ++ toString(depth) ++ "]" ++
-      " : " ++ body.pp ++ " on " ++ tree ++ ".\n";
+      " : " ++ body.pp ++ " on " ++ join(trees) ++ ".\n";
 
   body.attrOccurrences = top.currentState.knownAttrOccurrences;
   body.boundVars = [];
   body.finalTys = [];
 
-  top.errors <-
-      case treeTy of
-      | left(msg) -> [errorMsg(msg)]
-      | right(ty) ->
-        if tyIsNonterminal(ty)
-        then --This needs to be in here (not separate) because it relies on treeTy = right(_)
-             case correctWPDRelation of
-             | just(_) -> []
-             | nothing() ->
-               [errorMsg("Unknown nonterminal type " ++ ty.pp ++
-                         "; did you modify the definition file?")]
-             end
-        else [errorMsg("Cannot prove an extensible theorem based on a " ++
-                       "variable of type " ++ ty.pp ++ "; must be a tree")]
-      end;
+  local thms::[Metaterm] = splitMetaterm(body);
 
-  body.findNameType = tree;
-  local treeTy::Either<String Type> = body.foundNameType;
-  local correctWPDRelation::Maybe<(Type, [String])> =
-        findAssociated(wpdTypeName(treeTy.fromRight), top.currentState.knownWPDRelations);
+  top.errors <-
+      if length(trees) != length(thms)
+      then [errorMsg("Expecting " ++ toString(length(thms)) ++
+                     " induction arguments but got " ++
+                     toString(length(trees)))]
+      else [];
+  top.errors <-
+      foldr(\ p::(String, Metaterm) rest::[Error] ->
+              case decorate p.2 with {
+                      findNameType = p.1;
+                      attrOccurrences =
+                         top.currentState.knownAttrOccurrences;
+                      boundVars = [];
+                   }.foundNameType of
+              | left(msg) -> [errorMsg(msg)]
+              | right(ty) ->
+                if tyIsNonterminal(ty)
+                then
+                  case findAssociated(wpdTypeName(ty),
+                          top.currentState.knownWPDRelations) of
+                  | just(_) -> []
+                  | nothing() ->
+                    [errorMsg("Unknown nonterminal type " ++ ty.pp)]
+                  end
+                else [errorMsg("Cannot prove an extensible theorem based on a " ++
+                               "variable of type " ++ ty.pp ++ "; must be a tree")]
+              end,
+            [], zipLists(trees, thms));
+
+  local groupings::[(Metaterm, String, Type, [String])] =
+        map(\ p::(String, Metaterm) ->
+              let ty::Type = decorate p.2 with {
+                                findNameType = p.1;
+                                attrOccurrences =
+                                   top.currentState.knownAttrOccurrences;
+                                boundVars = [];
+                             }.foundNameType.fromRight
+              in
+              let trans::Metaterm =
+                  decorate p.2 with {
+                     knownTrees = p.1::body.gatheredTrees;
+                     finalTys = [];
+                     boundVars = [];
+                     attrOccurrences =
+                        top.currentState.knownAttrOccurrences;
+                  }.translation
+              in
+                (trans, p.1, ty,
+                 findAssociated(wpdTypeName(ty),
+                    top.currentState.knownWPDRelations).fromJust.2)
+              end
+              end, zipLists(trees, thms));
+
   local expandedBody::Metaterm =
         buildExtensibleTheoremBody(
-           body.translation, tree, treeTy.fromRight,
-           correctWPDRelation.fromJust, nub(body.usedNames),
+           groupings, nub(body.usedNames),
            top.currentState.knownProductions);
   top.translation = theoremDeclaration("$" ++ name, [], expandedBody);
 
+  body.knownTrees = trees ++ body.gatheredTrees;
   top.translatedTheorem = body.translation;
-  body.knownTrees = tree::body.gatheredTrees;
-  top.numRelevantProds = length(correctWPDRelation.fromJust.snd);
+
+  --The number of splits to do when the theorem is done
+  top.numRelevantProds =
+      foldr(\ p::(Metaterm, String, Type, [String]) sum::Integer ->
+              sum + length(p.4),
+            0, groupings);
 
   top.newKnownTheorems = [(name, body.translation)];
 }
@@ -233,7 +279,7 @@ top::TopCommand ::= theoremName::String newTheoremNames::[String]
           | mt::mttl, [] ->
             (theoremName ++ toString(i), mt)::buildnames(mttl, [], i + 1)
           | mt::mttl, n::ntl ->
-            (n, mt)::buildnames(mttl, ntl, i)
+            (n, mt)::buildnames(mttl, ntl, i + 1)
           end;  
   top.newKnownTheorems =
       case findAssociated(theoremName, top.currentState.knownTheorems) of

@@ -73,108 +73,257 @@ induction on 1. intros. case H1.
 
 
 Set subgoals off.
+Set debug off.
 
-
-Extensible_Theorem value_nonexistence_unique__Expr :
-  forall T1 T2 Env,
-    T1 = T2 ->
-    T1.env = Env -> T2.env = Env ->
-    T1.value = < no value > ->
-    T2.value = < no value >
-on T1.
+%/*
+%  Why do we have so many mutual theorems here?  Because we defined the
+%  value equation for letBind as having a value regardless of the
+%  existence of values for the environment or the value for expression
+%  E1 (in <let x = E1 in E2>), we need to consider the cases where they
+%  might not exist, which leads to a lot of theorems we wouldn't
+%  normally need to consider.
+%*/
+%I seem to have problems parsing multi-line comments.
+Extensible_Theorem value_unique_lemmas__Expr :
+  (forall T1 T2,
+     T1 = T2 ->
+     T1.env = <no value> -> T2.env = <no value> ->
+     T1.value = <no value> ->
+     T2.value = <no value>) /\
+  (forall T1 T2 V,
+     T1 = T2 ->
+     T1.env = <no value> -> T2.env = <no value> ->
+     T1.value = V ->
+     T2.value = V) /\
+  (forall T1 T2 Env,
+     T1 = T2 ->
+     T1.env = Env -> T2.env = Env ->
+     T1.value = <no value> ->
+     T2.value = <no value>) /\
+  (forall T1 T2 Env V,
+     T1 = T2 ->
+     T1.env = Env -> T2.env = Env ->
+     T1.value = V ->
+     T2.value = V)
+on T1 T1 T1 T1.
 split.
-%intConst
- intros Structure N_Is Eq. case T1.value.
-%plus
- intros IH1 IH2 Structure Eq. case_structure T2 in Eq with Structure.
- case T1.value.
-   %E.value does not exist
-    case E.env. case E2.env. apply symmetry to H10.
-    apply IH1 to H23 H18 H21 H16. case T2.value. search.
-   %E1.value does not exist
-    case E1.env. case E3.env. apply symmetry to H11.
-    apply IH2 to H24 H20 H23 H17. case T2.value. search. search.
-%minus
- intros IH1 IH2 Structure Eq. case_structure T2 in Eq with Structure.
- case T1.value.
-   %E.value does not exist
-    case E.env. case E2.env. apply symmetry to H10.
-    apply IH1 to H23 H18 H21 H16. case T2.value. search.
-   %E1.value does not exist
-    case E1.env. case E3.env. apply symmetry to H11.
-    apply IH2 to H24 H20 H23 H17. case T2.value. search. search.
-%mult
- intros IH1 IH2 Structure Eq. case_structure T2 in Eq with Structure.
- case T1.value.
-   %E.value does not exist
-    case E.env. case E2.env. apply symmetry to H10.
-    apply IH1 to H23 H18 H21 H16. case T2.value. search.
-   %E1.value does not exist
-    case E1.env. case E3.env. apply symmetry to H11.
-    apply IH2 to H24 H20 H23 H17. case T2.value. search. search.
-%letBind
- intros IH1 IH2 Structure L_Is Eq.
- case_structure T2 in Eq with Structure. clear H13.
- apply symmetry to H10. apply symmetry to H16. clear H10. clear H16.
- case T1.value. skip.
-%name
- intros Structure L_Is Eq. case_structure T2 in Eq with Structure.
- case T1.value. case T2.value.
-   %fun__lookup doesn't return for T2
-    search.
-   %fun__lookup returns for T2
-    assert exists Ret, fun__lookup Env2 L Ret. apply H12 to H16.
+%No Environment, No Value
+ %intConst
+  intros Structure N_Is Eq T1Env T2Env T1Val. case T1.value.
+ %plus
+  intros IH1_NE_NV IH2_NE_NV IH1_NE_V IH2_NE_V IH1_NV IH2_NV
+         IH1_V IH2_V Structure Eq T1Env T2Env T1Val.
+  case_structure T2 in Eq with Structure.
+  Eq1: apply symmetry to H7. Eq2: apply symmetry to H8. clear H7 H8.
+  case E.env. case E2.env. case T1.value.
+    %E.value does not exist
+     apply IH1_NE_NV to Eq1 H13 H16 H19. case T2.value. search.
+    %E1.value does not exist
+     apply IH2_NE_NV to Eq2 H14 H17 H20. case T2.value. search. search.
+ %minus
+  intros IH1_NE_NV IH2_NE_NV IH1_NE_V IH2_NE_V IH1_NV IH2_NV
+         IH1_V IH2_V Structure Eq T1Env T2Env T1Val.
+  case_structure T2 in Eq with Structure.
+  Eq1: apply symmetry to H7. Eq2: apply symmetry to H8. clear H7 H8.
+  case E.env. case E2.env. case T1.value.
+    %E.value does not exist
+     apply IH1_NE_NV to Eq1 H13 H16 H19. case T2.value. search.
+    %E1.value does not exist
+     apply IH2_NE_NV to Eq2 H14 H17 H20. case T2.value. search. search.
+ %mult
+  intros IH1_NE_NV IH2_NE_NV IH1_NE_V IH2_NE_V IH1_NV IH2_NV
+         IH1_V IH2_V Structure Eq T1Env T2Env T1Val.
+  case_structure T2 in Eq with Structure.
+  Eq1: apply symmetry to H7. Eq2: apply symmetry to H8. clear H7 H8.
+  case E.env. case E2.env. case T1.value.
+    %E.value does not exist
+     apply IH1_NE_NV to Eq1 H13 H16 H19. case T2.value. search.
+    %E1.value does not exist
+     apply IH2_NE_NV to Eq2 H14 H17 H20. case T2.value. search. search.
+ %letBind
+  intros IH1_NE_NV IH2_NE_NV IH1_NE_V IH2_NE_V IH1_NV IH2_NV
+         IH1_V IH2_V Structure L_Is Eq T1Env T2Env T1Val.
+  case_structure T2 in Eq with Structure.
+  Eq2 : apply symmetry to H8. clear H8.
+  case E1.env. case E3.env. case T1.value.
+  apply IH2_NE_NV to Eq2 H15 H18 H20. case T2.value. search.
+ %name
+  intros Structure L_Is Eq T1Env T2Env T1Val.
+  case_structure T2 in Eq with Structure.
+  case T2.value. search.
+%No Environment, Value Exists
+ %intConst
+  intros Structure N_Is Eq T1Env T2Env T1Val.
+  case_structure T2 in Eq with Structure.
+  case T1.value. case T2.value. search.
+ %plus
+  intros IH1_NE_NV IH2_NE_NV IH1_NE_V IH2_NE_V IH1_NV IH2_NV
+         IH1_V IH2_V Structure Eq T1Env T2Env T1Val.
+  case_structure T2 in Eq with Structure.
+  Eq1: apply symmetry to H7. Eq2: apply symmetry to H8. clear H7 H8.
+  case E.env. case E2.env. case T1.value.
+  apply IH1_NE_V to Eq1 H13 H16 H19. apply IH2_NE_V to Eq2 H14 H17 H20.
+  case T2.value. apply plus_integer_unique to H21 H27. search.
+ %minus
+  intros IH1_NE_NV IH2_NE_NV IH1_NE_V IH2_NE_V IH1_NV IH2_NV
+         IH1_V IH2_V Structure Eq T1Env T2Env T1Val.
+  case_structure T2 in Eq with Structure.
+  Eq1: apply symmetry to H7. Eq2: apply symmetry to H8. clear H7 H8.
+  case E.env. case E2.env. case T1.value.
+  apply IH1_NE_V to Eq1 H13 H16 H19. apply IH2_NE_V to Eq2 H14 H17 H20.
+  case T2.value. apply minus_integer_unique to H21 H27. search.
+ %mult
+  intros IH1_NE_NV IH2_NE_NV IH1_NE_V IH2_NE_V IH1_NV IH2_NV
+         IH1_V IH2_V Structure Eq T1Env T2Env T1Val.
+  case_structure T2 in Eq with Structure.
+  Eq1: apply symmetry to H7. Eq2: apply symmetry to H8. clear H7 H8.
+  case E.env. case E2.env. case T1.value.
+  apply IH1_NE_V to Eq1 H13 H16 H19. apply IH2_NE_V to Eq2 H14 H17 H20.
+  case T2.value. apply multiply_integer_unique to H21 H27. search.
+ %letBind
+  intros IH1_NE_NV IH2_NE_NV IH1_NE_V IH2_NE_V IH1_NV
+         IH2_NV IH1_V IH2_V Structure L_Is Eq T1Env T2Env T1Val.
+  case_structure T2 in Eq with Structure.
+  Eq1: apply symmetry to H7. Eq2: apply symmetry to H8. clear H7 H8.
+  case E.env. case E2.env. case T1.value.
+  apply IH2_NE_V to Eq2 H15 H18 H20. case T2.value. search.
+ %name
+  intros Structure L_Is Eq T1Env T2Env T1Val. case T1.value.
+%No Value
+ %intConst
+  intros Structure N_Is Eq. case T1.value.
+ %plus
+  intros IH1_NE_NV IH2_NE_NV IH1_NE_V IH2_NE_V
+         IH1_NV IH2_NV IH1_V IH2_V Structure Eq.
+  case_structure T2 in Eq with Structure.
+  case T1.value.
+    %E.value does not exist
+     case E.env. case E2.env. apply symmetry to H10.
+     apply IH1_NV to H23 H18 H21 H16. case T2.value. search.
+    %E1.value does not exist
+     case E1.env. case E3.env. apply symmetry to H11.
+     apply IH2_NV to H24 H20 H23 H17. case T2.value. search. search.
+ %minus
+  intros IH1_NE_NV IH2_NE_NV IH1_NE_V IH2_NE_V
+         IH1_NV IH2_NV IH1_V IH2_V Structure Eq.
+  case_structure T2 in Eq with Structure.
+  case T1.value.
+    %E.value does not exist
+     case E.env. case E2.env. apply symmetry to H10.
+     apply IH1_NV to H23 H18 H21 H16. case T2.value. search.
+    %E1.value does not exist
+     case E1.env. case E3.env. apply symmetry to H11.
+     apply IH2_NV to H24 H20 H23 H17. case T2.value. search. search.
+ %mult
+  intros IH1_NE_NV IH2_NE_NV IH1_NE_V IH2_NE_V
+         IH1_NV IH2_NV IH1_V IH2_V Structure Eq.
+  case_structure T2 in Eq with Structure.
+  case T1.value.
+    %E.value does not exist
+     case E.env. case E2.env. apply symmetry to H10.
+     apply IH1_NV to H23 H18 H21 H16. case T2.value. search.
+    %E1.value does not exist
+     case E1.env. case E3.env. apply symmetry to H11.
+     apply IH2_NV to H24 H20 H23 H17. case T2.value. search. search.
+ %letBind
+  intros IH1_NE_NV IH2_NE_NV IH1_NE_V IH2_NE_V
+         IH1_NV IH2_NV IH1_V IH2_V Structure L_Is Eq.
+  case_structure T2 in Eq with Structure. clear H13.
+  Eq1: apply symmetry to H10. Eq2: apply symmetry to H11. clear H10 H11.
+  case E.env.
+    %E.value does not exist
+     case E2.env.
+       %E2.value does not exist
+        case T1.value. apply IH2_NE_NV to Eq2 H19 H23 H25.
+        case T2.value. search.
+       %E2.value exists
+        apply IH1_NV to Eq1 H17 H21 H18.
+    %E.value exists
+     case E2.env.
+       %E2.value does not exist
+        apply IH1_V to Eq1 H17 H22 H18.
+       %E.value exists
+        apply IH1_V to Eq1 H17 H22 H18. apply append_unique to H19 H24.
+        case T1.value. apply IH2_NV to Eq2 H20 H25 H28. case T2.value.
+        search.
+ %name
+  intros Structure L_Is Eq. case_structure T2 in Eq with Structure.
+  case T1.value. case T2.value.
+    %fun__lookup doesn't return for T2
+     search.
+    %fun__lookup returns for T2
+     assert exists Ret, fun__lookup Env2 L Ret. apply H12 to H16.
+%Value Exists
+ %intConst
+  intros Structure N_Is Eq T1Env T2Env T1Val T2Val.
+  case_structure T2 in Eq with Structure.
+  case T1.value. case T2.value. search.
+ %plus
+  intros IH1_NE_NV IH2_NE_NV IH1_NE_V IH2_NE_V IH1_NV IH2_NV
+         IH1_V IH2_V Structure Eq T1Env T2Env T1Val T2Val.
+  case_structure T2 in Eq with Structure.
+  case E.env. case E2.env. case T1.value.
+  Eq1: apply symmetry to H7. Eq2: apply symmetry to H8.
+  apply IH1_V to Eq1 H13 H16 H19. apply IH2_V to Eq2 H14 H17 H20.
+  apply attr_is to H22. apply attr_is to H23. case T2.value.
+  apply plus_integer_unique to H21 H29. search.
+ %minus
+  intros IH1_NE_NV IH2_NE_NV IH1_NE_V IH2_NE_V IH1_NV IH2_NV
+         IH1_V IH2_V Structure Eq T1Env T2Env T1Val T2Val.
+  case_structure T2 in Eq with Structure.
+  case E.env. case E2.env. case T1.value.
+  Eq1: apply symmetry to H7. Eq2: apply symmetry to H8.
+  apply IH1_V to Eq1 H13 H16 H19. apply IH2_V to Eq2 H14 H17 H20.
+  apply attr_is to H22. apply attr_is to H23. case T2.value.
+  apply minus_integer_unique to H21 H29. search.
+ %mult
+  intros IH1_NE_NV IH2_NE_NV IH1_NE_V IH2_NE_V IH1_NV IH2_NV
+         IH1_V IH2_V Structure Eq T1Env T2Env T1Val T2Val.
+  case_structure T2 in Eq with Structure.
+  case E.env. case E2.env. case T1.value.
+  Eq1: apply symmetry to H7. Eq2: apply symmetry to H8.
+  apply IH1_V to Eq1 H13 H16 H19. apply IH2_V to Eq2 H14 H17 H20.
+  apply attr_is to H22. apply attr_is to H23. case T2.value.
+  apply multiply_integer_unique to H21 H29. search.
+ %letBind
+  intros IH1_NE_NV IH2_NE_NV IH1_NE_V IH2_NE_V IH1_NV IH2_NV
+         IH1_V IH2_V Structure L_Is Eq T1Inv T2Env T1Val.
+  case_structure T2 in Eq with Structure.
+  Eq1: apply symmetry to H7. Eq2: apply symmetry to H8. clear H7 H8.
+  case E.env.
+    %E.value does not exist
+     case E2.env.
+       %E2.value does not exist
+        case T1.value. apply IH2_NE_V to Eq2 H16 H20 H22.
+        case T2.value. search.
+       %E2.value exists
+        apply IH1_NV to Eq1 H14 H18 H15.
+    %E.value does exist
+     case E2.env.
+       %E2.value does not exist
+        apply IH1_V to Eq1 H14 H19 H15.
+       %E2.value exists
+        case T1.value. case T2.value.
+          %E3.value does not exist
+           apply IH1_V to Eq1 H14 H19 H15. apply append_unique to H16 H21.
+           apply IH2_V to Eq2 H17 H22 H24.
+          %E3.value exists
+           apply IH1_V to Eq1 H14 H19 H15. apply append_unique to H16 H21.
+           apply IH2_V to Eq2 H17 H22 H24. case T2.value. search.
+ %name
+  intros Structure L_Is Eq T1Env T2Env T1Val T2Val.
+  case_structure T2 in Eq with Structure.
+  case T1.value. case T2.value.
+    %fun__lookup does not return for T2
+     assert exists Ret, fun__lookup Env2 L Ret. apply H12 to H13.
+    %fun__lookup does return for T2
+     apply fun__lookup__unique to H9 H12. search.
 
-
-Extensible_Theorem value_unique__Expr :
-  forall T1 T2 Env V1 V2,
-    T1 = T2 ->
-    T1.env = Env -> T2.env = Env ->
-    T1.value = V1 -> T2.value = V2 ->
-    V1 = V2
-on T1.
-split.
-%intConst
- intros Structure N_Is Eq. case T1.value.
- case_structure T2 in Eq with Structure. case T2.value. search.
-%plus
- intros IH1 IH2 Structure Eq. case_structure T2 in Eq with Structure.
- case E.env. case E2.env. rename Val1 to Env. case T1.value.
- case T2.value. apply symmetry to H11. apply symmetry to H12.
- apply IH1 to H30 H17 H20 H23 H27. apply IH2 to H31 H18 H21 H24 H28.
- apply plus_integer_unique to H25 H29. search.
-%minus
- intros IH1 IH2 Structure Eq. case_structure T2 in Eq with Structure.
- case E.env. case E2.env. rename Val1 to Env. case T1.value.
- case T2.value. apply symmetry to H11. apply symmetry to H12.
- apply IH1 to H30 H17 H20 H23 H27. apply IH2 to H31 H18 H21 H24 H28.
- apply minus_integer_unique to H25 H29. search.
-%mult
- intros IH1 IH2 Structure Eq. case_structure T2 in Eq with Structure.
- case E.env. case E2.env. rename Val1 to Env. case T1.value.
- case T2.value. apply symmetry to H11. apply symmetry to H12.
- apply IH1 to H30 H17 H20 H23 H27. apply IH2 to H31 H18 H21 H24 H28.
- apply multiply_integer_unique to H25 H29. search.
-%letBind
- intros IH1 IH2 Structure L_Is Eq.
- case_structure T2 in Eq with Structure.
- case E.env.
-   %E.value does not exist
-    skip.
-   %E.value does exist
-    case E2.env.
-      %E2.value does not exist
-       skip.
-      %E2.value does exist
-       Eq1 : apply symmetry to H11. Eq2 : apply symmetry to H12.
-       case T1.value. case T2.value.
-       apply IH1 to Eq1 H18 H23 H19 H24.
-       apply append_unique to H20 H25.
-       apply IH2 to Eq2 H21 H26 H28 H30. search.
-%name
- intros Structure L_Is Eq. case_structure T2 in Eq with Structure.
- case T1.value. case T2.value. apply fun__lookup__unique to H13 H16.
- search.
+Split value_unique_lemmas__Expr as
+  value_unique__no_env__no_value__Expr,
+  value_unique__no_env__Expr,
+  value_unique__no_value__Expr,
+  value_unique__Expr.
 
 
 Extensible_Theorem value_unique__Root :
@@ -183,7 +332,23 @@ Extensible_Theorem value_unique__Root :
     R1.value = V1 -> R2.value = V2 ->
     V1 = V2
 on R1.
-skip.
+%root
+ intros Structure Eq R1Val R2Val.
+ case_structure R2 in Eq with Structure.
+ apply symmetry to H6. case E.env. case E1.env. case R1.value.
+ apply value_unique__Expr to H9 H10 H11 H13. case R2.value. search.
+
+Extensible_Theorem value_unique__no_value__Root :
+  forall (R1 R2 : nt_Root),
+    R1 = R2 ->
+    R1.value = <no value> ->
+    R2.value = <no value>
+on R1.
+%root
+ intros Structure Eq R1Val. case_structure R2 in Eq with Structure.
+ apply symmetry to H6. case E.env. case E1.env. case R1.value.
+ apply value_unique__no_value__Expr to H9 H10 H11 H13. case R2.value.
+ search.
 
 
 

@@ -114,6 +114,17 @@ Pair<[a] [b]> ::= l::[Pair<a b>]
          end;
 }
 
+function zipLists
+[(a, b)] ::= l1::[a] l2::[b]
+{
+  return
+     case l1, l2 of
+     | [], _ -> []
+     | _, [] -> []
+     | h1::t1, h2::t2 -> (h1, h2)::zipLists(t1, t2)
+     end;
+}
+
 function elemAtIndex
 a ::= l::[a] i::Integer
 {
@@ -148,6 +159,20 @@ TermList ::= args::[Term]
        error("Should not call buildApplicationArgs with an empty list")
      | [x] -> singleTermList(x)
      | h::t -> consTermList(h, buildApplicationArgs(t))
+     end;
+}
+
+
+--Split based on actual conjunctions
+--Different than attribute
+function splitMetaterm
+[Metaterm] ::= mt::Metaterm
+{
+  return
+     case mt of
+     | andMetaterm(mt1, mt2) ->
+       splitMetaterm(mt1) ++ splitMetaterm(mt2)
+     | _ -> [mt]
      end;
 }
 

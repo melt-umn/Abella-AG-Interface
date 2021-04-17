@@ -30,11 +30,11 @@ top::FullDisplay ::= msg::ExtraInformation state::ProofState
 
 
 abstract production showDisplay
-top::FullDisplay ::= name::String body::Metaterm
+top::FullDisplay ::= tl::TheoremList
 {
-  top.pp = "Theorem " ++ name ++ " : " ++ body.pp;
+  top.pp = tl.pp;
 
-  top.translation = showDisplay(name, body.translation);
+  top.translation = showDisplay(tl.translation);
 
   --We don't know what the current state is
   top.proof = noProof();
@@ -44,6 +44,31 @@ top::FullDisplay ::= name::String body::Metaterm
 
   --Can't really replace the state if we don't have one
   top.replacedState = top;
+}
+
+
+
+
+
+nonterminal TheoremList with
+   pp,
+   translation<TheoremList>;
+
+abstract production theoremListEmpty
+top::TheoremList ::=
+{
+  top.pp = "";
+
+  top.translation = theoremListEmpty();
+}
+
+abstract production theoremListAdd
+top::TheoremList ::= name::String body::Metaterm rest::TheoremList
+{
+  top.pp = "Theorem " ++ name ++ " : " ++ body.pp ++ ".\n\n" ++ rest.pp;
+
+  top.translation =
+      theoremListAdd(name, body.translation, rest.translation);
 }
 
 
