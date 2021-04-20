@@ -20,6 +20,7 @@ parser cmd_parse::AnyCommand_c
   interface_:toAbella:concreteSyntax;
 }
 
+--We need this to pass down for reading files being imported
 parser file_parse::ListOfCommands_c
 {
   interface_:toAbella:concreteSyntax;
@@ -36,48 +37,9 @@ IOVal<Integer> ::= largs::[String] ioin::IO
   local abella_initial_string::IOVal<String> =
         read_abella_outputs(1, abella.iovalue, abella.io);
 
-  local knownAttrs::[(String, Type)] = [];
-        --[  ("env", functorType(nameType("list"),
-        --              functorType(functorType(nameType("$pair"),
-        --                 functorType(nameType("list"), nameType("$char"))),
-        --                 nameType("integer"))) ), --list (pair string integer)
-        --   ("value", nameType("integer")),
-        --   ("knownNames", functorType(nameType("list"), --list string
-        --                     functorType(nameType("list"), nameType("$char"))) ),
-        --   ("valExists", nameType("$bool"))
-        --];
-  local attrOccurrences::[(String, [Type])] = [];
-        --[  ("env", [nameType("nt_Expr")]),
-        --   ("value", [nameType("nt_Expr"), nameType("nt_Root")]),
-        --   ("knownNames", [nameType("nt_Expr")]),
-        --   ("valExists", [nameType("nt_Expr"), nameType("nt_Root")])
-        --];
-  local knownProds::[(String, Type)] = [];
-        --[  ("prod_intConst", arrowType(nameType("integer"), nameType("nt_Expr")) ),
-        --   ("prod_plus", arrowType(nameType("nt_Expr"),
-        --                    arrowType(nameType("nt_Expr"), nameType("nt_Expr"))) ),
-        --   ("prod_minus", arrowType(nameType("nt_Expr"),
-        --                     arrowType(nameType("nt_Expr"), nameType("nt_Expr"))) ),
-        --   ("prod_mult", arrowType(nameType("nt_Expr"),
-        --                    arrowType(nameType("nt_Expr"), nameType("nt_Expr"))) ),
-        --   ("prod_letBind", arrowType(functorType(nameType("list"), nameType("$char")),
-        --                       arrowType(nameType("nt_Expr"),
-        --                          arrowType(nameType("nt_Expr"), nameType("nt_Expr")))) ),
-        --   ("prod_name", arrowType(functorType(nameType("list"), nameType("$char")),
-        --                    nameType("nt_Expr")) ),
-        --   ("prod_root", arrowType(nameType("nt_Expr"), nameType("nt_Root")))
-        --];
-  local wpdRelations::[(String, Type, [String])] = [];
-        --[  ("$wpd_nt_Expr", nameType("nt_Expr"),
-        --    ["prod_intConst", "prod_plus", "prod_minus",
-        --     "prod_mult", "prod_letBind", "prod_name"]),
-        --   ("$wpd_nt_Root", nameType("nt_Root"), ["prod_root"])
-        --];
-  local knownInheritedAttrs::[String] = ["env", "knownNames"];
-
   return
-     run_step([(-1, proverState(noProof(),false, knownAttrs, attrOccurrences,
-                                knownProds, wpdRelations, knownInheritedAttrs, true, []))],
+     run_step([(-1, proverState(noProof(),false, [], [],
+                                [], [], [], true, []))],
               abella.iovalue, abella_initial_string.io);
 }
 
@@ -99,7 +61,6 @@ IOVal<Integer> ::=
   local state::ProofState = head(stateList).snd.state;
   local debug::Boolean = head(stateList).snd.debug;
   local attrs::[(String, Type)] = head(stateList).snd.knownAttrs;
-  --local attrOccurrences::[(String, [Type])] = head(stateList).snd.knownAttrOccurrences;
   local prods::[(String, Type)] = head(stateList).snd.knownProductions;
 
   {-
@@ -332,18 +293,12 @@ IOVal<String> ::= ioin::IO
 function read_abella_outputs
 IOVal<String> ::= n::Integer abella::ProcessHandle ioin::IO
 {
-  return read_n_abella_outputs(n, abella, ioin);
-}
---Read the given number of outputs from Abella
-function read_n_abella_outputs
-IOVal<String> ::= n::Integer abella::ProcessHandle ioin::IO
-{
   local read::IOVal<String> = readUntilFromProcess(abella, "< ", ioin);
   return
      case n of
      | x when x <= 0 -> error("Should not call read_n_abella_outputs with n <= 0")
      | 1 -> ioval(read.io, removeLastWord(read.iovalue))
-     | x -> read_n_abella_outputs(x - 1, abella, read.io)
+     | x -> read_abella_outputs(x - 1, abella, read.io)
      end;
 }
 

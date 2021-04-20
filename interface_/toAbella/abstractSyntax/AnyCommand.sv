@@ -72,7 +72,7 @@ top::AnyCommand ::= c::TopCommand
                c.newKnownAttrOccurrences,
                c.newKnownProductions,
                c.newKnownWPDRelations,
-               currentState.knownInheritedAttrs,
+               c.newKnownInheritedAttrs,
                currentState.clean,
                c.newKnownTheorems)
            )::top.stateListIn;

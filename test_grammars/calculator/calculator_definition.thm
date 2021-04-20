@@ -50,6 +50,15 @@ Type $access_$_valExists_$_nt_Root   node_Root -> $attrVal bool -> prop.
 
 
 
+/*
+  These are just so the interface can read in which attributes are
+  inherited.  They serve no purpose in the encoding itself.
+*/
+Type $env$_is_inherited          prop.
+Type $knownNames$_is_inherited   prop.
+
+
+
 Type $env__nt_Expr   nt_Expr -> $node_tree -> prop.
 Type $value__nt_Expr   nt_Expr -> $node_tree -> prop.
 Type $knownNames__nt_Expr   nt_Expr -> $node_tree -> prop.
