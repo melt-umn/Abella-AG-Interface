@@ -9,7 +9,7 @@ grammar interface_:toAbella:abstractSyntax;
 
 nonterminal AnyCommand with
    pp,
-   translation<String>, currentState, translatedState, inProof,
+   translation<String>, currentState, translatedState, inProof, abellaFileParser,
    isQuit, isUndo, shouldClean, mustClean,
    sendCommand, ownOutput, numCommandsSent,
    stateListIn, stateListOut, newProofState, wasError;
@@ -20,19 +20,21 @@ top::AnyCommand ::= c::TopCommand
 {
   top.pp = c.pp;
 
-  top.translation = --c.translation.pp;
+  top.translation = c.translation.pp;
       --This is a hack to correctly read input when we import a file
       --Any file we import with this had better be correct, or it will crash or hang
-      case c.translation of
+      {-case c.translation of
       | textCommand(_) ->
         c.translation.pp ++ " Theorem $$done : true. abort. "
       | _ -> c.translation.pp
-      end;
+      end;-}
 
   top.isQuit = false;
   top.isUndo = false;
   top.shouldClean = false;
   top.mustClean = false;
+
+  c.abellaFileParser = top.abellaFileParser;
 
   top.sendCommand =
       if top.inProof
@@ -46,11 +48,8 @@ top::AnyCommand ::= c::TopCommand
            else errors_to_string(c.errors);
   top.numCommandsSent =
       if top.sendCommand
-      then case c.translation of
-           | textCommand(_) -> nothing()
-           | _ -> just(1)
-           end
-      else just(0);
+      then c.numCommandsSent
+      else 0;
 
   local currentState::ProverState = head(top.stateListIn).snd;
   local newProofState::ProofState =
@@ -61,25 +60,21 @@ top::AnyCommand ::= c::TopCommand
              name, c.numRelevantProds)
         | _ -> top.newProofState
         end;
-  local newKnownTheorems::[(String, Metaterm)] =
-        c.newKnownTheorems ++ currentState.knownTheorems;
   top.stateListOut =
       if top.wasError || top.inProof || !null(c.errors)
       then top.stateListIn
-      else (case top.numCommandsSent of
-            | just(x) -> x
-            | nothing() -> -1
-            end, proverState(
-                    newProofState,
-                    currentState.debug,
-                    --Next lines need to change when we actually get it from imports
-                    currentState.knownAttrs,
-                    currentState.knownAttrOccurrences,
-                    currentState.knownProductions,
-                    currentState.knownWPDRelations,
-                    currentState.knownInheritedAttrs,
-                    currentState.clean,
-                    newKnownTheorems)
+      else (top.numCommandsSent,
+            proverState(
+               newProofState,
+               currentState.debug,
+               --Next lines need to change when we actually get it from imports
+               c.newKnownAttrs,
+               c.newKnownAttrOccurrences,
+               c.newKnownProductions,
+               c.newKnownWPDRelations,
+               currentState.knownInheritedAttrs,
+               currentState.clean,
+               c.newKnownTheorems)
            )::top.stateListIn;
 }
 
@@ -117,8 +112,8 @@ top::AnyCommand ::= c::ProofCommand
       else "Error:  Cannot use proof commands outside a proof\n\n";
   top.numCommandsSent =
       if top.sendCommand
-      then just(length(c.translation))
-      else just(0);
+      then length(c.translation)
+      else 0;
 
   c.stateListIn = top.stateListIn;
   c.currentState = top.currentState;
@@ -134,19 +129,17 @@ top::AnyCommand ::= c::ProofCommand
       then top.stateListIn
       else if c.isUndo
            then c.stateListOut
-           else (case top.numCommandsSent of
-                 | just(x) -> x
-                 | nothing() -> -1
-                 end, proverState(
-                         newProofState,
-                         currentState.debug,
-                         currentState.knownAttrs,
-                         currentState.knownAttrOccurrences,
-                         currentState.knownProductions,
-                         currentState.knownWPDRelations,
-                         currentState.knownInheritedAttrs,
-                         currentState.clean,
-                         currentState.knownTheorems)
+           else (top.numCommandsSent,
+                 proverState(
+                    newProofState,
+                    currentState.debug,
+                    currentState.knownAttrs,
+                    currentState.knownAttrOccurrences,
+                    currentState.knownProductions,
+                    currentState.knownWPDRelations,
+                    currentState.knownInheritedAttrs,
+                    currentState.clean,
+                    currentState.knownTheorems)
                 )::top.stateListIn;
 }
 
@@ -171,7 +164,7 @@ top::AnyCommand ::= c::NoOpCommand
   top.numCommandsSent =
       if top.sendCommand
       then c.numCommandsSent
-      else just(0);
+      else 0;
 
   c.stateListIn = top.stateListIn;
   top.stateListOut =
@@ -196,7 +189,7 @@ top::AnyCommand ::= parseErrors::String
 
   top.sendCommand = false;
   top.ownOutput = "Error:  Could not parse:\n" ++ parseErrors;
-  top.numCommandsSent = just(0);
+  top.numCommandsSent = 0;
 
   top.stateListOut = top.stateListIn;
 }

@@ -20,8 +20,8 @@ propagate newPremises on
 
 monoid attribute errors::[Error] with [], ++;
 propagate errors on
-   Metaterm, Term, TermList, ListContents, PairContents,
-   ProofCommand, TopCommand, NoOpCommand;
+   Metaterm, Term, TermList, ListContents, PairContents, HHint,
+   ProofCommand, TopCommand, NoOpCommand, Type, EWitness;
 
 --Whether a command is something to be sent to Abella, or handled internally
 synthesized attribute sendCommand::Boolean;
@@ -29,8 +29,21 @@ synthesized attribute sendCommand::Boolean;
 --Our own output, to show the user in the case we shouldn't send to Abella
 synthesized attribute ownOutput::String;
 
---Number of commands sent, or nothing() if it is the import problem
-synthesized attribute numCommandsSent::Maybe<Integer>;
+--Number of commands sent
+synthesized attribute numCommandsSent::Integer;
+
+
+--We need to pass the parser in for parsing imported files because we
+--   don't have the concrete syntax to build the parser here
+--Return parse errors or the AST given the file contents and file name
+inherited attribute abellaFileParser::(Either<String ListOfCommands> ::= String String);
+
+--Gather new pieces for the prover state from the import
+synthesized attribute newKnownAttrs::[(String, Type)];
+synthesized attribute newKnownAttrOccurrences::[(String, [Type])];
+synthesized attribute newKnownProductions::[(String, Type)];
+synthesized attribute newKnownWPDRelations::[(String, Type, [String])];
+synthesized attribute newKnownTheorems::[(String, Metaterm)];
 
 
 
@@ -163,11 +176,6 @@ synthesized attribute foundNameType::Either<String Type>;
 --These are just for handling extensible theorems
 synthesized attribute translatedTheorem::Metaterm;
 synthesized attribute numRelevantProds::Integer;
-
---For any new theorems being added, the name and count of added, hidden WPD premises
---It is fine to add these before the theorem is proven, since Abella
---   will still not allow applying it
-synthesized attribute newKnownTheorems::[(String, Metaterm)];
 
 
 

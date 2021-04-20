@@ -27,6 +27,9 @@ global integerLessEqName::String = "$lesseq_integer";
 global integerGreaterName::String = "$greater_integer";
 global integerGreaterEqName::String = "$greatereq_integer";
 
+global stringType::Type =
+       functorType(nameType("list"), nameType("$char"));
+
 global appendName::String = "$append";
 
 global pairConstructorName::String = "$pair_c";

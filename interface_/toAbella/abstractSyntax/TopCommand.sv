@@ -6,10 +6,11 @@ grammar interface_:toAbella:abstractSyntax;
 nonterminal TopCommand with
    --pp should always end with a newline
    pp,
-   translation<TopCommand>, currentState,
+   translation<TopCommand>, numCommandsSent, currentState,
+   abellaFileParser,  newKnownAttrs, newKnownAttrOccurrences,
+     newKnownProductions, newKnownWPDRelations, newKnownTheorems,
    errors, sendCommand, ownOutput,
-   translatedTheorem, numRelevantProds,
-   newKnownTheorems;
+   translatedTheorem, numRelevantProds;
 
 
 
@@ -19,12 +20,18 @@ top::TopCommand ::=
   top.sendCommand = true;
   top.ownOutput = "";
 
+  top.numCommandsSent = 1;
+
   --These are only relevant to extensible theorems
   top.translatedTheorem = error("Should only access translatedTheorem on extensibleTheoremDeclaration");
   top.numRelevantProds = error("Should only access numRelevantProds on extensibleTheoremDeclaration");
 
-  --Most commands aren't adding any new theorems
-  top.newKnownTheorems = [];
+  --Most commands aren't adding anything new
+  top.newKnownTheorems = top.currentState.knownTheorems;
+  top.newKnownAttrs = top.currentState.knownAttrs;
+  top.newKnownAttrOccurrences = top.currentState.knownAttrOccurrences;
+  top.newKnownProductions = top.currentState.knownProductions;
+  top.newKnownWPDRelations = top.currentState.knownWPDRelations;
 }
 
 
@@ -50,6 +57,16 @@ top::TopCommand ::= name::String depth::Integer body::Metaterm trees::[String]
   local thms::[Metaterm] = splitMetaterm(body);
 
   top.errors <-
+      if startsWith("$", name)
+      then [errorMsg("Cannot start theorem names with \"$\"")]
+      else [];
+  top.errors <-
+      foldr(\ s::String rest::[Error] ->
+              if startsWith("$", s)
+              then [errorMsg("Identifiers cannot start with \"$\"")] ++ rest
+              else rest,
+            [], trees);
+  top.errors <-
       if length(trees) != length(thms)
       then [errorMsg("Expecting " ++ toString(length(thms)) ++
                      " induction arguments but got " ++
@@ -67,10 +84,10 @@ top::TopCommand ::= name::String depth::Integer body::Metaterm trees::[String]
               | right(ty) ->
                 if tyIsNonterminal(ty)
                 then
-                  case findAssociated(wpdTypeName(ty),
+                  case findWPDRelations(ty,
                           top.currentState.knownWPDRelations) of
-                  | just(_) -> []
-                  | nothing() ->
+                  | h::t -> []
+                  | [] ->
                     [errorMsg("Unknown nonterminal type " ++ ty.pp)]
                   end
                 else [errorMsg("Cannot prove an extensible theorem based on a " ++
@@ -97,8 +114,8 @@ top::TopCommand ::= name::String depth::Integer body::Metaterm trees::[String]
                   }.translation
               in
                 (trans, p.1, ty,
-                 findAssociated(wpdTypeName(ty),
-                    top.currentState.knownWPDRelations).fromJust.2)
+                 head(findWPDRelations(ty,
+                         top.currentState.knownWPDRelations)).3)
               end
               end, zipLists(trees, thms));
 
@@ -117,7 +134,8 @@ top::TopCommand ::= name::String depth::Integer body::Metaterm trees::[String]
               sum + length(p.4),
             0, groupings);
 
-  top.newKnownTheorems = [(name, body.translation)];
+  top.newKnownTheorems =
+      [(name, body.translation)] ++ top.currentState.knownTheorems;
 }
 
 
@@ -141,13 +159,19 @@ top::TopCommand ::= name::String params::[String] body::Metaterm
       "Theorem " ++ name ++ " " ++ paramsString ++
       " : " ++ body.pp ++ ".\n";
 
+  top.errors <-
+      if startsWith("$", name)
+      then [errorMsg("Cannot start theorem names with \"$\"")]
+      else [];
+
   body.boundVars = [];
   body.finalTys = [];
   body.attrOccurrences = top.currentState.knownAttrOccurrences;
   body.knownTrees = body.gatheredTrees;
   top.translation = theoremDeclaration(name, params, body.translation);
 
-  top.newKnownTheorems = [(name, body.translation)];
+  top.newKnownTheorems =
+      [(name, body.translation)] ++ top.currentState.knownTheorems;
 }
 
 
@@ -218,7 +242,7 @@ top::TopCommand ::= importFile::String withs::[(String, String)]
     (constants with result type prop).  We use such constants all over
     in component definitions, so we are going to read the files and
     pass their text to Abella directly.  I'm not handling withs in
-    that case, but there shouldn't be any withs any.
+    that case, but there shouldn't be any withs anyway.
 
     For simplicity, we are going to import our library files normally,
     since they don't include any declared relations.
@@ -228,15 +252,42 @@ top::TopCommand ::= importFile::String withs::[(String, String)]
          "integer_division", "integer_comparison", "lists", "pairs",
          "strings", "attr_val"];
   local readFilename::String = importFile ++ ".thm";
+  local isLibrary::Boolean =
+        contains(fileNameInFilePath(importFile), libraryFiles);
   local fileExists::Boolean = isFile(readFilename, unsafeIO()).iovalue;
+  local fileContents::String = readFile(readFilename, unsafeIO()).iovalue;
+  local fileParsed::Either<String ListOfCommands> =
+        top.abellaFileParser(fileContents, readFilename);
+  local fileAST::ListOfCommands = fileParsed.fromRight;
   top.translation =
-      if contains(fileNameInFilePath(importFile), libraryFiles)
+      if isLibrary
       then importCommand(importFile, withs)
-      else textCommand(readFile(importFile ++ ".thm", unsafeIO()).iovalue);
+      else textCommand(fileAST.pp);
+
+  top.numCommandsSent =
+      if isLibrary
+      then 1
+      else fileAST.numCommandsSent;
+
+  top.newKnownAttrs =
+      fileAST.newAttrs ++ top.currentState.knownAttrs;
+  top.newKnownAttrOccurrences =
+      combineAssociations(fileAST.newAttrOccurrences,
+                          top.currentState.knownAttrOccurrences);
+  top.newKnownProductions =
+      fileAST.newProductions ++ top.currentState.knownProductions;
+  top.newKnownWPDRelations =
+      fileAST.newWPDRelations ++ top.currentState.knownWPDRelations;
+  top.newKnownTheorems =
+      fileAST.newTheorems ++ top.currentState.knownTheorems;
 
   top.errors <-
       if fileExists
-      then []
+      then if !isLibrary && fileParsed.isRight
+           then []
+           else [errorMsg("File \"" ++ readFilename ++
+                          "\" could not be parsed:\n" ++
+                          fileParsed.fromLeft)]
       else [errorMsg("File \"" ++ readFilename ++ "\" does not exist")];
 }
 
@@ -272,6 +323,17 @@ top::TopCommand ::= theoremName::String newTheoremNames::[String]
 
   top.translation = splitTheorem(theoremName, newTheoremNames);
 
+  top.errors <-
+      if startsWith("$", theoremName)
+      then [errorMsg("Cannot start theorem names with \"$\"")]
+      else [];
+  top.errors <-
+      foldr(\ s::String rest::[Error] ->
+              if startsWith("$", s)
+              then [errorMsg("Cannot start theorem names with \"$\"")] ++ rest
+              else rest,
+            [], newTheoremNames);
+
   local buildnames::([(String, Metaterm)] ::= [Metaterm] [String] Integer) =
         \ splits::[Metaterm] givenNames::[String] i::Integer ->
           case splits, givenNames of
@@ -286,7 +348,7 @@ top::TopCommand ::= theoremName::String newTheoremNames::[String]
       | nothing() -> []
       | just(mt) ->
         buildnames(mt.conjunctionSplit, newTheoremNames, 1)
-      end;
+      end ++ top.currentState.knownTheorems;
 }
 
 
@@ -327,7 +389,7 @@ top::TopCommand ::= names::[String] ty::Type
   local namesString::String =
      if null(names)
      then ""
-     else " as " ++ buildNames(names);
+     else buildNames(names);
   top.pp = "Type " ++ namesString ++ "   " ++ ty.pp ++ ".\n";
 
   top.translation = error("Translation not done in typeDeclaration yet");

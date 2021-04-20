@@ -299,6 +299,19 @@ top::Metaterm ::= b::Binder bindings::[(String, Maybe<Type>)] body::Metaterm
                end,
              [], currentScope)
      end;
+  top.errors <-
+      foldr(\ p::(String, Maybe<Type>) rest::[Error] ->
+              if startsWith("$", p.1)
+              then [errorMsg("Identifiers cannot start with \"$\"")] ++ rest
+              else rest,
+             [], bindings);
+  top.errors <-
+      foldr(\ p::(String, Maybe<Type>) rest::[Error] ->
+              case p.2 of
+              | just(ty) -> ty.errors ++ rest
+              | nothing() -> rest
+              end,
+             [], bindings);
 
   top.implicationPremises =
       case b of
@@ -835,10 +848,17 @@ top::Term ::= name::String ty::Maybe<Type>
       else case ty of
            | just(t) when tyIsNonterminal(t) ->
              nameTerm(treeToStructureName(name), ty)
+           | just(nameType("string")) ->
+             nameTerm(name, just(stringType))
            | _ -> nameTerm(name, ty)
            end;
 
   top.boundVarsOut = top.boundVars;
+
+  top.errors <-
+      if startsWith("$", name)
+      then [errorMsg("Identifiers cannot start with \"$\"")]
+      else [];
 
   {-
     I don't think we need to check if this name exists because we

@@ -37,15 +37,15 @@ Maybe<a> ::= key::String scopes::[[Pair<String a>]]
   - The scopes version assumes the key is contained in some scope.
 -}
 function replaceAssociated
-Maybe<[Pair<String a>]> ::= key::String newVal::a container::[Pair<String a>]
+Maybe<[(String, a)]> ::= key::String newVal::a container::[(String, a)]
 {
   return case container of
          | [] -> nothing()
-         | pair(a, b)::tl ->
+         | (a, b)::tl ->
            if key == a
-           then just(pair(a, newVal)::tl)
+           then just((a, newVal)::tl)
            else case replaceAssociated(key, newVal, tl) of
-                | just(newtl) -> just(pair(a, b)::newtl)
+                | just(newtl) -> just((a, b)::newtl)
                 | nothing() -> nothing()
                 end
          end;
@@ -176,6 +176,22 @@ function splitMetaterm
      end;
 }
 
+
+
+
+--Find all the WPD relations for a given type
+function findWPDRelations
+[(String, Type, [String])] ::= ty::Type relations::[(String, Type, [String])]
+{
+  return
+     case relations of
+     | [] -> []
+     | (rel, type, prods)::tl ->
+       if tysEqual(ty, type)
+       then (rel, type, prods)::findWPDRelations(ty, tl)
+       else findWPDRelations(ty, tl)
+     end;
+}
 
 
 

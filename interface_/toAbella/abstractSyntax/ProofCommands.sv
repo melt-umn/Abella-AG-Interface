@@ -79,6 +79,12 @@ top::ProofCommand ::= names::[String]
       | nothing() -> [errorMsg("Cannot use proof commands outside of a proof")]
       | just(_) -> []
       end;
+  top.errors <-
+      foldr(\ s::String rest::[Error] ->
+              if startsWith("$", s)
+              then [errorMsg("Identifiers cannot start with \"$\"")] ++ rest
+              else rest,
+            [], names);
 
   local goalPremises::[Metaterm] =
         top.currentState.state.goal.fromJust.implicationPremises;
@@ -147,6 +153,16 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> theorem::Clearable
                      errorMsg("Unknown hypothesis " ++ a.name)::rest
                    end,
             [], args);
+  top.errors <-
+      foldr(\ a::ApplyArg rest::[Error] ->
+              if startsWith("$", a.name)
+              then [errorMsg("Identifiers cannot start with \"$\"")] ++ rest
+              else rest,
+            [], args);
+  top.errors <-
+      if startsWith("$", theorem.name)
+      then [errorMsg("Identifiers cannot start with \"$\"")]
+      else [];
 
   top.translation =
       case err_trans of
@@ -508,6 +524,10 @@ top::ProofCommand ::=
   -}
   top.pp = h.pp ++ "case_structure " ++ tree ++ " in " ++ hyp ++ ".  ";
 
+  top.errors <-
+      if startsWith("$", tree)
+      then [errorMsg("Identifiers cannot start with \"$\"")]
+      else [];
   top.errors <-
       if contains(tree, top.currentState.state.gatheredTrees)
       then []
@@ -877,6 +897,11 @@ top::ProofCommand ::= ew::[EWitness]
                 {knownTrees = top.currentState.state.gatheredTrees;
                 }.translation, ew))];
 
+  top.errors <-
+      foldr(\ e::EWitness rest::[Error] ->
+              e.errors ++ rest,
+            [], ew);
+
   --no real change to proof state
   top.shouldClean = false;
 }
@@ -901,6 +926,11 @@ top::ProofCommand ::= ew::[EWitness]
                 decorate e with
                 {knownTrees = top.currentState.state.gatheredTrees;
                 }.translation, ew))];
+
+  top.errors <-
+      foldr(\ e::EWitness rest::[Error] ->
+              e.errors ++ rest,
+            [], ew);
 
   --no real change to proof state
   top.shouldClean = false;
@@ -1087,6 +1117,15 @@ top::ProofCommand ::= original::String renamed::String
 {
   top.pp = "rename " ++ original ++ " to " ++ renamed ++ ".  ";
 
+  top.errors <-
+      if startsWith("$", original)
+      then [errorMsg("Identifiers cannot start with \"$\"")]
+      else [];
+  top.errors <-
+      if startsWith("$", renamed)
+      then [errorMsg("Identifiers cannot start with \"$\"")]
+      else [];
+
   {-
     Depending on what they want you to rename, you might have to
     rename a couple of things which map together (renaming a tree
@@ -1151,6 +1190,13 @@ top::ProofCommand ::= names::[String] hyp::Maybe<String>
 
   top.translation = [permuteTactic(names, hyp)];
 
+  top.errors <-
+      foldr(\ s::String rest::[Error] ->
+              if startsWith("$", s)
+              then errorMsg("Identifiers cannot start with \"$\"")::rest
+              else rest,
+            [], names);
+
   top.shouldClean = true;
 }
 
@@ -1173,6 +1219,11 @@ top::ProofCommand ::= id::String all::Boolean
   top.pp = "unfold " ++ id ++ if all then "(all).  " else ".  ";
 
   top.translation = error("Translation not done in unfoldIdentifierTactic yet");
+
+  top.errors <-
+      if startsWith("$", id)
+      then [errorMsg("Identifiers cannot start with \"$\"")]
+      else [];
 
   --no real change to proof state
   top.shouldClean = false;
@@ -1252,7 +1303,7 @@ top::ApplyArg ::= name::String instantiation::[Type]
 
 nonterminal EWitness with
    pp,
-   translation<EWitness>, knownTrees;
+   translation<EWitness>, knownTrees, errors;
 
 abstract production termEWitness
 top::EWitness ::= t::Term
@@ -1269,18 +1320,30 @@ top::EWitness ::= name::String t::Term
   top.pp = name ++ " = " ++ t.pp;
 
   top.translation = nameEWitness(name, t.translation);
+
+  top.errors <-
+      if startsWith("$", name)
+      then [errorMsg("Identifiers cannot start with \"$\"")]
+      else [];
 }
 
 
 
 
 
-nonterminal HHint with pp;
+nonterminal HHint with
+   errors,
+   pp;
 
 abstract production nameHint
 top::HHint ::= name::String
 {
   top.pp = name ++ ": ";
+
+  top.errors <-
+      if startsWith("$", name)
+      then [errorMsg("Identifiers cannot start with \"$\"")]
+      else [];
 }
 
 

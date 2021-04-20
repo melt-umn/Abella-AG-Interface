@@ -20,6 +20,11 @@ parser cmd_parse::AnyCommand_c
   interface_:toAbella:concreteSyntax;
 }
 
+parser file_parse::ListOfCommands_c
+{
+  interface_:toAbella:concreteSyntax;
+}
+
 
 
 
@@ -29,45 +34,45 @@ IOVal<Integer> ::= largs::[String] ioin::IO
   local abella::IOVal<ProcessHandle> = spawnProcess("abella", [], ioin);
   --Abella outputs a welcome message, which we want to clean out
   local abella_initial_string::IOVal<String> =
-        read_abella_outputs(just(1), abella.iovalue, abella.io);
+        read_abella_outputs(1, abella.iovalue, abella.io);
 
-  local knownAttrs::[(String, Type)] =
-        [  ("env", functorType(nameType("list"),
-                      functorType(functorType(nameType("$pair"),
-                         functorType(nameType("list"), nameType("$char"))),
-                         nameType("integer"))) ), --list (pair string integer)
-           ("value", nameType("integer")),
-           ("knownNames", functorType(nameType("list"), --list string
-                             functorType(nameType("list"), nameType("$char"))) ),
-           ("valExists", nameType("$bool"))
-        ];
-  local attrOccurrences::[(String, [Type])] =
-        [  ("env", [nameType("nt_Expr")]),
-           ("value", [nameType("nt_Expr"), nameType("nt_Root")]),
-           ("knownNames", [nameType("nt_Expr")]),
-           ("valExists", [nameType("nt_Expr"), nameType("nt_Root")])
-        ];
-  local knownProds::[(String, Type)] =
-        [  ("prod_intConst", arrowType(nameType("integer"), nameType("nt_Expr")) ),
-           ("prod_plus", arrowType(nameType("nt_Expr"),
-                            arrowType(nameType("nt_Expr"), nameType("nt_Expr"))) ),
-           ("prod_minus", arrowType(nameType("nt_Expr"),
-                             arrowType(nameType("nt_Expr"), nameType("nt_Expr"))) ),
-           ("prod_mult", arrowType(nameType("nt_Expr"),
-                            arrowType(nameType("nt_Expr"), nameType("nt_Expr"))) ),
-           ("prod_letBind", arrowType(functorType(nameType("list"), nameType("$char")),
-                               arrowType(nameType("nt_Expr"),
-                                  arrowType(nameType("nt_Expr"), nameType("nt_Expr")))) ),
-           ("prod_name", arrowType(functorType(nameType("list"), nameType("$char")),
-                            nameType("nt_Expr")) ),
-           ("prod_root", arrowType(nameType("nt_Expr"), nameType("nt_Root")))
-        ];
-  local wpdRelations::[(String, Type, [String])] =
-        [  ("$wpd_nt_Expr", nameType("nt_Expr"),
-            ["prod_intConst", "prod_plus", "prod_minus",
-             "prod_mult", "prod_letBind", "prod_name"]),
-           ("$wpd_nt_Root", nameType("nt_Root"), ["prod_root"])
-        ];
+  local knownAttrs::[(String, Type)] = [];
+        --[  ("env", functorType(nameType("list"),
+        --              functorType(functorType(nameType("$pair"),
+        --                 functorType(nameType("list"), nameType("$char"))),
+        --                 nameType("integer"))) ), --list (pair string integer)
+        --   ("value", nameType("integer")),
+        --   ("knownNames", functorType(nameType("list"), --list string
+        --                     functorType(nameType("list"), nameType("$char"))) ),
+        --   ("valExists", nameType("$bool"))
+        --];
+  local attrOccurrences::[(String, [Type])] = [];
+        --[  ("env", [nameType("nt_Expr")]),
+        --   ("value", [nameType("nt_Expr"), nameType("nt_Root")]),
+        --   ("knownNames", [nameType("nt_Expr")]),
+        --   ("valExists", [nameType("nt_Expr"), nameType("nt_Root")])
+        --];
+  local knownProds::[(String, Type)] = [];
+        --[  ("prod_intConst", arrowType(nameType("integer"), nameType("nt_Expr")) ),
+        --   ("prod_plus", arrowType(nameType("nt_Expr"),
+        --                    arrowType(nameType("nt_Expr"), nameType("nt_Expr"))) ),
+        --   ("prod_minus", arrowType(nameType("nt_Expr"),
+        --                     arrowType(nameType("nt_Expr"), nameType("nt_Expr"))) ),
+        --   ("prod_mult", arrowType(nameType("nt_Expr"),
+        --                    arrowType(nameType("nt_Expr"), nameType("nt_Expr"))) ),
+        --   ("prod_letBind", arrowType(functorType(nameType("list"), nameType("$char")),
+        --                       arrowType(nameType("nt_Expr"),
+        --                          arrowType(nameType("nt_Expr"), nameType("nt_Expr")))) ),
+        --   ("prod_name", arrowType(functorType(nameType("list"), nameType("$char")),
+        --                    nameType("nt_Expr")) ),
+        --   ("prod_root", arrowType(nameType("nt_Expr"), nameType("nt_Root")))
+        --];
+  local wpdRelations::[(String, Type, [String])] = [];
+        --[  ("$wpd_nt_Expr", nameType("nt_Expr"),
+        --    ["prod_intConst", "prod_plus", "prod_minus",
+        --     "prod_mult", "prod_letBind", "prod_name"]),
+        --   ("$wpd_nt_Root", nameType("nt_Root"), ["prod_root"])
+        --];
   local knownInheritedAttrs::[String] = ["env", "knownNames"];
 
   return
@@ -116,6 +121,15 @@ IOVal<Integer> ::=
   any_a.translatedState = head(stateList).snd.state.translation;
   any_a.inProof = state.inProof;
   any_a.stateListIn = stateList;
+  any_a.abellaFileParser =
+        \ fileContents::String fileName::String ->
+          let result::ParseResult<ListOfCommands_c> =
+              file_parse(fileContents, fileName)
+          in
+            if result.parseSuccess
+            then right(result.parseTree.ast)
+            else left(result.parseErrors)
+          end;
   local is_blank::Boolean = isSpace(input);
   --whether we have an actual command to send to Abella
   local speak_to_abella::Boolean = !is_blank && any_a.sendCommand;
@@ -144,10 +158,9 @@ IOVal<Integer> ::=
   -}
   --Read output
   ----------------------------
-  local should_count_outputs::Maybe<Integer> = any_a.numCommandsSent;
   local back_from_abella::IOVal<String> =
         if speak_to_abella
-        then read_abella_outputs(should_count_outputs, abella, out_to_abella)
+        then read_abella_outputs(any_a.numCommandsSent, abella, out_to_abella)
         else ioval(out_to_abella, "");
   --Translate output
   ----------------------------
@@ -262,7 +275,7 @@ function cleanState
   local send::IO = sendToProcess(abella, currentState.cleanUpCommands, ioin);
   --Read back from Abella
   local back::IOVal<String> =
-        read_abella_outputs(just(currentState.numCleanUpCommands), abella, send);
+        read_abella_outputs(currentState.numCleanUpCommands, abella, send);
   local parsed::ParseResult<FullDisplay_c> =
         from_parse(back.iovalue, "<<output>>");
   currentState.nextStateIn =
@@ -314,30 +327,12 @@ IOVal<String> ::= ioin::IO
 }
 
 
---Read the given number of Abella outputs (prompt-terminated), if given
---Otherwise read until one ends with a prompt
+--Read the given number of Abella outputs (prompt-terminated)
 --Returns the text of the last output
 function read_abella_outputs
-IOVal<String> ::= n::Maybe<Integer> abella::ProcessHandle ioin::IO
+IOVal<String> ::= n::Integer abella::ProcessHandle ioin::IO
 {
-  return
-     case n of
-     | nothing() -> read_abella_outputs_until_done(abella, ioin)
-     | just(x) -> read_n_abella_outputs(x, abella, ioin)
-     end;
-}
---Read from Abella until reaching the end, known from a theorem called "$$done" which is aborted
---Can do this because should only be used with an Import Abella itself doesn't like
-function read_abella_outputs_until_done
-IOVal<String> ::= abella::ProcessHandle ioin::IO
-{
-  local read1::IOVal<String> = readUntilFromProcess(abella, "< ", ioin);
-  local readAgain::IOVal<String> = readUntilFromProcess(abella, "< ", ioin);
-
-  return
-     if endsWith("$$done < ", read1.iovalue)
-     then ioval(readAgain.io, "") --get the aborting of $$done, but don't show it
-     else read_abella_outputs_until_done(abella, read1.io);
+  return read_n_abella_outputs(n, abella, ioin);
 }
 --Read the given number of outputs from Abella
 function read_n_abella_outputs

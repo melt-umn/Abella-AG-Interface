@@ -22,14 +22,23 @@ function split_AttrAccess_t
 
 
 
---nonterminal Command_c with ast<ProofCommand>;
+nonterminal ListOfCommands_c with ast<ListOfCommands>;
+
+concrete productions top::ListOfCommands_c
+|
+  { top.ast = emptyListOfCommands(); }
+| a::AnyCommand_c rest::ListOfCommands_c
+  { top.ast = addListOfCommands(a.ast, rest.ast); }
+
+
+
+
+
 nonterminal PureCommand_c with ast<ProofCommand>;
---nonterminal TopCommand_c with ast<TopCommand>;
 nonterminal CommonCommand_c with ast<NoOpCommand>;
 nonterminal PureTopCommand_c with ast<TopCommand>;
-
-
 nonterminal AnyCommand_c with ast<AnyCommand>;
+
 concrete productions top::AnyCommand_c
 | c::PureTopCommand_c
   { top.ast = anyTopCommand(c.ast); }
@@ -45,14 +54,6 @@ concrete productions top::AnyCommand_c
 | 'Extensible_Theorem' '[' depth::Number_t ']' name::Id_t ':' body::Metaterm_c '.'
   { top.ast =
         anyParseFailure("Must include a tree or trees on which to do induction"); }
-
-{-
-concrete productions top::Command_c
-| p::PureCommand_c
-  { top.ast = p.ast; }
-| c::CommonCommand_c
-  { top.ast = proofNoOpCommand(c.ast); }
--}
 
 concrete productions top::PureCommand_c
 | h::HHint_c 'induction' 'on' nl::NumList_c '.'
@@ -140,14 +141,6 @@ concrete productions top::PureCommand_c
 | 'permute' p::Perm_c h::Hyp_c '.'
   { top.ast = permuteTactic(p.ast, just(h.ast)); }
 
-{-
-concrete productions top::TopCommand_c
-| p::PureTopCommand_c
-  { top.ast = p.ast; }
-| c::CommonCommand_c
-  { top.ast = topNoOpCommand(c.ast); }
--}
-
 concrete productions top::PureTopCommand_c
 | 'Theorem' name::Id_t params::TheoremTyparams_c ':' body::Metaterm_c '.'
   { top.ast = theoremDeclaration(name.lexeme, params.ast, body.ast); }
@@ -203,10 +196,19 @@ concrete productions top::CommonCommand_c
 nonterminal Backs_c with ast<Integer>;
 
 concrete productions top::Backs_c
-| '#back' '.'
-  { top.ast = 1; }
-| '#back' '.' rest::Backs_c
-  { top.ast = 1 + rest.ast; }
+| b::Backs_t
+  { top.ast = countOctothorpeOccurrences(b.lexeme); }
+
+function countOctothorpeOccurrences
+Integer ::= str::String
+{
+  local index::Integer = indexOf("#", str);
+  local rest::String = substring(index + 1, length(str), str);
+  return
+     if index > -1
+     then 1 + countOctothorpeOccurrences(rest)
+     else 0;
+}
 
 
 

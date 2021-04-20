@@ -21,7 +21,7 @@ top::Kind ::= k::Kind
 
 
 attribute
-   translation<Type>,
+   translation<Type>, errors,
    eqTest<Type>, isEq,
    argumentTypes, headTypeName, resultType,
    isRelation
@@ -78,6 +78,11 @@ top::Type ::= name::String
       if name == "string"
       then functorType(nameType("list"), nameType("$char"))
       else nameType(name);
+
+  top.errors <-
+      if startsWith("$", name)
+      then [errorMsg("Identifiers cannot start with \"$\"")]
+      else [];
 
   top.argumentTypes = [top];
 

@@ -39,14 +39,11 @@ top::NoOpCommand ::= opt::String val::String
            then "Turning " ++ opt ++ " " ++ val ++ ".\n"
            else ""
       else "";
-  top.numCommandsSent = if top.sendCommand then just(1) else just(0);
+  top.numCommandsSent = if top.sendCommand then 1 else 0;
 
   local currentState::ProverState = head(top.stateListIn).snd;
   top.stateListOut =
-      (case top.numCommandsSent of
-       | just(x) -> x
-       | nothing() -> -1
-       end,
+      (top.numCommandsSent,
        proverState(currentState.state,
                    if opt == "debug"
                    then val == "on"
@@ -71,12 +68,17 @@ top::NoOpCommand ::= theoremName::String
 
   top.translation = showCommand(theoremName);
 
+  top.errors <-
+      if startsWith("$", theoremName)
+      then [errorMsg("Cannot start theorem names with \"$\"")]
+      else [];
+
   top.isQuit = false;
   top.isUndo = false;
 
   top.sendCommand = true;
   top.ownOutput = "";
-  top.numCommandsSent = just(1);
+  top.numCommandsSent = 1;
 
   top.stateListOut = (1, head(top.stateListIn).snd)::top.stateListIn;
 }
@@ -94,7 +96,7 @@ top::NoOpCommand ::=
 
   top.sendCommand = true;
   top.ownOutput = "";
-  top.numCommandsSent = just(1);
+  top.numCommandsSent = 1;
 
   top.stateListOut = (1, head(top.stateListIn).snd)::top.stateListIn;
 }
@@ -124,7 +126,7 @@ top::NoOpCommand ::= n::Integer
 
   top.sendCommand = null(top.errors) && trans_n > 0;
   top.ownOutput = "";
-  top.numCommandsSent = just(trans_n);
+  top.numCommandsSent = trans_n;
 
   top.stateListOut = drop(n, top.stateListIn);
 }
@@ -143,7 +145,7 @@ top::NoOpCommand ::=
 
   top.sendCommand = true;
   top.ownOutput = "";
-  top.numCommandsSent = just(1);
+  top.numCommandsSent = 1;
 
   top.stateListOut = top.stateListIn;
 }
@@ -162,7 +164,7 @@ top::NoOpCommand ::=
   top.sendCommand = false;
   --Don't need to show anything, because current state will be shown by main
   top.ownOutput = "";
-  top.numCommandsSent = just(0);
+  top.numCommandsSent = 0;
 
   top.stateListOut = top.stateListIn;
 }

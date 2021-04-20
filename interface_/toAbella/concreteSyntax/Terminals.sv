@@ -73,7 +73,7 @@ terminal In_t             'in'                     lexer classes {TACTIC};
 terminal ShowCurrent_t  'Show $$current.'  lexer classes {COMMAND};
 
 
-terminal Back_t        '#back'   lexer classes {TOKEN};
+terminal Backs_t       /(#back[\ \n\r\t]*.[\ \n\r\t]*)+/ lexer classes {TOKEN};
 terminal Reset_t       '#reset'  lexer classes {TOKEN};
 terminal DefEq_t       ':='      lexer classes {TOKEN};
 terminal Comma_t       ','       lexer classes {TOKEN}, precedence=3;
@@ -101,9 +101,7 @@ terminal Plus_t        '+'       lexer classes {TOKEN}, precedence=9, associatio
 terminal Star_t        '*'       lexer classes {TOKEN}, precedence=10, association=left;
 
 
---Identifiers in Abella can also start with a dollar sign
---To prevent overwriting encoded things, we'll disallow that
-terminal Id_t  /[-A-Za-z^=`'?][-A-Za-z^=`'?$0-9_*@+#!~\/]*/;
+terminal Id_t  /[-A-Za-z^=`'?$][-A-Za-z^=`'?$0-9_*@+#!~\/]*/;
 terminal QString_t  /"[^"]*"/;
 terminal Number_t  /[0-9]+/;
 
