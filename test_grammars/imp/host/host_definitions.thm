@@ -1,0 +1,667 @@
+
+Kind bool   type.
+Kind nat   type.
+Import "../../../silver_compilation/encodingPrimitives/integer_addition".
+Import "../../../silver_compilation/encodingPrimitives/integer_multiplication".
+Import "../../../silver_compilation/encodingPrimitives/integer_comparison".
+
+Import "../../../silver_compilation/encodingPrimitives/lists".
+Import "../../../silver_compilation/encodingPrimitives/strings".
+Kind $pair   type -> type -> type.
+Import "../../../silver_compilation/encodingPrimitives/pairs".
+Kind $attrVal   type -> type.
+Import "../../../silver_compilation/encodingPrimitives/attr_val".
+
+
+Kind nt_A   type.
+
+Type prod_plus   nt_A -> nt_A -> nt_A.
+Type prod_num    integer -> nt_A.
+Type prod_name   list $char -> nt_A.
+
+
+Kind nt_B   type.
+
+Type prod_greater   nt_A -> nt_A -> nt_B.
+Type prod_equal     nt_A -> nt_A -> nt_B.
+Type prod_and       nt_B -> nt_B -> nt_B.
+Type prod_or        nt_B -> nt_B -> nt_B.
+Type prod_bTrue     nt_B.
+Type prod_bFalse    nt_B.
+
+
+Kind nt_C   type.
+
+Type prod_noop         nt_C.
+Type prod_seq          nt_C -> nt_C -> nt_C.
+Type prod_assign       list $char -> nt_A -> nt_C.
+Type prod_ifThenElse   nt_B -> nt_C -> nt_C -> nt_C.
+Type prod_while        nt_B -> nt_C -> nt_C.
+
+
+
+
+Kind node_A   type.
+Kind node_B   type.
+Kind node_C   type.
+
+
+
+
+Kind $node_tree   type.
+
+Type $ntr_nt_A   node_A -> list $node_tree -> $node_tree.
+Type $ntr_nt_B   node_B -> list $node_tree -> $node_tree.
+Type $ntr_nt_C   node_C -> list $node_tree -> $node_tree.
+
+
+
+
+Type $access_$_env_$_nt_A
+     node_A -> $attrVal (list ($pair (list $char) integer)) -> prop.
+Type $access_$_intVal_$_nt_A   node_A -> $attrVal integer -> prop.
+Type $access_$_env_$_nt_B
+     node_B -> $attrVal (list ($pair (list $char) integer)) -> prop.
+Type $access_$_boolVal_$_nt_B   node_B -> $attrVal bool -> prop.
+Type $access_$_env_$_nt_C
+     node_C -> $attrVal (list ($pair (list $char) integer)) -> prop.
+Type $access_$_env_out_$_nt_C
+     node_C -> $attrVal (list ($pair (list $char) integer)) -> prop.
+
+
+
+
+/*
+  This is just so the interface can read in which attributes are
+  inherited.  It serves no purpose in the encoding itself.
+*/
+Type $env$_is_inherited   prop.
+
+
+
+
+Define fun__lookup :
+       list $char -> list ($pair (list $char) integer) ->
+       integer -> prop by
+  fun__lookup N (($pair_c N Val)::Tail) Val;
+  fun__lookup N (($pair_c Name Val)::Tail) Result :=
+     (Name = N -> false) /\
+     fun__lookup N Tail Result.
+
+
+
+
+Type $env__nt_A       nt_A -> $node_tree -> prop.
+Type $intVal__nt_A    nt_A -> $node_tree -> prop.
+Type $env__nt_B       nt_B -> $node_tree -> prop.
+Type $boolVal__nt_B   nt_B -> $node_tree -> prop.
+Type $env__nt_C       nt_C -> $node_tree -> prop.
+Type $env_out__nt_C   nt_C -> $node_tree -> prop.
+
+
+Define $env__nt_A__host : nt_A -> $node_tree -> prop by
+  %plus
+  $env__nt_A__host (prod_plus A1 A2)
+                   ($ntr_nt_A Node ($ntr_nt_A A1Node A1CL::
+                                    $ntr_nt_A A2Node A2CL::nil)) :=
+     $access_$_env_$_nt_A Node $attr_no /\
+     $access_$_env_$_nt_A A1Node $attr_no /\
+     $access_$_env_$_nt_A A2Node $attr_no;
+  $env__nt_A__host (prod_plus A1 A2)
+                   ($ntr_nt_A Node ($ntr_nt_A A1Node A1CL::
+                                    $ntr_nt_A A2Node A2CL::nil)) :=
+     forall Env,
+        $access_$_env_$_nt_A Node ($attr_ex Env) /\
+        $access_$_env_$_nt_A A1Node ($attr_ex Env) /\
+        $access_$_env_$_nt_A A2Node ($attr_ex Env);
+  %num
+  $env__nt_A__host (prod_num N) ($ntr_nt_A Node nil);
+  %name
+  $env__nt_A__host (prod_name N) ($ntr_nt_A Node nil).
+
+Define $intVal__nt_A__host : nt_A -> $node_tree -> prop by
+  %plus
+  $intVal__nt_A__host (prod_plus A1 A2)
+                   ($ntr_nt_A Node ($ntr_nt_A A1Node A1CL::
+                                    $ntr_nt_A A2Node A2CL::nil)) :=
+     $access_$_intVal_$_nt_A Node $attr_no /\
+     $access_$_intVal_$_nt_A A1Node $attr_no;
+  $intVal__nt_A__host (prod_plus A1 A2)
+                   ($ntr_nt_A Node ($ntr_nt_A A1Node A1CL::
+                                    $ntr_nt_A A2Node A2CL::nil)) :=
+     forall Val,
+        $access_$_intVal_$_nt_A Node $attr_no /\
+        $access_$_intVal_$_nt_A A1Node ($attr_ex Val) /\
+        $access_$_intVal_$_nt_A A2Node $attr_no;
+  $intVal__nt_A__host (prod_plus A1 A2)
+                   ($ntr_nt_A Node ($ntr_nt_A A1Node A1CL::
+                                    $ntr_nt_A A2Node A2CL::nil)) :=
+     forall Val1 Val2 PlusResult,
+        $access_$_intVal_$_nt_A Node ($attr_ex PlusResult) /\
+        $access_$_intVal_$_nt_A A1Node ($attr_ex Val1) /\
+        $access_$_intVal_$_nt_A A2Node ($attr_ex Val2) /\
+        $plus_integer Val1 Val2 PlusResult;
+  %num
+  $intVal__nt_A__host (prod_num N) ($ntr_nt_A Node nil) :=
+     $access_$_intVal_$_nt_A Node ($attr_ex N);
+  %name
+  $intVal__nt_A__host (prod_name S) ($ntr_nt_A Node nil) :=
+     $access_$_intVal_$_nt_A Node $attr_no /\
+     $access_$_env_$_nt_A Node $attr_no;
+  $intVal__nt_A__host (prod_name S) ($ntr_nt_A Node nil) :=
+     forall Env,
+        $access_$_intVal_$_nt_A Node $attr_no /\
+        $access_$_env_$_nt_A Node ($attr_ex Env) /\
+        ((exists Ret, fun__lookup S Env Ret) -> false);
+  $intVal__nt_A__host (prod_name S) ($ntr_nt_A Node nil) :=
+     forall Env Ret,
+        $access_$_intVal_$_nt_A Node ($attr_ex Ret) /\
+        $access_$_env_$_nt_A Node ($attr_ex Env) /\
+        fun__lookup S Env Ret.
+
+
+Define $env__nt_B__host : nt_B -> $node_tree -> prop by
+  %greater
+  $env__nt_B__host (prod_greater A1 A2)
+                   ($ntr_nt_B Node ($ntr_nt_A A1Node A1CL::
+                                    $ntr_nt_A A2Node A2CL::nil)) :=
+     $access_$_env_$_nt_B Node $attr_no /\
+     $access_$_env_$_nt_A A1Node $attr_no /\
+     $access_$_env_$_nt_A A2Node $attr_no;
+  $env__nt_B__host (prod_greater A1 A2)
+                   ($ntr_nt_B Node ($ntr_nt_A A1Node A1CL::
+                                    $ntr_nt_A A2Node A2CL::nil)) :=
+     forall Env,
+        $access_$_env_$_nt_B Node ($attr_ex Env) /\
+        $access_$_env_$_nt_A A1Node ($attr_ex Env) /\
+        $access_$_env_$_nt_A A2Node ($attr_ex Env);
+  %equal
+  $env__nt_B__host (prod_equal A1 A2)
+                   ($ntr_nt_B Node ($ntr_nt_A A1Node A1CL::
+                                    $ntr_nt_A A2Node A2CL::nil)) :=
+     $access_$_env_$_nt_B Node $attr_no /\
+     $access_$_env_$_nt_A A1Node $attr_no /\
+     $access_$_env_$_nt_A A2Node $attr_no;
+  $env__nt_B__host (prod_equal A1 A2)
+                   ($ntr_nt_B Node ($ntr_nt_A A1Node A1CL::
+                                    $ntr_nt_A A2Node A2CL::nil)) :=
+     forall Env,
+        $access_$_env_$_nt_B Node ($attr_ex Env) /\
+        $access_$_env_$_nt_A A1Node ($attr_ex Env) /\
+        $access_$_env_$_nt_A A2Node ($attr_ex Env);
+  %and
+  $env__nt_B__host (prod_and B1 B2)
+                   ($ntr_nt_B Node ($ntr_nt_B B1Node B1CL::
+                                    $ntr_nt_B B2Node B2CL::nil)) :=
+     $access_$_env_$_nt_B Node $attr_no /\
+     $access_$_env_$_nt_B B1Node $attr_no /\
+     $access_$_env_$_nt_B B2Node $attr_no;
+  $env__nt_B__host (prod_and B1 B2)
+                   ($ntr_nt_B Node ($ntr_nt_B B1Node B1CL::
+                                    $ntr_nt_B B2Node B2CL::nil)) :=
+     forall Env,
+        $access_$_env_$_nt_B Node ($attr_ex Env) /\
+        $access_$_env_$_nt_B B1Node ($attr_ex Env) /\
+        $access_$_env_$_nt_B B2Node ($attr_ex Env);
+  %or
+  $env__nt_B__host (prod_or B1 B2)
+                   ($ntr_nt_B Node ($ntr_nt_B B1Node B1CL::
+                                    $ntr_nt_B B2Node B2CL::nil)) :=
+     $access_$_env_$_nt_B Node $attr_no /\
+     $access_$_env_$_nt_B B1Node $attr_no /\
+     $access_$_env_$_nt_B B2Node $attr_no;
+  $env__nt_B__host (prod_or B1 B2)
+                   ($ntr_nt_B Node ($ntr_nt_B B1Node B1CL::
+                                    $ntr_nt_B B2Node B2CL::nil)) :=
+     forall Env,
+        $access_$_env_$_nt_B Node ($attr_ex Env) /\
+        $access_$_env_$_nt_B B1Node ($attr_ex Env) /\
+        $access_$_env_$_nt_B B2Node ($attr_ex Env);
+  %bTrue
+  $env__nt_B__host prod_bTrue ($ntr_nt_B Node nil);
+  %bFalse
+  $env__nt_B__host prod_bFalse ($ntr_nt_B Node nil).
+
+Define $boolVal__nt_B__host : nt_B -> $node_tree -> prop by
+  %greater
+  $boolVal__nt_B__host (prod_greater A1 A2)
+                   ($ntr_nt_B Node ($ntr_nt_A A1Node A1CL::
+                                    $ntr_nt_A A2Node A2CL::nil)) :=
+     $access_$_boolVal_$_nt_B Node $attr_no /\
+     $access_$_intVal_$_nt_A A1Node $attr_no;
+  $boolVal__nt_B__host (prod_greater A1 A2)
+                   ($ntr_nt_B Node ($ntr_nt_A A1Node A1CL::
+                                    $ntr_nt_A A2Node A2CL::nil)) :=
+     forall Val,
+        $access_$_boolVal_$_nt_B Node $attr_no /\
+        $access_$_intVal_$_nt_A A1Node ($attr_ex Val) /\
+        $access_$_intVal_$_nt_A A2Node $attr_no;
+  $boolVal__nt_B__host (prod_greater A1 A2)
+                   ($ntr_nt_B Node ($ntr_nt_A A1Node A1CL::
+                                    $ntr_nt_A A2Node A2CL::nil)) :=
+     forall Val1 Val2 GreaterResult,
+        $access_$_boolVal_$_nt_B Node ($attr_ex GreaterResult) /\
+        $access_$_intVal_$_nt_A A1Node ($attr_ex Val1) /\
+        $access_$_intVal_$_nt_A A2Node ($attr_ex Val2) /\
+        $greater_integer Val1 Val2 GreaterResult;
+  %equal
+  $boolVal__nt_B__host (prod_equal A1 A2)
+                   ($ntr_nt_B Node ($ntr_nt_A A1Node A1CL::
+                                    $ntr_nt_A A2Node A2CL::nil)) :=
+     $access_$_boolVal_$_nt_B Node $attr_no /\
+     $access_$_intVal_$_nt_A A1Node $attr_no;
+  $boolVal__nt_B__host (prod_equal A1 A2)
+                   ($ntr_nt_B Node ($ntr_nt_A A1Node A1CL::
+                                    $ntr_nt_A A2Node A2CL::nil)) :=
+     forall Val,
+        $access_$_boolVal_$_nt_B Node $attr_no /\
+        $access_$_intVal_$_nt_A A1Node ($attr_ex Val) /\
+        $access_$_intVal_$_nt_A A2Node $attr_no;
+  $boolVal__nt_B__host (prod_equal A1 A2)
+                   ($ntr_nt_B Node ($ntr_nt_A A1Node A1CL::
+                                    $ntr_nt_A A2Node A2CL::nil)) :=
+     forall Val,
+        $access_$_boolVal_$_nt_B Node ($attr_ex $btrue) /\
+        $access_$_intVal_$_nt_A A1Node ($attr_ex Val) /\
+        $access_$_intVal_$_nt_A A2Node ($attr_ex Val);
+  %and
+  $boolVal__nt_B__host (prod_and B1 B2)
+                   ($ntr_nt_B Node ($ntr_nt_B B1Node B1CL::
+                                    $ntr_nt_B B2Node B2CL::nil)) :=
+     $access_$_boolVal_$_nt_B Node $attr_no /\
+     $access_$_boolVal_$_nt_B B1Node $attr_no;
+  $boolVal__nt_B__host (prod_and B1 B2)
+                   ($ntr_nt_B Node ($ntr_nt_B B1Node B1CL::
+                                    $ntr_nt_B B2Node B2CL::nil)) :=
+     $access_$_boolVal_$_nt_B Node $attr_no /\
+     $access_$_boolVal_$_nt_B B1Node ($attr_ex $btrue) /\
+     $access_$_boolVal_$_nt_B B2Node $attr_no;
+  $boolVal__nt_B__host (prod_and B1 B2)
+                   ($ntr_nt_B Node ($ntr_nt_B B1Node B1CL::
+                                    $ntr_nt_B B2Node B2CL::nil)) :=
+     forall Val,
+        $access_$_boolVal_$_nt_B Node ($attr_ex Val) /\
+        $access_$_boolVal_$_nt_B B1Node ($attr_ex $btrue) /\
+        $access_$_boolVal_$_nt_B B2Node ($attr_ex Val);
+  $boolVal__nt_B__host (prod_and B1 B2)
+                   ($ntr_nt_B Node ($ntr_nt_B B1Node B1CL::
+                                    $ntr_nt_B B2Node B2CL::nil)) :=
+     $access_$_boolVal_$_nt_B Node ($attr_ex $bfalse) /\
+     $access_$_boolVal_$_nt_B B1Node ($attr_ex $bfalse);
+  %or
+  $boolVal__nt_B__host (prod_or B1 B2)
+                   ($ntr_nt_B Node ($ntr_nt_B B1Node B1CL::
+                                    $ntr_nt_B B2Node B2CL::nil)) :=
+     $access_$_boolVal_$_nt_B Node $attr_no /\
+     $access_$_boolVal_$_nt_B B1Node $attr_no;
+  $boolVal__nt_B__host (prod_or B1 B2)
+                   ($ntr_nt_B Node ($ntr_nt_B B1Node B1CL::
+                                    $ntr_nt_B B2Node B2CL::nil)) :=
+     $access_$_boolVal_$_nt_B Node $attr_no /\
+     $access_$_boolVal_$_nt_B B1Node ($attr_ex $bfalse) /\
+     $access_$_boolVal_$_nt_B B2Node $attr_no;
+  $boolVal__nt_B__host (prod_or B1 B2)
+                   ($ntr_nt_B Node ($ntr_nt_B B1Node B1CL::
+                                    $ntr_nt_B B2Node B2CL::nil)) :=
+     forall Val,
+        $access_$_boolVal_$_nt_B Node ($attr_ex Val) /\
+        $access_$_boolVal_$_nt_B B1Node ($attr_ex $bfalse) /\
+        $access_$_boolVal_$_nt_B B2Node ($attr_ex Val);
+  $boolVal__nt_B__host (prod_or B1 B2)
+                   ($ntr_nt_B Node ($ntr_nt_B B1Node B1CL::
+                                    $ntr_nt_B B2Node B2CL::nil)) :=
+     $access_$_boolVal_$_nt_B Node ($attr_ex $btrue) /\
+     $access_$_boolVal_$_nt_B B1Node ($attr_ex $btrue);
+  %bTrue
+  $boolVal__nt_B__host prod_bTrue ($ntr_nt_B Node nil) :=
+     $access_$_boolVal_$_nt_B Node ($attr_ex $btrue);
+  %bFalse
+  $boolVal__nt_B__host prod_bTrue ($ntr_nt_B Node nil) :=
+     $access_$_boolVal_$_nt_B Node ($attr_ex $bfalse).
+
+
+Define $env__nt_C__host : nt_C -> $node_tree -> prop by
+  %noop
+  $env__nt_C__host prod_noop ($ntr_nt_C Node nil);
+  %seq
+  $env__nt_C__host (prod_seq C1 C2)
+                   ($ntr_nt_C Node ($ntr_nt_C C1Node C1CL::
+                                    $ntr_nt_C C2Node C2CL::nil)) :=
+     $access_$_env_$_nt_C Node $attr_no /\
+     $access_$_env_$_nt_C C1Node $attr_no /\
+     $access_$_env_out_$_nt_C C1Node $attr_no /\
+     $access_$_env_$_nt_C C2Node $attr_no;
+  $env__nt_C__host (prod_seq C1 C2)
+                   ($ntr_nt_C Node ($ntr_nt_C C1Node C1CL::
+                                    $ntr_nt_C C2Node C2CL::nil)) :=
+     forall EnvOut,
+        $access_$_env_$_nt_C Node $attr_no /\
+        $access_$_env_$_nt_C C1Node $attr_no /\
+        $access_$_env_out_$_nt_C C1Node ($attr_ex EnvOut) /\
+        $access_$_env_$_nt_C C2Node ($attr_ex EnvOut);
+  $env__nt_C__host (prod_seq C1 C2)
+                   ($ntr_nt_C Node ($ntr_nt_C C1Node C1CL::
+                                    $ntr_nt_C C2Node C2CL::nil)) :=
+     forall Env,
+        $access_$_env_$_nt_C Node ($attr_ex Env) /\
+        $access_$_env_$_nt_C C1Node ($attr_ex Env) /\
+        $access_$_env_out_$_nt_C C1Node $attr_no /\
+        $access_$_env_$_nt_C C2Node $attr_no;
+  $env__nt_C__host (prod_seq C1 C2)
+                   ($ntr_nt_C Node ($ntr_nt_C C1Node C1CL::
+                                    $ntr_nt_C C2Node C2CL::nil)) :=
+     forall Env EnvOut,
+        $access_$_env_$_nt_C Node ($attr_ex Env) /\
+        $access_$_env_$_nt_C C1Node ($attr_ex Env) /\
+        $access_$_env_out_$_nt_C C1Node ($attr_ex EnvOut) /\
+        $access_$_env_$_nt_C C2Node ($attr_ex EnvOut);
+  %assign
+  $env__nt_C__host (prod_assign N A)
+                   ($ntr_nt_C Node ($ntr_nt_A ANode ACL::nil)) :=
+     $access_$_env_$_nt_C Node $attr_no /\
+     $access_$_env_$_nt_A ANode $attr_no;
+  $env__nt_C__host (prod_assign N A)
+                   ($ntr_nt_C Node ($ntr_nt_A ANode ACL::nil)) :=
+     forall Env,
+        $access_$_env_$_nt_C Node ($attr_ex Env) /\
+        $access_$_env_$_nt_A ANode ($attr_ex Env);
+  %ifThenElse
+  $env__nt_C__host (prod_ifThenElse B C1 C2)
+                   ($ntr_nt_C Node ($ntr_nt_B BNode BCL::
+                                    $ntr_nt_C C1Node C1CL::
+                                    $ntr_nt_C C2Node C2CL::nil)) :=
+     $access_$_env_$_nt_C Node $attr_no /\
+     $access_$_env_$_nt_B BNode $attr_no /\
+     $access_$_env_$_nt_C C1Node $attr_no /\
+     $access_$_env_$_nt_C C2Node $attr_no;
+  $env__nt_C__host (prod_ifThenElse B C1 C2)
+                   ($ntr_nt_C Node ($ntr_nt_B BNode BCL::
+                                    $ntr_nt_C C1Node C1CL::
+                                    $ntr_nt_C C2Node C2CL::nil)) :=
+     forall Env,
+        $access_$_env_$_nt_C Node ($attr_ex Env) /\
+        $access_$_env_$_nt_B BNode ($attr_ex Env) /\
+        $access_$_env_$_nt_C C1Node ($attr_ex Env) /\
+        $access_$_env_$_nt_C C2Node ($attr_ex Env);
+  %while
+  $env__nt_C__host (prod_while B C)
+                   ($ntr_nt_C Node ($ntr_nt_B BNode BCL::
+                                    $ntr_nt_C CNode CCL::nil)) :=
+     $access_$_env_$_nt_C Node $attr_no /\
+     $access_$_env_$_nt_B BNode $attr_no /\
+     $access_$_env_$_nt_C CNode $attr_no;
+  $env__nt_C__host (prod_while B C)
+                   ($ntr_nt_C Node ($ntr_nt_B BNode BCL::
+                                    $ntr_nt_C CNode CCL::nil)) :=
+     forall Env,
+        $access_$_env_$_nt_C Node ($attr_ex Env) /\
+        $access_$_env_$_nt_B BNode ($attr_ex Env) /\
+        $access_$_env_$_nt_C CNode ($attr_ex Env).
+
+Define $env_out__nt_C__host : nt_C -> $node_tree -> prop by
+  %noop
+  $env_out__nt_C__host prod_noop ($ntr_nt_C Node nil) :=
+     $access_$_env_out_$_nt_C Node $attr_no /\
+     $access_$_env_$_nt_C Node $attr_no;
+  $env_out__nt_C__host prod_noop ($ntr_nt_C Node nil) :=
+     forall Env,
+        $access_$_env_out_$_nt_C Node ($attr_ex Env) /\
+        $access_$_env_$_nt_C Node ($attr_ex Env);
+  %seq
+  $env_out__nt_C__host (prod_seq C1 C2)
+                   ($ntr_nt_C Node ($ntr_nt_C C1Node C1CL::
+                                    $ntr_nt_C C2Node C2CL::nil)) :=
+     $access_$_env_out_$_nt_C Node $attr_no /\
+     $access_$_env_out_$_nt_C C2Node $attr_no;
+  $env_out__nt_C__host (prod_seq C1 C2)
+                   ($ntr_nt_C Node ($ntr_nt_C C1Node C1CL::
+                                    $ntr_nt_C C2Node C2CL::nil)) :=
+     forall EnvOut,
+        $access_$_env_out_$_nt_C Node ($attr_ex EnvOut) /\
+        $access_$_env_out_$_nt_C C2Node ($attr_ex EnvOut);
+  %assign
+  $env_out__nt_C__host (prod_assign N A)
+                   ($ntr_nt_C Node ($ntr_nt_A ANode ACL::nil)) :=
+     $access_$_env_out_$_nt_C Node $attr_no /\
+     $access_$_intVal_$_nt_A ANode $attr_no;
+  $env_out__nt_C__host (prod_assign N A)
+                   ($ntr_nt_C Node ($ntr_nt_A ANode ACL::nil)) :=
+     forall Val,
+        $access_$_env_out_$_nt_C Node $attr_no /\
+        $access_$_intVal_$_nt_A ANode ($attr_ex Val) /\
+        $access_$_env_$_nt_C Node $attr_no;
+  $env_out__nt_C__host (prod_assign N A)
+                   ($ntr_nt_C Node ($ntr_nt_A ANode ACL::nil)) :=
+     forall Val Env,
+        $access_$_env_out_$_nt_C Node
+                                 ($attr_ex ($pair_c N Val::Env)) /\
+        $access_$_intVal_$_nt_A ANode ($attr_ex Val) /\
+        $access_$_env_$_nt_C Node ($attr_ex Env);
+  %ifThenElse
+  $env_out__nt_C__host (prod_ifThenElse B C1 C2)
+                   ($ntr_nt_C Node ($ntr_nt_B BNode BCL::
+                                    $ntr_nt_C C1Node C1CL::
+                                    $ntr_nt_C C2Node C2CL::nil)) :=
+     $access_$_env_out_$_nt_C Node $attr_no /\
+     $access_$_boolVal_$_nt_B BNode $attr_no;
+  $env_out__nt_C__host (prod_ifThenElse B C1 C2)
+                   ($ntr_nt_C Node ($ntr_nt_B BNode BCL::
+                                    $ntr_nt_C C1Node C1CL::
+                                    $ntr_nt_C C2Node C2CL::nil)) :=
+     $access_$_env_out_$_nt_C Node $attr_no /\
+     $access_$_boolVal_$_nt_B BNode ($attr_ex $btrue) /\
+     $access_$_env_out_$_nt_C C1Node $attr_no;
+  $env_out__nt_C__host (prod_ifThenElse B C1 C2)
+                   ($ntr_nt_C Node ($ntr_nt_B BNode BCL::
+                                    $ntr_nt_C C1Node C1CL::
+                                    $ntr_nt_C C2Node C2CL::nil)) :=
+     $access_$_env_out_$_nt_C Node $attr_no /\
+     $access_$_boolVal_$_nt_B BNode ($attr_ex $bfalse) /\
+     $access_$_env_out_$_nt_C C2Node $attr_no;
+  $env_out__nt_C__host (prod_ifThenElse B C1 C2)
+                   ($ntr_nt_C Node ($ntr_nt_B BNode BCL::
+                                    $ntr_nt_C C1Node C1CL::
+                                    $ntr_nt_C C2Node C2CL::nil)) :=
+     forall EnvOut,
+        $access_$_env_out_$_nt_C Node ($attr_ex EnvOut) /\
+        $access_$_boolVal_$_nt_B BNode ($attr_ex $btrue) /\
+        $access_$_env_out_$_nt_C C1Node ($attr_ex EnvOut);
+  $env_out__nt_C__host (prod_ifThenElse B C1 C2)
+                   ($ntr_nt_C Node ($ntr_nt_B BNode BCL::
+                                    $ntr_nt_C C1Node C1CL::
+                                    $ntr_nt_C C2Node C2CL::nil)) :=
+     forall EnvOut,
+        $access_$_env_out_$_nt_C Node ($attr_ex EnvOut) /\
+        $access_$_boolVal_$_nt_B BNode ($attr_ex $bfalse) /\
+        $access_$_env_out_$_nt_C C2Node ($attr_ex EnvOut);
+  %while
+  $env_out__nt_C__host (prod_while B C)
+                   ($ntr_nt_C Node ($ntr_nt_B BNode BCL::
+                                    $ntr_nt_C CNode CCL::nil)) :=
+     $access_$_env_out_$_nt_C Node $attr_no /\
+     $access_$_boolVal_$_nt_B BNode $attr_no;
+  $env_out__nt_C__host (prod_while B C)
+                   ($ntr_nt_C Node ($ntr_nt_B BNode BCL::
+                                    $ntr_nt_C CNode CCL::nil)) :=
+     $access_$_env_out_$_nt_C Node $attr_no /\
+     $access_$_boolVal_$_nt_B BNode ($attr_ex $btrue) /\
+     true; %subwhile env_out doesn't exist
+  $env_out__nt_C__host (prod_while B C)
+                   ($ntr_nt_C Node ($ntr_nt_B BNode BCL::
+                                    $ntr_nt_C CNode CCL::nil)) :=
+     forall Env,
+        $access_$_env_out_$_nt_C Node ($attr_ex Env) /\
+        $access_$_boolVal_$_nt_B BNode ($attr_ex $bfalse) /\
+        $access_$_env_$_nt_C Node ($attr_ex Env);
+  $env_out__nt_C__host (prod_while B C)
+                   ($ntr_nt_C Node ($ntr_nt_B BNode BCL::
+                                    $ntr_nt_C CNode CCL::nil)) :=
+     forall EnvOut,
+        $access_$_env_out_$_nt_C Node ($attr_ex EnvOut) /\
+        $access_$_boolVal_$_nt_B BNode ($attr_ex $btrue) /\
+        true. %subwhile env_out is EnvOut
+
+
+
+
+Type $wpd_node_nt_A   nt_A -> $node_tree -> prop.
+Type $wpd_node_nt_B   nt_B -> $node_tree -> prop.
+Type $wpd_node_nt_C   nt_C -> $node_tree -> prop.
+
+
+Define $wpd_node_nt_A__host : nt_A -> $node_tree -> prop by
+  $wpd_node_nt_A__host Tree ($ntr_nt_A Node CL) :=
+     forall AEnv AIntVal,
+       $env__nt_A Tree ($ntr_nt_A Node CL) /\
+          $access_$_env_$_nt_A Node AEnv /\
+          $is_attrVal (is_list (is_pair is_string is_integer)) AEnv /\
+       $intVal__nt_A Tree ($ntr_nt_A Node CL) /\
+          $access_$_intVal_$_nt_A Node AIntVal /\
+          $is_attrVal is_integer AIntVal.
+
+Define $wpd_node_nt_B__host : nt_B -> $node_tree -> prop by
+  $wpd_node_nt_B__host Tree ($ntr_nt_B Node CL) :=
+     forall AEnv ABoolVal,
+       $env__nt_B Tree ($ntr_nt_B Node CL) /\
+          $access_$_env_$_nt_B Node AEnv /\
+          $is_attrVal (is_list (is_pair is_string is_integer)) AEnv /\
+       $boolVal__nt_B Tree ($ntr_nt_B Node CL) /\
+          $access_$_boolVal_$_nt_B Node ABoolVal /\
+          $is_attrVal is_bool ABoolVal.
+
+Define $wpd_node_nt_C__host : nt_C -> $node_tree -> prop by
+  $wpd_node_nt_C__host Tree ($ntr_nt_C Node CL) :=
+     forall AEnv AEnvOut,
+       $env__nt_C Tree ($ntr_nt_C Node CL) /\
+          $access_$_env_$_nt_C Node AEnv /\
+          $is_attrVal (is_list (is_pair is_string is_integer)) AEnv /\
+       $env_out__nt_C Tree ($ntr_nt_C Node CL) /\
+          $access_$_env_out_$_nt_C Node AEnv /\
+          $is_attrVal (is_list (is_pair is_string is_integer)) AEnvOut.
+
+
+
+
+Type $wpd_nt_A   nt_A -> $node_tree -> prop.
+Type $wpd_nt_B   nt_B -> $node_tree -> prop.
+Type $wpd_nt_C   nt_C -> $node_tree -> prop.
+
+
+Define $wpd_nt_A__host : nt_A -> $node_tree -> prop by
+  $wpd_nt_A__host (prod_plus A1 A2)
+                  ($ntr_nt_A Node (A1Ntr::A2Ntr::nil)) :=
+     $wpd_node_nt_A (prod_plus A1 A2)
+                    ($ntr_nt_A Node (A1Ntr::A2Ntr::nil)) /\
+     $wpd_nt_A A1 A1Ntr /\
+     $wpd_nt_A A2 A2Ntr;
+  $wpd_nt_A__host (prod_num N) ($ntr_nt_A Node nil) :=
+     $wpd_node_nt_A (prod_num N) ($ntr_nt_A Node nil);
+  $wpd_nt_A__host (prod_name N) ($ntr_nt_A Node nil) :=
+     $wpd_node_nt_A (prod_name N) ($ntr_nt_A Node nil).
+
+Define $wpd_nt_B__host : nt_B -> $node_tree -> prop by
+  $wpd_nt_B__host (prod_greater A1 A2)
+                  ($ntr_nt_B Node (A1Ntr::A2Ntr::nil)) :=
+     $wpd_node_nt_B (prod_greater A1 A2)
+                    ($ntr_nt_B Node (A1Ntr::A2Ntr::nil)) /\
+     $wpd_nt_A A1 A1Ntr /\
+     $wpd_nt_A A2 A2Ntr;
+  $wpd_nt_B__host (prod_equal A1 A2)
+                  ($ntr_nt_B Node (A1Ntr::A2Ntr::nil)) :=
+     $wpd_node_nt_B (prod_equal A1 A2)
+                    ($ntr_nt_B Node (A1Ntr::A2Ntr::nil)) /\
+     $wpd_nt_A A1 A1Ntr /\
+     $wpd_nt_A A2 A2Ntr;
+  $wpd_nt_B__host (prod_and B1 B2)
+                  ($ntr_nt_B Node (B1Ntr::B2Ntr::nil)) :=
+     $wpd_node_nt_B (prod_and B1 B2)
+                    ($ntr_nt_B Node (B1Ntr::B2Ntr::nil)) /\
+     $wpd_nt_B B1 B1Ntr /\
+     $wpd_nt_B B2 B2Ntr;
+  $wpd_nt_B__host (prod_or B1 B2)
+                  ($ntr_nt_B Node (B1Ntr::B2Ntr::nil)) :=
+     $wpd_node_nt_B (prod_or B1 B2)
+                    ($ntr_nt_B Node (B1Ntr::B2Ntr::nil)) /\
+     $wpd_nt_B B1 B1Ntr /\
+     $wpd_nt_B B2 B2Ntr;
+  $wpd_nt_B__host prod_bTrue ($ntr_nt_B Node nil) :=
+     $wpd_node_nt_B prod_bTrue ($ntr_nt_B Node nil);
+  $wpd_nt_B__host prod_bFalse ($ntr_nt_B Node nil) :=
+     $wpd_node_nt_B prod_bFalse ($ntr_nt_B Node nil).
+
+Define $wpd_nt_C__host : nt_C -> $node_tree -> prop by
+  $wpd_nt_C__host prod_noop ($ntr_nt_C Node nil) :=
+     $wpd_node_nt_C prod_noop ($ntr_nt_C Node nil);
+  $wpd_nt_C__host (prod_seq C1 C2)
+                  ($ntr_nt_C Node (C1Ntr::C2Ntr::nil)) :=
+     $wpd_node_nt_C (prod_seq C1 C2)
+                    ($ntr_nt_C Node (C1Ntr::C2Ntr::nil)) /\
+     $wpd_nt_C C1 C1Ntr /\
+     $wpd_nt_C C2 C2Ntr;
+  $wpd_nt_C__host (prod_assign N A) ($ntr_nt_C Node (ANtr::nil)) :=
+     $wpd_node_nt_C (prod_assign N A) ($ntr_nt_C Node (ANtr::nil)) /\
+     $wpd_nt_A A ANtr;
+  $wpd_nt_C__host (prod_ifThenElse B C1 C2)
+                  ($ntr_nt_C Node (BNtr::C1Ntr::C2Ntr::nil)) :=
+     $wpd_node_nt_C (prod_ifThenElse B C1 C2)
+                    ($ntr_nt_C Node (BNtr::C1Ntr::C2Ntr::nil)) /\
+     $wpd_nt_B B BNtr /\
+     $wpd_nt_C C1 C1Ntr /\
+     $wpd_nt_C C2 C2Ntr;
+  $wpd_nt_C__host (prod_while B C)
+                  ($ntr_nt_C Node (BNtr::CNtr::nil)) :=
+     $wpd_node_nt_C (prod_while B C)
+                    ($ntr_nt_C Node (BNtr::CNtr::nil)) /\
+     $wpd_nt_B B BNtr /\
+     $wpd_nt_C C CNtr.
+
+
+
+
+Type $structure_eq__nt_A   nt_A -> nt_A -> prop.
+Type $structure_eq__nt_B   nt_B -> nt_B -> prop.
+Type $structure_eq__nt_C   nt_C -> nt_C -> prop.
+
+
+Define $structure_eq__nt_A__host : nt_A -> nt_A -> prop by
+  $structure_eq__nt_A__host (prod_plus A1x A2x) (prod_plus A3x A4x) :=
+     $structure_eq__nt_A A1x A3x /\
+     $structure_eq__nt_A A2x A4x;
+  $structure_eq__nt_A__host (prod_num N) (prod_num N);
+  $structure_eq__nt_A__host (prod_name N) (prod_name N).
+
+Define $structure_eq__nt_B__host : nt_B -> nt_B -> prop by
+  $structure_eq__nt_B__host (prod_greater A1x A2x)
+                            (prod_greater A3x A4x) :=
+     $structure_eq__nt_A A1x A3x /\
+     $structure_eq__nt_A A2x A4x;
+  $structure_eq__nt_B__host (prod_equal A1x A2x)
+                            (prod_equal A3x A4x) :=
+     $structure_eq__nt_A A1x A3x /\
+     $structure_eq__nt_A A2x A4x;
+  $structure_eq__nt_B__host (prod_and B1x B2x) (prod_and B3x B4x) :=
+     $structure_eq__nt_B B1x B3x /\
+     $structure_eq__nt_B B2x B4x;
+  $structure_eq__nt_B__host (prod_or B1x B2x) (prod_or B3x B4x) :=
+     $structure_eq__nt_B B1x B3x /\
+     $structure_eq__nt_B B2x B4x;
+  $structure_eq__nt_B__host prod_bTrue prod_bTrue;
+  $structure_eq__nt_B__host prod_bFalse prod_bFalse.
+
+Define $structure_eq__nt_C__host : nt_C -> nt_C -> prop by
+  $structure_eq__nt_C__host prod_noop prod_noop;
+  $structure_eq__nt_C__host (prod_seq C1x C2x) (prod_seq C3x C4x) :=
+     $structure_eq__nt_C C1x C3x /\
+     $structure_eq__nt_C C2x C4x;
+  $structure_eq__nt_C__host (prod_assign N A1x) (prod_assign N A2x) :=
+     $structure_eq__nt_A A1x A2x;
+  $structure_eq__nt_C__host (prod_ifThenElse B1x C1x C2x)
+                            (prod_ifThenElse B2x C3x C4x) :=
+     $structure_eq__nt_B B1x B2x /\
+     $structure_eq__nt_C C1x C3x /\
+     $structure_eq__nt_C C2x C4x;
+  $structure_eq__nt_C__host (prod_while B1x C1x)
+                            (prod_while B2x C2x) :=
+     $structure_eq__nt_B B1x B2x /\
+     $structure_eq__nt_C C1x C2x.
+
