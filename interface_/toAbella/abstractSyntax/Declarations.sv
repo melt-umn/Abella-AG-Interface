@@ -49,12 +49,7 @@ top::Type ::= ty1::Type ty2::Type
 
   top.translation = arrowType(ty1.translation, ty2.translation);
 
-  top.argumentTypes =
-      ty1.argumentTypes ++
-      case ty2 of
-      | arrowType(_, _) -> ty2.argumentTypes
-      | _ -> []
-      end;
+  top.argumentTypes = ty1::ty2.argumentTypes;
 
   top.headTypeName = nothing();
 
@@ -84,7 +79,7 @@ top::Type ::= name::String
       then [errorMsg("Identifiers cannot start with \"$\"")]
       else [];
 
-  top.argumentTypes = [top];
+  top.argumentTypes = [];
 
   top.headTypeName = just(name);
 
@@ -124,7 +119,7 @@ top::Type ::= functorTy::Type argTy::Type
 
   top.translation = functorType(functorTy.translation, argTy.translation);
 
-  top.argumentTypes = [top];
+  top.argumentTypes = [];
 
   top.headTypeName = functorTy.headTypeName;
 
@@ -152,7 +147,7 @@ top::Type ::=
 
   top.translation = underscoreType();
 
-  top.argumentTypes = [top];
+  top.argumentTypes = [];
 
   top.headTypeName = nothing();
 

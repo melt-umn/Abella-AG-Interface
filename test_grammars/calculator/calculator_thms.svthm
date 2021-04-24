@@ -2,7 +2,7 @@
 Import "calculator_definition".
 
 
-Set debug on.
+Set debug off.
 
 
 Theorem fun__contains__member : forall E N,
@@ -73,7 +73,6 @@ induction on 1. intros. case H1.
 
 
 Set subgoals off.
-Set debug off.
 
 %/*
 %  Why do we have so many mutual theorems here?  Because we defined the

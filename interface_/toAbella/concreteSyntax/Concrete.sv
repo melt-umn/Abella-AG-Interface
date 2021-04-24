@@ -360,6 +360,7 @@ concrete productions top::SubMetaterm_c
 
 
 nonterminal Term_c with ast<Term>;
+nonterminal MidTerm_c with ast<Term>;
 nonterminal Exp_c with ast<Term>;
 nonterminal ExpList_c with ast<TermList>;
 nonterminal PairBody_c with ast<PairContents>;
@@ -368,12 +369,17 @@ nonterminal PAId_c with ast<Term>;
 
 
 concrete productions top::Term_c
+| t1::MidTerm_c '::' t2::Term_c
+  { top.ast = consTerm(t1.ast, t2.ast); }
+| e::MidTerm_c
+  { top.ast = e.ast; }
+
+
+concrete productions top::MidTerm_c
 | e::Exp_c el::ExpList_c
   { top.ast = applicationTerm(e.ast, el.ast); }
 | e::Exp_c
   { top.ast = e.ast; }
-| t1::Exp_c '::' t2::Term_c
-  { top.ast = consTerm(t1.ast, t2.ast); }
 
 
 concrete productions top::Exp_c

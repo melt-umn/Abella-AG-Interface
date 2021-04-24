@@ -61,6 +61,12 @@ String ::= treeTy::Type
 {
   return "$ntr_" ++ treeTy.pp;
 }
+function isNodeTreeConstructorName
+Boolean ::= s::String
+{
+  return startsWith("$ntr_", s);
+}
+
 
 --Attribute Access
 function accessToAccessName
@@ -92,6 +98,7 @@ String ::= str::String
   return substring(lastSplit + 3, length(str), str);
 }
 
+
 --Access Theorems
 function accessUniqueThm
 String ::= attr::String ty::String
@@ -103,6 +110,36 @@ String ::= attr::String ty::String
 {
   return "$access_$_" ++ attr ++ "_$_" ++ ty ++ "__is";
 }
+
+
+--Local Attributes
+function isLocalAccessRelation
+Boolean ::= s::String
+{
+  return startsWith("$local_access_$_", s);
+}
+function localAccessToProd
+String ::= s::String
+{
+  --$local_access_$_<prod>_$_<name>_$_<type>
+  local tailStr::String = substring(16, length(s), s);
+  return substring(0, indexOf("_$_", tailStr), tailStr);
+}
+function localAccessToAttr
+String ::= s::String
+{
+  --$local_access_$_<prod>_$_<name>_$_<type>
+  local tailStr::String = substring(16, length(s), s);
+  local midStr::String = substring(0, lastIndexOf("_$_", tailStr), tailStr);
+  return substring(indexOf("_$_", midStr) + 3, length(midStr), midStr);
+}
+function localAccessToType
+Type ::= s::String
+{
+  --$local_access_$_<prod>_$_<name>_$_<type>
+  return nameType(substring(lastIndexOf("_$_", s) + 3, length(s), s));
+}
+
 
 --WPD Nonterminal
 function wpdTypeName
@@ -133,6 +170,7 @@ String ::= ty::Type
   return "$wpd_" ++ ty.pp ++ "__ntr_" ++ ty.pp;
 }
 
+
 --WPD Node
 function wpdNodeTypeName
 String ::= treeTy::Type
@@ -151,6 +189,7 @@ Type ::= str::String
   return nameType(substring(10, length(str), str));
 }
 
+
 --Attribute Equations
 function wpdNode_to_AttrEq
 String ::= attr::String ty::Type
@@ -167,6 +206,7 @@ String ::= attr::String ty::Type prod::String
 {
   return "$" ++ attr ++ "__" ++ ty.pp ++ "__" ++ prod;
 }
+
 
 --Structure Equality
 function typeToStructureEqName
@@ -204,6 +244,7 @@ String ::= prod::String
 {
   return "$structure_eq__" ++ prod;
 }
+
 
 --Productions
 function isProd

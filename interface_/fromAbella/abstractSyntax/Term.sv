@@ -148,6 +148,29 @@ top::Term ::= f::Term args::TermList
        when isAccessRelation(str) ->
        right(attrAccessEmptyMetaterm(nodeToTreeName(treeNodeName),
                                      accessRelationToAttr(str)))
+     --Local Attribute Access
+     | nameTerm(str, _),
+       consTermList(nameTerm(treeNodeName, _),
+                    singleTermList(applicationTerm(nameTerm("$attr_ex", _),
+                                                   singleTermList(val))))
+       when isLocalAccessRelation(str) ->
+       case val of
+       | pairTerm(
+            addPairContents(nameTerm(tree, _),
+            singlePairContents(applicationTerm(nameTerm(ntr, _), _))))
+         when isNodeTreeConstructorName(ntr) ->
+         right(localAttrAccessMetaterm(nodeToTreeName(treeNodeName),
+                  localAccessToAttr(str), nameTerm(tree, nothing())))
+       | _ ->
+         right(localAttrAccessMetaterm(nodeToTreeName(treeNodeName),
+                  localAccessToAttr(str), val))
+       end
+     | nameTerm(str, _),
+       consTermList(nameTerm(treeNodeName, _),
+                    singleTermList(nameTerm("$attr_no", _)))
+       when isLocalAccessRelation(str) ->
+       right(localAttrAccessEmptyMetaterm(nodeToTreeName(treeNodeName),
+                                     localAccessToAttr(str)))
      --Structural Equality
      | nameTerm(str, _), consTermList(t1, singleTermList(t2))
        when isStructureEqName(str) ->

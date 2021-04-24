@@ -1,0 +1,164 @@
+
+Import "host_definitions".
+
+
+Theorem lookup__unique : forall L N Ret Ret',
+  fun__lookup N L Ret -> fun__lookup N L Ret' -> Ret = Ret'.
+induction on 1. intros. case H1.
+  %found here 1
+   case H2.
+     %found here 2
+      search.
+     %found later 2
+      assert false. backchain H3. case H5.
+  %found later 1
+   case H2.
+     %found here 2
+      assert false. backchain H3. case H5.
+     %found later 2
+      apply IH to H4 H6. search.
+
+
+
+
+Extensible_Theorem value_unique__A : forall (T1 T2 : nt_A) Env V,
+   T1 = T2 ->
+   T1.env = Env -> T2.env = Env ->
+   T1.intVal = V ->
+   T2.intVal = V
+on T1.
+split.
+ %plus
+  intros IH1 IH2 Structure Eq T1Env T2Env T1Val.
+  case_structure T2 in Eq with Structure. case A.env. case A2.env.
+  Eq1 : apply symmetry to H7. Eq2 : apply symmetry to H8. clear H7 H8.
+  case T1.intVal. apply IH1 to Eq1 H13 H16 H19.
+  apply IH2 to Eq2 H14 H17 H20. case T2.intVal.
+  apply plus_integer_unique to H21 H27. search.
+ %num
+  intros Structure N_Is Eq T1Env T2Env T1Val.
+  case_structure T2 in Eq with Structure. case T1.intVal.
+  case T2.intVal. search.
+ %name
+  intros Structure N_Is Eq T1Env T2Env T1Val.
+  case_structure T2 in Eq with Structure. case T1.intVal.
+  case T2.intVal.
+    %lookup doesn't return
+     assert exists Ret, fun__lookup L Env2 Ret. apply H11 to H12.
+    %lookup returns
+     apply lookup__unique to H8 H11. search.
+
+
+Extensible_Theorem value_unique__B : forall (T1 T2 : nt_B) Env V,
+   T1 = T2 ->
+   T1.env = Env -> T2.env = Env ->
+   T1.boolVal = V ->
+   T2.boolVal = V
+on T1.
+split.
+ %greater
+  intros Structure Eq T1Env T2Env T1Val.
+  case_structure T2 in Eq with Structure. case A.env. case A2.env.
+  Eq1 : apply symmetry to H7. Eq2 : apply symmetry to H8. clear H7 H8.
+  case T1.boolVal. apply value_unique__A to Eq1 H13 H16 H19.
+  apply value_unique__A to Eq2 H14 H17 H20. case T2.boolVal.
+  apply greater_integer_unique to H21 H27. search.
+ %equal
+  intros Structure Eq T1Env T2Env T1Val.
+  case_structure T2 in Eq with Structure. case A.env. case A2.env.
+  Eq1 : apply symmetry to H7. Eq2 : apply symmetry to H8. clear H7 H8.
+  case T1.boolVal. apply value_unique__A to Eq1 H13 H16 H19.
+  apply value_unique__A to Eq2 H14 H17 H20. case T2.boolVal. search.
+ %and
+  intros IH1 IH2 Structure Eq T1Env T2Env T1Val.
+  case_structure T2 in Eq with Structure. case B.env. case B2.env.
+  Eq1 : apply symmetry to H7. Eq2 : apply symmetry to H8. clear H7 H8.
+  case T1.boolVal.
+    %B.boolVal = true, T1.boolVal = B1.boolVal
+     apply IH1 to Eq1 H13 H16 H19. apply IH2 to Eq2 H14 H17 H20.
+     case T2.boolVal. search.
+    %B.boolVal = false
+     apply IH1 to Eq1 H13 H16 H19. case T2.boolVal. search.
+ %or
+  intros IH1 IH2 Structure Eq T1Env T2Env T1Val.
+  case_structure T2 in Eq with Structure. case B.env. case B2.env.
+  Eq1 : apply symmetry to H7. Eq2 : apply symmetry to H8. clear H7 H8.
+  case T1.boolVal.
+    %B.boolVal = false, T1.boolVal = B1.boolVal
+     apply IH1 to Eq1 H13 H16 H19. apply IH2 to Eq2 H14 H17 H20.
+     case T2.boolVal. search.
+    %B.boolVal = true
+     apply IH1 to Eq1 H13 H16 H19. case T2.boolVal. search.
+ %bTrue
+  intros Structure Eq T1Env T2Env T1Val.
+  case_structure T2 in Eq with Structure.
+  case T1.boolVal. case T2.boolVal. search.
+ %bFalse
+  intros Structure Eq T1Env T2Env T1Val.
+  case_structure T2 in Eq with Structure.
+  case T1.boolVal. case T2.boolVal. search.
+
+Set debug on.
+
+Extensible_Theorem no_env__no_env_out : forall (T : nt_C),
+  T.env = <no value> -> T.env_out = <no value>
+on T.
+split.
+ %noop
+  intros Structure TEnv. case T.env_out. search.
+ %seq
+  intros IH1 IH2 Structure TEnv. case C.env.
+    %C.env_out does not exist
+     apply IH2 to H8. case T.env_out. search.
+    %C.env_out exists
+     apply IH1 to H6.
+ %assign
+  intros Structure L_Is TEnv. case T.env_out.
+    %A.intVal does not exist
+     search.
+    %T.env does not exist
+     search.
+ %ifThenElse
+  intros IH1 IH2 Structure TEnv. case C.env. apply IH1 to H8.
+  apply IH2 to H9. case T.env_out.
+    %B.boolVal does not exist
+     search.
+    %B.boolVal = true, C.env_out does not exist
+     search.
+    %B.boolVal = false, C1.env_out does not exist
+     search.
+ %while
+  intros IH Structure TEnv. case C.env. apply IH to H7.
+  case T.env_out.
+    %B.boolVal does not exist
+     search.
+    %B.boolVal = true, subWhile does not exist
+     search.
+    %B.boolVal = true, subWhile.env_out does not exist
+     search.
+    %B.boolVal = true, subeWhile.env_out has a value
+     skip.
+
+
+Extensible_Theorem env_out__unique__C : forall (T1 T2 : nt_C) Env V,
+   T1 = T2 ->
+   T1.env = Env -> T2.env = Env ->
+   T1.env_out = V ->
+   T2.env_out = V
+on T1.
+split.
+ %noop
+  intros Structure Eq T1Env T2Env T1EnvOut.
+  case_structure T2 in Eq with Structure. case T1.env_out.
+  case T2.env_out. search.
+ %seq
+  intros IH1 IH2 Structure Eq T1Env T2Env T1EnvOut.
+  case_structure T2 in Eq with Structure. case C.env. case C2.env.
+  
+ %assign
+  
+ %ifThenElse
+  
+ %while
+  
+

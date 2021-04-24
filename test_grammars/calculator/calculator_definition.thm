@@ -477,7 +477,7 @@ Type $wpd_node_nt_Expr   nt_Expr -> $node_tree -> prop.
 
 Define $wpd_node_nt_Expr__host : nt_Expr -> $node_tree -> prop by
   $wpd_node_nt_Expr__host Tree ($ntr_nt_Expr Node CL) :=
-     forall AEnv AValue AKnownNames AValExists,
+     exists AEnv AValue AKnownNames AValExists,
         $env__nt_Expr Tree ($ntr_nt_Expr Node CL) /\
            $access_$_env_$_nt_Expr Node AEnv /\
            $is_attrVal (is_list (is_pair is_string is_integer)) AEnv /\
@@ -532,7 +532,7 @@ Type $wpd_node_nt_Root   nt_Root -> $node_tree -> prop.
 
 Define $wpd_node_nt_Root__host : nt_Root -> $node_tree -> prop by
   $wpd_node_nt_Root__host Tree ($ntr_nt_Root Node CL) :=
-     forall AValue AValExists,
+     exists AValue AValExists,
         $value__nt_Root Tree ($ntr_nt_Root Node CL) /\
             $access_$_value_$_nt_Root Node AValue /\
             $is_attrVal is_integer AValue /\

@@ -21,13 +21,6 @@ top::AnyCommand ::= c::TopCommand
   top.pp = c.pp;
 
   top.translation = c.translation.pp;
-      --This is a hack to correctly read input when we import a file
-      --Any file we import with this had better be correct, or it will crash or hang
-      {-case c.translation of
-      | textCommand(_) ->
-        c.translation.pp ++ " Theorem $$done : true. abort. "
-      | _ -> c.translation.pp
-      end;-}
 
   top.isQuit = false;
   top.isUndo = false;
@@ -73,6 +66,7 @@ top::AnyCommand ::= c::TopCommand
                c.newKnownProductions,
                c.newKnownWPDRelations,
                c.newKnownInheritedAttrs,
+               c.newKnownLocalAttrs,
                currentState.clean,
                c.newKnownTheorems)
            )::top.stateListIn;
@@ -138,6 +132,7 @@ top::AnyCommand ::= c::ProofCommand
                     currentState.knownProductions,
                     currentState.knownWPDRelations,
                     currentState.knownInheritedAttrs,
+                    currentState.knownLocalAttrs,
                     currentState.clean,
                     currentState.knownTheorems)
                 )::top.stateListIn;

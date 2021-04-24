@@ -11,7 +11,8 @@ grammar interface_:common;
 nonterminal ProverState with
    state, debug, clean,
    knownAttrs, knownAttrOccurrences, knownProductions,
-   knownWPDRelations, knownInheritedAttrs, knownTheorems,
+   knownWPDRelations, knownInheritedAttrs, knownLocalAttrs,
+   knownTheorems,
    replaceState, replacedState<ProverState>;
 
 
@@ -23,6 +24,8 @@ synthesized attribute knownAttrs::[(String, Type)];
 synthesized attribute knownAttrOccurrences::[(String, [Type])];
 --any attr not in this list (and which is known) is synthesized
 synthesized attribute knownInheritedAttrs::[String];
+--local name and list of productions it occurs on and type there
+synthesized attribute knownLocalAttrs::[(String, [(String, Type)])];
 
 synthesized attribute knownProductions::[(String, Type)];
 
@@ -49,7 +52,8 @@ top::ProverState ::=
    state::ProofState debugMode::Boolean attrs::[(String, Type)]
    attrOccurrences::[(String, [Type])] prods::[(String, Type)]
    wpdRelations::[(String, Type, [String])]
-   inheritedAttrs::[String] cleanMode::Boolean
+   inheritedAttrs::[String] localAttrs::[(String, [(String, Type)])]
+   cleanMode::Boolean
    knownTheorems::[(String, Metaterm)]
 {
   top.state = state;
@@ -60,11 +64,13 @@ top::ProverState ::=
   top.knownProductions = prods;
   top.knownWPDRelations = wpdRelations;
   top.knownInheritedAttrs = inheritedAttrs;
+  top.knownLocalAttrs = localAttrs;
   top.knownTheorems = knownTheorems;
 
   top.replacedState =
       proverState(top.replaceState, debugMode, attrs,
                   attrOccurrences, prods, wpdRelations,
-                  inheritedAttrs, cleanMode, knownTheorems);
+                  inheritedAttrs, localAttrs, cleanMode,
+                  knownTheorems);
 }
 

@@ -45,6 +45,7 @@ synthesized attribute newKnownProductions::[(String, Type)];
 synthesized attribute newKnownWPDRelations::[(String, Type, [String])];
 synthesized attribute newKnownTheorems::[(String, Metaterm)];
 synthesized attribute newKnownInheritedAttrs::[String];
+synthesized attribute newKnownLocalAttrs::[(String, [(String, Type)])];
 
 
 

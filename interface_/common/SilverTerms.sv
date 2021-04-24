@@ -152,6 +152,23 @@ top::Metaterm ::= tree::String attr::String
 }
 
 
+abstract production localAttrAccessMetaterm
+top::Metaterm ::= tree::String attr::String val::Term
+{
+  top.pp = "local " ++ tree ++ "." ++ attr ++ " = " ++ val.pp;
+  top.isAtomic = true;
+  top.shouldHide = false;
+}
+
+abstract production localAttrAccessEmptyMetaterm
+top::Metaterm ::= tree::String attr::String
+{
+  top.pp = "local " ++ tree ++ "." ++ attr ++ " = <no value>";
+  top.isAtomic = true;
+  top.shouldHide = false;
+}
+
+
 
 --TERMS
 abstract production intTerm

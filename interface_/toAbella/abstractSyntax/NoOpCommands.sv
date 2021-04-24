@@ -53,6 +53,7 @@ top::NoOpCommand ::= opt::String val::String
                    currentState.knownProductions,
                    currentState.knownWPDRelations,
                    currentState.knownInheritedAttrs,
+                   currentState.knownLocalAttrs,
                    if opt == "clean"
                    then val == "on"
                    else currentState.clean,
