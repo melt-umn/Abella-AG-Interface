@@ -127,6 +127,19 @@ top::Metaterm ::= arg::Term result::Term
 
 
 {-
+  FUNCTION SYNTAX
+-}
+
+aspect production funMetaterm
+top::Metaterm ::= funName::String args::ParenthesizedArgs result::Term
+{
+  top.translation = error("Should never be translating a funMetaterm");
+}
+
+
+
+
+{-
   ATTRIBUTE ACCESS
 -}
 
@@ -140,7 +153,20 @@ top::Metaterm ::= tree::String attr::String val::Term
 aspect production attrAccessEmptyMetaterm
 top::Metaterm ::= tree::String attr::String
 {
-  top.translation = error("Should enver be translating an attrAccessEmptyMetaterm");
+  top.translation = error("Should never be translating an attrAccessEmptyMetaterm");
+}
+
+
+aspect production localAttrAccessMetaterm
+top::Metaterm ::= tree::String attr::String val::Term
+{
+  top.translation = error("Should never be translating a localAttrAccessMetaterm");
+}
+
+aspect production localAttrAccessEmptyMetaterm
+top::Metaterm ::= tree::String attr::String
+{
+  top.translation = error("Should never be translating a localAttrAccessEmptyMetaterm");
 }
 
 
@@ -202,6 +228,19 @@ aspect production pairTerm
 top::Term ::= contents::PairContents
 {
   top.translation = error("Should never be translating a pairTerm");
+}
+
+
+
+
+{-
+  PRODUCTION SYNTAX
+-}
+
+aspect production prodTerm
+top::Term ::= prodName::String args::ParenthesizedArgs
+{
+  top.translation = error("Should never be translating a prodTerm");
 }
 
 

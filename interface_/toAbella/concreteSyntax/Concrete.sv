@@ -272,7 +272,7 @@ concrete productions top::SubMetaterm_c
 --| 'false'
 --  { top.ast = falseMetaterm(); }
 | t1::Term_c '=' t2::Term_c
-  { top.ast = eqMetaterm(t1.ast, t2.ast); }
+  { top.ast = disambiguateEqMetaterm(t1.ast, t2.ast); }
 | b::Binder_c bl::BindingList_c ',' m::Metaterm_c
   { top.ast = bindingMetaterm(b.ast, bl.ast, m.ast); }
 | m1::Metaterm_c '->' m2::Metaterm_c
@@ -377,7 +377,9 @@ concrete productions top::Term_c
 
 concrete productions top::MidTerm_c
 | e::Exp_c el::ExpList_c
-  { top.ast = applicationTerm(e.ast, el.ast); }
+  { top.ast = disambiguateApplicationTerm(e.ast, el.ast); }
+| e::Exp_c '(' ')'
+  { top.ast = disambiguateApplicationTerm(e.ast, emptyTermList()); }
 | e::Exp_c
   { top.ast = e.ast; }
 

@@ -12,7 +12,7 @@ nonterminal ProverState with
    state, debug, clean,
    knownAttrs, knownAttrOccurrences, knownProductions,
    knownWPDRelations, knownInheritedAttrs, knownLocalAttrs,
-   knownTheorems,
+   knownTheorems, knownFunctions,
    replaceState, replacedState<ProverState>;
 
 
@@ -28,6 +28,7 @@ synthesized attribute knownInheritedAttrs::[String];
 synthesized attribute knownLocalAttrs::[(String, [(String, Type)])];
 
 synthesized attribute knownProductions::[(String, Type)];
+synthesized attribute knownFunctions::[(String, Type)];
 
 --The type here is just the nonterminal type---we can deduce the rest
 --   of the WPD nonterminal relation's type from that.
@@ -51,7 +52,7 @@ abstract production proverState
 top::ProverState ::=
    state::ProofState debugMode::Boolean attrs::[(String, Type)]
    attrOccurrences::[(String, [Type])] prods::[(String, Type)]
-   wpdRelations::[(String, Type, [String])]
+   funs::[(String, Type)] wpdRelations::[(String, Type, [String])]
    inheritedAttrs::[String] localAttrs::[(String, [(String, Type)])]
    cleanMode::Boolean
    knownTheorems::[(String, Metaterm)]
@@ -62,6 +63,7 @@ top::ProverState ::=
   top.knownAttrs = attrs;
   top.knownAttrOccurrences = attrOccurrences;
   top.knownProductions = prods;
+  top.knownFunctions = funs;
   top.knownWPDRelations = wpdRelations;
   top.knownInheritedAttrs = inheritedAttrs;
   top.knownLocalAttrs = localAttrs;
@@ -69,8 +71,18 @@ top::ProverState ::=
 
   top.replacedState =
       proverState(top.replaceState, debugMode, attrs,
-                  attrOccurrences, prods, wpdRelations,
+                  attrOccurrences, prods, funs, wpdRelations,
                   inheritedAttrs, localAttrs, cleanMode,
                   knownTheorems);
+}
+
+
+
+--Build a prover state as you expect in the beginning
+function defaultProverState
+ProverState ::=
+{
+  return proverState(noProof(), false, [], [], [], [],
+                 [], [], [], true, []);
 }
 

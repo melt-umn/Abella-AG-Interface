@@ -3,7 +3,7 @@ Import "host_definitions".
 
 
 Theorem lookup__unique : forall L N Ret Ret',
-  fun__lookup N L Ret -> fun__lookup N L Ret' -> Ret = Ret'.
+  lookup(N, L) = Ret -> lookup(N, L) = Ret' -> Ret = Ret'.
 induction on 1. intros. case H1.
   %found here 1
    case H2.
@@ -44,7 +44,7 @@ split.
   case_structure T2 in Eq with Structure. case T1.intVal.
   case T2.intVal.
     %lookup doesn't return
-     assert exists Ret, fun__lookup L Env2 Ret. apply H11 to H12.
+     assert exists Ret, lookup(L, Env2) = Ret. apply H11 to H12.
     %lookup returns
      apply lookup__unique to H8 H11. search.
 
@@ -98,7 +98,6 @@ split.
   case_structure T2 in Eq with Structure.
   case T1.boolVal. case T2.boolVal. search.
 
-Set debug on.
 
 Extensible_Theorem no_env__no_env_out : forall (T : nt_C),
   T.env = <no value> -> T.env_out = <no value>

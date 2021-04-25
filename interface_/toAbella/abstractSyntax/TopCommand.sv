@@ -9,7 +9,7 @@ nonterminal TopCommand with
    translation<TopCommand>, numCommandsSent, currentState,
    abellaFileParser,  newKnownAttrs, newKnownAttrOccurrences,
      newKnownProductions, newKnownWPDRelations, newKnownTheorems,
-     newKnownInheritedAttrs, newKnownLocalAttrs,
+     newKnownInheritedAttrs, newKnownLocalAttrs, newKnownFunctions,
    errors, sendCommand, ownOutput,
    translatedTheorem, numRelevantProds;
 
@@ -32,6 +32,7 @@ top::TopCommand ::=
   top.newKnownAttrs = top.currentState.knownAttrs;
   top.newKnownAttrOccurrences = top.currentState.knownAttrOccurrences;
   top.newKnownProductions = top.currentState.knownProductions;
+  top.newKnownFunctions = top.currentState.knownFunctions;
   top.newKnownWPDRelations = top.currentState.knownWPDRelations;
   top.newKnownInheritedAttrs = top.currentState.knownInheritedAttrs;
   top.newKnownLocalAttrs = top.currentState.knownLocalAttrs;
@@ -279,6 +280,8 @@ top::TopCommand ::= importFile::String withs::[(String, String)]
                           top.currentState.knownAttrOccurrences);
   top.newKnownProductions =
       fileAST.newProductions ++ top.currentState.knownProductions;
+  top.newKnownFunctions =
+      fileAST.newFunctions ++ top.currentState.knownFunctions;
   top.newKnownWPDRelations =
       fileAST.newWPDRelations ++ top.currentState.knownWPDRelations;
   top.newKnownTheorems =

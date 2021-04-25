@@ -223,17 +223,29 @@ top::Term ::= ty::Maybe<Type>
 
 
 
-nonterminal TermList with pp;
+nonterminal TermList with pp, argList;
 
 abstract production singleTermList
 top::TermList ::= t::Term
 {
   top.pp = if t.isAtomic then t.pp else "(" ++ t.pp ++ ")";
+
+  top.argList = [t];
 }
 
 abstract production consTermList
 top::TermList ::= t::Term rest::TermList
 {
   top.pp = (if t.isAtomic then t.pp else "(" ++ t.pp ++ ")") ++ " " ++ rest.pp;
+
+  top.argList = t::rest.argList;
+}
+
+abstract production emptyTermList
+top::TermList ::=
+{
+  top.pp = "";
+
+  top.argList = [];
 }
 

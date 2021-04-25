@@ -10,6 +10,7 @@ attribute
    removeWPDTree, removedWPD,
    implicationPremises, conjunctionSplit,
    errors,
+   currentState,
    gatheredTrees
 occurs on Metaterm;
 
@@ -461,6 +462,36 @@ top::Metaterm ::= tree::String attr::String
 }
 
 
+aspect production localAttrAccessMetaterm
+top::Metaterm ::= tree::String attr::String val::Term
+{
+  top.translation = error("Should not access translation on localAttrAccessMetaterm");
+
+  top.removedWPD = top;
+
+  val.boundVars = top.boundVars;
+  top.boundVarsOut = val.boundVarsOut;
+
+  top.usedNames = tree::val.usedNames;
+
+  top.foundNameType = left("Did not find name " ++ top.findNameType);
+}
+
+aspect production localAttrAccessEmptyMetaterm
+top::Metaterm ::= tree::String attr::String
+{
+  top.translation = error("Should not access translation on localAttrAccessEmptyMetaterm");
+
+  top.removedWPD = top;
+
+  top.boundVarsOut = top.boundVars;
+
+  top.usedNames = [tree];
+
+  top.foundNameType = left("Did not find name " ++ top.findNameType);
+}
+
+
 aspect production plusMetaterm
 top::Metaterm ::= t1::Term t2::Term result::Term
 {
@@ -779,6 +810,44 @@ top::Metaterm ::= t::Term result::Term
 }
 
 
+aspect production funMetaterm
+top::Metaterm ::= funName::String args::ParenthesizedArgs result::Term
+{
+  top.translation =
+      termMetaterm(
+         buildApplication(
+            nameTerm(nameToFun(funName), nothing()),
+            case args.translation of
+            | just(a) -> a.argList ++ [result.translation]
+            | nothing() -> [result.translation]
+            end),
+         emptyRestriction());
+
+  top.errors <-
+      case findAssociated(funName, top.currentState.knownFunctions) of
+      | just(ty) ->
+        --Subtract 1 because return type is included
+        if length(ty.argumentTypes) - 1 == length(args.argList)
+        then []
+        else [errorMsg("Function " ++ funName ++ " expected " ++
+                       toString(length(ty.argumentTypes) - 1) ++
+                       " arguments but got " ++
+                       toString(length(args.argList)))]
+      | nothing() -> [errorMsg("Unknown function " ++ funName)]
+      end;
+
+  args.boundVars = top.boundVars;
+  result.boundVars = args.boundVarsOut;
+  top.boundVarsOut = result.boundVarsOut;
+
+  top.foundNameType = left("Did not find name " ++ top.findNameType);
+
+  top.usedNames = args.usedNames ++ result.usedNames;
+
+  top.removedWPD = top;
+}
+
+
 
 
 
@@ -791,7 +860,8 @@ attribute
    eqTest<Term>, isEq,
    findParentOf, foundParent,
    gatheredTrees,
-   isProdStructure
+   isProdStructure,
+   currentState
 occurs on Term;
 
 aspect production applicationTerm
@@ -1060,6 +1130,38 @@ top::Term ::= c::String
   top.isProdStructure = false;
 }
 
+aspect production prodTerm
+top::Term ::= prodName::String args::ParenthesizedArgs
+{
+  top.translation =
+      case args.translation of
+      | just(a) ->
+        applicationTerm(nameTerm(nameToProd(prodName), nothing()), a)
+      | nothing() ->
+        nameTerm(nameToProd(prodName), nothing())
+      end;
+
+  args.boundVars = top.boundVars;
+  top.boundVarsOut = args.boundVarsOut;
+
+  top.usedNames = args.usedNames;
+
+  top.isEq =
+      case top.eqTest of
+      | prodTerm(prod, args2) when prod == prodName ->
+        decorate args with {eqTest = args2;}.isEq
+      | _ -> false
+      end;
+
+  args.findParentOf = top.findParentOf;
+  top.foundParent =
+      if args.isArgHere.isJust
+      then just((nameToProd(prodName), args.isArgHere.fromJust))
+      else args.foundParent;
+
+  top.isProdStructure = true;
+}
+
 
 aspect production pairTerm
 top::Term ::= contents::PairContents
@@ -1217,6 +1319,79 @@ top::PairContents ::= t::Term rest::PairContents
 
 
 attribute
+   translation<Maybe<TermList>>, newPremises,
+   boundVars, boundVarsOut, attrOccurrences, knownTrees,
+   usedNames,
+   replaceName, replaceTerm, replaced,
+   errors,
+   eqTest<ParenthesizedArgs>, isEq,
+   findParentOf, foundParent, isArgHere,
+   gatheredTrees
+occurs on ParenthesizedArgs;
+
+aspect production emptyParenthesizedArgs
+top::ParenthesizedArgs ::=
+{
+  top.translation = nothing();
+
+  top.boundVarsOut = top.boundVars;
+
+  top.usedNames = [];
+
+  top.isEq =
+      case top.eqTest of
+      | emptyParenthesizedArgs() -> true
+      | _ -> false
+      end;
+
+  top.foundParent = nothing();
+  top.isArgHere = nothing();
+}
+
+
+aspect production addParenthesizedArgs
+top::ParenthesizedArgs ::= hd::Term tl::ParenthesizedArgs
+{
+  top.translation =
+      case tl.translation of
+      | just(tlt) -> just(consTermList(hd.translation, tlt))
+      | nothing() -> just(singleTermList(hd.translation))
+      end;
+
+  hd.boundVars = top.boundVars;
+  tl.boundVars = hd.boundVarsOut;
+  top.boundVarsOut = tl.boundVarsOut;
+
+  top.usedNames = hd.usedNames ++ tl.usedNames;
+
+  top.isEq =
+      case top.eqTest of
+      | addParenthesizedArgs(hd2, tl2) ->
+        decorate hd with {eqTest = hd2;}.isEq &&
+        decorate tl with {eqTest = tl2;}.isEq
+      | _ -> false
+      end;
+
+  hd.findParentOf = top.findParentOf;
+  tl.findParentOf = top.findParentOf;
+  top.foundParent =
+      case hd.foundParent of
+      | just(_) -> hd.foundParent
+      | nothing() -> tl.foundParent
+      end;
+  top.isArgHere =
+      case hd of
+      | nameTerm(str, _) when str == top.findParentOf ->
+        just(0) --0-based indexing
+      | _ -> bind(tl.isArgHere, \x::Integer -> just(x + 1))
+      end;
+}
+
+
+
+
+
+attribute
    translation<TermList>, newPremises,
    boundVars, boundVarsOut, attrOccurrences, knownTrees,
    usedNames,
@@ -1224,8 +1399,7 @@ attribute
    errors,
    eqTest<TermList>, isEq,
    findParentOf, foundParent, isArgHere,
-   gatheredTrees,
-   argList
+   gatheredTrees
 occurs on TermList;
 
 aspect production singleTermList
@@ -1253,8 +1427,6 @@ top::TermList ::= t::Term
         just(0) --0-based indexing
       | _ -> nothing()
       end;
-
-  top.argList = [t];
 }
 
 
@@ -1290,7 +1462,26 @@ top::TermList ::= t::Term rest::TermList
         just(0) --0-based indexing
       | _ -> bind(rest.isArgHere, \x::Integer -> just(x + 1))
       end;
+}
 
-  top.argList = t::rest.argList;
+
+
+aspect production emptyTermList
+top::TermList ::=
+{
+  top.translation = emptyTermList();
+
+  top.boundVarsOut = top.boundVars;
+
+  top.usedNames = [];
+
+  top.isEq =
+      case top.eqTest of
+      | emptyTermList() -> true
+      | _ -> false
+      end;
+
+  top.foundParent = nothing();
+  top.isArgHere = nothing();
 }
 

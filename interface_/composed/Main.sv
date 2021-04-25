@@ -38,8 +38,7 @@ IOVal<Integer> ::= largs::[String] ioin::IO
         read_abella_outputs(1, abella.iovalue, abella.io);
 
   return
-     run_step([(-1, proverState(noProof(),false, [], [],
-                                [], [], [], [], true, []))],
+     run_step([(-1, defaultProverState())],
               abella.iovalue, abella_initial_string.io);
 }
 

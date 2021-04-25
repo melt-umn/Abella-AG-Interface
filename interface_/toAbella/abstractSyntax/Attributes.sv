@@ -9,19 +9,20 @@ imports interface_:common;
   structured tree, then use pp to get the text to send to Abella.
 -}
 synthesized attribute translation<a>::a;
-flowtype translation {attrOccurrences, boundVars, finalTys, knownTrees} on Metaterm;
+flowtype translation {attrOccurrences, boundVars, finalTys,
+                      knownTrees, currentState} on Metaterm;
 
 --new premises we are adding to the current theorem being defined
 monoid attribute newPremises::[NewPremise] with [], ++;
 propagate newPremises on
-   Metaterm, Term, TermList, ListContents, PairContents
+   Metaterm, Term, TermList, ListContents, PairContents, ParenthesizedArgs
    excluding bindingMetaterm, attrAccessMetaterm, attrAccessEmptyMetaterm;
 
 
 monoid attribute errors::[Error] with [], ++;
 propagate errors on
    Metaterm, Term, TermList, ListContents, PairContents, HHint,
-   ProofCommand, TopCommand, NoOpCommand, Type, EWitness;
+   ProofCommand, TopCommand, NoOpCommand, Type, EWitness, ParenthesizedArgs;
 
 --Whether a command is something to be sent to Abella, or handled internally
 synthesized attribute sendCommand::Boolean;
@@ -42,6 +43,7 @@ inherited attribute abellaFileParser::(Either<String ListOfCommands> ::= String 
 synthesized attribute newKnownAttrs::[(String, Type)];
 synthesized attribute newKnownAttrOccurrences::[(String, [Type])];
 synthesized attribute newKnownProductions::[(String, Type)];
+synthesized attribute newKnownFunctions::[(String, Type)];
 synthesized attribute newKnownWPDRelations::[(String, Type, [String])];
 synthesized attribute newKnownTheorems::[(String, Metaterm)];
 synthesized attribute newKnownInheritedAttrs::[String];
@@ -102,7 +104,8 @@ autocopy attribute translatedState::ProofState;
 autocopy attribute replaceName::String;
 autocopy attribute replaceTerm::Term;
 functor attribute replaced;
-propagate replaced on Metaterm, Term, TermList, PairContents, ListContents
+propagate replaced on Metaterm, Term, TermList, PairContents,
+                      ListContents, ParenthesizedArgs
    excluding nameTerm, bindingMetaterm;
 
 
@@ -163,9 +166,6 @@ inherited attribute findParentOf::String;
 synthesized attribute foundParent::Maybe<(String, Integer)>;
 synthesized attribute isArgHere::Maybe<Integer>;
 
---To get a list of term arguments from a TermList
-synthesized attribute argList::[Term];
-
 
 
 --Search for the type of a variable by a particular name at the top level of a metaterm
@@ -214,7 +214,7 @@ synthesized attribute nextStateOut::ProofState;
 --Names of trees used in a proof state
 monoid attribute gatheredTrees::[String] with [], ++;
 propagate gatheredTrees on
-   Metaterm, Term, TermList, ListContents, PairContents,
+   Metaterm, Term, TermList, ListContents, PairContents, ParenthesizedArgs,
    ProofState, Context, Hypothesis
    excluding bindingMetaterm, attrAccessMetaterm, attrAccessEmptyMetaterm,
              nameTerm, applicationTerm;

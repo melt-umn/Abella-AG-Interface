@@ -444,7 +444,8 @@ top::ProofCommand ::= h::HHint tree::String attr::String
                   {findParentOf = tree;}.foundParent of
              | nothing() -> error("We picked this term based on it being included")
              | just((prod, index)) ->
-                case findAssociated(prod, top.currentState.knownProductions) of
+                case findAssociated(prodToName(prod),
+                                    top.currentState.knownProductions) of
                 | just(val) -> val.resultType
                 | nothing() -> error("Production " ++ prod ++ " must exist")
                 end
@@ -463,8 +464,20 @@ top::ProofCommand ::= h::HHint tree::String attr::String
                case decorate args with {findParentOf = tree;}.isArgHere of
                | nothing() -> error("Must exist because of where this came from")
                | just(ind) ->
-                 case findAssociated(prod, top.currentState.knownProductions) of
-                 | nothing() -> error("Production must exist (" ++ prod ++ ")")
+                 case findAssociated(prodToName(prod),
+                                     top.currentState.knownProductions) of
+                 | nothing() -> error("Production must exist 1 (" ++ prod ++ ")")
+                 | just(prodTy) -> elemAtIndex(prodTy.argumentTypes, ind)
+                 end
+               end
+             | just((_, prodTerm(prod, args))) ->
+               case decorate args with {findParentOf = tree;}.isArgHere of
+               | nothing() -> error("Must exist because of where this came from")
+               | just(ind) ->
+                 case findAssociated(prod,
+                                     top.currentState.knownProductions) of
+                 | nothing() ->
+                   error("Production must exist 2 (" ++ prod ++ ")")
                  | just(prodTy) -> elemAtIndex(prodTy.argumentTypes, ind)
                  end
                end
@@ -642,7 +655,7 @@ top::ProofCommand ::=
         | _ -> error("This must be one of these because of error checking")
         end;
   local prodTy::Maybe<Type> =
-        findAssociated(prod, top.currentState.knownProductions);
+        findAssociated(prodToName(prod), top.currentState.knownProductions);
   local prodChildren::[Term] =
         case structure of
         | applicationTerm(_, args) -> args.argList

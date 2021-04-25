@@ -233,7 +233,7 @@ Metaterm ::= prods::[String] original::Metaterm treeName::String
   local children::[(Type, String)] = buildChildNames(prodTy.argumentTypes, usedNames);
   local newTree::Term =
         buildApplication(
-           nameTerm(prodName, nothing()),
+           nameTerm(nameToProd(prodName), nothing()),
            map(\ p::(Type, String) ->
                  nameTerm( if tyIsNonterminal(p.fst)
                            then treeToStructureName(p.snd)

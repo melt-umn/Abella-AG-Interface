@@ -7,6 +7,10 @@ synthesized attribute pp::String;
 synthesized attribute isAtomic::Boolean;
 
 
+--The arguments in a TermList, but in an actual list
+synthesized attribute argList::[Term];
+
+
 --Whether a premise should be hidden
 --We include this here because we need it in both toAbella and fromAbella
 synthesized attribute shouldHide::Boolean;

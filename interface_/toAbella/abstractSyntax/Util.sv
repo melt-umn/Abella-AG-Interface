@@ -307,6 +307,12 @@ Maybe<(String, Term)> ::= treename::String hyps::[(String, Metaterm)]
      | (hyp, eqMetaterm(applicationTerm(f, args), nameTerm(prod, _)))::_
        when decorate args with {findParentOf = treename;}.isArgHere.isJust ->
        just((prod, applicationTerm(f, args)))
+     | (hyp, eqMetaterm(nameTerm(tree, _), prodTerm(prodName, args)))::_
+       when decorate args with {findParentOf = treename;}.isArgHere.isJust ->
+       just((tree, prodTerm(prodName, args)))
+     | (hyp, eqMetaterm(prodTerm(prodName, args), nameTerm(tree, _)))::_
+       when decorate args with {findParentOf = treename;}.isArgHere.isJust ->
+       just((tree, prodTerm(prodName, args)))
      | _::tl -> find_parent_tree(treename, tl)
      end;
 }

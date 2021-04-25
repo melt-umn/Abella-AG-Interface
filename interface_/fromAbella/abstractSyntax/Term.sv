@@ -175,6 +175,18 @@ top::Term ::= f::Term args::TermList
      | nameTerm(str, _), consTermList(t1, singleTermList(t2))
        when isStructureEqName(str) ->
        right(eqMetaterm(t1, t2))
+     --Function Application
+     | nameTerm(str, _), args when isFun(str) ->
+       right(funMetaterm(funToName(str),
+                foldr(addParenthesizedArgs(_, _),
+                      emptyParenthesizedArgs(),
+                      take(length(args.argList) - 1, args.argList)),
+                last(args.argList)))
+     --Production Application
+     | nameTerm(str, _), args when isProd(str) ->
+       left(prodTerm(prodToName(str),
+               foldr(addParenthesizedArgs(_, _),
+                     emptyParenthesizedArgs(), args.argList)))
      --Integer Constants
      | nameTerm("$posInt", _), singleTermList(intTerm(i)) ->
        left(intTerm(i))
@@ -204,13 +216,16 @@ top::Term ::= name::String ty::Maybe<Type>
           --Tree structure variable
           | x when isTreeStructureName(x) ->
             nameTerm(structureToTreeName(x), ty)
+          --Productions
+          | str when isProd(str) ->
+            prodTerm(prodToName(str), emptyParenthesizedArgs())
+          --Characters
+          | str when startsWith("$c_", str) ->
+            charTerm(charsToString([toInteger(
+                        substring(3, length(name), name))]))
           --Other
           | _ ->
-            if startsWith("$c_", name)
-            --Character for string
-            then charTerm(charsToString([toInteger(substring(3, 5, name))]))
-            --Nothing Special
-            else nameTerm(name, ty)
+            nameTerm(name, ty)
           end);
   local findDot::Integer = indexOf("_DOT_", name);
 }
@@ -275,5 +290,12 @@ top::TermList ::= t::Term rest::TermList
       | left(tm) -> consTermList(tm, rest.translation)
       | right(_) -> error("Should not have a metaterm translation in consTermList")
       end;
+}
+
+
+aspect production emptyTermList
+top::TermList ::=
+{
+  top.translation = error("Should not have an emptyTermList here");
 }
 

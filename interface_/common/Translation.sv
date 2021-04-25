@@ -250,6 +250,36 @@ String ::= prod::String
 function isProd
 Boolean ::= name::String
 {
-  return startsWith("prod_", name);
+  return startsWith("$prod_", name);
+}
+function prodToName
+String ::= prod::String
+{
+  --$prod_<name>
+  return substring(6, length(prod), prod);
+}
+function nameToProd
+String ::= s::String
+{
+  return "$prod_" ++ s;
+}
+
+
+--Functions
+function isFun
+Boolean ::= name::String
+{
+  return startsWith("$fun__", name);
+}
+function funToName
+String ::= fun::String
+{
+  --$fun__<name>
+  return substring(6, length(fun), fun);
+}
+function nameToFun
+String ::= s::String
+{
+  return "$fun__" ++ s;
 }
 

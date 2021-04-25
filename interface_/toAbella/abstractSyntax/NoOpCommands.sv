@@ -51,6 +51,7 @@ top::NoOpCommand ::= opt::String val::String
                    currentState.knownAttrs,
                    currentState.knownAttrOccurrences,
                    currentState.knownProductions,
+                   currentState.knownFunctions,
                    currentState.knownWPDRelations,
                    currentState.knownInheritedAttrs,
                    currentState.knownLocalAttrs,

@@ -125,6 +125,14 @@ top::Metaterm ::= t::Term result::Term
   top.shouldHide = false;
 }
 
+abstract production funMetaterm
+top::Metaterm ::= funName::String args::ParenthesizedArgs result::Term
+{
+  top.pp = funName ++ "(" ++ args.pp ++ ") = " ++ result.pp;
+  top.isAtomic = true;
+  top.shouldHide = false;
+}
+
 {-
   We were going to handle attribute access implicitly, with t.a being
   a Term and inserting an access Metaterm earlier in the theorem.
@@ -227,37 +235,68 @@ top::Term ::= char::String
   top.shouldHide = false;
 }
 
+abstract production prodTerm
+top::Term ::= prodName::String args::ParenthesizedArgs
+{
+  top.pp = prodName ++ "(" ++ args.pp ++ ")";
+  top.isAtomic = true;
+  top.shouldHide = false;
+}
 
 
 
-nonterminal ListContents with pp;
+
+nonterminal ParenthesizedArgs with pp, argList;
+
+abstract production emptyParenthesizedArgs
+top::ParenthesizedArgs ::=
+{
+  top.pp = "";
+  top.argList = [];
+}
+
+abstract production addParenthesizedArgs
+top::ParenthesizedArgs ::= t::Term rest::ParenthesizedArgs
+{
+  top.pp = t.pp ++ (if rest.pp == "" then "" else ", " ++ rest.pp);
+  top.argList = t::rest.argList;
+}
+
+
+
+
+nonterminal ListContents with pp, argList;
 
 abstract production emptyListContents
 top::ListContents ::=
 {
   top.pp = "";
+  top.argList = [];
 }
 
 abstract production addListContents
 top::ListContents ::= t::Term rest::ListContents
 {
   top.pp = t.pp ++ (if rest.pp == "" then "" else ", " ++ rest.pp);
+  top.argList = t::rest.argList;
 }
 
 
 
 
-nonterminal PairContents with pp;
+nonterminal PairContents with pp, argList;
 
 abstract production singlePairContents
 top::PairContents ::= t::Term
 {
   top.pp = t.pp;
+  top.argList = [t];
 }
 
 abstract production addPairContents
 top::PairContents ::= t::Term rest::PairContents
 {
   top.pp = t.pp ++ ", " ++ rest.pp;
+  top.argList = t::rest.argList;
 }
 

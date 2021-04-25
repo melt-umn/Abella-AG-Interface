@@ -5,8 +5,8 @@ Import "calculator_definition".
 Set debug off.
 
 
-Theorem fun__contains__member : forall E N,
-   member N E -> is_list is_string E -> fun__contains N E true.
+Theorem contains__member : forall E N,
+   member N E -> is_list is_string E -> contains(N, E) = true.
 induction on 1. intros. case H1.
   %Subgoal 1
    search.
@@ -18,16 +18,16 @@ induction on 1. intros. case H1.
      %Subgoal 2.3
       search.
 
-Theorem fun__contains__to__member : forall E N,
-   fun__contains N E true -> member N E.
+Theorem contains__to__member : forall E N,
+   contains(N, E) = true -> member N E.
 induction on 1. intros. case H1.
   %contains here
    search.
   %contains later
    apply IH to H3. search.
 
-Theorem fun__contains__total : forall E N,
-  is_list is_string E -> is_string N -> exists B, fun__contains N E B.
+Theorem contains__total : forall E N,
+  is_list is_string E -> is_string N -> exists B, contains(N, E) = B.
 induction on 1. intros. case H1 (keep).
   %Subgoal 1
    exists false. search.
@@ -38,9 +38,9 @@ induction on 1. intros. case H1 (keep).
      %Subgoal 2.2
       apply IH to H4 H2. search.
 
-Theorem fun__lookup__member : forall E V N,
+Theorem lookup__member : forall E V N,
   is_list (is_pair is_string is_integer) E -> member (N, V) E ->
-  exists V', fun__lookup E N V'.
+  exists V', lookup(E, N) = V'.
 induction on 2. intros. case H2.
   %member here
    search.
@@ -52,8 +52,8 @@ induction on 2. intros. case H2.
      %not equal
       exists V'. search.
 
-Theorem fun__lookup__unique : forall E V N N',
-  fun__lookup E V N -> fun__lookup E V N' -> N = N'.
+Theorem lookup__unique : forall E V N N',
+  lookup(E, V) = N -> lookup(E, V) = N' -> N = N'.
 induction on 1. intros. case H1.
   %lookup 1 here
    case H2.
@@ -248,10 +248,10 @@ split.
  %name
   intros Structure L_Is Eq. case_structure T2 in Eq with Structure.
   case T1.value. case T2.value.
-    %fun__lookup doesn't return for T2
+    %lookup doesn't return for T2
      search.
-    %fun__lookup returns for T2
-     assert exists Ret, fun__lookup Env2 L Ret. apply H12 to H16.
+    %lookup returns for T2
+     assert exists Ret, lookup(Env2, L) = Ret. apply H12 to H16.
 %Value Exists
  %intConst
   intros Structure N_Is Eq T1Env T2Env T1Val T2Val.
@@ -313,10 +313,10 @@ split.
   intros Structure L_Is Eq T1Env T2Env T1Val T2Val.
   case_structure T2 in Eq with Structure.
   case T1.value. case T2.value.
-    %fun__lookup does not return for T2
-     assert exists Ret, fun__lookup Env2 L Ret. apply H12 to H13.
-    %fun__lookup does return for T2
-     apply fun__lookup__unique to H9 H12. search.
+    %lookup does not return for T2
+     assert exists Ret, lookup(Env2, L) = Ret. apply H12 to H13.
+    %lookup does return for T2
+     apply lookup__unique to H9 H12. search.
 
 Split value_unique_lemmas__Expr as
   value_unique__no_env__no_value__Expr,
@@ -392,11 +392,11 @@ split.
     search.
 %name
  intros Structure. case T.valExists.
- apply fun__contains__to__member to H10. apply H6 to H11.
- apply attr_is to H5. apply fun__lookup__member to H13 H12.
+ apply contains__to__member to H10. apply H6 to H11.
+ apply attr_is to H5. apply lookup__member to H13 H12.
  case T.value.
    %T.value = <no value> because lookup does not return
-    assert exists Ret, fun__lookup Env1 L Ret. apply H17 to H18.
+    assert exists Ret, lookup(Env1, L) = Ret. apply H17 to H18.
    %T.value exists
     search.
 
@@ -469,8 +469,8 @@ split.
 %name
  intros Structure. case T.valExists.
    %contains does not return
-    apply attr_is to H6. apply fun__contains__total to H8 H3.
-    assert (exists B, fun__contains L KnownNames1 B).
+    apply attr_is to H6. apply contains__total to H8 H3.
+    assert (exists B, contains(L, KnownNames1) = B).
     apply H7 to H10.
    %contains returns a value
     exists Val. search.
