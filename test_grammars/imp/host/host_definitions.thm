@@ -519,12 +519,28 @@ Define $env_out__nt_C__host : nt_C -> $node_tree -> prop by
         $access_$_env_out_$_nt_C $Node_SubWhile ($attr_ex EnvOut).
 
 Define $while_local_subWhile : nt_C -> $node_tree -> prop by
+  %while
   $while_local_subWhile ($prod_while B C)
                         ($ntr_nt_C Node ($ntr_nt_B BNode BCL::
                                          $ntr_nt_C CNode CCL::nil)) :=
-     exists SubWhileNode,
+     exists SubWhileNode SubWhileChildList,
         $local_access_$_$prod_while_$_subWhile_$_nt_C Node
-                  ($attr_ex ($pair_c ($prod_while B C) SubWhileNode));
+                  ($attr_ex ($pair_c ($prod_while B C)
+                                ($ntr_nt_C SubWhileNode
+                                           SubWhileChildList))) /\
+        $access_$_env_$_nt_C Node $attr_no /\
+        $access_$_env_$_nt_C SubWhileNode $attr_no;
+  $while_local_subWhile ($prod_while B C)
+                        ($ntr_nt_C Node ($ntr_nt_B BNode BCL::
+                                         $ntr_nt_C CNode CCL::nil)) :=
+     exists SubWhileNode SubWhileChildList Env,
+        $local_access_$_$prod_while_$_subWhile_$_nt_C Node
+                  ($attr_ex ($pair_c ($prod_while B C)
+                                ($ntr_nt_C SubWhileNode
+                                           SubWhileChildList))) /\
+        $access_$_env_$_nt_C Node ($attr_ex Env) /\
+        $access_$_env_$_nt_C SubWhileNode ($attr_ex Env);
+  %other productions
   $while_local_subWhile Term ($ntr_nt_C Node CL) :=
      ((exists B C, Term = $prod_while B C) -> false) /\
      $local_access_$_$prod_while_$_subWhile_$_nt_C Node $attr_no.

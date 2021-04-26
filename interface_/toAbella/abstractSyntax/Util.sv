@@ -101,6 +101,26 @@ Boolean ::= ty::Type
 
 
 
+--This isn't included in Silver's library for some reason
+function capitalizeString
+String ::= s::String
+{
+  return
+     if s == ""
+     then ""
+     else case substring(0, 1, s) of
+          | "a" -> "A" | "b" -> "B" | "c" -> "C" | "d" -> "D" | "e" -> "E"
+          | "f" -> "F" | "g" -> "G" | "h" -> "H" | "i" -> "I" | "j" -> "J"
+          | "k" -> "K" | "l" -> "L" | "m" -> "M" | "n" -> "N" | "o" -> "O"
+          | "p" -> "P" | "q" -> "Q" | "r" -> "R" | "s" -> "S" | "t" -> "T"
+          | "u" -> "U" | "v" -> "V" | "w" -> "W" | "x" -> "X" | "y" -> "Y"
+          | "z" -> "Z" |  _  -> substring(0, 1, s)
+          end ++ substring(1, length(s), s);
+}
+
+
+
+
 
 function splitList
 Pair<[a] [b]> ::= l::[Pair<a b>]
@@ -173,6 +193,24 @@ function splitMetaterm
      | andMetaterm(mt1, mt2) ->
        splitMetaterm(mt1) ++ splitMetaterm(mt2)
      | _ -> [mt]
+     end;
+}
+
+
+
+
+--Find the local attributes which occur on a given production
+function findProdLocalAttrs
+[(String, Type)] ::= prod::String localAttrs::[(String, [(String, Type)])]
+{
+  return
+     case localAttrs of
+     | [] -> []
+     | (attrName, lst)::tl ->
+       case findAssociated(prod, lst) of
+       | nothing() -> []
+       | just(ty) -> [(attrName, ty)]
+       end ++ findProdLocalAttrs(prod, tl)
      end;
 }
 

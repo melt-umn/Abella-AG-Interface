@@ -118,12 +118,19 @@ Boolean ::= s::String
 {
   return startsWith("$local_access_$_", s);
 }
+function localAccessRelationName
+String ::= treeTy::Type attrName::String prodName::String
+{
+  --$local_access_$_<prod>_$_<name>_$_<type>
+  return "$local_access_$_" ++ nameToProd(prodName) ++ "_$_" ++
+         attrName ++ "_$_" ++ treeTy.pp;
+}
 function localAccessToProd
 String ::= s::String
 {
   --$local_access_$_<prod>_$_<name>_$_<type>
   local tailStr::String = substring(16, length(s), s);
-  return substring(0, indexOf("_$_", tailStr), tailStr);
+  return prodToName(substring(0, indexOf("_$_", tailStr), tailStr));
 }
 function localAccessToAttr
 String ::= s::String

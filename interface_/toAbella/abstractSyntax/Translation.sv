@@ -193,8 +193,9 @@ top::NewPremise ::= tree::String
 function buildExtensibleTheoremBody
 Metaterm ::= thms::[(Metaterm, String, Type, [String])]
              usedNames::[String] allProds::[(String, Type)]
+             localAttrs::[(String, [(String, Type)])]
 {
-  return buildAllTheoremBodies(thms, thms, usedNames, allProds);
+  return buildAllTheoremBodies(thms, thms, usedNames, allProds, localAttrs);
 }
 
 --We need to know all the theorems to make IH's for the body, so we
@@ -203,10 +204,12 @@ function buildAllTheoremBodies
 Metaterm ::= walkThroughThms::[(Metaterm, String, Type, [String])]
              allThms::[(Metaterm, String, Type, [String])]
              usedNames::[String] allProds::[(String, Type)]
+             localAttrs::[(String, [(String, Type)])]
 {
   local thm::(Metaterm, String, Type, [String]) = head(walkThroughThms);
   local thisThm::Metaterm =
-        buildProdBodies(thm.4, thm.1, thm.2, thm.3, allThms, usedNames, allProds);
+        buildProdBodies(thm.4, thm.1, thm.2, thm.3, allThms,
+                        usedNames, allProds, localAttrs);
 
   return
      case walkThroughThms of
@@ -214,7 +217,8 @@ Metaterm ::= walkThroughThms::[(Metaterm, String, Type, [String])]
      | [hd] -> thisThm
      | hd::tl ->
        andMetaterm(thisThm,
-          buildAllTheoremBodies(tl, allThms, usedNames, allProds))
+          buildAllTheoremBodies(tl, allThms, usedNames,
+                                allProds, localAttrs))
      end;
 }
 
@@ -226,6 +230,7 @@ function buildProdBodies
 Metaterm ::= prods::[String] original::Metaterm treeName::String
              treeTy::Type allThms::[(Metaterm, String, Type, [String])]
              usedNames::[String] allProds::[(String, Type)]
+             localAttrs::[(String, [(String, Type)])]
 {
   local prodName::String = head(prods);
   --The productions referenced in WPD relations had better exist
@@ -327,8 +332,13 @@ Metaterm ::= prods::[String] original::Metaterm treeName::String
                        end,
                 [], children);
   --fake IHs remove WPD nonterminal relation, and replace original tree with child tree
+  local prodLocalAttrs::[(String, Type)] =
+        findProdLocalAttrs(prodName, localAttrs);
   local fakeIHs::[Metaterm] =
-        buildFakeIHs(allThms, children);
+        buildFakeIHs(allThms, children, prodName, prodTy.resultType,
+                     nameTerm(treeToNodeName(treeName), nothing()),
+                     prodLocalAttrs,
+                     usedNames ++ map(snd, children));
   local currentStep::Metaterm =
         bindingMetaterm(originalBinder, newBindings,
            foldr(\ m::Metaterm rest::Metaterm ->
@@ -340,13 +350,18 @@ Metaterm ::= prods::[String] original::Metaterm treeName::String
      | [_] -> currentStep
      | _::t ->
        andMetaterm(currentStep,
-          buildProdBodies(t, original, treeName, treeTy, allThms, usedNames, allProds))
+          buildProdBodies(t, original, treeName, treeTy, allThms,
+                          usedNames, allProds, localAttrs))
      end;
 }
 
 function buildFakeIHs
 [Metaterm] ::= thms::[(Metaterm, String, Type, [String])]
-               children::[(Type, String)]
+               children::[(Type, String)] prod::String
+               rootTy::Type rootNode::Term
+               --local name, local type
+               relevantLocalAttrs::[(String, Type)]
+               usedNames::[String]
 {
   local first::(Metaterm, String, Type, [String]) = head(thms);
   local treeTy::Type = first.3;
@@ -376,6 +391,7 @@ function buildFakeIHs
                      (treeToNodeName(treeName), nothing()),
                      (treeToChildListName(treeName), nothing())],
                     originalBindings);
+  --Hypotheses for the children of the production
   local firstIHs::[Metaterm] =
         foldr(\ p::(Type, String) rest::[Metaterm] ->
                 if tysEqual(p.fst, treeTy)
@@ -411,11 +427,63 @@ function buildFakeIHs
                                                              nothing());}.replaced)::rest
                 else rest,
               [], children);
+  --Hypotheses for the local attributes which occur on the given production
+  local localIHs::[Metaterm] =
+        foldr(\ p::(String, Type) rest::[Metaterm] ->
+                if tysEqual(p.snd, treeTy)
+                then let newName::String =
+                         makeUniqueNameFromBase(capitalizeString(p.fst), usedNames)
+                     in
+                     bindingMetaterm(
+                        originalBinder,
+                        removedBindings ++
+                           [(treeToStructureName(newName), nothing()),
+                            (treeToNodeName(newName), nothing()),
+                            (treeToChildListName(newName), nothing())],
+                        --Add accessing the local with a value as a premise
+                        impliesMetaterm(
+                           termMetaterm(
+                              buildApplication(
+                                 nameTerm(
+                                    localAccessRelationName(rootTy, p.fst, prod),
+                                    nothing()),
+                                 [rootNode,
+                                  buildApplication(
+                                     nameTerm(attributeExistsName, nothing()),
+                                     [buildApplication(
+                                         nameTerm(pairConstructorName, nothing()),
+                                         [nameTerm(treeToStructureName(newName), nothing()),
+                                          buildApplication(
+                                             nameTerm(nodeTreeConstructorName(p.snd), nothing()),
+                                             [nameTerm(treeToNodeName(newName), nothing()),
+                                              nameTerm(treeToChildListName(newName), nothing())])
+                                         ])
+                                     ])
+                                 ]),
+                              emptyRestriction()),
+                           --replace tree, tree node, and tree child list
+                           decorate
+                              (decorate
+                                 (decorate removedWPD with
+                                     {replaceName = treeToChildListName(treeName);
+                                      replaceTerm = nameTerm(treeToChildListName(newName),
+                                                             nothing());}.replaced)
+                               with {replaceName = treeToNodeName(treeName);
+                                     replaceTerm = nameTerm(treeToNodeName(newName),
+                                                            nothing());}.replaced)
+                           with {replaceName = treeToStructureName(treeName);
+                                 replaceTerm = nameTerm(treeToStructureName(newName),
+                                                        nothing());}.replaced))::rest
+                     end
+                else rest,
+              [], relevantLocalAttrs);
 
   return
      case thms of
      | [] -> []
-     | hd::tl -> firstIHs ++ buildFakeIHs(tl, children)
+     | hd::tl ->
+       firstIHs ++ localIHs ++
+       buildFakeIHs(tl, children, prod, rootTy, rootNode, relevantLocalAttrs, usedNames)
      end;
 }
 
@@ -450,6 +518,17 @@ String ::= ty::Type usedNames::[String]
                     charsToString([head(stringToChars(substring(0, 1, str))) - 32])
                else substring(0, 1, str)
              end;
+  return
+     if contains(base, usedNames)
+     then makeUniqueName(base, 1, usedNames)
+     else base;
+}
+
+
+--Make anem that isn't in usedNames, starting with the given base
+function makeUniqueNameFromBase
+String ::= base::String usedNames::[String]
+{
   return
      if contains(base, usedNames)
      then makeUniqueName(base, 1, usedNames)

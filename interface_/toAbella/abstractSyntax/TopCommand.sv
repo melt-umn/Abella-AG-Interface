@@ -126,7 +126,8 @@ top::TopCommand ::= name::String depth::Integer body::Metaterm trees::[String]
   local expandedBody::Metaterm =
         buildExtensibleTheoremBody(
            groupings, nub(body.usedNames),
-           top.currentState.knownProductions);
+           top.currentState.knownProductions,
+           top.currentState.knownLocalAttrs);
   top.translation = theoremDeclaration("$" ++ name, [], expandedBody);
 
   body.knownTrees = trees ++ body.gatheredTrees;
