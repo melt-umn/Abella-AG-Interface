@@ -307,9 +307,25 @@ top::ProcessingErrorMessage ::= argnum::Integer const1::String const2::String
               argnum, nodeToTreeName(const1),
               nodeToTreeName(const2))
       else if isAccessRelation(const1)
-      then matchingUnificationFailure(
-              argnum, accessRelationToAttr(const1),
-              accessRelationToAttr(const2))
+      then if isAccessRelation(const1)
+           then if accessRelationToAttr(const1) == accessRelationToAttr(const2)
+                then matchingUnificationFailure(
+                        argnum,
+                        accessRelationToAttr(const1) ++ " on " ++
+                           accessRelationToType(const1),
+                        accessRelationToAttr(const2) ++ " on " ++
+                           accessRelationToType(const2))
+                else matchingUnificationFailure(
+                        argnum, accessRelationToAttr(const1),
+                        accessRelationToAttr(const2))
+           else matchingUnificationFailure(argnum,
+                   "attribute access", const2)
+      else if isAccessRelation(const2)
+      then matchingUnificationFailure(argnum, const1, "attribute access")
+      else if const1 == "$attr_no"
+      then matchingUnificationFailure(argnum, "<no value>", "value")
+      else if const2 == "$attr_no"
+      then matchingUnificationFailure(argnum, "value", "<no value>")
       else matchingUnificationFailure(argnum, const1, const2);
 }
 

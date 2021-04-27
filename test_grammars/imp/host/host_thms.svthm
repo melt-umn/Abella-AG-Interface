@@ -136,7 +136,7 @@ split.
     %B.boolVal = true, subWhile.env_out does not exist
      search.
     %B.boolVal = true, subeWhile.env_out has a value
-     skip.
+     case_local T.subWhile. skip.
 
 
 Extensible_Theorem env_out__unique__C : forall (T1 T2 : nt_C) Env V,

@@ -80,6 +80,10 @@ concrete productions top::PureCommand_c
   { local treeName::String = case split_AttrAccess_t(a) of | pair(trn, _) -> trn end;
     local attrName::String = case split_AttrAccess_t(a) of | pair(_, atn) -> atn end;
     top.ast = caseAttrAccess(h.ast, treeName, attrName); }
+| h::HHint_c 'case_local' a::AttrAccess_t '.'
+  { local treeName::String = case split_AttrAccess_t(a) of | pair(trn, _) -> trn end;
+    local attrName::String = case split_AttrAccess_t(a) of | pair(_, atn) -> atn end;
+    top.ast = caseLocalAttr(h.ast, treeName, attrName); }
 | h::HHint_c 'case_structure' tree::Id_t 'in' hy::Hyp_c 'with' hy2::Hyp_c '.'
   { top.ast = caseStructure(h.ast, tree.lexeme, hy.ast, hy2.ast, false); }
 | h::HHint_c 'case_structure' tree::Id_t 'in' hy::Hyp_c 'with' hy2::Hyp_c '(' 'keep' ')' '.'

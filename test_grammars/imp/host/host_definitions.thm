@@ -82,6 +82,56 @@ Type $env$_is_inherited   prop.
 
 
 
+Type $structure_eq__nt_A   nt_A -> nt_A -> prop.
+Type $structure_eq__nt_B   nt_B -> nt_B -> prop.
+Type $structure_eq__nt_C   nt_C -> nt_C -> prop.
+
+
+Define $structure_eq__nt_A__host : nt_A -> nt_A -> prop by
+  $structure_eq__nt_A__host ($prod_plus A1x A2x) ($prod_plus A3x A4x) :=
+     $structure_eq__nt_A A1x A3x /\
+     $structure_eq__nt_A A2x A4x;
+  $structure_eq__nt_A__host ($prod_num N) ($prod_num N);
+  $structure_eq__nt_A__host ($prod_name N) ($prod_name N).
+
+Define $structure_eq__nt_B__host : nt_B -> nt_B -> prop by
+  $structure_eq__nt_B__host ($prod_greater A1x A2x)
+                            ($prod_greater A3x A4x) :=
+     $structure_eq__nt_A A1x A3x /\
+     $structure_eq__nt_A A2x A4x;
+  $structure_eq__nt_B__host ($prod_equal A1x A2x)
+                            ($prod_equal A3x A4x) :=
+     $structure_eq__nt_A A1x A3x /\
+     $structure_eq__nt_A A2x A4x;
+  $structure_eq__nt_B__host ($prod_and B1x B2x) ($prod_and B3x B4x) :=
+     $structure_eq__nt_B B1x B3x /\
+     $structure_eq__nt_B B2x B4x;
+  $structure_eq__nt_B__host ($prod_or B1x B2x) ($prod_or B3x B4x) :=
+     $structure_eq__nt_B B1x B3x /\
+     $structure_eq__nt_B B2x B4x;
+  $structure_eq__nt_B__host $prod_bTrue $prod_bTrue;
+  $structure_eq__nt_B__host $prod_bFalse $prod_bFalse.
+
+Define $structure_eq__nt_C__host : nt_C -> nt_C -> prop by
+  $structure_eq__nt_C__host $prod_noop $prod_noop;
+  $structure_eq__nt_C__host ($prod_seq C1x C2x) ($prod_seq C3x C4x) :=
+     $structure_eq__nt_C C1x C3x /\
+     $structure_eq__nt_C C2x C4x;
+  $structure_eq__nt_C__host ($prod_assign N A1x) ($prod_assign N A2x) :=
+     $structure_eq__nt_A A1x A2x;
+  $structure_eq__nt_C__host ($prod_ifThenElse B1x C1x C2x)
+                            ($prod_ifThenElse B2x C3x C4x) :=
+     $structure_eq__nt_B B1x B2x /\
+     $structure_eq__nt_C C1x C3x /\
+     $structure_eq__nt_C C2x C4x;
+  $structure_eq__nt_C__host ($prod_while B1x C1x)
+                            ($prod_while B2x C2x) :=
+     $structure_eq__nt_B B1x B2x /\
+     $structure_eq__nt_C C1x C2x.
+
+
+
+
 Define $fun__lookup :
        list $char -> list ($pair (list $char) integer) ->
        integer -> prop by
@@ -523,23 +573,25 @@ Define $while_local_subWhile : nt_C -> $node_tree -> prop by
   $while_local_subWhile ($prod_while B C)
                         ($ntr_nt_C Node ($ntr_nt_B BNode BCL::
                                          $ntr_nt_C CNode CCL::nil)) :=
-     exists SubWhileNode SubWhileChildList,
+     exists $Tm_SubWhile $Node_SubWhile $ChildList_SubWhile,
         $local_access_$_$prod_while_$_subWhile_$_nt_C Node
-                  ($attr_ex ($pair_c ($prod_while B C)
-                                ($ntr_nt_C SubWhileNode
-                                           SubWhileChildList))) /\
+                  ($attr_ex ($pair_c $Tm_SubWhile
+                                ($ntr_nt_C $Node_SubWhile
+                                           $ChildList_SubWhile))) /\
+        $structure_eq__nt_C $Tm_SubWhile ($prod_while B C) /\
         $access_$_env_$_nt_C Node $attr_no /\
-        $access_$_env_$_nt_C SubWhileNode $attr_no;
+        $access_$_env_$_nt_C $Node_SubWhile $attr_no;
   $while_local_subWhile ($prod_while B C)
                         ($ntr_nt_C Node ($ntr_nt_B BNode BCL::
                                          $ntr_nt_C CNode CCL::nil)) :=
-     exists SubWhileNode SubWhileChildList Env,
+     exists $Tm_SubWhile $Node_SubWhile $ChildList_SubWhile Env,
         $local_access_$_$prod_while_$_subWhile_$_nt_C Node
-                  ($attr_ex ($pair_c ($prod_while B C)
-                                ($ntr_nt_C SubWhileNode
-                                           SubWhileChildList))) /\
+                  ($attr_ex ($pair_c $Tm_SubWhile
+                                ($ntr_nt_C $Node_SubWhile
+                                           $ChildList_SubWhile))) /\
+        $structure_eq__nt_C $Tm_SubWhile ($prod_while B C) /\
         $access_$_env_$_nt_C Node ($attr_ex Env) /\
-        $access_$_env_$_nt_C SubWhileNode ($attr_ex Env);
+        $access_$_env_$_nt_C $Node_SubWhile ($attr_ex Env);
   %other productions
   $while_local_subWhile Term ($ntr_nt_C Node CL) :=
      ((exists B C, Term = $prod_while B C) -> false) /\
@@ -664,56 +716,6 @@ Define $wpd_nt_C__host : nt_C -> $node_tree -> prop by
                     ($ntr_nt_C Node (BNtr::CNtr::nil)) /\
      $wpd_nt_B B BNtr /\
      $wpd_nt_C C CNtr.
-
-
-
-
-Type $structure_eq__nt_A   nt_A -> nt_A -> prop.
-Type $structure_eq__nt_B   nt_B -> nt_B -> prop.
-Type $structure_eq__nt_C   nt_C -> nt_C -> prop.
-
-
-Define $structure_eq__nt_A__host : nt_A -> nt_A -> prop by
-  $structure_eq__nt_A__host ($prod_plus A1x A2x) ($prod_plus A3x A4x) :=
-     $structure_eq__nt_A A1x A3x /\
-     $structure_eq__nt_A A2x A4x;
-  $structure_eq__nt_A__host ($prod_num N) ($prod_num N);
-  $structure_eq__nt_A__host ($prod_name N) ($prod_name N).
-
-Define $structure_eq__nt_B__host : nt_B -> nt_B -> prop by
-  $structure_eq__nt_B__host ($prod_greater A1x A2x)
-                            ($prod_greater A3x A4x) :=
-     $structure_eq__nt_A A1x A3x /\
-     $structure_eq__nt_A A2x A4x;
-  $structure_eq__nt_B__host ($prod_equal A1x A2x)
-                            ($prod_equal A3x A4x) :=
-     $structure_eq__nt_A A1x A3x /\
-     $structure_eq__nt_A A2x A4x;
-  $structure_eq__nt_B__host ($prod_and B1x B2x) ($prod_and B3x B4x) :=
-     $structure_eq__nt_B B1x B3x /\
-     $structure_eq__nt_B B2x B4x;
-  $structure_eq__nt_B__host ($prod_or B1x B2x) ($prod_or B3x B4x) :=
-     $structure_eq__nt_B B1x B3x /\
-     $structure_eq__nt_B B2x B4x;
-  $structure_eq__nt_B__host $prod_bTrue $prod_bTrue;
-  $structure_eq__nt_B__host $prod_bFalse $prod_bFalse.
-
-Define $structure_eq__nt_C__host : nt_C -> nt_C -> prop by
-  $structure_eq__nt_C__host $prod_noop $prod_noop;
-  $structure_eq__nt_C__host ($prod_seq C1x C2x) ($prod_seq C3x C4x) :=
-     $structure_eq__nt_C C1x C3x /\
-     $structure_eq__nt_C C2x C4x;
-  $structure_eq__nt_C__host ($prod_assign N A1x) ($prod_assign N A2x) :=
-     $structure_eq__nt_A A1x A2x;
-  $structure_eq__nt_C__host ($prod_ifThenElse B1x C1x C2x)
-                            ($prod_ifThenElse B2x C3x C4x) :=
-     $structure_eq__nt_B B1x B2x /\
-     $structure_eq__nt_C C1x C3x /\
-     $structure_eq__nt_C C2x C4x;
-  $structure_eq__nt_C__host ($prod_while B1x C1x)
-                            ($prod_while B2x C2x) :=
-     $structure_eq__nt_B B1x B2x /\
-     $structure_eq__nt_C C1x C2x.
 
 
 
@@ -1147,6 +1149,10 @@ skip.
 Theorem $wpd__to__env_out__nt_C : forall Tree NodeTree,
   $wpd_nt_C Tree NodeTree ->
   $env_out__nt_C Tree NodeTree.
+skip.
+Theorem $wpd__to__while_local_subWhile__nt_C : forall Tree NodeTree,
+  $wpd_nt_C Tree NodeTree ->
+  $while_local_subWhile Tree NodeTree.
 skip.
 
 

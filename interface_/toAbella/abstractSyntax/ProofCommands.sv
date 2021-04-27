@@ -322,6 +322,130 @@ top::ProofCommand ::= h::HHint hyp::String keep::Boolean
 }
 
 
+abstract production caseLocalAttr
+top::ProofCommand ::= h::HHint tree::String attr::String
+{
+  top.pp = h.pp ++ "case_local " ++ tree ++ "." ++ attr ++ ".  ";
+
+  top.errors <-
+      if treeExists
+      then []
+      else [errorMsg("Unknown tree " ++ tree)];
+  top.errors <-
+      if attrExists
+      then []
+      else [errorMsg("Unknown local attribute " ++ attr)];
+  top.errors <-
+      if treeExists && attrExists
+      then if structureKnown
+           then []
+           else [errorMsg("Cannot do case analysis on local attribute " ++
+                          attr ++ " for tree " ++ tree ++ " of unknown structure")]
+      else [];
+  top.errors <-
+      if treeExists && attrExists && structureKnown
+      then if attrOccursOn
+           then []
+           else [errorMsg("No local attribute named " ++ attr ++
+                          " occurs on trees built by production " ++
+                          associatedProd)]
+      else [];
+
+  local treeExists::Boolean = contains(tree, top.currentState.state.gatheredTrees);
+  local attrExists::Boolean = contains(attr, map(fst, top.currentState.knownLocalAttrs));
+  local structureKnown::Boolean =
+        case structure of
+        | just((_, applicationTerm(nameTerm(prod, _), _)))
+          when isProd(prod) -> true
+        | just((_, nameTerm(prod, _))) when isProd(prod) -> true
+        | _ -> false
+        end;
+  local attrOccursOn::Boolean =
+        findAssociated(associatedProd,
+           findAssociated(attr, top.currentState.knownLocalAttrs).fromJust).isJust;
+  --
+  local newNum::String = toString(genInt());
+  local eqHypName::String = "$Eq_" ++ newNum;
+  local equalityName::String = "$Equality_" ++ newNum;
+  --
+  local structure::Maybe<(String, Term)> =
+        case find_structure_hyp(tree, top.translatedState.hypList) of
+        | nothing() -> nothing()
+        | just((hyp, _)) ->
+          --This must exist and have the form of "$structure_eq T Structure" or symm
+          case findAssociated(hyp, top.currentState.state.hypList) of
+          | just(termMetaterm(
+                    applicationTerm(_,
+                       consTermList(
+                          nameTerm(tr, _),
+                          singleTermList(structure))), _))
+            when tr == treeToStructureName(tree) ->
+            just((hyp, new(structure)))
+          | just(termMetaterm(
+                    applicationTerm(_,
+                       consTermList(
+                          structure,
+                          singleTermList(nameTerm(tr, _)))), _))
+            when tr == treeToStructureName(tree) ->
+            just((hyp, new(structure)))
+          | _ -> nothing()
+          end
+        end;
+  local associatedProd::String =
+        case structure of
+        | just((_, applicationTerm(nameTerm(prod, _), _))) -> prodToName(prod)
+        | just((_, nameTerm(prod, _))) -> prodToName(prod)
+        | just((_, tm)) -> error("It should be a production (associatedProd):  " ++ tm.pp)
+        | nothing() -> error("It should have a value (associatedProd)")
+        end;
+  local wpdNtHyp::Maybe<(String, Metaterm)> =
+        find_WPD_nt_hyp(tree, top.translatedState.hypList);
+  local treeTy::Type =
+        case wpdNtHyp of
+        | just((_, termMetaterm(applicationTerm(nameTerm(rel, _), _), _))) ->
+          wpdNt_type(rel)
+        | just((_, tm)) -> error("Should not get here (caseAttrAccess bad just)")
+        | nothing() -> error("Should not get here (caseAttrAccess nothing)")
+        end;
+  local makeEqHypThm::Clearable =
+        clearable(false, wpdNt_to_LocalAttrEq(associatedProd, attr, treeTy), []);
+  --
+  top.translation =
+      [
+       --Get structure assumption of correct form (treename = prod_<name> <children>)
+       assertTactic(nameHint(equalityName), nothing(),
+                    termMetaterm(
+                       buildApplication(
+                          nameTerm(typeToStructureEqName(treeTy), nothing()),
+                          [nameTerm(treeToStructureName(tree), nothing()),
+                           structure.fromJust.2]),
+                       emptyRestriction()))
+      ] ++
+       --Need to solve previous goal by case analysis if structure hyp is backward
+      ( case findAssociated(structure.fromJust.fst, top.translatedState.hypList) of
+        | nothing() -> error("This hypothesis must exist")
+        | just(eqMetaterm(nameTerm(str, _), _)) -> []
+        | just(eqMetaterm(_, nameTerm(str, _))) ->
+          [ backchainTactic(nothing(),
+               clearable(false, typeToStructureEq_Symm(treeTy), []), []) ]
+        | just(_) ->
+          error("This hypothesis must be \"<tree> = structure\" or \"structure = <tree>\"")
+        end
+      ) ++
+      [
+       --Go from WPD nonterminal to equation relation
+       applyTactic(nameHint(eqHypName), nothing(), makeEqHypThm,
+                   [hypApplyArg(wpdNtHyp.fromJust.1, [])], []),
+       --Actual case analysis on equation relation
+       caseTactic(h, eqHypName, true),
+       --Remove our extra assumptions (unnecessary, but nice)
+       clearCommand([eqHypName, equalityName], false)
+      ];
+
+  top.shouldClean = true;
+}
+
+
 abstract production caseAttrAccess
 top::ProofCommand ::= h::HHint tree::String attr::String
 {

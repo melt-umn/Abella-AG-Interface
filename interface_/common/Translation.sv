@@ -146,6 +146,12 @@ Type ::= s::String
   --$local_access_$_<prod>_$_<name>_$_<type>
   return nameType(substring(lastIndexOf("_$_", s) + 3, length(s), s));
 }
+function wpdNt_to_LocalAttrEq
+String ::= prod::String attr::String ty::Type
+{
+  --$wpd__to__<prod>_local_<attr>__<ty>
+  return "$wpd__to__" ++ prod ++ "_local_" ++ attr ++ "__" ++ ty.pp;
+}
 
 
 --WPD Nonterminal
