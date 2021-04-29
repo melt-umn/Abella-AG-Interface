@@ -151,6 +151,15 @@ Type $env__nt_C       nt_C -> $node_tree -> prop.
 Type $env_out__nt_C   nt_C -> $node_tree -> prop.
 
 
+Type $wpd_node_nt_A   nt_A -> $node_tree -> prop.
+Type $wpd_node_nt_B   nt_B -> $node_tree -> prop.
+Type $wpd_node_nt_C   nt_C -> $node_tree -> prop.
+
+Type $wpd_nt_A   nt_A -> $node_tree -> prop.
+Type $wpd_nt_B   nt_B -> $node_tree -> prop.
+Type $wpd_nt_C   nt_C -> $node_tree -> prop.
+
+
 Define $env__nt_A__host : nt_A -> $node_tree -> prop by
   %plus
   $env__nt_A__host ($prod_plus A1 A2)
@@ -569,6 +578,10 @@ Define $env_out__nt_C__host : nt_C -> $node_tree -> prop by
         $access_$_env_out_$_nt_C $Node_SubWhile ($attr_ex EnvOut).
 
 Define $while_local_subWhile : nt_C -> $node_tree -> prop by
+  %non-while productions
+  $while_local_subWhile Term ($ntr_nt_C Node CL) :=
+     ((exists B C, Term = $prod_while B C) -> false) /\
+     $local_access_$_$prod_while_$_subWhile_$_nt_C Node $attr_no;
   %while
   $while_local_subWhile ($prod_while B C)
                         ($ntr_nt_C Node ($ntr_nt_B BNode BCL::
@@ -579,7 +592,9 @@ Define $while_local_subWhile : nt_C -> $node_tree -> prop by
                                 ($ntr_nt_C $Node_SubWhile
                                            $ChildList_SubWhile))) /\
         $structure_eq__nt_C $Tm_SubWhile ($prod_while B C) /\
-        $access_$_env_$_nt_C Node $attr_no /\
+        $wpd_nt_C $Tm_SubWhile ($ntr_nt_C $Node_SubWhile
+                                          $ChildList_SubWhile) /\
+        $access_$_env_out_$_nt_C CNode $attr_no /\
         $access_$_env_$_nt_C $Node_SubWhile $attr_no;
   $while_local_subWhile ($prod_while B C)
                         ($ntr_nt_C Node ($ntr_nt_B BNode BCL::
@@ -590,23 +605,12 @@ Define $while_local_subWhile : nt_C -> $node_tree -> prop by
                                 ($ntr_nt_C $Node_SubWhile
                                            $ChildList_SubWhile))) /\
         $structure_eq__nt_C $Tm_SubWhile ($prod_while B C) /\
-        $access_$_env_$_nt_C Node ($attr_ex Env) /\
-        $access_$_env_$_nt_C $Node_SubWhile ($attr_ex Env);
-  %other productions
-  $while_local_subWhile Term ($ntr_nt_C Node CL) :=
-     ((exists B C, Term = $prod_while B C) -> false) /\
-     $local_access_$_$prod_while_$_subWhile_$_nt_C Node $attr_no.
+        $wpd_nt_C $Tm_SubWhile ($ntr_nt_C $Node_SubWhile
+                                          $ChildList_SubWhile) /\
+        $access_$_env_out_$_nt_C CNode ($attr_ex Env) /\
+        $access_$_env_$_nt_C $Node_SubWhile ($attr_ex Env).
 
 
-
-
-Type $wpd_node_nt_A   nt_A -> $node_tree -> prop.
-Type $wpd_node_nt_B   nt_B -> $node_tree -> prop.
-Type $wpd_node_nt_C   nt_C -> $node_tree -> prop.
-
-Type $wpd_nt_A   nt_A -> $node_tree -> prop.
-Type $wpd_nt_B   nt_B -> $node_tree -> prop.
-Type $wpd_nt_C   nt_C -> $node_tree -> prop.
 
 
 Define $split : (A -> B -> prop) -> ($pair A B) -> prop by
@@ -1150,9 +1154,18 @@ Theorem $wpd__to__env_out__nt_C : forall Tree NodeTree,
   $wpd_nt_C Tree NodeTree ->
   $env_out__nt_C Tree NodeTree.
 skip.
-Theorem $wpd__to__while_local_subWhile__nt_C : forall Tree NodeTree,
+/*We are only going to use this only when we have a
+  $structure_eq__nt_C hypothesis to do case analysis on the local tree
+  (case_local T.A).  To get it on the correct structure and not
+  replace the structure of the given tree, we can use the
+  $structure_eq assumption to replace the form for the case analysis.
+  This can still be proven easily automatically by using a
+  structure_eq theorem to get Tree = Tree', then proceeding as for the
+  other theorems in this section.*/
+Theorem $wpd__to__while_local_subWhile__nt_C : forall Tree Tree' NodeTree,
+  $structure_eq__nt_C Tree Tree' ->
   $wpd_nt_C Tree NodeTree ->
-  $while_local_subWhile Tree NodeTree.
+  $while_local_subWhile Tree' NodeTree.
 skip.
 
 

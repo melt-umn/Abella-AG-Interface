@@ -12,6 +12,7 @@ aspect production proofInProgress
 top::ProofState ::=
    subgoalNum::[Integer] currGoal::CurrentGoal futureGoals::[Subgoal]
 {
+  --Clean up attribute accesses to be equal
   --(hyp name, tree name, attr name, type name, value of attr)
   local attrAccessHyps::[(String, String, String, String, Term)] =
         foldr(
@@ -60,13 +61,111 @@ top::ProofState ::=
         | _ -> error("Impossible after filtration")
         end;
 
+  --Clean up local attribute accesses to be equal
+  --(hyp name, tree name, prod name, attr name, type name, value of attr)
+  local localAccessHyps::[(String, String, String, String, String, Term)] =
+        foldr(
+          \ p::(String, Metaterm)
+            rest::[(String, String, String, String, String, Term)] ->
+            case p of
+            | (hyp,
+               termMetaterm(applicationTerm(nameTerm(access, _),
+                              consTermList(nameTerm(treeNode, _),
+                              singleTermList(val))), _))
+              when isLocalAccessRelation(access) ->
+              (hyp, nodeToTreeName(treeNode),
+               localAccessToProd(access),
+               localAccessToAttr(access),
+               localAccessToType(access).pp, new(val))::rest
+            | (_, _) -> rest
+            end,
+          [], currGoal.hypList);
+  local sortedLocalAccessHyps::[(String, String, String, String, String, Term)] =
+        sortBy(\ p1::(String, String, String, String, String, Term)
+                 p2::(String, String, String, String, String, Term) ->
+                 p1.4 < p2.4 || (p1.4 == p2.4 && p1.2 <= p2.2),
+               localAccessHyps);
+  local groupedLocalAccesses::[[(String, String, String, String, String, Term)]] =
+        groupBy(\ p1::(String, String, String, String, String, Term)
+                  p2::(String, String, String, String, String, Term) ->
+                  p1.2 == p2.2 && p1.3 == p2.3 && p1.4 == p2.4,
+                sortedLocalAccessHyps);
+  local cleanedLocalAccessGroups::[[(String, String, String, String, String, Term)]] =
+        map(\ l::[(String, String, String, String, String, Term)] ->
+              nubBy(\ p1::(String, String, String, String, String, Term)
+                      p2::(String, String, String, String, String, Term) ->
+                    p1.6.pp == p2.6.pp, l), groupedLocalAccesses);
+  local cleanedLocalAccesses::[[(String, String, String, String, String, Term)]] =
+        filter(\ l::[(String, String, String, String, String, Term)] ->
+                 length(l) > 1, cleanedLocalAccessGroups);
+  --We can only do one clean up at a time, since each one might
+  --   eliminate the goal based on impossibility
+  --We can do the rest later, if we don't remove the goal
+  local localAccessCmd::String =
+        case head(cleanedLocalAccesses) of
+        | (hyp1, _, prod, attr, ty, _)::(hyp2, _, _, _, _, _)::_ ->
+          applyTactic(noHint(), nothing(),
+                      clearable(false, localAccessUniqueThm(prod, attr, ty), []),
+                      [hypApplyArg(hyp1, []),
+                       hypApplyArg(hyp2, [])], []).pp
+        | _ -> error("Impossible after filtration")
+        end;
+
+  --Clean up cases with impossible tree forms which come from equations
+  --   for local attributes
+  --We need to hide these cases to hide the encoding of the AG
+  --(exists <Children>, <prod>(<Children'>) = <prod>(<Children>)) -> false
+  local impossibleEqHyps::[String] =
+        foldr(\ p::(String, Metaterm) rest::[String] ->
+                case p of
+                --TODO need to handle non-tree children
+                | (hyp,
+                   impliesMetaterm(
+                      bindingMetaterm(
+                         existsBinder(),
+                         children,
+                         eqMetaterm(
+                            applicationTerm(nameTerm(prod1, _), args1),
+                            applicationTerm(nameTerm(prod2, _), args2))),
+                      falseMetaterm()))
+                  when isProd(prod1) && prod1 == prod2 ->
+                  hyp::rest
+                | (hyp,
+                   impliesMetaterm(
+                      bindingMetaterm(
+                         existsBinder(),
+                         children,
+                         eqMetaterm(
+                            nameTerm(prod1, _),
+                            nameTerm(prod2, _))),
+                      falseMetaterm()))
+                  when isProd(prod1) && prod1 == prod2 -> hyp::rest
+                | _ -> rest
+                end,
+              [], currGoal.hypList);
+  local impossibleEqHypsCmd::String =
+        let name::String = "$F_" ++ toString(genInt())
+        in
+          name ++ ": assert false.  " ++
+          "backchain " ++ head(impossibleEqHyps) ++ ".  " ++
+          "case " ++ name ++ ".  "
+        end;
+
   top.cleanUpCommands =
       if null(cleanedAttrAccesses)
-      then ""
+      then if null(cleanedLocalAccesses)
+           then if null(impossibleEqHyps)
+                then ""
+                else impossibleEqHypsCmd
+           else localAccessCmd
       else attrAccessCmd;
   top.numCleanUpCommands =
       if null(cleanedAttrAccesses)
-      then 0
+      then if null(cleanedLocalAccesses)
+           then if null(impossibleEqHyps)
+                then 0
+                else 3
+           else 1
       else 1;
 
   top.nextStateOut = top.nextStateIn;

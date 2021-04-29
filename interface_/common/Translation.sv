@@ -152,6 +152,12 @@ String ::= prod::String attr::String ty::Type
   --$wpd__to__<prod>_local_<attr>__<ty>
   return "$wpd__to__" ++ prod ++ "_local_" ++ attr ++ "__" ++ ty.pp;
 }
+function localAccessUniqueThm
+String ::= prod::String attr::String ty::String
+{
+  --$local_access_$_<$prod_prod>_$_<attr>_$_<ty>__unique
+  return "$local_access_$_$prod_" ++ prod ++ "_$_" ++ attr ++ "_$_" ++ ty ++ "__unique";
+}
 
 
 --WPD Nonterminal

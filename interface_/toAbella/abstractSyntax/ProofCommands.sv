@@ -435,7 +435,8 @@ top::ProofCommand ::= h::HHint tree::String attr::String
       [
        --Go from WPD nonterminal to equation relation
        applyTactic(nameHint(eqHypName), nothing(), makeEqHypThm,
-                   [hypApplyArg(wpdNtHyp.fromJust.1, [])], []),
+                   [hypApplyArg(equalityName, []),
+                    hypApplyArg(wpdNtHyp.fromJust.1, [])], []),
        --Actual case analysis on equation relation
        caseTactic(h, eqHypName, true),
        --Remove our extra assumptions (unnecessary, but nice)
