@@ -14,34 +14,35 @@ terms.
 ### Formulas
 The syntax of formulas supports many of the same constructs as Abella,
 as well as some others:
-   | Formula Syntax      | Meaning                                   |
-   ----------------------|--------------------------------------------
-   | `forall A B C, ...` | universal quantification                  |
-   | `exists A B C, ...` | existential quantification                |
-   | `nabla A B C, ...`  | nominal quantification                    |
-   | `F1 /\ F2`          | and                                       |
-   | `F1 \/ F2`          | or                                        |
-   | `F1 -> F2`          | implies                                   |
-   | `true`              | logical truth                             |
-   | `false`             | logical false                             |
-   | `pred t1 t2 t3`     | meta-level predicate or Silver function   |
-   | `t1 = t2`           | equality of terms                         |
-   | `t1 + t2 = t3`      | addition                                  |
-   | `t1 - t2 = t3`      | subtraction                               |
-   | `- t1 = t2`         | negation                                  |
-   | `t1 * t2 = t3`      | multiplication                            |
-   | `t1 / t2 = t3`      | division                                  |
-   | `t1 mod t2 = t3`    | modular division                          |
-   | `t1 ++ t2 = t3`     | append                                    |
-   | `t1 < t2 = t3`      | less than                                 |
-   | `t1 <= t2 = t3`     | less than or equal to                     |
-   | `t1 > t2 = t3`      | greater than                              |
-   | `t1 >= t2 = t3`     | greater than or equal to                  |
-   | `t1 \|\| t2 = t3`   | Boolean or                                |
-   | `t1 && t2 = t3`     | Boolean and                               |
-   | `!t1 = t2`          | Boolean negation                          |
-   | `T.a = t`           | attribute access, where `T` is a variable |
-   | `T.a = <no value>`  | attribute access with no value for `a`    |
+   | Formula Syntax       | Meaning                                   |
+   -----------------------|--------------------------------------------
+   | `forall A B C, ...`  | universal quantification                  |
+   | `exists A B C, ...`  | existential quantification                |
+   | `nabla A B C, ...`   | nominal quantification                    |
+   | `F1 /\ F2`           | and                                       |
+   | `F1 \/ F2`           | or                                        |
+   | `F1 -> F2`           | implies                                   |
+   | `true`               | logical truth                             |
+   | `false`              | logical false                             |
+   | `pred t1 t2 t3`      | meta-level predicate                      |
+   | `t1 = t2`            | equality of terms                         |
+   | `t1 + t2 = t3`       | addition                                  |
+   | `t1 - t2 = t3`       | subtraction                               |
+   | `- t1 = t2`          | negation                                  |
+   | `t1 * t2 = t3`       | multiplication                            |
+   | `t1 / t2 = t3`       | division                                  |
+   | `t1 mod t2 = t3`     | modular division                          |
+   | `t1 ++ t2 = t3`      | append                                    |
+   | `t1 < t2 = t3`       | less than                                 |
+   | `t1 <= t2 = t3`      | less than or equal to                     |
+   | `t1 > t2 = t3`       | greater than                              |
+   | `t1 >= t2 = t3`      | greater than or equal to                  |
+   | `t1 \|\| t2 = t3`    | Boolean or                                |
+   | `t1 && t2 = t3`      | Boolean and                               |
+   | `!t1 = t2`           | Boolean negation                          |
+   | `T.a = t`            | attribute access, where `T` is a variable |
+   | `T.a = <no value>`   | attribute access with no value for `a`    |
+   | `f(t1, ..., tn) = t` | Silver function application               |
 
 Any formulas which include an equals sign may also be flipped about
 the equals sign (e.g. `t3 = t1 + t2` is equivalent to `t1 + t2 = t3`).
@@ -71,6 +72,7 @@ adds syntax for literals from Silver:
    | `<integer>`        | integer literal         |
    | `true`             | Boolean true            |
    | `false`            | Boolean false           |
+   | `p(t1, ..., tn)`   | production application  |
 
 
 
@@ -128,6 +130,14 @@ which occurs on the tree represented by the variable `T`.  This does
 **not** require `T.a` to be in a hypothesis of the form `T.a = V`.
 For example, if one wishes to prove `T.a` has a value
 (`exists V, T.a = V`), this is a necessary step.
+
+`case_local T.a.`  
+Similar to case analysis on attribute equations for normal attributes,
+this does case analysis on the equation for the local attribute `a`
+which occurs on `T`, as well as the equations for its inherited
+attributes.  This will only succeed if a hypothesis of the form
+`T = <prod>(<children>)` exists, where the local attribute `a` is
+defined in the production `<prod>`.
 
 `case_structure T in H1 with H2.`  
 This requires that `H1` be an equality of `T` and a second tree `T'`
