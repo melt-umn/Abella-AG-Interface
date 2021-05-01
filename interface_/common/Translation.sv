@@ -7,22 +7,6 @@ grammar interface_:common;
 -}
 
 --Decorated Trees
-function treeToStructureName
-String ::= treeName::String
-{
-  return "$Tm_" ++ treeName;
-}
-function isTreeStructureName
-Boolean ::= str::String
-{
-  return startsWith("$Tm_", str);
-}
-function structureToTreeName
-String ::= treeStructure::String
-{
-  return substring(4, length(treeStructure), treeStructure);
-}
-
 function treeToNodeName
 String ::= treeName::String
 {

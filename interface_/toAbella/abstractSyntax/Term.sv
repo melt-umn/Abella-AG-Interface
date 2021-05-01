@@ -3,15 +3,14 @@ grammar interface_:toAbella:abstractSyntax;
 
 attribute
    translation<Metaterm>, newPremises,
-   boundVars, boundVarsOut, attrOccurrences, knownTrees, finalTys,
+   boundVars, boundVarsOut, attrOccurrences, finalTys,
    findNameType, foundNameType,
    usedNames,
    replaceName, replaceTerm, replaced,
    removeWPDTree, removedWPD,
    implicationPremises, conjunctionSplit,
    errors,
-   currentState,
-   gatheredTrees
+   currentState
 occurs on Metaterm;
 
 
@@ -237,16 +236,6 @@ top::Metaterm ::= b::Binder bindings::[(String, Maybe<Type>)] body::Metaterm
       | [] -> error("We lost a scope somewhere (bindingMetaterm production)")
       | _::otherScopes -> otherScopes
       end;
-  body.knownTrees =
-       foldr(\ p::(String, Maybe<Type>) rest::[String] ->
-               case p of
-               | (s, just(ty)) when tyIsNonterminal(ty) ->
-                 s::rest
-               | _ -> rest
-               end,
-             filter(\ s::String -> contains(s, map(fst, bindings)),
-                    top.knownTrees),
-             bindings);
 
   body.finalTys =
        map(\ p::(String, Maybe<[Type]>) ->
@@ -320,13 +309,6 @@ top::Metaterm ::= b::Binder bindings::[(String, Maybe<Type>)] body::Metaterm
       | _ -> []
       end;
 
-  top.gatheredTrees :=
-      foldr(\ p::(String, Maybe<Type>) rest::[String] ->
-              if isTreeStructureName(p.1)
-              then structureToTreeName(p.1)::rest
-              else rest,
-            body.gatheredTrees, bindings);
-
   top.conjunctionSplit =
       map(bindingMetaterm(b, bindings, _), body.conjunctionSplit);
 }
@@ -393,8 +375,6 @@ top::Metaterm ::= tree::String attr::String val::Term
   top.usedNames = tree::val.usedNames;
 
   top.removedWPD = top;
-
-  top.gatheredTrees := [tree];
 }
 
 
@@ -457,8 +437,6 @@ top::Metaterm ::= tree::String attr::String
   top.usedNames = [tree];
 
   top.removedWPD = top;
-
-  top.gatheredTrees := [tree];
 }
 
 
@@ -853,13 +831,12 @@ top::Metaterm ::= funName::String args::ParenthesizedArgs result::Term
 
 attribute
    translation<Term>, newPremises,
-   boundVars, boundVarsOut, attrOccurrences, knownTrees,
+   boundVars, boundVarsOut, attrOccurrences,
    usedNames,
    replaceName, replaceTerm, replaced,
    errors,
    eqTest<Term>, isEq,
    findParentOf, foundParent,
-   gatheredTrees,
    isProdStructure,
    currentState
 occurs on Term;
@@ -892,15 +869,6 @@ top::Term ::= f::Term args::TermList
            end
       else args.foundParent;
 
-  top.gatheredTrees :=
-      f.gatheredTrees ++ args.gatheredTrees ++
-      case f, args of
-      | nameTerm(access, _), consTermList(nameTerm(treeNode, _), _)
-        when isAccessRelation(access) ->
-        [nodeToTreeName(treeNode)]
-      | _, _ -> []
-      end;
-
   top.isProdStructure =
       case f of
       | nameTerm(prod, _) -> isProd(prod)
@@ -913,15 +881,11 @@ aspect production nameTerm
 top::Term ::= name::String ty::Maybe<Type>
 {
   top.translation =
-      if contains(name, top.knownTrees)
-      then nameTerm(treeToStructureName(name), ty)
-      else case ty of
-           | just(t) when tyIsNonterminal(t) ->
-             nameTerm(treeToStructureName(name), ty)
-           | just(nameType("string")) ->
-             nameTerm(name, just(stringType))
-           | _ -> nameTerm(name, ty)
-           end;
+      case ty of
+      | just(nameType("string")) ->
+        nameTerm(name, just(stringType))
+      | _ -> nameTerm(name, ty)
+      end;
 
   top.boundVarsOut = top.boundVars;
 
@@ -950,11 +914,6 @@ top::Term ::= name::String ty::Maybe<Type>
       end;
 
   top.foundParent = nothing();
-
-  top.gatheredTrees :=
-      if isTreeStructureName(name)
-      then [structureToTreeName(name)]
-      else [];
 
   top.isProdStructure = isProd(name);
 }
@@ -1214,12 +1173,11 @@ top::Term ::= contents::ListContents
 
 attribute
    translation<Term>, newPremises,
-   boundVars, boundVarsOut, attrOccurrences, knownTrees,
+   boundVars, boundVarsOut, attrOccurrences,
    usedNames,
    replaceName, replaceTerm, replaced,
    errors,
-   eqTest<ListContents>, isEq,
-   gatheredTrees
+   eqTest<ListContents>, isEq
 occurs on ListContents;
 
 aspect production emptyListContents
@@ -1265,12 +1223,11 @@ top::ListContents ::= hd::Term tl::ListContents
 
 attribute
    translation<Term>, newPremises,
-   boundVars, boundVarsOut, attrOccurrences, knownTrees,
+   boundVars, boundVarsOut, attrOccurrences,
    usedNames,
    replaceName, replaceTerm, replaced,
    errors,
-   eqTest<PairContents>, isEq,
-   gatheredTrees
+   eqTest<PairContents>, isEq
 occurs on PairContents;
 
 aspect production singlePairContents
@@ -1320,13 +1277,12 @@ top::PairContents ::= t::Term rest::PairContents
 
 attribute
    translation<Maybe<TermList>>, newPremises,
-   boundVars, boundVarsOut, attrOccurrences, knownTrees,
+   boundVars, boundVarsOut, attrOccurrences,
    usedNames,
    replaceName, replaceTerm, replaced,
    errors,
    eqTest<ParenthesizedArgs>, isEq,
-   findParentOf, foundParent, isArgHere,
-   gatheredTrees
+   findParentOf, foundParent, isArgHere
 occurs on ParenthesizedArgs;
 
 aspect production emptyParenthesizedArgs
@@ -1393,13 +1349,12 @@ top::ParenthesizedArgs ::= hd::Term tl::ParenthesizedArgs
 
 attribute
    translation<TermList>, newPremises,
-   boundVars, boundVarsOut, attrOccurrences, knownTrees,
+   boundVars, boundVarsOut, attrOccurrences,
    usedNames,
    replaceName, replaceTerm, replaced,
    errors,
    eqTest<TermList>, isEq,
-   findParentOf, foundParent, isArgHere,
-   gatheredTrees
+   findParentOf, foundParent, isArgHere
 occurs on TermList;
 
 aspect production singleTermList

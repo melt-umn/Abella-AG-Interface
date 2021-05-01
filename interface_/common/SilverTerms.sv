@@ -149,6 +149,8 @@ top::Metaterm ::= tree::String attr::String val::Term
   top.pp = tree ++ "." ++ attr ++ " = " ++ val.pp;
   top.isAtomic = true;
   top.shouldHide = false;
+
+  top.gatheredTrees := [tree];
 }
 
 abstract production attrAccessEmptyMetaterm
@@ -157,6 +159,8 @@ top::Metaterm ::= tree::String attr::String
   top.pp = tree ++ "." ++ attr ++ " = <no value>";
   top.isAtomic = true;
   top.shouldHide = false;
+
+  top.gatheredTrees := [tree];
 }
 
 
@@ -246,7 +250,7 @@ top::Term ::= prodName::String args::ParenthesizedArgs
 
 
 
-nonterminal ParenthesizedArgs with pp, argList;
+nonterminal ParenthesizedArgs with pp, argList, knownTrees, knownDecoratedTrees, usedNames;
 
 abstract production emptyParenthesizedArgs
 top::ParenthesizedArgs ::=
@@ -265,7 +269,7 @@ top::ParenthesizedArgs ::= t::Term rest::ParenthesizedArgs
 
 
 
-nonterminal ListContents with pp, argList;
+nonterminal ListContents with pp, argList, knownTrees, knownDecoratedTrees, usedNames;
 
 abstract production emptyListContents
 top::ListContents ::=
@@ -284,7 +288,7 @@ top::ListContents ::= t::Term rest::ListContents
 
 
 
-nonterminal PairContents with pp, argList;
+nonterminal PairContents with pp, argList, knownTrees, knownDecoratedTrees, usedNames;
 
 abstract production singlePairContents
 top::PairContents ::= t::Term

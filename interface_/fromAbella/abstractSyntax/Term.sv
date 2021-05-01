@@ -68,10 +68,16 @@ top::Metaterm ::= t1::Metaterm t2::Metaterm
 aspect production bindingMetaterm
 top::Metaterm ::= b::Binder nameBindings::[(String, Maybe<Type>)] body::Metaterm
 {
-  --We need to remove $ names and replace $<tree>_Tm with <tree>
+  local isHidden::(Boolean ::= String) =
+        \ s::String ->
+          contains(s, flatMap(\ p::(String, String, Term) -> p.2::p.3.usedNames,
+                              body.gatheredDecoratedTrees));
   local cleanedNames::[(String, Maybe<Type>)] =
-        filter(\ p::(String, Maybe<Type>) -> p.fst != "",
-               map(\ p::(String, Maybe<Type>) -> (cleanVariable(p.fst), p.snd), nameBindings));
+        foldr(\ p::(String, Maybe<Type>) rest::[(String, Maybe<Type>)] ->
+                if isHidden(p.1)
+                then rest
+                else p::rest,
+              [], nameBindings);
   top.translation = bindingMetaterm(b, cleanedNames, body.translation);
 }
 
@@ -140,37 +146,50 @@ top::Term ::= f::Term args::TermList
                     singleTermList(applicationTerm(nameTerm("$attr_ex", _),
                                                    singleTermList(val))))
        when isAccessRelation(str) ->
-       right(attrAccessMetaterm(nodeToTreeName(treeNodeName),
-                                accessRelationToAttr(str), val))
+       case findAssociatedMiddle(treeNodeName, top.knownDecoratedTrees) of
+       | nothing() -> error("Impossible unknown tree node (" ++ treeNodeName ++ ")")
+       | just((tree, _)) ->
+         right(attrAccessMetaterm(tree, accessRelationToAttr(str), val))
+       end
      | nameTerm(str, _),
        consTermList(nameTerm(treeNodeName, _),
                     singleTermList(nameTerm("$attr_no", _)))
        when isAccessRelation(str) ->
-       right(attrAccessEmptyMetaterm(nodeToTreeName(treeNodeName),
-                                     accessRelationToAttr(str)))
+       case findAssociatedMiddle(treeNodeName, top.knownDecoratedTrees) of
+       | nothing() -> error("Impossible unknown tree node (" ++ treeNodeName ++ ")")
+       | just((tree, _)) ->
+         right(attrAccessEmptyMetaterm(tree, accessRelationToAttr(str)))
+       end
      --Local Attribute Access
      | nameTerm(str, _),
        consTermList(nameTerm(treeNodeName, _),
                     singleTermList(applicationTerm(nameTerm("$attr_ex", _),
                                                    singleTermList(val))))
        when isLocalAccessRelation(str) ->
-       case val of
-       | pairTerm(
-            addPairContents(nameTerm(tree, _),
-            singlePairContents(applicationTerm(nameTerm(ntr, _), _))))
-         when isNodeTreeConstructorName(ntr) ->
-         right(localAttrAccessMetaterm(nodeToTreeName(treeNodeName),
-                  localAccessToAttr(str), nameTerm(tree, nothing())))
-       | _ ->
-         right(localAttrAccessMetaterm(nodeToTreeName(treeNodeName),
-                  localAccessToAttr(str), val))
+       case findAssociatedMiddle(treeNodeName, top.knownDecoratedTrees) of
+       | nothing() -> error("Impossible unknown tree node (" ++ treeNodeName ++ ")")
+       | just((tree, _)) ->
+         case val of
+         | pairTerm(
+              addPairContents(nameTerm(tree, _),
+              singlePairContents(applicationTerm(nameTerm(ntr, _), _))))
+           when isNodeTreeConstructorName(ntr) ->
+           right(localAttrAccessMetaterm(tree,
+                    localAccessToAttr(str), nameTerm(tree, nothing())))
+         | _ ->
+           right(localAttrAccessMetaterm(tree,
+                    localAccessToAttr(str), val))
+         end
        end
      | nameTerm(str, _),
        consTermList(nameTerm(treeNodeName, _),
                     singleTermList(nameTerm("$attr_no", _)))
        when isLocalAccessRelation(str) ->
-       right(localAttrAccessEmptyMetaterm(nodeToTreeName(treeNodeName),
-                                     localAccessToAttr(str)))
+       case findAssociatedMiddle(treeNodeName, top.knownDecoratedTrees) of
+       | nothing() -> error("Impossible unknown tree node (" ++ treeNodeName ++ ")")
+       | just((tree, _)) ->
+         right(localAttrAccessEmptyMetaterm(tree, localAccessToAttr(str)))
+       end
      --Structural Equality
      | nameTerm(str, _), consTermList(t1, singleTermList(t2))
        when isStructureEqName(str) ->
@@ -213,9 +232,6 @@ top::Term ::= name::String ty::Maybe<Type>
           | "$bfalse" -> falseTerm()
           --Integers
           | "$zero" -> intTerm(0)
-          --Tree structure variable
-          | x when isTreeStructureName(x) ->
-            nameTerm(structureToTreeName(x), ty)
           --Productions
           | str when isProd(str) ->
             prodTerm(prodToName(str), emptyParenthesizedArgs())
