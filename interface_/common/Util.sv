@@ -64,7 +64,7 @@ Maybe<(a, b)> ::= key::String container::[(a, String, b)]
      case container of
      | [] -> nothing()
      | (a, s, b)::_ when s == key ->
-       just(a, b)
+       just((a, b))
      | _::tl -> findAssociatedMiddle(key, tl)
      end;
 }

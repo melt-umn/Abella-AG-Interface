@@ -6,6 +6,7 @@ grammar interface_:fromAbella:abstractSyntax;
 
 nonterminal WarningMessage with
    pp,
+   knownTrees, knownDecoratedTrees,
    translation<WarningMessage>;
 
 abstract production stratificationWarning
@@ -41,6 +42,7 @@ top::WarningMessage ::= name::String
 
 nonterminal ProcessingErrorMessage with
    pp,
+   knownTrees, knownDecoratedTrees,
    translation<ProcessingErrorMessage>;
 
 abstract production undeterminedVarType

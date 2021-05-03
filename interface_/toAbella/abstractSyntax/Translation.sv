@@ -124,7 +124,7 @@ abstract production wpdNewPremise
 top::NewPremise ::= tree::String
 {
   local wpdRel::Term = nameTerm(wpdTypeName(ty), nothing());
-  local treeStructure::Term = nameTerm(treeToStructureName(tree), nothing());
+  local treeStructure::Term = nameTerm(tree, nothing());
   local treeNode::Term = nameTerm(treeToNodeName(tree), nothing());
   local treeChildList::Term = nameTerm(treeToChildListName(tree), nothing());
   local nodeTree::Term =
@@ -160,7 +160,7 @@ top::NewPremise ::= tree::String
   --We don't want to add these names if we can't find a type for them.
   top.newBindingNames =
      case findty of
-     | just(just([_])) -> [(treeToStructureName(tree), just(ty)),
+     | just(just([_])) -> [(tree, just(ty)),
                            (treeToNodeName(tree), nothing()),
                            (treeToChildListName(tree), nothing())]
      | _ -> []
@@ -241,7 +241,7 @@ Metaterm ::= prods::[String] original::Metaterm treeName::String
            nameTerm(nameToProd(prodName), nothing()),
            map(\ p::(Type, String) ->
                  nameTerm( if tyIsNonterminal(p.fst)
-                           then treeToStructureName(p.snd)
+                           then p.snd
                            else p.snd, nothing()), children));
   local newChildList::Term =
         foldr(\ p::(Type, String) rest::Term ->
@@ -268,7 +268,7 @@ Metaterm ::= prods::[String] original::Metaterm treeName::String
   local newBindings::[(String, Maybe<Type>)] =
         flatMap(\ p::(Type, String) ->
                   if tyIsNonterminal(p.fst)
-                  then [(treeToStructureName(p.snd), just(p.fst)),
+                  then [(p.snd, just(p.fst)),
                         (treeToNodeName(p.snd), nothing()),
                         (treeToChildListName(p.snd), nothing())]
                   else [(p.snd, just(p.fst))], children) ++
@@ -297,14 +297,14 @@ Metaterm ::= prods::[String] original::Metaterm treeName::String
         [ termMetaterm(
              buildApplication(
                 nameTerm(typeToStructureEqName(prodTy.resultType), nothing()),
-                [nameTerm(treeToStructureName(treeName), nothing()),
+                [nameTerm(treeName, nothing()),
                  newTree]),
              emptyRestriction()),
           --WPD nonterminal relation for root
           --Add back after removal to get just the name, not the structure, in it
           termMetaterm(
              buildApplication(nameTerm(wpdTypeName(treeTy), nothing()),
-                              [nameTerm(treeToStructureName(treeName), nothing()),
+                              [nameTerm(treeName, nothing()),
                                newNodeTree]),
              emptyRestriction()),
           --WPD node relation for root
@@ -318,7 +318,7 @@ Metaterm ::= prods::[String] original::Metaterm treeName::String
                   then termMetaterm(
                           buildApplication(
                              nameTerm(wpdTypeName(p.fst), nothing()),
-                             [nameTerm(treeToStructureName(p.snd), nothing()),
+                             [nameTerm(p.snd, nothing()),
                               buildNodeTree(p.snd, p.fst)]),
                           emptyRestriction())::rest
                   else case p.fst.isRelation of
@@ -387,7 +387,7 @@ function buildFakeIHs
   local removedBindings::[(String, Maybe<Type>)] =
         removeAllBy(\ p1::(String, Maybe<Type>) p2::(String, Maybe<Type>) ->
                       p1.fst == p2.fst,
-                    [(treeToStructureName(treeName), nothing()),
+                    [(treeName, nothing()),
                      (treeToNodeName(treeName), nothing()),
                      (treeToChildListName(treeName), nothing())],
                     originalBindings);
@@ -406,8 +406,8 @@ function buildFakeIHs
                               with {replaceName = treeToNodeName(treeName);
                                     replaceTerm = nameTerm(treeToNodeName(p.snd),
                                                            nothing());}.replaced)
-                          with {replaceName = treeToStructureName(treeName);
-                                replaceTerm = nameTerm(treeToStructureName(p.snd),
+                          with {replaceName = treeName;
+                                replaceTerm = nameTerm(p.snd,
                                                        nothing());}.replaced::rest
                      else bindingMetaterm(
                              originalBinder,
@@ -422,8 +422,8 @@ function buildFakeIHs
                                     with {replaceName = treeToNodeName(treeName);
                                           replaceTerm = nameTerm(treeToNodeName(p.snd),
                                                                  nothing());}.replaced)
-                                with {replaceName = treeToStructureName(treeName);
-                                      replaceTerm = nameTerm(treeToStructureName(p.snd),
+                                with {replaceName = treeName;
+                                      replaceTerm = nameTerm(p.snd,
                                                              nothing());}.replaced)::rest
                 else rest,
               [], children);
@@ -437,7 +437,7 @@ function buildFakeIHs
                      bindingMetaterm(
                         originalBinder,
                         removedBindings ++
-                           [(treeToStructureName(newName), nothing()),
+                           [(newName, nothing()),
                             (treeToNodeName(newName), nothing()),
                             (treeToChildListName(newName), nothing())],
                         --Add accessing the local with a value as a premise
@@ -452,7 +452,7 @@ function buildFakeIHs
                                      nameTerm(attributeExistsName, nothing()),
                                      [buildApplication(
                                          nameTerm(pairConstructorName, nothing()),
-                                         [nameTerm(treeToStructureName(newName), nothing()),
+                                         [nameTerm(newName, nothing()),
                                           buildApplication(
                                              nameTerm(nodeTreeConstructorName(p.snd), nothing()),
                                              [nameTerm(treeToNodeName(newName), nothing()),
@@ -471,8 +471,8 @@ function buildFakeIHs
                                with {replaceName = treeToNodeName(treeName);
                                      replaceTerm = nameTerm(treeToNodeName(newName),
                                                             nothing());}.replaced)
-                           with {replaceName = treeToStructureName(treeName);
-                                 replaceTerm = nameTerm(treeToStructureName(newName),
+                           with {replaceName = treeName;
+                                 replaceTerm = nameTerm(newName,
                                                         nothing());}.replaced))::rest
                      end
                 else rest,

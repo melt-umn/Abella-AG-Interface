@@ -171,8 +171,7 @@ Maybe<(String, Metaterm)> ::= tree::Term treename::String hyps::[(String, Metate
                          nameTerm(treeNode, treeNodeTy),
                       singleTermList(childList)))))),
                 _))::_
-       when isWpdTypeName(str) && termsEqual(tree, tr) &&
-            nodeToTreeName(treeNode) == treename ->
+       when isWpdTypeName(str) && termsEqual(tree, tr) ->
        just((hyp,
           termMetaterm(applicationTerm(nameTerm(str, x),
                 consTermList(tr,
@@ -191,8 +190,7 @@ Maybe<(String, Metaterm)> ::= tree::Term treename::String hyps::[(String, Metate
                          nameTerm(treeNode, treeNodeTy),
                       singleTermList(childList)))))),
                 _))::_
-       when isWpdTypeName(str) && tr == treename &&
-            nodeToTreeName(treeNode) == treename ->
+       when isWpdTypeName(str) && tr == treename ->
        just((hyp,
           termMetaterm(applicationTerm(nameTerm(str, x),
                 consTermList(nameTerm(tr, trty),

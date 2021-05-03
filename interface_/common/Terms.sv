@@ -96,9 +96,12 @@ top::Metaterm ::= b::Binder nameBindings::[Pair<String Maybe<Type>>] body::Metat
   top.isAtomic = false;
   top.shouldHide = false;
 
+  --Want ALL names which occur, even if only in bindings
+  top.usedNames := map(fst, nameBindings) ++ body.usedNames;
+
   top.gatheredTrees :=
       foldr(\ s::String rest::[String] ->
-              if containsAssociated(p.1, nameBindings)
+              if containsAssociated(s, nameBindings)
               then rest
               else s::rest,
             [], body.gatheredTrees);
@@ -210,7 +213,7 @@ top::Term ::= f::Term args::TermList
       end;
 
   top.gatheredTrees :=
-      f.gatheredTrees ++ args.gatheredTrees ++
+      f.gatheredTrees ++
       case f, args of
       | nameTerm(wpdNT, _), consTermList(nameTerm(tree, _), _)
         when isWpdTypeName(wpdNT) ->
@@ -219,14 +222,17 @@ top::Term ::= f::Term args::TermList
       end;
 
   top.gatheredDecoratedTrees :=
-      f.gatheredTrees ++ args.gatheredTrees ++
+      f.gatheredDecoratedTrees ++
       case f, args of
       | nameTerm(wpdNT, _),
         consTermList(nameTerm(tree, _),
-           consTermList(nameTerm(node, _),
-              singleTermList(children)))
+           singleTermList(
+              applicationTerm(
+                 nameTerm(ntr, _),
+                 consTermList(nameTerm(node, _),
+                    singleTermList(children)))))
         when isWpdTypeName(wpdNT) ->
-        [(tree, node, children)]
+        [(tree, node, new(children))]
       | _, _ -> []
       end;
 }
@@ -241,6 +247,8 @@ top::Term ::= name::String ty::Maybe<Type>
       end;
   top.isAtomic = true;
   top.shouldHide = false;
+
+  top.usedNames := [name];
 }
 
 abstract production consTerm
@@ -283,7 +291,7 @@ top::Term ::= ty::Maybe<Type>
 
 nonterminal TermList with
    pp, argList,
-   gatheredTrees, knownTrees, gatheredDecoratedTrees, knownDecoratedTrees,
+   knownTrees, knownDecoratedTrees,
    usedNames;
 
 abstract production singleTermList

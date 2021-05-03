@@ -18,7 +18,7 @@ induction on 1. intros. case H1.
      %found later 2
       apply IH to H4 H6. search.
 
-
+Set debug on.
 
 
 Extensible_Theorem value_unique_A : forall (T1 T2 : nt_A) Env V,

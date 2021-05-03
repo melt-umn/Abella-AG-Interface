@@ -93,6 +93,13 @@ occurs on Term;
 aspect production applicationTerm
 top::Term ::= f::Term args::TermList
 {
+  local unsafeKnownDecoratedTrees::String =
+        "[" ++ foldr(\ p::(String, String, Term) rest::String ->
+                       "(" ++ p.1 ++ ", " ++ p.2 ++ ", " ++ p.3.pp ++ ");  " ++ rest,
+                     "]", top.knownDecoratedTrees) ++ "    " ++
+        "[" ++ foldr(\ p::String rest::String ->
+                       p ++ ";  " ++ rest,
+                     "]", top.knownTrees);
   top.translation =
      case f, args.translation of
      --Integer Operations
@@ -147,7 +154,7 @@ top::Term ::= f::Term args::TermList
                                                    singleTermList(val))))
        when isAccessRelation(str) ->
        case findAssociatedMiddle(treeNodeName, top.knownDecoratedTrees) of
-       | nothing() -> error("Impossible unknown tree node (" ++ treeNodeName ++ ")")
+       | nothing() -> error("Impossible unknown tree node (" ++ treeNodeName ++ "; " ++ unsafeKnownDecoratedTrees ++ ")")
        | just((tree, _)) ->
          right(attrAccessMetaterm(tree, accessRelationToAttr(str), val))
        end
@@ -156,7 +163,7 @@ top::Term ::= f::Term args::TermList
                     singleTermList(nameTerm("$attr_no", _)))
        when isAccessRelation(str) ->
        case findAssociatedMiddle(treeNodeName, top.knownDecoratedTrees) of
-       | nothing() -> error("Impossible unknown tree node (" ++ treeNodeName ++ ")")
+       | nothing() -> error("Impossible unknown tree node (" ++ treeNodeName ++ "; " ++ unsafeKnownDecoratedTrees ++ ")")
        | just((tree, _)) ->
          right(attrAccessEmptyMetaterm(tree, accessRelationToAttr(str)))
        end
@@ -167,7 +174,7 @@ top::Term ::= f::Term args::TermList
                                                    singleTermList(val))))
        when isLocalAccessRelation(str) ->
        case findAssociatedMiddle(treeNodeName, top.knownDecoratedTrees) of
-       | nothing() -> error("Impossible unknown tree node (" ++ treeNodeName ++ ")")
+       | nothing() -> error("Impossible unknown tree node (" ++ treeNodeName ++ "; " ++ unsafeKnownDecoratedTrees ++ ")")
        | just((tree, _)) ->
          case val of
          | pairTerm(
@@ -186,7 +193,7 @@ top::Term ::= f::Term args::TermList
                     singleTermList(nameTerm("$attr_no", _)))
        when isLocalAccessRelation(str) ->
        case findAssociatedMiddle(treeNodeName, top.knownDecoratedTrees) of
-       | nothing() -> error("Impossible unknown tree node (" ++ treeNodeName ++ ")")
+       | nothing() -> error("Impossible unknown tree node (" ++ treeNodeName ++ "; " ++ unsafeKnownDecoratedTrees ++ ")")
        | just((tree, _)) ->
          right(localAttrAccessEmptyMetaterm(tree, localAccessToAttr(str)))
        end

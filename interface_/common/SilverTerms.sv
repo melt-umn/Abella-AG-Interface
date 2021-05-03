@@ -150,7 +150,7 @@ top::Metaterm ::= tree::String attr::String val::Term
   top.isAtomic = true;
   top.shouldHide = false;
 
-  top.gatheredTrees := [tree];
+  top.usedNames := [tree];
 }
 
 abstract production attrAccessEmptyMetaterm
@@ -160,7 +160,7 @@ top::Metaterm ::= tree::String attr::String
   top.isAtomic = true;
   top.shouldHide = false;
 
-  top.gatheredTrees := [tree];
+  top.usedNames := [tree];
 }
 
 
@@ -170,6 +170,8 @@ top::Metaterm ::= tree::String attr::String val::Term
   top.pp = "local " ++ tree ++ "." ++ attr ++ " = " ++ val.pp;
   top.isAtomic = true;
   top.shouldHide = false;
+
+  top.usedNames := [tree];
 }
 
 abstract production localAttrAccessEmptyMetaterm
@@ -178,6 +180,8 @@ top::Metaterm ::= tree::String attr::String
   top.pp = "local " ++ tree ++ "." ++ attr ++ " = <no value>";
   top.isAtomic = true;
   top.shouldHide = false;
+
+  top.usedNames := [tree];
 }
 
 

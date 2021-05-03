@@ -10,7 +10,11 @@ grammar interface_:common;
 synthesized attribute hypList::[(String, Metaterm)];
 synthesized attribute currentSubgoal::[Integer];
 
-nonterminal ProofState with pp, hypList, currentSubgoal, goal;
+nonterminal ProofState with
+   pp,
+   hypList, currentSubgoal, goal,
+   gatheredTrees, gatheredDecoratedTrees,
+   usedNames;
 
 abstract production proofInProgress
 top::ProofState ::= subgoalNum::[Integer] currGoal::CurrentGoal futureGoals::[Subgoal]
@@ -28,6 +32,9 @@ top::ProofState ::= subgoalNum::[Integer] currGoal::CurrentGoal futureGoals::[Su
 
   top.currentSubgoal = subgoalNum;
   top.goal = currGoal.goal;
+
+  currGoal.knownTrees = top.gatheredTrees;
+  currGoal.knownDecoratedTrees = top.gatheredDecoratedTrees;
 }
 
 
@@ -97,7 +104,11 @@ top::ProofState ::= currentProofState::ProofState originalTheorem::Metaterm
 
 
 
-nonterminal CurrentGoal with pp, hypList, goal;
+nonterminal CurrentGoal with
+   pp,
+   hypList, goal,
+   gatheredTrees, knownTrees, gatheredDecoratedTrees, knownDecoratedTrees,
+   usedNames;
 
 abstract production currentGoal
 top::CurrentGoal ::= vars::[String] ctx::Context goal::Metaterm
@@ -116,7 +127,10 @@ top::CurrentGoal ::= vars::[String] ctx::Context goal::Metaterm
 
 
 --A context is the hypotheses available for proving the current goal
-nonterminal Context with pp, hypList;
+nonterminal Context with
+   pp, hypList,
+   gatheredTrees, knownTrees, gatheredDecoratedTrees, knownDecoratedTrees,
+   usedNames;
 
 abstract production emptyContext
 top::Context ::=
@@ -147,7 +161,11 @@ top::Context ::= c1::Context c2::Context
 
 
 
-nonterminal Hypothesis with pp, hypList, shouldHide;
+nonterminal Hypothesis with
+   pp,
+   hypList, shouldHide,
+   gatheredTrees, knownTrees, gatheredDecoratedTrees, knownDecoratedTrees,
+   usedNames;
 
 abstract production metatermHyp
 top::Hypothesis ::= name::String body::Metaterm
@@ -167,6 +185,8 @@ nonterminal Subgoal with pp;
 abstract production subgoal
 top::Subgoal ::= num::[Integer] goal::Metaterm
 {
+  goal.knownTrees = [];
+  goal.knownDecoratedTrees = [];
   top.pp = "Subgoal " ++ subgoalNumToString(num) ++ " is:\n " ++ goal.pp;
 }
 

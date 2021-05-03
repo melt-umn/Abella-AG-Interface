@@ -12,26 +12,11 @@ String ::= treeName::String
 {
   return "$Node_" ++ treeName;
 }
-function isTreeNodeName
-Boolean ::= str::String
-{
-  return startsWith("$Node_", str);
-}
-function nodeToTreeName
-String ::= treeName::String
-{
-  return substring(6, length(treeName), treeName);
-}
 
 function treeToChildListName
 String ::= treeName::String
 {
   return "$ChildList_" ++ treeName;
-}
-function isChildListName
-Boolean ::= str::String
-{
-  return startsWith("$ChildList_", str);
 }
 
 function treeToNodeTreeName

@@ -5,7 +5,6 @@ attribute
    translation<Metaterm>, newPremises,
    boundVars, boundVarsOut, attrOccurrences, finalTys,
    findNameType, foundNameType,
-   usedNames,
    replaceName, replaceTerm, replaced,
    removeWPDTree, removedWPD,
    implicationPremises, conjunctionSplit,
@@ -42,8 +41,6 @@ top::Metaterm ::= t::Term r::Restriction
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
-  top.usedNames = t.usedNames;
-
   top.removedWPD = top;
 }
 
@@ -56,8 +53,6 @@ top::Metaterm ::=
   top.boundVarsOut = top.boundVars;
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
-
-  top.usedNames = [];
 
   top.removedWPD = top;
 }
@@ -72,8 +67,6 @@ top::Metaterm ::=
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
-  top.usedNames = [];
-
   top.removedWPD = top;
 }
 
@@ -83,8 +76,8 @@ top::Metaterm ::= t1::Term t2::Term
 {
   top.translation =
       case t1.translation, t2.translation of
-      | nameTerm(t1n, _), _ when isTreeStructureName(t1n) ->
-        case findAssociatedScopes(structureToTreeName(t1n), top.finalTys) of
+      | nameTerm(t1n, _), _ when contains(t1n, top.knownTrees) ->
+        case findAssociatedScopes(t1n, top.finalTys) of
         | just(just(ty)) ->
           termMetaterm(
              buildApplication(nameTerm(typeToStructureEqName(ty), nothing()),
@@ -92,8 +85,8 @@ top::Metaterm ::= t1::Term t2::Term
              emptyRestriction())
         | _ -> eqMetaterm(t1.translation, t2.translation)
         end
-      | _, nameTerm(t2n, _) when isTreeStructureName(t2n) ->
-        case findAssociatedScopes(structureToTreeName(t2n), top.finalTys) of
+      | _, nameTerm(t2n, _) when contains(t2n, top.knownTrees) ->
+        case findAssociatedScopes(t2n, top.finalTys) of
         | just(just(ty)) ->
           termMetaterm(
              buildApplication(nameTerm(typeToStructureEqName(ty), nothing()),
@@ -111,8 +104,6 @@ top::Metaterm ::= t1::Term t2::Term
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
-  top.usedNames = t1.usedNames ++ t2.usedNames;
-
   top.removedWPD = top;
 }
 
@@ -128,14 +119,11 @@ top::Metaterm ::= t1::Metaterm t2::Metaterm
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
-  top.usedNames = t1.usedNames ++ t2.usedNames;
-
   top.removedWPD =
       case t1 of
       | termMetaterm(applicationTerm(nameTerm(wpdRel, _),
                      consTermList(nameTerm(tree, _), _)), _)
-           when isTreeStructureName(tree) &&
-                isWpdTypeName(wpdRel) -> t2
+           when isWpdTypeName(wpdRel) -> t2
       | _ -> impliesMetaterm(t1, t2.removedWPD)
       end;
 
@@ -156,8 +144,6 @@ top::Metaterm ::= t1::Metaterm t2::Metaterm
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
-  top.usedNames = t1.usedNames ++ t2.usedNames;
-
   top.removedWPD = top;
 }
 
@@ -172,8 +158,6 @@ top::Metaterm ::= t1::Metaterm t2::Metaterm
   top.boundVarsOut = t2.boundVarsOut;
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
-
-  top.usedNames = t1.usedNames ++ t2.usedNames;
 
   top.removedWPD = top;
 
@@ -259,9 +243,6 @@ top::Metaterm ::= b::Binder bindings::[(String, Maybe<Type>)] body::Metaterm
              end
            end
       else left("Did not find name " ++ top.findNameType);
-
-  --Want ALL names which occur, even if only in bindings
-  top.usedNames = map(fst, bindings) ++ body.usedNames;
 
   top.replaced =
       if containsBy(\ p1::(String, Maybe<Type>) p2::(String, Maybe<Type>) ->
@@ -372,8 +353,6 @@ top::Metaterm ::= tree::String attr::String val::Term
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
-  top.usedNames = tree::val.usedNames;
-
   top.removedWPD = top;
 }
 
@@ -434,8 +413,6 @@ top::Metaterm ::= tree::String attr::String
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
-  top.usedNames = [tree];
-
   top.removedWPD = top;
 }
 
@@ -450,8 +427,6 @@ top::Metaterm ::= tree::String attr::String val::Term
   val.boundVars = top.boundVars;
   top.boundVarsOut = val.boundVarsOut;
 
-  top.usedNames = tree::val.usedNames;
-
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 }
 
@@ -463,8 +438,6 @@ top::Metaterm ::= tree::String attr::String
   top.removedWPD = top;
 
   top.boundVarsOut = top.boundVars;
-
-  top.usedNames = [tree];
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 }
@@ -487,8 +460,6 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
-  top.usedNames = t1.usedNames ++ t2.usedNames ++ result.usedNames;
-
   top.removedWPD = top;
 }
 
@@ -509,8 +480,6 @@ top::Metaterm ::= t1::Term t2::Term result::Term
   top.boundVarsOut = result.boundVarsOut;
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
-
-  top.usedNames = t1.usedNames ++ t2.usedNames ++ result.usedNames;
 
   top.removedWPD = top;
 }
@@ -533,8 +502,6 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
-  top.usedNames = t1.usedNames ++ t2.usedNames ++ result.usedNames;
-
   top.removedWPD = top;
 }
 
@@ -555,8 +522,6 @@ top::Metaterm ::= t1::Term t2::Term result::Term
   top.boundVarsOut = result.boundVarsOut;
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
-
-  top.usedNames = t1.usedNames ++ t2.usedNames ++ result.usedNames;
 
   top.removedWPD = top;
 }
@@ -579,8 +544,6 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
-  top.usedNames = t1.usedNames ++ t2.usedNames ++ result.usedNames;
-
   top.removedWPD = top;
 }
 
@@ -599,8 +562,6 @@ top::Metaterm ::= t::Term result::Term
   top.boundVarsOut = result.boundVarsOut;
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
-
-  top.usedNames = t.usedNames ++ result.usedNames;
 
   top.removedWPD = top;
 }
@@ -623,8 +584,6 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
-  top.usedNames = t1.usedNames ++ t2.usedNames ++ result.usedNames;
-
   top.removedWPD = top;
 }
 
@@ -645,8 +604,6 @@ top::Metaterm ::= t1::Term t2::Term result::Term
   top.boundVarsOut = result.boundVarsOut;
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
-
-  top.usedNames = t1.usedNames ++ t2.usedNames ++ result.usedNames;
 
   top.removedWPD = top;
 }
@@ -669,8 +626,6 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
-  top.usedNames = t1.usedNames ++ t2.usedNames ++ result.usedNames;
-
   top.removedWPD = top;
 }
 
@@ -691,8 +646,6 @@ top::Metaterm ::= t1::Term t2::Term result::Term
   top.boundVarsOut = result.boundVarsOut;
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
-
-  top.usedNames = t1.usedNames ++ t2.usedNames ++ result.usedNames;
 
   top.removedWPD = top;
 }
@@ -715,8 +668,6 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
-  top.usedNames = t1.usedNames ++ t2.usedNames ++ result.usedNames;
-
   top.removedWPD = top;
 }
 
@@ -737,8 +688,6 @@ top::Metaterm ::= t1::Term t2::Term result::Term
   top.boundVarsOut = result.boundVarsOut;
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
-
-  top.usedNames = t1.usedNames ++ t2.usedNames ++ result.usedNames;
 
   top.removedWPD = top;
 }
@@ -761,8 +710,6 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
-  top.usedNames = t1.usedNames ++ t2.usedNames ++ result.usedNames;
-
   top.removedWPD = top;
 }
 
@@ -781,8 +728,6 @@ top::Metaterm ::= t::Term result::Term
   top.boundVarsOut = result.boundVarsOut;
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
-
-  top.usedNames = t.usedNames ++ result.usedNames;
 
   top.removedWPD = top;
 }
@@ -820,8 +765,6 @@ top::Metaterm ::= funName::String args::ParenthesizedArgs result::Term
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
-  top.usedNames = args.usedNames ++ result.usedNames;
-
   top.removedWPD = top;
 }
 
@@ -832,7 +775,6 @@ top::Metaterm ::= funName::String args::ParenthesizedArgs result::Term
 attribute
    translation<Term>, newPremises,
    boundVars, boundVarsOut, attrOccurrences,
-   usedNames,
    replaceName, replaceTerm, replaced,
    errors,
    eqTest<Term>, isEq,
@@ -849,8 +791,6 @@ top::Term ::= f::Term args::TermList
   f.boundVars = top.boundVars;
   args.boundVars = f.boundVarsOut;
   top.boundVarsOut = args.boundVarsOut;
-
-  top.usedNames = f.usedNames ++ args.usedNames;
 
   top.isEq =
       case top.eqTest of
@@ -900,8 +840,6 @@ top::Term ::= name::String ty::Maybe<Type>
     something for typing.
   -}
 
-  top.usedNames = [name];
-
   top.replaced =
       if top.replaceName == name
       then top.replaceTerm
@@ -928,8 +866,6 @@ top::Term ::= t1::Term t2::Term
   t2.boundVars = t1.boundVarsOut;
   top.boundVarsOut = t2.boundVarsOut;
 
-  top.usedNames = t1.usedNames ++ t2.usedNames;
-
   top.isEq =
       case top.eqTest of
       | consTerm(t1_2, t2_2) ->
@@ -951,8 +887,6 @@ top::Term ::=
 
   top.boundVarsOut = top.boundVars;
 
-  top.usedNames = [];
-
   top.isEq =
       case top.eqTest of
       | nilTerm() -> true
@@ -972,8 +906,6 @@ top::Term ::= ty::Maybe<Type>
 
   top.boundVarsOut = top.boundVars;
 
-  top.usedNames = [];
-
   top.isEq = true;
 
   top.foundParent = nothing();
@@ -988,8 +920,6 @@ top::Term ::= i::Integer
   top.translation = integerToIntegerTerm(i);
 
   top.boundVarsOut = top.boundVars;
-
-  top.usedNames = [];
 
   top.isEq =
       case top.eqTest of
@@ -1013,8 +943,6 @@ top::Term ::= contents::String
 
   top.boundVarsOut = top.boundVars;
 
-  top.usedNames = [];
-
   top.isEq =
       case top.eqTest of
       | stringTerm(contents2) -> contents == contents2
@@ -1033,8 +961,6 @@ top::Term ::=
   top.translation = nameTerm(trueName, nothing());
 
   top.boundVarsOut = top.boundVars;
-
-  top.usedNames = [];
 
   top.isEq =
       case top.eqTest of
@@ -1055,8 +981,6 @@ top::Term ::=
 
   top.boundVarsOut = top.boundVars;
 
-  top.usedNames = [];
-
   top.isEq =
       case top.eqTest of
       | falseTerm() -> true
@@ -1075,8 +999,6 @@ top::Term ::= c::String
   top.translation = error("Should not have charTerm in toAbella");
 
   top.boundVarsOut = error("Should not have charTerm in toAbella");
-
-  top.usedNames = [];
 
   top.isEq =
       case top.eqTest of
@@ -1103,8 +1025,6 @@ top::Term ::= prodName::String args::ParenthesizedArgs
   args.boundVars = top.boundVars;
   top.boundVarsOut = args.boundVarsOut;
 
-  top.usedNames = args.usedNames;
-
   top.isEq =
       case top.eqTest of
       | prodTerm(prod, args2) when prod == prodName ->
@@ -1130,8 +1050,6 @@ top::Term ::= contents::PairContents
   contents.boundVars = top.boundVars;
   top.boundVarsOut = contents.boundVarsOut;
 
-  top.usedNames = contents.usedNames;
-
   top.isEq =
       case top.eqTest of
       | pairTerm(contents2) ->
@@ -1153,8 +1071,6 @@ top::Term ::= contents::ListContents
   contents.boundVars = top.boundVars;
   top.boundVarsOut = contents.boundVarsOut;
 
-  top.usedNames = contents.usedNames;
-
   top.isEq =
       case top.eqTest of
       | listTerm(contents2) ->
@@ -1174,7 +1090,6 @@ top::Term ::= contents::ListContents
 attribute
    translation<Term>, newPremises,
    boundVars, boundVarsOut, attrOccurrences,
-   usedNames,
    replaceName, replaceTerm, replaced,
    errors,
    eqTest<ListContents>, isEq
@@ -1186,8 +1101,6 @@ top::ListContents ::=
   top.translation = nilTerm();
 
   top.boundVarsOut = top.boundVars;
-
-  top.usedNames = [];
 
   top.isEq =
       case top.eqTest of
@@ -1206,8 +1119,6 @@ top::ListContents ::= hd::Term tl::ListContents
   tl.boundVars = hd.boundVarsOut;
   top.boundVarsOut = tl.boundVarsOut;
 
-  top.usedNames = hd.usedNames ++ tl.usedNames;
-
   top.isEq =
       case top.eqTest of
       | addListContents(hd2, tl2) ->
@@ -1224,7 +1135,6 @@ top::ListContents ::= hd::Term tl::ListContents
 attribute
    translation<Term>, newPremises,
    boundVars, boundVarsOut, attrOccurrences,
-   usedNames,
    replaceName, replaceTerm, replaced,
    errors,
    eqTest<PairContents>, isEq
@@ -1237,8 +1147,6 @@ top::PairContents ::= t::Term
 
   t.boundVars = top.boundVars;
   top.boundVarsOut = t.boundVarsOut;
-
-  top.usedNames = t.usedNames;
 
   top.isEq =
       case top.eqTest of
@@ -1260,8 +1168,6 @@ top::PairContents ::= t::Term rest::PairContents
   rest.boundVars = t.boundVarsOut;
   top.boundVarsOut = rest.boundVarsOut;
 
-  top.usedNames = t.usedNames ++ rest.usedNames;
-
   top.isEq =
       case top.eqTest of
       | addPairContents(t2, rest2) ->
@@ -1278,7 +1184,6 @@ top::PairContents ::= t::Term rest::PairContents
 attribute
    translation<Maybe<TermList>>, newPremises,
    boundVars, boundVarsOut, attrOccurrences,
-   usedNames,
    replaceName, replaceTerm, replaced,
    errors,
    eqTest<ParenthesizedArgs>, isEq,
@@ -1291,8 +1196,6 @@ top::ParenthesizedArgs ::=
   top.translation = nothing();
 
   top.boundVarsOut = top.boundVars;
-
-  top.usedNames = [];
 
   top.isEq =
       case top.eqTest of
@@ -1317,8 +1220,6 @@ top::ParenthesizedArgs ::= hd::Term tl::ParenthesizedArgs
   hd.boundVars = top.boundVars;
   tl.boundVars = hd.boundVarsOut;
   top.boundVarsOut = tl.boundVarsOut;
-
-  top.usedNames = hd.usedNames ++ tl.usedNames;
 
   top.isEq =
       case top.eqTest of
@@ -1350,7 +1251,6 @@ top::ParenthesizedArgs ::= hd::Term tl::ParenthesizedArgs
 attribute
    translation<TermList>, newPremises,
    boundVars, boundVarsOut, attrOccurrences,
-   usedNames,
    replaceName, replaceTerm, replaced,
    errors,
    eqTest<TermList>, isEq,
@@ -1364,8 +1264,6 @@ top::TermList ::= t::Term
 
   t.boundVars = top.boundVars;
   top.boundVarsOut = t.boundVarsOut;
-
-  top.usedNames = t.usedNames;
 
   top.isEq =
       case top.eqTest of
@@ -1393,8 +1291,6 @@ top::TermList ::= t::Term rest::TermList
   t.boundVars = top.boundVars;
   rest.boundVars = t.boundVarsOut;
   top.boundVarsOut = rest.boundVarsOut;
-
-  top.usedNames = t.usedNames ++ rest.usedNames;
 
   top.isEq =
       case top.eqTest of
@@ -1427,8 +1323,6 @@ top::TermList ::=
   top.translation = emptyTermList();
 
   top.boundVarsOut = top.boundVars;
-
-  top.usedNames = [];
 
   top.isEq =
       case top.eqTest of

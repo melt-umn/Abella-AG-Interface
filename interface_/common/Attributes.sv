@@ -23,8 +23,7 @@ synthesized attribute goal::Maybe<Metaterm>;
 --Names of trees used in a proof state
 monoid attribute gatheredTrees::[String] with [], ++;
 propagate gatheredTrees on
-   Metaterm, Term, TermList, ListContents, PairContents, ParenthesizedArgs,
-   ProofState, Context, Hypothesis
+   Metaterm, Term, ProofState, Context, Hypothesis, CurrentGoal
    excluding bindingMetaterm, applicationTerm;
 --Names which are known to be trees of any type
 autocopy attribute knownTrees::[String];
@@ -33,7 +32,7 @@ autocopy attribute knownTrees::[String];
 --(Name of tree, name of node, child list)
 monoid attribute gatheredDecoratedTrees::[(String, String, Term)] with [], ++;
 propagate gatheredDecoratedTrees on
-   Metaterm, Term
+   Metaterm, Term, ProofState, Context, Hypothesis, CurrentGoal
    excluding bindingMetaterm, applicationTerm;
 --Passing the above information down the tree
 autocopy attribute knownDecoratedTrees::[(String, String, Term)];
@@ -42,5 +41,9 @@ autocopy attribute knownDecoratedTrees::[(String, String, Term)];
 
 --Names which occur anywhere in a term or metaterm, including uses and bindings
 --(May include unbound names or names which are bound but used nowhere)
-synthesized attribute usedNames::[String];
+monoid attribute usedNames::[String] with [], ++;
+propagate usedNames on
+   Metaterm, Term, TermList, ParenthesizedArgs, ListContents, PairContents,
+      Hypothesis, Context, CurrentGoal, ProofState
+   excluding bindingMetaterm, nameTerm, attrAccessMetaterm, attrAccessEmptyMetaterm, localAttrAccessMetaterm, localAttrAccessEmptyMetaterm;
 

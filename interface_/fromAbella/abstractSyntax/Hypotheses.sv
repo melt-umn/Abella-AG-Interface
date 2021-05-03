@@ -123,14 +123,16 @@ occurs on CurrentGoal;
 aspect production currentGoal
 top::CurrentGoal ::= vars::[String] ctx::Context goal::Metaterm
 {
-
-  {-
-    We assume all attributes are for trees which are listed in the
-    list of variables as well, and that all tree terms and nodes are
-    included by pairs.
-  -}
+  local isHidden::(Boolean ::= String) =
+        \ s::String ->
+          contains(s, flatMap(\ p::(String, String, Term) -> p.2::p.3.usedNames,
+                              ctx.gatheredDecoratedTrees));
   local cleanVars::[String] =
-        filter(\ x::String -> x != "", map(cleanVariable, vars));
+        foldr(\ s::String rest::[String] ->
+                if isHidden(s)
+                then rest
+                else s::rest,
+              [], vars);
   top.translation = currentGoal(cleanVars, ctx.translation, goal.translation);
 
   top.hypList = ctx.hypList;
