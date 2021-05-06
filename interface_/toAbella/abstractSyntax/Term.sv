@@ -83,7 +83,7 @@ top::Metaterm ::= t1::Term t2::Term
              buildApplication(nameTerm(typeToStructureEqName(ty), nothing()),
                               [t1.translation, t2.translation]),
              emptyRestriction())
-        | _ -> eqMetaterm(t1.translation, t2.translation)
+        | _ -> error("Could not find type for tree " ++ t1n)
         end
       | _, nameTerm(t2n, _) when contains(t2n, top.knownTrees) ->
         case findAssociatedScopes(t2n, top.finalTys) of
@@ -92,7 +92,7 @@ top::Metaterm ::= t1::Term t2::Term
              buildApplication(nameTerm(typeToStructureEqName(ty), nothing()),
                               [t1.translation, t2.translation]),
              emptyRestriction())
-        | _ -> eqMetaterm(t1.translation, t2.translation)
+        | _ -> error("Could not find type for tree " ++ t2n)
         end
       | _, _ -> eqMetaterm(t1.translation, t2.translation)
       end;
@@ -304,7 +304,8 @@ top::Metaterm ::= tree::String attr::String val::Term
         termMetaterm(
            buildApplication(
               nameTerm(accessRelationName(ty, attr), nothing()),
-              [nameTerm(treeToNodeName(tree), nothing()),
+              [nameTerm(tree, nothing()),
+               nameTerm(treeToNodeName(tree), nothing()),
                buildApplication(nameTerm(attributeExistsName, nothing()),
                                 [val.translation])]),
            emptyRestriction())
@@ -366,7 +367,8 @@ top::Metaterm ::= tree::String attr::String
         termMetaterm(
            buildApplication(
               nameTerm(accessRelationName(ty, attr), nothing()),
-              [nameTerm(treeToNodeName(tree), nothing()),
+              [nameTerm(tree, nothing()),
+               nameTerm(treeToNodeName(tree), nothing()),
                nameTerm(attributeNotExistsName, nothing())]),
            emptyRestriction())
       | _ ->

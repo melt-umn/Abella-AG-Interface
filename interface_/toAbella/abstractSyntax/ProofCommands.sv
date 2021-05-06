@@ -859,7 +859,7 @@ top::ProofCommand ::=
             if tr1 == tree
             then [
                   assertTactic(
-                     nameHint(correctDirectionName), nothing(), --just(length(newChildren) + 3),
+                     nameHint(correctDirectionName), just(length(newChildren) + 3),
                      termMetaterm(
                         buildApplication(
                            nameTerm(typeToStructureEqName(

@@ -149,54 +149,42 @@ top::Term ::= f::Term args::TermList
        right(notBoolMetaterm(arg1, arg2))
      --Attribute Access
      | nameTerm(str, _),
+       consTermList(nameTerm(treeName, _),
        consTermList(nameTerm(treeNodeName, _),
                     singleTermList(applicationTerm(nameTerm("$attr_ex", _),
-                                                   singleTermList(val))))
+                                                   singleTermList(val)))))
        when isAccessRelation(str) ->
-       case findAssociatedMiddle(treeNodeName, top.knownDecoratedTrees) of
-       | nothing() -> error("Impossible unknown tree node (" ++ treeNodeName ++ "; " ++ unsafeKnownDecoratedTrees ++ ")")
-       | just((tree, _)) ->
-         right(attrAccessMetaterm(tree, accessRelationToAttr(str), val))
-       end
+       right(attrAccessMetaterm(treeName, accessRelationToAttr(str), val))
      | nameTerm(str, _),
+       consTermList(nameTerm(treeName, _),
        consTermList(nameTerm(treeNodeName, _),
-                    singleTermList(nameTerm("$attr_no", _)))
+                    singleTermList(nameTerm("$attr_no", _))))
        when isAccessRelation(str) ->
-       case findAssociatedMiddle(treeNodeName, top.knownDecoratedTrees) of
-       | nothing() -> error("Impossible unknown tree node (" ++ treeNodeName ++ "; " ++ unsafeKnownDecoratedTrees ++ ")")
-       | just((tree, _)) ->
-         right(attrAccessEmptyMetaterm(tree, accessRelationToAttr(str)))
-       end
+       right(attrAccessEmptyMetaterm(treeName, accessRelationToAttr(str)))
      --Local Attribute Access
      | nameTerm(str, _),
+       consTermList(nameTerm(treeName, _),
        consTermList(nameTerm(treeNodeName, _),
                     singleTermList(applicationTerm(nameTerm("$attr_ex", _),
-                                                   singleTermList(val))))
+                                                   singleTermList(val)))))
        when isLocalAccessRelation(str) ->
-       case findAssociatedMiddle(treeNodeName, top.knownDecoratedTrees) of
-       | nothing() -> error("Impossible unknown tree node (" ++ treeNodeName ++ "; " ++ unsafeKnownDecoratedTrees ++ ")")
-       | just((tree, _)) ->
-         case val of
-         | pairTerm(
-              addPairContents(nameTerm(tree, _),
-              singlePairContents(applicationTerm(nameTerm(ntr, _), _))))
-           when isNodeTreeConstructorName(ntr) ->
-           right(localAttrAccessMetaterm(tree,
-                    localAccessToAttr(str), nameTerm(tree, nothing())))
-         | _ ->
-           right(localAttrAccessMetaterm(tree,
-                    localAccessToAttr(str), val))
-         end
+       case val of
+       | pairTerm(
+            addPairContents(nameTerm(tree, _),
+            singlePairContents(applicationTerm(nameTerm(ntr, _), _))))
+         when isNodeTreeConstructorName(ntr) ->
+         right(localAttrAccessMetaterm(treeName,
+                  localAccessToAttr(str), nameTerm(tree, nothing())))
+       | _ ->
+         right(localAttrAccessMetaterm(treeName,
+                  localAccessToAttr(str), val))
        end
      | nameTerm(str, _),
+       consTermList(nameTerm(treeName, _),
        consTermList(nameTerm(treeNodeName, _),
-                    singleTermList(nameTerm("$attr_no", _)))
+                    singleTermList(nameTerm("$attr_no", _))))
        when isLocalAccessRelation(str) ->
-       case findAssociatedMiddle(treeNodeName, top.knownDecoratedTrees) of
-       | nothing() -> error("Impossible unknown tree node (" ++ treeNodeName ++ "; " ++ unsafeKnownDecoratedTrees ++ ")")
-       | just((tree, _)) ->
-         right(localAttrAccessEmptyMetaterm(tree, localAccessToAttr(str)))
-       end
+       right(localAttrAccessEmptyMetaterm(treeName, localAccessToAttr(str)))
      --Structural Equality
      | nameTerm(str, _), consTermList(t1, singleTermList(t2))
        when isStructureEqName(str) ->

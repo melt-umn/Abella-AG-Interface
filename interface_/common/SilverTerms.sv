@@ -151,6 +151,7 @@ top::Metaterm ::= tree::String attr::String val::Term
   top.shouldHide = false;
 
   top.usedNames := [tree];
+  top.gatheredTrees <- [tree];
 }
 
 abstract production attrAccessEmptyMetaterm
@@ -161,6 +162,7 @@ top::Metaterm ::= tree::String attr::String
   top.shouldHide = false;
 
   top.usedNames := [tree];
+  top.gatheredTrees <- [tree];
 }
 
 
@@ -172,6 +174,7 @@ top::Metaterm ::= tree::String attr::String val::Term
   top.shouldHide = false;
 
   top.usedNames := [tree];
+  top.gatheredTrees <- [tree];
 }
 
 abstract production localAttrAccessEmptyMetaterm
@@ -182,6 +185,7 @@ top::Metaterm ::= tree::String attr::String
   top.shouldHide = false;
 
   top.usedNames := [tree];
+  top.gatheredTrees <- [tree];
 }
 
 

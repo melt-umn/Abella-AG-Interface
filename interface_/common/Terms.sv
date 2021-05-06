@@ -233,7 +233,15 @@ top::Term ::= f::Term args::TermList
                     singleTermList(children)))))
         when isWpdTypeName(wpdNT) ->
         [(tree, node, new(children))]
-      | _, _ -> []
+      | nameTerm(wpdNT, _),
+        consTermList(nameTerm(tree, _),
+           singleTermList(
+              applicationTerm(
+                 nameTerm(ntr, _),
+                 consTermList(nameTerm(node, _),
+                    singleTermList(children))))) ->
+        unsafeTrace([], print("Not adding decorated tree from (" ++ f.pp ++ ", " ++ args.pp ++ ") because not WPD\n", unsafeIO()))
+      | _, _ -> unsafeTrace([], print("Not adding decorated tree from (" ++ f.pp ++ ", " ++ args.pp ++ ")\n", unsafeIO()))
       end;
 }
 
