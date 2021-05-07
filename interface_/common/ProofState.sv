@@ -185,8 +185,6 @@ nonterminal Subgoal with pp;
 abstract production subgoal
 top::Subgoal ::= num::[Integer] goal::Metaterm
 {
-  goal.knownTrees = [];
-  goal.knownDecoratedTrees = [("This is it", "$Node_T2", nameTerm("Yep", nothing())), ("'Nother one", "$Node_T", nameTerm("Yep", nothing())), ("For SubWhile", "$Node_SubWhile", nameTerm("Yep", nothing()))];
   top.pp = "Subgoal " ++ subgoalNumToString(num) ++ " is:\n " ++ goal.pp;
 }
 

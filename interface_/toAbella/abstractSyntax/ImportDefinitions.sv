@@ -146,7 +146,7 @@ top::TopCommand ::= names::[String] ty::Type
 
   local attrTy::Type =
         case ty of
-        | arrowType(_, arrowType(functorType(_, attrty), _)) ->
+        | arrowType(_, arrowType(_, arrowType(functorType(_, attrty), _))) ->
           new(attrty)
         | _ -> error("Access relations must have types of a certain form")
         end;

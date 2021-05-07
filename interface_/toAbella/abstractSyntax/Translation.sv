@@ -447,7 +447,8 @@ function buildFakeIHs
                                  nameTerm(
                                     localAccessRelationName(rootTy, p.fst, prod),
                                     nothing()),
-                                 [rootNode,
+                                 [nameTerm(treeName, nothing()),
+                                  rootNode,
                                   buildApplication(
                                      nameTerm(attributeExistsName, nothing()),
                                      [buildApplication(

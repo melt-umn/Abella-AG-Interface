@@ -12,7 +12,7 @@ top::ProofState ::=
    subgoalNum::[Integer] currGoal::CurrentGoal futureGoals::[Subgoal]
 {
   --Clean up attribute accesses to be equal
-  --(hyp name, node name, attr name, type name, value of attr)
+  --(hyp name, tree name, attr name, type name, value of attr)
   local attrAccessHyps::[(String, String, String, String, Term)] =
         foldr(
           \ p::(String, Metaterm)
@@ -20,10 +20,11 @@ top::ProofState ::=
             case p of
             | (hyp,
                termMetaterm(applicationTerm(nameTerm(access, _),
+                              consTermList(nameTerm(treeName, _),
                               consTermList(nameTerm(treeNode, _),
-                              singleTermList(val))), _))
+                              singleTermList(val)))), _))
               when isAccessRelation(access) ->
-              (hyp, treeNode,
+              (hyp, treeName,
                accessRelationToAttr(access),
                accessRelationToType(access), new(val))::rest
             | (_, _) -> rest
@@ -61,7 +62,7 @@ top::ProofState ::=
         end;
 
   --Clean up local attribute accesses to be equal
-  --(hyp name, node name, prod name, attr name, type name, value of attr)
+  --(hyp name, tree name, prod name, attr name, type name, value of attr)
   local localAccessHyps::[(String, String, String, String, String, Term)] =
         foldr(
           \ p::(String, Metaterm)
@@ -69,10 +70,11 @@ top::ProofState ::=
             case p of
             | (hyp,
                termMetaterm(applicationTerm(nameTerm(access, _),
+                              consTermList(nameTerm(treeName, _),
                               consTermList(nameTerm(treeNode, _),
-                              singleTermList(val))), _))
+                              singleTermList(val)))), _))
               when isLocalAccessRelation(access) ->
-              (hyp, treeNode,
+              (hyp, treeName,
                localAccessToProd(access),
                localAccessToAttr(access),
                localAccessToType(access).pp, new(val))::rest

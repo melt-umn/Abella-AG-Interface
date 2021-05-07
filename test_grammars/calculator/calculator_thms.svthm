@@ -105,7 +105,7 @@ Extensible_Theorem value_unique_lemmas__Expr :
      T1.value = V ->
      T2.value = V)
 on T1 T1 T1 T1.
-split.
+split.                    Set debug on.
 %No Environment, No Value
  %intConst
   intros Structure N_Is Eq T1Env T2Env T1Val. case T1.value.

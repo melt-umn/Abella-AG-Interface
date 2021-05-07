@@ -2,6 +2,6 @@
 
 GRAMMAR=interface_:composed
 
-silver $@ -I ../.. $GRAMMAR
+SVJVM_FLAGS="-Xmx8000M -Xss40M" silver $@ -I ../.. $GRAMMAR
 
 
