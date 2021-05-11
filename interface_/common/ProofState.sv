@@ -34,7 +34,6 @@ top::ProofState ::= subgoalNum::[Integer] currGoal::CurrentGoal futureGoals::[Su
   top.goal = currGoal.goal;
 
   currGoal.knownTrees = top.gatheredTrees;
-  currGoal.knownDecoratedTrees = top.gatheredDecoratedTrees;
 }
 
 
@@ -107,7 +106,7 @@ top::ProofState ::= currentProofState::ProofState originalTheorem::Metaterm
 nonterminal CurrentGoal with
    pp,
    hypList, goal,
-   gatheredTrees, knownTrees, gatheredDecoratedTrees, knownDecoratedTrees,
+   gatheredTrees, knownTrees, gatheredDecoratedTrees,
    usedNames;
 
 abstract production currentGoal
@@ -129,7 +128,7 @@ top::CurrentGoal ::= vars::[String] ctx::Context goal::Metaterm
 --A context is the hypotheses available for proving the current goal
 nonterminal Context with
    pp, hypList,
-   gatheredTrees, knownTrees, gatheredDecoratedTrees, knownDecoratedTrees,
+   gatheredTrees, knownTrees, gatheredDecoratedTrees,
    usedNames;
 
 abstract production emptyContext
@@ -164,7 +163,7 @@ top::Context ::= c1::Context c2::Context
 nonterminal Hypothesis with
    pp,
    hypList, shouldHide,
-   gatheredTrees, knownTrees, gatheredDecoratedTrees, knownDecoratedTrees,
+   gatheredTrees, knownTrees, gatheredDecoratedTrees,
    usedNames;
 
 abstract production metatermHyp

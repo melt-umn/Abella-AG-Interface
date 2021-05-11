@@ -1,56 +1,16 @@
 grammar interface_:toAbella:abstractSyntax;
 
 
-{-
-  When we're translating things, we're going to end up needing the
-  names of some constants that will be defined in Abella.  We will
-  have those as globals here.
--}
-
-global attributeExistsName::String = "$attr_ex";
-global attributeNotExistsName::String = "$attr_no";
-
-global nodeTreeName::String = "$node_tree";
-global nodeTreeType::Type = nameType(nodeTreeName);
-
-global natSuccName::String = "$succ";
-global natZeroName::String = "$zero";
-
-global integerAdditionName::String = "$plus_integer";
-global integerSubtractionName::String = "$minus_integer";
-global integerMultiplicationName::String = "$multiply_integer";
-global integerDivisionName::String = "$divide_integer";
-global integerModulusName::String = "$modulus_integer";
-global integerNegateName::String = "$negate_integer";
-global integerLessName::String = "$less_integer";
-global integerLessEqName::String = "$lesseq_integer";
-global integerGreaterName::String = "$greater_integer";
-global integerGreaterEqName::String = "$greatereq_integer";
-
-global stringType::Type =
-       functorType(nameType("list"), nameType("$char"));
-
-global appendName::String = "$append";
-
-global pairConstructorName::String = "$pair_c";
-
-global orName::String = "$or_bool";
-global andName::String = "$and_bool";
-global notName::String = "$not_bool";
-global trueName::String = "$btrue";
-global falseName::String = "$bfalse";
-
-
 
 --Build a term for an expanded node tree (ntr_treeTy Node ChildList)
 function buildNodeTree
-Term ::= name::String treeTy::Type
+Term ::= nodeName::String childListName::String treeTy::Type
 {
   return
      buildApplication(
         nameTerm(nodeTreeConstructorName(treeTy), nothing()),
-        [ nameTerm(treeToNodeName(name), nothing()),
-          nameTerm(treeToChildListName(name), nothing()) ]);
+        [ nameTerm(nodeName, nothing()),
+          nameTerm(childListName, nothing()) ]);
 }
 
 
@@ -106,7 +66,8 @@ nonterminal NewPremise with
    translation<Metaterm>,
    currentNames, boundVarsHere, addPremiseHere,
    eqTest<NewPremise>, isEq,
-   newBindingNames, removeBindingNames;
+   newBindingNames, removeBindingNames,
+   gatheredDecoratedTrees, knownNames;
 
 --This is so we can figure out if this new premise should be added in
 --   one place or elsewhere, based on the names that are bound
@@ -125,8 +86,12 @@ top::NewPremise ::= tree::String
 {
   local wpdRel::Term = nameTerm(wpdTypeName(ty), nothing());
   local treeStructure::Term = nameTerm(tree, nothing());
-  local treeNode::Term = nameTerm(treeToNodeName(tree), nothing());
-  local treeChildList::Term = nameTerm(treeToChildListName(tree), nothing());
+  local nodeName::String =
+        makeUniqueNameFromBase(treeToNodeName(tree), top.knownNames);
+  local treeNode::Term = nameTerm(nodeName, nothing());
+  local childListName::String =
+        makeUniqueNameFromBase(treeToChildListName(tree), top.knownNames);
+  local treeChildList::Term = nameTerm(childListName, nothing());
   local nodeTree::Term =
         buildApplication(nameTerm(nodeTreeConstructorName(ty), nothing()),
                          [treeNode, treeChildList]);
@@ -140,6 +105,8 @@ top::NewPremise ::= tree::String
      | just(just(_)) -> trueMetaterm() --no type, so can't actually translate this
      | _ -> trueMetaterm() --error case, but I think it is caught elsewhere
      end;
+
+  top.gatheredDecoratedTrees := [(tree, nodeName, new(treeChildList))];
 
   local findty::Maybe<Maybe<[Type]>> = findAssociated(tree, top.boundVarsHere);
   local ty::Type =
@@ -161,8 +128,8 @@ top::NewPremise ::= tree::String
   top.newBindingNames =
      case findty of
      | just(just([_])) -> [(tree, just(ty)),
-                           (treeToNodeName(tree), nothing()),
-                           (treeToChildListName(tree), nothing())]
+                           (nodeName, nothing()),
+                           (childListName, nothing())]
      | _ -> []
      end;
   top.removeBindingNames =
@@ -207,9 +174,18 @@ Metaterm ::= walkThroughThms::[(Metaterm, String, Type, [String])]
              localAttrs::[(String, [(String, Type)])]
 {
   local thm::(Metaterm, String, Type, [String]) = head(walkThroughThms);
+  local body::Metaterm =
+        case thm.1 of
+        | bindingMetaterm(_, _, body) -> body
+        | _ -> error("Can't have anything but binding metaterm to start")
+        end;
   local thisThm::Metaterm =
-        buildProdBodies(thm.4, thm.1, thm.2, thm.3, allThms,
-                        usedNames, allProds, localAttrs);
+        case findAssociated(thm.2, body.gatheredDecoratedTrees) of
+        | just((nodeName, nameTerm(childList, _))) ->
+          buildProdBodies(thm.4, thm.1, thm.2, nodeName, childList, thm.3,
+                          allThms, usedNames, allProds, localAttrs)
+        | _ -> error("Tree must be bound at root")
+        end;
 
   return
      case walkThroughThms of
@@ -227,34 +203,34 @@ Metaterm ::= walkThroughThms::[(Metaterm, String, Type, [String])]
 --Walk through the list of productions and fill them in, and adding in
 --their inductive hypotheses and premises for the current case
 function buildProdBodies
-Metaterm ::= prods::[String] original::Metaterm treeName::String
-             treeTy::Type allThms::[(Metaterm, String, Type, [String])]
+Metaterm ::= prods::[String] original::Metaterm
+             treeName::String treeNode::String treeCL::String treeTy::Type
+             allThms::[(Metaterm, String, Type, [String])]
              usedNames::[String] allProds::[(String, Type)]
              localAttrs::[(String, [(String, Type)])]
 {
   local prodName::String = head(prods);
   --The productions referenced in WPD relations had better exist
   local prodTy::Type = findAssociated(prodName, allProds).fromJust;
-  local children::[(Type, String)] = buildChildNames(prodTy.argumentTypes, usedNames);
+  local children::[(Type, String, String, String)] =
+        buildChildNames(prodTy.argumentTypes, usedNames);
   local newTree::Term =
         buildApplication(
            nameTerm(nameToProd(prodName), nothing()),
-           map(\ p::(Type, String) ->
-                 nameTerm( if tyIsNonterminal(p.fst)
-                           then p.snd
-                           else p.snd, nothing()), children));
+           map(\ p::(Type, String, String, String) ->
+                 nameTerm(p.2, nothing()), children));
   local newChildList::Term =
-        foldr(\ p::(Type, String) rest::Term ->
-                if tyIsNonterminal(p.fst)
+        foldr(\ p::(Type, String, String, String) rest::Term ->
+                if tyIsNonterminal(p.1)
                 then consTerm(
-                        buildNodeTree(p.snd, p.fst),
+                        buildNodeTree(p.3, p.4, p.1),
                         rest)
                 else rest,
               nilTerm(), children);
   local newNodeTree::Term =
         buildApplication(
            nameTerm(nodeTreeConstructorName(treeTy), nothing()),
-           [nameTerm(treeToNodeName(treeName), nothing()), newChildList]);
+           [nameTerm(treeNode, nothing()), newChildList]);
   local originalBinder::Binder =
         case original of
         | bindingMetaterm(binder, bindings, body) -> binder
@@ -266,15 +242,15 @@ Metaterm ::= prods::[String] original::Metaterm treeName::String
         | _ -> error("Should not have anything but a binding to start")
         end;
   local newBindings::[(String, Maybe<Type>)] =
-        flatMap(\ p::(Type, String) ->
-                  if tyIsNonterminal(p.fst)
-                  then [(p.snd, just(p.fst)),
-                        (treeToNodeName(p.snd), nothing()),
-                        (treeToChildListName(p.snd), nothing())]
-                  else [(p.snd, just(p.fst))], children) ++
+        flatMap(\ p::(Type, String, String, String) ->
+                  if tyIsNonterminal(p.1)
+                  then [(p.2, just(p.1)),
+                        (p.3, nothing()),
+                        (p.4, nothing())]
+                  else [(p.2, just(p.1))], children) ++
           removeBy(\ p1::(String, Maybe<Type>) p2::(String, Maybe<Type>) ->
-                     p1.fst == p2.fst,
-                   (treeToChildListName(treeName), nothing()), originalBindings);
+                     p1.1 == p2.1,
+                   (treeCL, nothing()), originalBindings);
   local originalBody::Metaterm =
         case original of
         | bindingMetaterm(binder, bindings, body) -> body
@@ -288,7 +264,7 @@ Metaterm ::= prods::[String] original::Metaterm treeName::String
    --noWPD.replaceName = treeToStructureName(treeName);
    --noWPD.replaceTerm = newTree;
   local replaceTree::Metaterm = noWPD; --.replaced;
-  replaceTree.replaceName = treeToChildListName(treeName);
+  replaceTree.replaceName = treeCL;
   replaceTree.replaceTerm = newChildList;
   local replaceTreeNode::Metaterm = replaceTree.replaced;
   --
@@ -313,19 +289,19 @@ Metaterm ::= prods::[String] original::Metaterm treeName::String
                               [newTree, newNodeTree]),
              emptyRestriction()) ] ++
           --WPD nonterminal relations/is relations for children
-          foldr(\ p::(Type, String) rest::[Metaterm] ->
-                  if tyIsNonterminal(p.fst)
+          foldr(\ p::(Type, String, String, String) rest::[Metaterm] ->
+                  if tyIsNonterminal(p.1)
                   then termMetaterm(
                           buildApplication(
-                             nameTerm(wpdTypeName(p.fst), nothing()),
-                             [nameTerm(p.snd, nothing()),
-                              buildNodeTree(p.snd, p.fst)]),
+                             nameTerm(wpdTypeName(p.1), nothing()),
+                             [nameTerm(p.2, nothing()),
+                              buildNodeTree(p.3, p.4, p.1)]),
                           emptyRestriction())::rest
-                  else case p.fst.isRelation of
+                  else case p.1.isRelation of
                        | right(isRel) ->
                          termMetaterm(
                             buildApplication(isRel,
-                                             [nameTerm(p.snd, nothing())]),
+                                             [nameTerm(p.2, nothing())]),
                             emptyRestriction())::rest
                        | left(err) ->
                          error("Could not generate is relation:\n" ++ err)
@@ -336,9 +312,11 @@ Metaterm ::= prods::[String] original::Metaterm treeName::String
         findProdLocalAttrs(prodName, localAttrs);
   local fakeIHs::[Metaterm] =
         buildFakeIHs(allThms, children, prodName, prodTy.resultType,
-                     nameTerm(treeToNodeName(treeName), nothing()),
+                     nameTerm(treeNode, nothing()),
                      prodLocalAttrs,
-                     usedNames ++ map(snd, children));
+                     usedNames ++
+                     flatMap(\ p::(Type, String, String, String) ->
+                               [p.2, p.3, p.4], children));
   local currentStep::Metaterm =
         bindingMetaterm(originalBinder, newBindings,
            foldr(\ m::Metaterm rest::Metaterm ->
@@ -350,14 +328,14 @@ Metaterm ::= prods::[String] original::Metaterm treeName::String
      | [_] -> currentStep
      | _::t ->
        andMetaterm(currentStep,
-          buildProdBodies(t, original, treeName, treeTy, allThms,
-                          usedNames, allProds, localAttrs))
+          buildProdBodies(t, original, treeName, treeNode, treeCL, treeTy,
+                          allThms, usedNames, allProds, localAttrs))
      end;
 }
 
 function buildFakeIHs
 [Metaterm] ::= thms::[(Metaterm, String, Type, [String])]
-               children::[(Type, String)] prod::String
+               children::[(Type, String, String, String)] prod::String
                rootTy::Type rootNode::Term
                --local name, local type
                relevantLocalAttrs::[(String, Type)]
@@ -366,6 +344,16 @@ function buildFakeIHs
   local first::(Metaterm, String, Type, [String]) = head(thms);
   local treeTy::Type = first.3;
   local treeName::String = first.2;
+  local treeNode::String =
+        case findAssociated(first.2, originalBody.gatheredDecoratedTrees) of
+        | just((nodeName, nameTerm(childList, _))) -> nodeName
+        | _ -> error("Tree must be bound at root")
+        end;
+  local treeCL::String =
+        case findAssociated(first.2, originalBody.gatheredDecoratedTrees) of
+        | just((nodeName, nameTerm(childList, _))) -> childList
+        | _ -> error("Tree must be bound at root")
+        end;
   local original::Metaterm = first.1;
   local originalBinder::Binder =
         case original of
@@ -388,27 +376,24 @@ function buildFakeIHs
         removeAllBy(\ p1::(String, Maybe<Type>) p2::(String, Maybe<Type>) ->
                       p1.fst == p2.fst,
                     [(treeName, nothing()),
-                     (treeToNodeName(treeName), nothing()),
-                     (treeToChildListName(treeName), nothing())],
+                     (treeNode, nothing()),
+                     (treeCL, nothing())],
                     originalBindings);
   --Hypotheses for the children of the production
   local firstIHs::[Metaterm] =
-        foldr(\ p::(Type, String) rest::[Metaterm] ->
-                if tysEqual(p.fst, treeTy)
+        foldr(\ p::(Type, String, String, String) rest::[Metaterm] ->
+                if tysEqual(p.1, treeTy)
                 then if null(removedBindings)
                      then --replace tree, tree node, and tree child list
                           decorate
                              (decorate
                                 (decorate removedWPD with
-                                    {replaceName = treeToChildListName(treeName);
-                                     replaceTerm = nameTerm(treeToChildListName(p.snd),
-                                                            nothing());}.replaced)
-                              with {replaceName = treeToNodeName(treeName);
-                                    replaceTerm = nameTerm(treeToNodeName(p.snd),
-                                                           nothing());}.replaced)
+                                    {replaceName = treeCL;
+                                     replaceTerm = nameTerm(p.4, nothing());}.replaced)
+                              with {replaceName = treeNode;
+                                    replaceTerm = nameTerm(p.3, nothing());}.replaced)
                           with {replaceName = treeName;
-                                replaceTerm = nameTerm(p.snd,
-                                                       nothing());}.replaced::rest
+                                replaceTerm = nameTerm(p.2, nothing());}.replaced::rest
                      else bindingMetaterm(
                              originalBinder,
                              removedBindings,
@@ -416,36 +401,36 @@ function buildFakeIHs
                                 decorate
                                    (decorate
                                       (decorate removedWPD with
-                                          {replaceName = treeToChildListName(treeName);
-                                           replaceTerm = nameTerm(treeToChildListName(p.snd),
-                                                                  nothing());}.replaced)
-                                    with {replaceName = treeToNodeName(treeName);
-                                          replaceTerm = nameTerm(treeToNodeName(p.snd),
-                                                                 nothing());}.replaced)
+                                          {replaceName = treeCL;
+                                           replaceTerm = nameTerm(p.4, nothing());}.replaced)
+                                    with {replaceName = treeNode;
+                                          replaceTerm = nameTerm(p.3, nothing());}.replaced)
                                 with {replaceName = treeName;
-                                      replaceTerm = nameTerm(p.snd,
-                                                             nothing());}.replaced)::rest
+                                      replaceTerm = nameTerm(p.2, nothing());}.replaced)::rest
                 else rest,
               [], children);
   --Hypotheses for the local attributes which occur on the given production
   local localIHs::[Metaterm] =
         foldr(\ p::(String, Type) rest::[Metaterm] ->
-                if tysEqual(p.snd, treeTy)
+                if tysEqual(p.2, treeTy)
                 then let newName::String =
-                         makeUniqueNameFromBase(capitalizeString(p.fst), usedNames)
-                     in
+                         makeUniqueNameFromBase(capitalizeString(p.1), usedNames) in
+                     let newNodeName::String =
+                         makeUniqueNameFromBase(treeToNodeName(newName), usedNames) in
+                     let newCLName::String =
+                         makeUniqueNameFromBase(treeToChildListName(newName), usedNames) in
                      bindingMetaterm(
                         originalBinder,
                         removedBindings ++
                            [(newName, nothing()),
-                            (treeToNodeName(newName), nothing()),
-                            (treeToChildListName(newName), nothing())],
+                            (newNodeName, nothing()),
+                            (newCLName, nothing())],
                         --Add accessing the local with a value as a premise
                         impliesMetaterm(
                            termMetaterm(
                               buildApplication(
                                  nameTerm(
-                                    localAccessRelationName(rootTy, p.fst, prod),
+                                    localAccessRelationName(rootTy, p.1, prod),
                                     nothing()),
                                  [nameTerm(treeName, nothing()),
                                   rootNode,
@@ -455,9 +440,9 @@ function buildFakeIHs
                                          nameTerm(pairConstructorName, nothing()),
                                          [nameTerm(newName, nothing()),
                                           buildApplication(
-                                             nameTerm(nodeTreeConstructorName(p.snd), nothing()),
-                                             [nameTerm(treeToNodeName(newName), nothing()),
-                                              nameTerm(treeToChildListName(newName), nothing())])
+                                             nameTerm(nodeTreeConstructorName(p.2), nothing()),
+                                             [nameTerm(newNodeName, nothing()),
+                                              nameTerm(newCLName, nothing())])
                                          ])
                                      ])
                                  ]),
@@ -466,16 +451,16 @@ function buildFakeIHs
                            decorate
                               (decorate
                                  (decorate removedWPD with
-                                     {replaceName = treeToChildListName(treeName);
-                                      replaceTerm = nameTerm(treeToChildListName(newName),
+                                     {replaceName = treeCL;
+                                      replaceTerm = nameTerm(newCLName,
                                                              nothing());}.replaced)
-                               with {replaceName = treeToNodeName(treeName);
-                                     replaceTerm = nameTerm(treeToNodeName(newName),
+                               with {replaceName = treeNode;
+                                     replaceTerm = nameTerm(newNodeName,
                                                             nothing());}.replaced)
                            with {replaceName = treeName;
                                  replaceTerm = nameTerm(newName,
                                                         nothing());}.replaced))::rest
-                     end
+                     end end end
                 else rest,
               [], relevantLocalAttrs);
 
@@ -490,15 +475,23 @@ function buildFakeIHs
 
 
 --Build names for each element of tys which do not occur in usedNames
+--Produces a name, a node name, and a child list name, whether needed or not
 function buildChildNames
-[(Type, String)] ::= tys::[Type] usedNames::[String]
+[(Type, String, String, String)] ::= tys::[Type] usedNames::[String]
 {
   local uniqueName::String = makeUniqueNameFromTy(head(tys), usedNames);
   return
      case tys of
      | [] -> []
-     | h::t -> (h, makeUniqueNameFromTy(head(tys), usedNames))::
-               buildChildNames(t, uniqueName::usedNames)
+     | h::t ->
+       let name::String = makeUniqueNameFromTy(head(tys), usedNames) in
+       let nodeName::String =
+           makeUniqueNameFromBase(treeToNodeName(name), usedNames) in
+       let childListName::String =
+           makeUniqueNameFromBase(treeToChildListName(name), usedNames) in
+           (h, name, nodeName, childListName)::
+           buildChildNames(t, name::nodeName::childListName::usedNames)
+       end end end
      end;
 }
 

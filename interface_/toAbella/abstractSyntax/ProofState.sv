@@ -170,6 +170,7 @@ top::ProofState ::=
       else 1;
 
   top.nextStateOut = top.nextStateIn;
+  currGoal.knownDecoratedTrees = top.gatheredDecoratedTrees;
 }
 
 
@@ -229,6 +230,10 @@ top::ProofState ::=
 
 
 
+attribute
+   knownDecoratedTrees
+occurs on CurrentGoal;
+
 aspect production currentGoal
 top::CurrentGoal ::= vars::[String] ctx::Context goal::Metaterm
 {
@@ -236,6 +241,10 @@ top::CurrentGoal ::= vars::[String] ctx::Context goal::Metaterm
 }
 
 
+
+attribute
+   knownDecoratedTrees
+occurs on Context;
 
 aspect production emptyContext
 top::Context ::=
@@ -258,6 +267,10 @@ top::Context ::= c1::Context c2::Context
 }
 
 
+
+attribute
+   knownDecoratedTrees
+occurs on Hypothesis;
 
 aspect production metatermHyp
 top::Hypothesis ::= name::String body::Metaterm

@@ -10,7 +10,8 @@ imports interface_:common;
 -}
 synthesized attribute translation<a>::a;
 flowtype translation {attrOccurrences, boundVars, finalTys,
-                      knownTrees, currentState} on Metaterm;
+                      knownTrees, knownDecoratedTrees, knownNames,
+                      currentState} on Metaterm;
 
 --new premises we are adding to the current theorem being defined
 monoid attribute newPremises::[NewPremise] with [], ++;
@@ -84,6 +85,13 @@ synthesized attribute boundVarsOut::[[(String, Maybe<[Type]>)]];
 --A final list of known types for variables
 --This is mostly so we know the correct types of trees in structure equality
 autocopy attribute finalTys::[[(String, Maybe<Type>)]];
+
+
+--(Name of tree, name of node, child list)
+autocopy attribute knownDecoratedTrees::[(String, String, Term)];
+
+--Names used somewhere
+autocopy attribute knownNames::[String];
 
 
 --Pairs of (attribute name, types it occurs on)

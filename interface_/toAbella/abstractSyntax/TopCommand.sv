@@ -57,6 +57,7 @@ top::TopCommand ::= name::String depth::Integer body::Metaterm trees::[String]
   body.attrOccurrences = top.currentState.knownAttrOccurrences;
   body.boundVars = [];
   body.finalTys = [];
+  body.knownNames = trees;
 
   local thms::[Metaterm] = splitMetaterm(body);
 
@@ -111,8 +112,11 @@ top::TopCommand ::= name::String depth::Integer body::Metaterm trees::[String]
               let trans::Metaterm =
                   decorate p.2 with {
                      knownTrees = p.1::body.gatheredTrees;
+                     knownDecoratedTrees = body.gatheredDecoratedTrees;
                      finalTys = [];
                      boundVars = [];
+                     knownNames = body.usedNames;
+                     currentState = top.currentState;
                      attrOccurrences =
                         top.currentState.knownAttrOccurrences;
                   }.translation
@@ -131,6 +135,7 @@ top::TopCommand ::= name::String depth::Integer body::Metaterm trees::[String]
   top.translation = theoremDeclaration("$" ++ name, [], expandedBody);
 
   body.knownTrees = trees ++ body.gatheredTrees;
+  body.knownDecoratedTrees = body.gatheredDecoratedTrees;
   top.translatedTheorem = body.translation;
 
   --The number of splits to do when the theorem is done
@@ -171,8 +176,10 @@ top::TopCommand ::= name::String params::[String] body::Metaterm
 
   body.boundVars = [];
   body.finalTys = [];
+  body.knownNames = [];
   body.attrOccurrences = top.currentState.knownAttrOccurrences;
   body.knownTrees = body.gatheredTrees;
+  body.knownDecoratedTrees = body.gatheredDecoratedTrees;
   top.translation = theoremDeclaration(name, params, body.translation);
 
   top.newKnownTheorems =
@@ -310,6 +317,7 @@ top::TopCommand ::= m::Metaterm
 
   m.attrOccurrences = top.currentState.knownAttrOccurrences;
   m.boundVars = [];
+  m.knownNames = [];
 
   top.translation = error("Translation not done in queryCommand yet");
 }

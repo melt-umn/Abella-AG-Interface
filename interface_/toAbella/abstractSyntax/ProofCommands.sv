@@ -1004,7 +1004,10 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> m::Metaterm
 
   m.boundVars = [];
   m.finalTys = [];
-  m.knownTrees = m.gatheredTrees;
+  m.knownNames = top.currentState.state.usedNames;
+  m.knownTrees = m.gatheredTrees ++ top.currentState.state.gatheredTrees;
+  m.knownDecoratedTrees =
+    m.gatheredDecoratedTrees ++ top.currentState.state.gatheredDecoratedTrees;
   top.translation = --error("Translation not done in assertTactic yet");
       [assertTactic(h, depth, m.translation)];
 

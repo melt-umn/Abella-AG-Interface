@@ -152,6 +152,27 @@ top::Metaterm ::= tree::String attr::String val::Term
 
   top.usedNames := [tree];
   top.gatheredTrees <- [tree];
+  top.gatheredDecoratedTrees <-
+      case val of
+      | pairTerm(
+           addPairContents(nameTerm(treeName, _),
+           singlePairContents(
+              applicationTerm(nameTerm(ntr, _),
+                 consTermList(nameTerm(nodeName, _),
+                 singleTermList(childList))))))
+        when isNodeTreeConstructorName(ntr) ->
+        [(treeName, nodeName, new(childList))]
+      | applicationTerm(nameTerm(pairMaker, _),
+           consTermList(nameTerm(treeName, _),
+           singleTermList(
+              applicationTerm(nameTerm(ntr, _),
+                 consTermList(nameTerm(nodeName, _),
+                 singleTermList(childList))))))
+        when pairMaker == pairConstructorName &&
+             isNodeTreeConstructorName(ntr) ->
+        [(treeName, nodeName, new(childList))]
+      | _ -> []
+      end;
 }
 
 abstract production attrAccessEmptyMetaterm
@@ -175,6 +196,27 @@ top::Metaterm ::= tree::String attr::String val::Term
 
   top.usedNames := [tree];
   top.gatheredTrees <- [tree];
+  top.gatheredDecoratedTrees <-
+      case val of
+      | pairTerm(
+           addPairContents(nameTerm(treeName, _),
+           singlePairContents(
+              applicationTerm(nameTerm(ntr, _),
+                 consTermList(nameTerm(nodeName, _),
+                 singleTermList(childList))))))
+        when isNodeTreeConstructorName(ntr) ->
+        [(treeName, nodeName, new(childList))]
+      | applicationTerm(nameTerm(pairMaker, _),
+           consTermList(nameTerm(treeName, _),
+           singleTermList(
+              applicationTerm(nameTerm(ntr, _),
+                 consTermList(nameTerm(nodeName, _),
+                 singleTermList(childList))))))
+        when pairMaker == pairConstructorName &&
+             isNodeTreeConstructorName(ntr) ->
+        [(treeName, nodeName, new(childList))]
+      | _ -> []
+      end;
 }
 
 abstract production localAttrAccessEmptyMetaterm
@@ -258,7 +300,7 @@ top::Term ::= prodName::String args::ParenthesizedArgs
 
 
 
-nonterminal ParenthesizedArgs with pp, argList, knownTrees, knownDecoratedTrees, usedNames;
+nonterminal ParenthesizedArgs with pp, argList, knownTrees, usedNames;
 
 abstract production emptyParenthesizedArgs
 top::ParenthesizedArgs ::=
@@ -277,7 +319,7 @@ top::ParenthesizedArgs ::= t::Term rest::ParenthesizedArgs
 
 
 
-nonterminal ListContents with pp, argList, knownTrees, knownDecoratedTrees, usedNames;
+nonterminal ListContents with pp, argList, knownTrees, usedNames;
 
 abstract production emptyListContents
 top::ListContents ::=
@@ -296,7 +338,7 @@ top::ListContents ::= t::Term rest::ListContents
 
 
 
-nonterminal PairContents with pp, argList, knownTrees, knownDecoratedTrees, usedNames;
+nonterminal PairContents with pp, argList, knownTrees, usedNames;
 
 abstract production singlePairContents
 top::PairContents ::= t::Term

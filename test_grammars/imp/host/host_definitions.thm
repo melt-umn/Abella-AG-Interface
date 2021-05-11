@@ -557,14 +557,14 @@ Define $env_out__nt_C__host : nt_C -> nt_C -> $node_tree -> prop by
   $env_out__nt_C__host TreeName ($prod_while B C)
                    ($ntr_nt_C Node ($ntr_nt_B BNode BCL::
                                     $ntr_nt_C CNode CCL::nil)) :=
-     exists SubWhile $Node_SubWhile $ChildList_SubWhile,
+     exists SubWhile Node_SubWhile ChildList_SubWhile,
         $access_$_env_out_$_nt_C TreeName Node $attr_no /\
         $access_$_boolVal_$_nt_B B BNode ($attr_ex $btrue) /\
         $local_access_$_$prod_while_$_subWhile_$_nt_C TreeName Node
                   ($attr_ex ($pair_c SubWhile
-                                    ($ntr_nt_C $Node_SubWhile
-                                          $ChildList_SubWhile))) /\
-        $access_$_env_out_$_nt_C SubWhile $Node_SubWhile $attr_no;
+                                    ($ntr_nt_C Node_SubWhile
+                                          ChildList_SubWhile))) /\
+        $access_$_env_out_$_nt_C SubWhile Node_SubWhile $attr_no;
   $env_out__nt_C__host TreeName ($prod_while B C)
                    ($ntr_nt_C Node ($ntr_nt_B BNode BCL::
                                     $ntr_nt_C CNode CCL::nil)) :=
@@ -575,14 +575,14 @@ Define $env_out__nt_C__host : nt_C -> nt_C -> $node_tree -> prop by
   $env_out__nt_C__host TreeName ($prod_while B C)
                    ($ntr_nt_C Node ($ntr_nt_B BNode BCL::
                                     $ntr_nt_C CNode CCL::nil)) :=
-     exists EnvOut SubWhile $Node_SubWhile $ChildList_SubWhile,
+     exists EnvOut SubWhile Node_SubWhile ChildList_SubWhile,
         $access_$_env_out_$_nt_C TreeName Node ($attr_ex EnvOut) /\
         $access_$_boolVal_$_nt_B B BNode ($attr_ex $btrue) /\
         $local_access_$_$prod_while_$_subWhile_$_nt_C TreeName Node
                   ($attr_ex ($pair_c SubWhile
-                                    ($ntr_nt_C $Node_SubWhile
-                                          $ChildList_SubWhile))) /\
-        $access_$_env_out_$_nt_C SubWhile $Node_SubWhile
+                                    ($ntr_nt_C Node_SubWhile
+                                          ChildList_SubWhile))) /\
+        $access_$_env_out_$_nt_C SubWhile Node_SubWhile
                                  ($attr_ex EnvOut).
 
 Define $while_local_subWhile : nt_C -> nt_C -> $node_tree -> prop by
@@ -601,31 +601,31 @@ Define $while_local_subWhile : nt_C -> nt_C -> $node_tree -> prop by
   $while_local_subWhile TreeName ($prod_while B C)
                         ($ntr_nt_C Node ($ntr_nt_B BNode BCL::
                                          $ntr_nt_C CNode CCL::nil)) :=
-     exists SubWhile $Node_SubWhile $ChildList_SubWhile,
+     exists SubWhile Node_SubWhile ChildList_SubWhile,
         $local_access_$_$prod_while_$_subWhile_$_nt_C TreeName Node
                   ($attr_ex ($pair_c SubWhile
-                                ($ntr_nt_C $Node_SubWhile
-                                           $ChildList_SubWhile))) /\
+                                ($ntr_nt_C Node_SubWhile
+                                           ChildList_SubWhile))) /\
         $structure_eq__nt_C SubWhile ($prod_while B C) /\
         $access_$_boolVal_$_nt_B B BNode ($attr_ex $btrue) /\
-        $wpd_nt_C SubWhile ($ntr_nt_C $Node_SubWhile
-                                          $ChildList_SubWhile) /\
+        $wpd_nt_C SubWhile ($ntr_nt_C Node_SubWhile
+                                          ChildList_SubWhile) /\
         $access_$_env_out_$_nt_C C CNode $attr_no /\
-        $access_$_env_$_nt_C SubWhile $Node_SubWhile $attr_no;
+        $access_$_env_$_nt_C SubWhile Node_SubWhile $attr_no;
   $while_local_subWhile TreeName ($prod_while B C)
                         ($ntr_nt_C Node ($ntr_nt_B BNode BCL::
                                          $ntr_nt_C CNode CCL::nil)) :=
-     exists SubWhile $Node_SubWhile $ChildList_SubWhile Env,
+     exists SubWhile Node_SubWhile ChildList_SubWhile Env,
         $local_access_$_$prod_while_$_subWhile_$_nt_C TreeName Node
                   ($attr_ex ($pair_c SubWhile
-                                ($ntr_nt_C $Node_SubWhile
-                                           $ChildList_SubWhile))) /\
+                                ($ntr_nt_C Node_SubWhile
+                                           ChildList_SubWhile))) /\
         $structure_eq__nt_C SubWhile ($prod_while B C) /\
         $access_$_boolVal_$_nt_B B BNode ($attr_ex $btrue) /\
-        $wpd_nt_C SubWhile ($ntr_nt_C $Node_SubWhile
-                                          $ChildList_SubWhile) /\
+        $wpd_nt_C SubWhile ($ntr_nt_C Node_SubWhile
+                                          ChildList_SubWhile) /\
         $access_$_env_out_$_nt_C C CNode ($attr_ex Env) /\
-        $access_$_env_$_nt_C SubWhile $Node_SubWhile ($attr_ex Env).
+        $access_$_env_$_nt_C SubWhile Node_SubWhile ($attr_ex Env).
 
 
 

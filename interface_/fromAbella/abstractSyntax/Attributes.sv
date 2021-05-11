@@ -11,7 +11,7 @@ imports interface_:common;
   there is any reason we need to examine it somehow.
 -}
 synthesized attribute translation<a>::a;
-flowtype translation {knownTrees, knownDecoratedTrees} on Metaterm;
+flowtype translation {} on Metaterm;
 
 
 

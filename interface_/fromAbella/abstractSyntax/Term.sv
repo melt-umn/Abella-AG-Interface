@@ -93,13 +93,6 @@ occurs on Term;
 aspect production applicationTerm
 top::Term ::= f::Term args::TermList
 {
-  local unsafeKnownDecoratedTrees::String =
-        "[" ++ foldr(\ p::(String, String, Term) rest::String ->
-                       "(" ++ p.1 ++ ", " ++ p.2 ++ ", " ++ p.3.pp ++ ");  " ++ rest,
-                     "]", top.knownDecoratedTrees) ++ "    " ++
-        "[" ++ foldr(\ p::String rest::String ->
-                       p ++ ";  " ++ rest,
-                     "]", top.knownTrees);
   top.translation =
      case f, args.translation of
      --Integer Operations

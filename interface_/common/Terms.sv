@@ -5,7 +5,7 @@ grammar interface_:common;
 
 nonterminal Metaterm with
    pp, isAtomic, shouldHide,
-   gatheredTrees, knownTrees, gatheredDecoratedTrees, knownDecoratedTrees,
+   gatheredTrees, knownTrees, gatheredDecoratedTrees,
    usedNames;
 
 abstract production termMetaterm
@@ -121,14 +121,6 @@ top::Metaterm ::= b::Binder nameBindings::[Pair<String Maybe<Type>>] body::Metat
                then rest
                else s::rest,
              [],  top.knownTrees);
-  body.knownDecoratedTrees =
-       body.gatheredDecoratedTrees ++
-       foldr(\ p::(String, String, Term)
-               rest::[(String, String, Term)] ->
-               if containsAssociated(p.1, nameBindings)
-               then rest
-               else p::rest,
-             [],  top.knownDecoratedTrees);
 }
 
 
@@ -194,7 +186,7 @@ top::Binder::=
 
 nonterminal Term with
    pp, isAtomic, shouldHide,
-   gatheredTrees, knownTrees, gatheredDecoratedTrees, knownDecoratedTrees,
+   gatheredTrees, knownTrees, gatheredDecoratedTrees,
    usedNames;
 
 abstract production applicationTerm
@@ -233,15 +225,26 @@ top::Term ::= f::Term args::TermList
                     singleTermList(children)))))
         when isWpdTypeName(wpdNT) ->
         [(tree, node, new(children))]
-      | nameTerm(wpdNT, _),
-        consTermList(nameTerm(tree, _),
+      --accessing decorated trees as attributes
+      | nameTerm(access, _),
+        consTermList(onTree,
+           consTermList(onTreeNode,
            singleTermList(
               applicationTerm(
-                 nameTerm(ntr, _),
-                 consTermList(nameTerm(node, _),
-                    singleTermList(children))))) ->
-        unsafeTrace([], print("Not adding decorated tree from (" ++ f.pp ++ ", " ++ args.pp ++ ") because not WPD\n", unsafeIO()))
-      | _, _ -> unsafeTrace([], print("Not adding decorated tree from (" ++ f.pp ++ ", " ++ args.pp ++ ")\n", unsafeIO()))
+                 nameTerm(attrEx, _),
+                 singleTermList(
+                    applicationTerm(
+                       nameTerm(pairMaker, _),
+                       consTermList(nameTerm(treeName, _),
+                          singleTermList(
+                             applicationTerm(nameTerm(ntr, _),
+                                consTermList(nameTerm(nodeName, _),
+                                singleTermList(childList)))))))))))
+        when attrEx == attributeExistsName &&
+             pairMaker == pairConstructorName &&
+             isNodeTreeConstructorName(ntr) ->
+        [(treeName, nodeName, new(childList))]
+      | _, _ -> []
       end;
 }
 
@@ -299,7 +302,7 @@ top::Term ::= ty::Maybe<Type>
 
 nonterminal TermList with
    pp, argList,
-   knownTrees, knownDecoratedTrees,
+   knownTrees,
    usedNames;
 
 abstract production singleTermList

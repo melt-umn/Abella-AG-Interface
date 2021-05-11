@@ -9,6 +9,7 @@ attribute
    removeWPDTree, removedWPD,
    implicationPremises, conjunctionSplit,
    errors,
+   knownDecoratedTrees, knownNames,
    currentState
 occurs on Metaterm;
 
@@ -182,6 +183,7 @@ top::Metaterm ::= b::Binder bindings::[(String, Maybe<Type>)] body::Metaterm
                 decorate x with
                 {currentNames = fst(splitList(bindings));
                  boundVarsHere = currentScope;
+                 knownNames = top.knownNames;
                  eqTest = error("Should not require eqTest");
                 },
               noDupPremises)
@@ -220,6 +222,16 @@ top::Metaterm ::= b::Binder bindings::[(String, Maybe<Type>)] body::Metaterm
       | [] -> error("We lost a scope somewhere (bindingMetaterm production)")
       | _::otherScopes -> otherScopes
       end;
+
+  body.knownDecoratedTrees =
+       flatMap((.gatheredDecoratedTrees), decPremises) ++
+       body.gatheredDecoratedTrees ++
+       foldr(\ p::(String, String, Term)
+               rest::[(String, String, Term)] ->
+               if containsAssociated(p.1, bindings)
+               then rest
+               else p::rest,
+             [],  top.knownDecoratedTrees);
 
   body.finalTys =
        map(\ p::(String, Maybe<[Type]>) ->
@@ -299,17 +311,17 @@ aspect production attrAccessMetaterm
 top::Metaterm ::= tree::String attr::String val::Term
 {
   top.translation =
-      case possibleTys of
-      | [ty] ->
+      case possibleTys, findAssociated(tree, top.knownDecoratedTrees) of
+      | [ty], just((nodeName, _)) ->
         termMetaterm(
            buildApplication(
               nameTerm(accessRelationName(ty, attr), nothing()),
               [nameTerm(tree, nothing()),
-               nameTerm(treeToNodeName(tree), nothing()),
+               nameTerm(nodeName, nothing()),
                buildApplication(nameTerm(attributeExistsName, nothing()),
                                 [val.translation])]),
            emptyRestriction())
-      | _ ->
+      | _, _ ->
         error("Should not access translation in the presence of errors (attrAccessMetaterm)")
       end;
   top.newPremises := [wpdNewPremise(tree)] ++ val.newPremises;
@@ -362,16 +374,16 @@ aspect production attrAccessEmptyMetaterm
 top::Metaterm ::= tree::String attr::String
 {
   top.translation =
-      case possibleTys of
-      | [ty] ->
+      case possibleTys, findAssociated(tree, top.knownDecoratedTrees) of
+      | [ty], just((nodeName, _)) ->
         termMetaterm(
            buildApplication(
               nameTerm(accessRelationName(ty, attr), nothing()),
               [nameTerm(tree, nothing()),
-               nameTerm(treeToNodeName(tree), nothing()),
+               nameTerm(nodeName, nothing()),
                nameTerm(attributeNotExistsName, nothing())]),
            emptyRestriction())
-      | _ ->
+      | _, _ ->
         error("Should not access translation in the presence of errors (attrAccessEmptyMetaterm)")
       end;
   top.newPremises := [wpdNewPremise(tree)];
@@ -782,6 +794,7 @@ attribute
    eqTest<Term>, isEq,
    findParentOf, foundParent,
    isProdStructure,
+   knownDecoratedTrees, knownNames,
    currentState
 occurs on Term;
 
@@ -1094,7 +1107,8 @@ attribute
    boundVars, boundVarsOut, attrOccurrences,
    replaceName, replaceTerm, replaced,
    errors,
-   eqTest<ListContents>, isEq
+   eqTest<ListContents>, isEq,
+   knownDecoratedTrees, knownNames
 occurs on ListContents;
 
 aspect production emptyListContents
@@ -1139,7 +1153,8 @@ attribute
    boundVars, boundVarsOut, attrOccurrences,
    replaceName, replaceTerm, replaced,
    errors,
-   eqTest<PairContents>, isEq
+   eqTest<PairContents>, isEq,
+   knownDecoratedTrees, knownNames
 occurs on PairContents;
 
 aspect production singlePairContents
@@ -1189,7 +1204,8 @@ attribute
    replaceName, replaceTerm, replaced,
    errors,
    eqTest<ParenthesizedArgs>, isEq,
-   findParentOf, foundParent, isArgHere
+   findParentOf, foundParent, isArgHere,
+   knownDecoratedTrees, knownNames
 occurs on ParenthesizedArgs;
 
 aspect production emptyParenthesizedArgs
@@ -1256,7 +1272,8 @@ attribute
    replaceName, replaceTerm, replaced,
    errors,
    eqTest<TermList>, isEq,
-   findParentOf, foundParent, isArgHere
+   findParentOf, foundParent, isArgHere,
+   knownDecoratedTrees
 occurs on TermList;
 
 aspect production singleTermList

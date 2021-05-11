@@ -34,8 +34,6 @@ monoid attribute gatheredDecoratedTrees::[(String, String, Term)] with [], ++;
 propagate gatheredDecoratedTrees on
    Metaterm, Term, ProofState, Context, Hypothesis, CurrentGoal
    excluding bindingMetaterm, applicationTerm;
---Passing the above information down the tree
-autocopy attribute knownDecoratedTrees::[(String, String, Term)];
 
 
 
