@@ -3,15 +3,14 @@ grammar interface_:toAbella:abstractSyntax;
 
 attribute
    translation<Metaterm>, newPremises,
-   boundVars, boundVarsOut, attrOccurrences, knownTrees, finalTys,
+   boundVars, boundVarsOut, attrOccurrences, finalTys,
    findNameType, foundNameType,
-   usedNames,
    replaceName, replaceTerm, replaced,
    removeWPDTree, removedWPD,
    implicationPremises, conjunctionSplit,
    errors,
-   currentState,
-   gatheredTrees
+   knownDecoratedTrees, knownNames,
+   currentState
 occurs on Metaterm;
 
 
@@ -43,8 +42,6 @@ top::Metaterm ::= t::Term r::Restriction
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
-  top.usedNames = t.usedNames;
-
   top.removedWPD = top;
 }
 
@@ -57,8 +54,6 @@ top::Metaterm ::=
   top.boundVarsOut = top.boundVars;
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
-
-  top.usedNames = [];
 
   top.removedWPD = top;
 }
@@ -73,8 +68,6 @@ top::Metaterm ::=
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
-  top.usedNames = [];
-
   top.removedWPD = top;
 }
 
@@ -84,23 +77,23 @@ top::Metaterm ::= t1::Term t2::Term
 {
   top.translation =
       case t1.translation, t2.translation of
-      | nameTerm(t1n, _), _ when isTreeStructureName(t1n) ->
-        case findAssociatedScopes(structureToTreeName(t1n), top.finalTys) of
+      | nameTerm(t1n, _), _ when contains(t1n, top.knownTrees) ->
+        case findAssociatedScopes(t1n, top.finalTys) of
         | just(just(ty)) ->
           termMetaterm(
              buildApplication(nameTerm(typeToStructureEqName(ty), nothing()),
                               [t1.translation, t2.translation]),
              emptyRestriction())
-        | _ -> eqMetaterm(t1.translation, t2.translation)
+        | _ -> error("Could not find type for tree " ++ t1n)
         end
-      | _, nameTerm(t2n, _) when isTreeStructureName(t2n) ->
-        case findAssociatedScopes(structureToTreeName(t2n), top.finalTys) of
+      | _, nameTerm(t2n, _) when contains(t2n, top.knownTrees) ->
+        case findAssociatedScopes(t2n, top.finalTys) of
         | just(just(ty)) ->
           termMetaterm(
              buildApplication(nameTerm(typeToStructureEqName(ty), nothing()),
                               [t1.translation, t2.translation]),
              emptyRestriction())
-        | _ -> eqMetaterm(t1.translation, t2.translation)
+        | _ -> error("Could not find type for tree " ++ t2n)
         end
       | _, _ -> eqMetaterm(t1.translation, t2.translation)
       end;
@@ -111,8 +104,6 @@ top::Metaterm ::= t1::Term t2::Term
   top.boundVarsOut = t2.boundVarsOut;
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
-
-  top.usedNames = t1.usedNames ++ t2.usedNames;
 
   top.removedWPD = top;
 }
@@ -129,14 +120,11 @@ top::Metaterm ::= t1::Metaterm t2::Metaterm
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
-  top.usedNames = t1.usedNames ++ t2.usedNames;
-
   top.removedWPD =
       case t1 of
       | termMetaterm(applicationTerm(nameTerm(wpdRel, _),
                      consTermList(nameTerm(tree, _), _)), _)
-           when isTreeStructureName(tree) &&
-                isWpdTypeName(wpdRel) -> t2
+           when isWpdTypeName(wpdRel) -> t2
       | _ -> impliesMetaterm(t1, t2.removedWPD)
       end;
 
@@ -157,8 +145,6 @@ top::Metaterm ::= t1::Metaterm t2::Metaterm
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
-  top.usedNames = t1.usedNames ++ t2.usedNames;
-
   top.removedWPD = top;
 }
 
@@ -173,8 +159,6 @@ top::Metaterm ::= t1::Metaterm t2::Metaterm
   top.boundVarsOut = t2.boundVarsOut;
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
-
-  top.usedNames = t1.usedNames ++ t2.usedNames;
 
   top.removedWPD = top;
 
@@ -199,6 +183,7 @@ top::Metaterm ::= b::Binder bindings::[(String, Maybe<Type>)] body::Metaterm
                 decorate x with
                 {currentNames = fst(splitList(bindings));
                  boundVarsHere = currentScope;
+                 knownNames = top.knownNames;
                  eqTest = error("Should not require eqTest");
                 },
               noDupPremises)
@@ -237,16 +222,16 @@ top::Metaterm ::= b::Binder bindings::[(String, Maybe<Type>)] body::Metaterm
       | [] -> error("We lost a scope somewhere (bindingMetaterm production)")
       | _::otherScopes -> otherScopes
       end;
-  body.knownTrees =
-       foldr(\ p::(String, Maybe<Type>) rest::[String] ->
-               case p of
-               | (s, just(ty)) when tyIsNonterminal(ty) ->
-                 s::rest
-               | _ -> rest
-               end,
-             filter(\ s::String -> contains(s, map(fst, bindings)),
-                    top.knownTrees),
-             bindings);
+
+  body.knownDecoratedTrees =
+       flatMap((.gatheredDecoratedTrees), decPremises) ++
+       body.gatheredDecoratedTrees ++
+       foldr(\ p::(String, String, Term)
+               rest::[(String, String, Term)] ->
+               if containsAssociated(p.1, bindings)
+               then rest
+               else p::rest,
+             [],  top.knownDecoratedTrees);
 
   body.finalTys =
        map(\ p::(String, Maybe<[Type]>) ->
@@ -270,9 +255,6 @@ top::Metaterm ::= b::Binder bindings::[(String, Maybe<Type>)] body::Metaterm
              end
            end
       else left("Did not find name " ++ top.findNameType);
-
-  --Want ALL names which occur, even if only in bindings
-  top.usedNames = map(fst, bindings) ++ body.usedNames;
 
   top.replaced =
       if containsBy(\ p1::(String, Maybe<Type>) p2::(String, Maybe<Type>) ->
@@ -320,13 +302,6 @@ top::Metaterm ::= b::Binder bindings::[(String, Maybe<Type>)] body::Metaterm
       | _ -> []
       end;
 
-  top.gatheredTrees :=
-      foldr(\ p::(String, Maybe<Type>) rest::[String] ->
-              if isTreeStructureName(p.1)
-              then structureToTreeName(p.1)::rest
-              else rest,
-            body.gatheredTrees, bindings);
-
   top.conjunctionSplit =
       map(bindingMetaterm(b, bindings, _), body.conjunctionSplit);
 }
@@ -336,16 +311,17 @@ aspect production attrAccessMetaterm
 top::Metaterm ::= tree::String attr::String val::Term
 {
   top.translation =
-      case possibleTys of
-      | [ty] ->
+      case possibleTys, findAssociated(tree, top.knownDecoratedTrees) of
+      | [ty], just((nodeName, _)) ->
         termMetaterm(
            buildApplication(
               nameTerm(accessRelationName(ty, attr), nothing()),
-              [nameTerm(treeToNodeName(tree), nothing()),
+              [nameTerm(tree, nothing()),
+               nameTerm(nodeName, nothing()),
                buildApplication(nameTerm(attributeExistsName, nothing()),
                                 [val.translation])]),
            emptyRestriction())
-      | _ ->
+      | _, _ ->
         error("Should not access translation in the presence of errors (attrAccessMetaterm)")
       end;
   top.newPremises := [wpdNewPremise(tree)] ++ val.newPremises;
@@ -390,11 +366,7 @@ top::Metaterm ::= tree::String attr::String val::Term
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
-  top.usedNames = tree::val.usedNames;
-
   top.removedWPD = top;
-
-  top.gatheredTrees := [tree];
 }
 
 
@@ -402,15 +374,16 @@ aspect production attrAccessEmptyMetaterm
 top::Metaterm ::= tree::String attr::String
 {
   top.translation =
-      case possibleTys of
-      | [ty] ->
+      case possibleTys, findAssociated(tree, top.knownDecoratedTrees) of
+      | [ty], just((nodeName, _)) ->
         termMetaterm(
            buildApplication(
               nameTerm(accessRelationName(ty, attr), nothing()),
-              [nameTerm(treeToNodeName(tree), nothing()),
+              [nameTerm(tree, nothing()),
+               nameTerm(nodeName, nothing()),
                nameTerm(attributeNotExistsName, nothing())]),
            emptyRestriction())
-      | _ ->
+      | _, _ ->
         error("Should not access translation in the presence of errors (attrAccessEmptyMetaterm)")
       end;
   top.newPremises := [wpdNewPremise(tree)];
@@ -454,11 +427,7 @@ top::Metaterm ::= tree::String attr::String
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
-  top.usedNames = [tree];
-
   top.removedWPD = top;
-
-  top.gatheredTrees := [tree];
 }
 
 
@@ -472,8 +441,6 @@ top::Metaterm ::= tree::String attr::String val::Term
   val.boundVars = top.boundVars;
   top.boundVarsOut = val.boundVarsOut;
 
-  top.usedNames = tree::val.usedNames;
-
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 }
 
@@ -485,8 +452,6 @@ top::Metaterm ::= tree::String attr::String
   top.removedWPD = top;
 
   top.boundVarsOut = top.boundVars;
-
-  top.usedNames = [tree];
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 }
@@ -509,8 +474,6 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
-  top.usedNames = t1.usedNames ++ t2.usedNames ++ result.usedNames;
-
   top.removedWPD = top;
 }
 
@@ -531,8 +494,6 @@ top::Metaterm ::= t1::Term t2::Term result::Term
   top.boundVarsOut = result.boundVarsOut;
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
-
-  top.usedNames = t1.usedNames ++ t2.usedNames ++ result.usedNames;
 
   top.removedWPD = top;
 }
@@ -555,8 +516,6 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
-  top.usedNames = t1.usedNames ++ t2.usedNames ++ result.usedNames;
-
   top.removedWPD = top;
 }
 
@@ -577,8 +536,6 @@ top::Metaterm ::= t1::Term t2::Term result::Term
   top.boundVarsOut = result.boundVarsOut;
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
-
-  top.usedNames = t1.usedNames ++ t2.usedNames ++ result.usedNames;
 
   top.removedWPD = top;
 }
@@ -601,8 +558,6 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
-  top.usedNames = t1.usedNames ++ t2.usedNames ++ result.usedNames;
-
   top.removedWPD = top;
 }
 
@@ -621,8 +576,6 @@ top::Metaterm ::= t::Term result::Term
   top.boundVarsOut = result.boundVarsOut;
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
-
-  top.usedNames = t.usedNames ++ result.usedNames;
 
   top.removedWPD = top;
 }
@@ -645,8 +598,6 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
-  top.usedNames = t1.usedNames ++ t2.usedNames ++ result.usedNames;
-
   top.removedWPD = top;
 }
 
@@ -667,8 +618,6 @@ top::Metaterm ::= t1::Term t2::Term result::Term
   top.boundVarsOut = result.boundVarsOut;
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
-
-  top.usedNames = t1.usedNames ++ t2.usedNames ++ result.usedNames;
 
   top.removedWPD = top;
 }
@@ -691,8 +640,6 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
-  top.usedNames = t1.usedNames ++ t2.usedNames ++ result.usedNames;
-
   top.removedWPD = top;
 }
 
@@ -713,8 +660,6 @@ top::Metaterm ::= t1::Term t2::Term result::Term
   top.boundVarsOut = result.boundVarsOut;
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
-
-  top.usedNames = t1.usedNames ++ t2.usedNames ++ result.usedNames;
 
   top.removedWPD = top;
 }
@@ -737,8 +682,6 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
-  top.usedNames = t1.usedNames ++ t2.usedNames ++ result.usedNames;
-
   top.removedWPD = top;
 }
 
@@ -759,8 +702,6 @@ top::Metaterm ::= t1::Term t2::Term result::Term
   top.boundVarsOut = result.boundVarsOut;
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
-
-  top.usedNames = t1.usedNames ++ t2.usedNames ++ result.usedNames;
 
   top.removedWPD = top;
 }
@@ -783,8 +724,6 @@ top::Metaterm ::= t1::Term t2::Term result::Term
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
-  top.usedNames = t1.usedNames ++ t2.usedNames ++ result.usedNames;
-
   top.removedWPD = top;
 }
 
@@ -803,8 +742,6 @@ top::Metaterm ::= t::Term result::Term
   top.boundVarsOut = result.boundVarsOut;
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
-
-  top.usedNames = t.usedNames ++ result.usedNames;
 
   top.removedWPD = top;
 }
@@ -842,8 +779,6 @@ top::Metaterm ::= funName::String args::ParenthesizedArgs result::Term
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
-  top.usedNames = args.usedNames ++ result.usedNames;
-
   top.removedWPD = top;
 }
 
@@ -853,14 +788,13 @@ top::Metaterm ::= funName::String args::ParenthesizedArgs result::Term
 
 attribute
    translation<Term>, newPremises,
-   boundVars, boundVarsOut, attrOccurrences, knownTrees,
-   usedNames,
+   boundVars, boundVarsOut, attrOccurrences,
    replaceName, replaceTerm, replaced,
    errors,
    eqTest<Term>, isEq,
    findParentOf, foundParent,
-   gatheredTrees,
    isProdStructure,
+   knownDecoratedTrees, knownNames,
    currentState
 occurs on Term;
 
@@ -872,8 +806,6 @@ top::Term ::= f::Term args::TermList
   f.boundVars = top.boundVars;
   args.boundVars = f.boundVarsOut;
   top.boundVarsOut = args.boundVarsOut;
-
-  top.usedNames = f.usedNames ++ args.usedNames;
 
   top.isEq =
       case top.eqTest of
@@ -892,15 +824,6 @@ top::Term ::= f::Term args::TermList
            end
       else args.foundParent;
 
-  top.gatheredTrees :=
-      f.gatheredTrees ++ args.gatheredTrees ++
-      case f, args of
-      | nameTerm(access, _), consTermList(nameTerm(treeNode, _), _)
-        when isAccessRelation(access) ->
-        [nodeToTreeName(treeNode)]
-      | _, _ -> []
-      end;
-
   top.isProdStructure =
       case f of
       | nameTerm(prod, _) -> isProd(prod)
@@ -913,15 +836,11 @@ aspect production nameTerm
 top::Term ::= name::String ty::Maybe<Type>
 {
   top.translation =
-      if contains(name, top.knownTrees)
-      then nameTerm(treeToStructureName(name), ty)
-      else case ty of
-           | just(t) when tyIsNonterminal(t) ->
-             nameTerm(treeToStructureName(name), ty)
-           | just(nameType("string")) ->
-             nameTerm(name, just(stringType))
-           | _ -> nameTerm(name, ty)
-           end;
+      case ty of
+      | just(nameType("string")) ->
+        nameTerm(name, just(stringType))
+      | _ -> nameTerm(name, ty)
+      end;
 
   top.boundVarsOut = top.boundVars;
 
@@ -936,8 +855,6 @@ top::Term ::= name::String ty::Maybe<Type>
     something for typing.
   -}
 
-  top.usedNames = [name];
-
   top.replaced =
       if top.replaceName == name
       then top.replaceTerm
@@ -951,11 +868,6 @@ top::Term ::= name::String ty::Maybe<Type>
 
   top.foundParent = nothing();
 
-  top.gatheredTrees :=
-      if isTreeStructureName(name)
-      then [structureToTreeName(name)]
-      else [];
-
   top.isProdStructure = isProd(name);
 }
 
@@ -968,8 +880,6 @@ top::Term ::= t1::Term t2::Term
   t1.boundVars = top.boundVars;
   t2.boundVars = t1.boundVarsOut;
   top.boundVarsOut = t2.boundVarsOut;
-
-  top.usedNames = t1.usedNames ++ t2.usedNames;
 
   top.isEq =
       case top.eqTest of
@@ -992,8 +902,6 @@ top::Term ::=
 
   top.boundVarsOut = top.boundVars;
 
-  top.usedNames = [];
-
   top.isEq =
       case top.eqTest of
       | nilTerm() -> true
@@ -1013,8 +921,6 @@ top::Term ::= ty::Maybe<Type>
 
   top.boundVarsOut = top.boundVars;
 
-  top.usedNames = [];
-
   top.isEq = true;
 
   top.foundParent = nothing();
@@ -1029,8 +935,6 @@ top::Term ::= i::Integer
   top.translation = integerToIntegerTerm(i);
 
   top.boundVarsOut = top.boundVars;
-
-  top.usedNames = [];
 
   top.isEq =
       case top.eqTest of
@@ -1054,8 +958,6 @@ top::Term ::= contents::String
 
   top.boundVarsOut = top.boundVars;
 
-  top.usedNames = [];
-
   top.isEq =
       case top.eqTest of
       | stringTerm(contents2) -> contents == contents2
@@ -1074,8 +976,6 @@ top::Term ::=
   top.translation = nameTerm(trueName, nothing());
 
   top.boundVarsOut = top.boundVars;
-
-  top.usedNames = [];
 
   top.isEq =
       case top.eqTest of
@@ -1096,8 +996,6 @@ top::Term ::=
 
   top.boundVarsOut = top.boundVars;
 
-  top.usedNames = [];
-
   top.isEq =
       case top.eqTest of
       | falseTerm() -> true
@@ -1116,8 +1014,6 @@ top::Term ::= c::String
   top.translation = error("Should not have charTerm in toAbella");
 
   top.boundVarsOut = error("Should not have charTerm in toAbella");
-
-  top.usedNames = [];
 
   top.isEq =
       case top.eqTest of
@@ -1144,8 +1040,6 @@ top::Term ::= prodName::String args::ParenthesizedArgs
   args.boundVars = top.boundVars;
   top.boundVarsOut = args.boundVarsOut;
 
-  top.usedNames = args.usedNames;
-
   top.isEq =
       case top.eqTest of
       | prodTerm(prod, args2) when prod == prodName ->
@@ -1171,8 +1065,6 @@ top::Term ::= contents::PairContents
   contents.boundVars = top.boundVars;
   top.boundVarsOut = contents.boundVarsOut;
 
-  top.usedNames = contents.usedNames;
-
   top.isEq =
       case top.eqTest of
       | pairTerm(contents2) ->
@@ -1194,8 +1086,6 @@ top::Term ::= contents::ListContents
   contents.boundVars = top.boundVars;
   top.boundVarsOut = contents.boundVarsOut;
 
-  top.usedNames = contents.usedNames;
-
   top.isEq =
       case top.eqTest of
       | listTerm(contents2) ->
@@ -1214,12 +1104,11 @@ top::Term ::= contents::ListContents
 
 attribute
    translation<Term>, newPremises,
-   boundVars, boundVarsOut, attrOccurrences, knownTrees,
-   usedNames,
+   boundVars, boundVarsOut, attrOccurrences,
    replaceName, replaceTerm, replaced,
    errors,
    eqTest<ListContents>, isEq,
-   gatheredTrees
+   knownDecoratedTrees, knownNames
 occurs on ListContents;
 
 aspect production emptyListContents
@@ -1228,8 +1117,6 @@ top::ListContents ::=
   top.translation = nilTerm();
 
   top.boundVarsOut = top.boundVars;
-
-  top.usedNames = [];
 
   top.isEq =
       case top.eqTest of
@@ -1248,8 +1135,6 @@ top::ListContents ::= hd::Term tl::ListContents
   tl.boundVars = hd.boundVarsOut;
   top.boundVarsOut = tl.boundVarsOut;
 
-  top.usedNames = hd.usedNames ++ tl.usedNames;
-
   top.isEq =
       case top.eqTest of
       | addListContents(hd2, tl2) ->
@@ -1265,12 +1150,11 @@ top::ListContents ::= hd::Term tl::ListContents
 
 attribute
    translation<Term>, newPremises,
-   boundVars, boundVarsOut, attrOccurrences, knownTrees,
-   usedNames,
+   boundVars, boundVarsOut, attrOccurrences,
    replaceName, replaceTerm, replaced,
    errors,
    eqTest<PairContents>, isEq,
-   gatheredTrees
+   knownDecoratedTrees, knownNames
 occurs on PairContents;
 
 aspect production singlePairContents
@@ -1280,8 +1164,6 @@ top::PairContents ::= t::Term
 
   t.boundVars = top.boundVars;
   top.boundVarsOut = t.boundVarsOut;
-
-  top.usedNames = t.usedNames;
 
   top.isEq =
       case top.eqTest of
@@ -1303,8 +1185,6 @@ top::PairContents ::= t::Term rest::PairContents
   rest.boundVars = t.boundVarsOut;
   top.boundVarsOut = rest.boundVarsOut;
 
-  top.usedNames = t.usedNames ++ rest.usedNames;
-
   top.isEq =
       case top.eqTest of
       | addPairContents(t2, rest2) ->
@@ -1320,13 +1200,12 @@ top::PairContents ::= t::Term rest::PairContents
 
 attribute
    translation<Maybe<TermList>>, newPremises,
-   boundVars, boundVarsOut, attrOccurrences, knownTrees,
-   usedNames,
+   boundVars, boundVarsOut, attrOccurrences,
    replaceName, replaceTerm, replaced,
    errors,
    eqTest<ParenthesizedArgs>, isEq,
    findParentOf, foundParent, isArgHere,
-   gatheredTrees
+   knownDecoratedTrees, knownNames
 occurs on ParenthesizedArgs;
 
 aspect production emptyParenthesizedArgs
@@ -1335,8 +1214,6 @@ top::ParenthesizedArgs ::=
   top.translation = nothing();
 
   top.boundVarsOut = top.boundVars;
-
-  top.usedNames = [];
 
   top.isEq =
       case top.eqTest of
@@ -1361,8 +1238,6 @@ top::ParenthesizedArgs ::= hd::Term tl::ParenthesizedArgs
   hd.boundVars = top.boundVars;
   tl.boundVars = hd.boundVarsOut;
   top.boundVarsOut = tl.boundVarsOut;
-
-  top.usedNames = hd.usedNames ++ tl.usedNames;
 
   top.isEq =
       case top.eqTest of
@@ -1393,13 +1268,12 @@ top::ParenthesizedArgs ::= hd::Term tl::ParenthesizedArgs
 
 attribute
    translation<TermList>, newPremises,
-   boundVars, boundVarsOut, attrOccurrences, knownTrees,
-   usedNames,
+   boundVars, boundVarsOut, attrOccurrences,
    replaceName, replaceTerm, replaced,
    errors,
    eqTest<TermList>, isEq,
    findParentOf, foundParent, isArgHere,
-   gatheredTrees
+   knownDecoratedTrees
 occurs on TermList;
 
 aspect production singleTermList
@@ -1409,8 +1283,6 @@ top::TermList ::= t::Term
 
   t.boundVars = top.boundVars;
   top.boundVarsOut = t.boundVarsOut;
-
-  top.usedNames = t.usedNames;
 
   top.isEq =
       case top.eqTest of
@@ -1438,8 +1310,6 @@ top::TermList ::= t::Term rest::TermList
   t.boundVars = top.boundVars;
   rest.boundVars = t.boundVarsOut;
   top.boundVarsOut = rest.boundVarsOut;
-
-  top.usedNames = t.usedNames ++ rest.usedNames;
 
   top.isEq =
       case top.eqTest of
@@ -1472,8 +1342,6 @@ top::TermList ::=
   top.translation = emptyTermList();
 
   top.boundVarsOut = top.boundVars;
-
-  top.usedNames = [];
 
   top.isEq =
       case top.eqTest of

@@ -10,7 +10,8 @@ imports interface_:common;
 -}
 synthesized attribute translation<a>::a;
 flowtype translation {attrOccurrences, boundVars, finalTys,
-                      knownTrees, currentState} on Metaterm;
+                      knownTrees, knownDecoratedTrees, knownNames,
+                      currentState} on Metaterm;
 
 --new premises we are adding to the current theorem being defined
 monoid attribute newPremises::[NewPremise] with [], ++;
@@ -85,8 +86,12 @@ synthesized attribute boundVarsOut::[[(String, Maybe<[Type]>)]];
 --This is mostly so we know the correct types of trees in structure equality
 autocopy attribute finalTys::[[(String, Maybe<Type>)]];
 
---Names which are known to be trees of any type
-autocopy attribute knownTrees::[String];
+
+--(Name of tree, name of node, child list)
+autocopy attribute knownDecoratedTrees::[(String, String, Term)];
+
+--Names used somewhere
+autocopy attribute knownNames::[String];
 
 
 --Pairs of (attribute name, types it occurs on)
@@ -153,12 +158,6 @@ synthesized attribute name::String;
 
 
 
---Names which occur anywhere in a term or metaterm, including uses and bindings
---(May include unbound names or names which are bound but used nowhere)
-synthesized attribute usedNames::[String];
-
-
-
 --Find the immediate parent of a tree with a given name in a Term
 --Gives both the production name and the index which child it is
 --e.g. prod_foo (prod_bar A B) C   gives   ("prod_bar, 2)   when looking for B
@@ -209,15 +208,6 @@ synthesized attribute numCleanUpCommands::Integer;
 --Let state decide how to handle making the next state
 inherited attribute nextStateIn::ProofState;
 synthesized attribute nextStateOut::ProofState;
-
-
---Names of trees used in a proof state
-monoid attribute gatheredTrees::[String] with [], ++;
-propagate gatheredTrees on
-   Metaterm, Term, TermList, ListContents, PairContents, ParenthesizedArgs,
-   ProofState, Context, Hypothesis
-   excluding bindingMetaterm, attrAccessMetaterm, attrAccessEmptyMetaterm,
-             nameTerm, applicationTerm;
 
 
 --Whether a term is built by a production at the root

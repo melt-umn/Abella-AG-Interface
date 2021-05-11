@@ -297,9 +297,9 @@ Either<String [ProofCommand]> ::=
         | nothing() ->
           case trms of
           | (nameTerm(str, _), _)
-            when isTreeStructureName(str) || isProd(str) -> true
+            when isProd(str) -> true
           | (_, nameTerm(str, _))
-            when isTreeStructureName(str) || isProd(str) -> true
+            when isProd(str) -> true
           | (applicationTerm(nameTerm(str, _), _), _)
             when isProd(str) -> true
           | (_, applicationTerm(nameTerm(str, _), _))
@@ -335,11 +335,11 @@ Either<String [ProofCommand]> ::=
           | just(ty) -> just(ty.resultType)
           end
         | (nameTerm(tr1, _), nameTerm(tr2, _)) -> --go search for WPD assumptions
-          case find_WPD_nt_hyp(structureToTreeName(tr1), hyps) of
+          case find_WPD_nt_hyp(tr1, hyps) of
           | just((_, termMetaterm(applicationTerm(nameTerm(str, _), _), _))) -> 
             just(wpdNt_type(str))
           | _ -> 
-            case find_WPD_nt_hyp(structureToTreeName(tr1), hyps) of
+            case find_WPD_nt_hyp(tr1, hyps) of
             | just((_, termMetaterm(applicationTerm(nameTerm(str, _), _), _))) -> 
               just(wpdNt_type(str))
             | _ -> nothing()

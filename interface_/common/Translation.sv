@@ -6,48 +6,59 @@ grammar interface_:common;
   and checking if names have these forms.
 -}
 
---Decorated Trees
-function treeToStructureName
-String ::= treeName::String
-{
-  return "$Tm_" ++ treeName;
-}
-function isTreeStructureName
-Boolean ::= str::String
-{
-  return startsWith("$Tm_", str);
-}
-function structureToTreeName
-String ::= treeStructure::String
-{
-  return substring(4, length(treeStructure), treeStructure);
-}
 
+{-
+  When we're translating things, we're going to end up needing the
+  names of some constants that will be defined in Abella.  We will
+  have those as globals here.
+-}
+
+global attributeExistsName::String = "$attr_ex";
+global attributeNotExistsName::String = "$attr_no";
+
+global nodeTreeName::String = "$node_tree";
+global nodeTreeType::Type = nameType(nodeTreeName);
+
+global natSuccName::String = "$succ";
+global natZeroName::String = "$zero";
+
+global integerAdditionName::String = "$plus_integer";
+global integerSubtractionName::String = "$minus_integer";
+global integerMultiplicationName::String = "$multiply_integer";
+global integerDivisionName::String = "$divide_integer";
+global integerModulusName::String = "$modulus_integer";
+global integerNegateName::String = "$negate_integer";
+global integerLessName::String = "$less_integer";
+global integerLessEqName::String = "$lesseq_integer";
+global integerGreaterName::String = "$greater_integer";
+global integerGreaterEqName::String = "$greatereq_integer";
+
+global stringType::Type =
+       functorType(nameType("list"), nameType("$char"));
+
+global appendName::String = "$append";
+
+global pairConstructorName::String = "$pair_c";
+
+global orName::String = "$or_bool";
+global andName::String = "$and_bool";
+global notName::String = "$not_bool";
+global trueName::String = "$btrue";
+global falseName::String = "$bfalse";
+
+
+
+--Decorated Trees
 function treeToNodeName
 String ::= treeName::String
 {
   return "$Node_" ++ treeName;
-}
-function isTreeNodeName
-Boolean ::= str::String
-{
-  return startsWith("$Node_", str);
-}
-function nodeToTreeName
-String ::= treeName::String
-{
-  return substring(6, length(treeName), treeName);
 }
 
 function treeToChildListName
 String ::= treeName::String
 {
   return "$ChildList_" ++ treeName;
-}
-function isChildListName
-Boolean ::= str::String
-{
-  return startsWith("$ChildList_", str);
 }
 
 function treeToNodeTreeName

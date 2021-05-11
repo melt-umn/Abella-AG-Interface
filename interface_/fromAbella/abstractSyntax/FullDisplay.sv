@@ -26,6 +26,8 @@ top::FullDisplay ::= msg::ExtraInformation state::ProofState
       end;
 
   top.replacedState = fullDisplay(msg, top.replaceState);
+
+  msg.knownTrees = state.gatheredTrees;
 }
 
 
@@ -67,6 +69,7 @@ top::TheoremList ::= name::String body::Metaterm rest::TheoremList
 {
   top.pp = "Theorem " ++ name ++ " : " ++ body.pp ++ ".\n\n" ++ rest.pp;
 
+  body.knownTrees = [];
   top.translation =
       theoremListAdd(name, body.translation, rest.translation);
 }
@@ -77,6 +80,7 @@ top::TheoremList ::= name::String body::Metaterm rest::TheoremList
 
 nonterminal ExtraInformation with
   pp,
+  knownTrees,
   translation<ExtraInformation>,
   isError, isWarning;
 

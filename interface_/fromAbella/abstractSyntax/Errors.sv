@@ -6,6 +6,7 @@ grammar interface_:fromAbella:abstractSyntax;
 
 nonterminal WarningMessage with
    pp,
+   knownTrees,
    translation<WarningMessage>;
 
 abstract production stratificationWarning
@@ -41,6 +42,7 @@ top::WarningMessage ::= name::String
 
 nonterminal ProcessingErrorMessage with
    pp,
+   knownTrees,
    translation<ProcessingErrorMessage>;
 
 abstract production undeterminedVarType
@@ -298,15 +300,7 @@ top::ProcessingErrorMessage ::= argnum::Integer const1::String const2::String
            const1 ++ " and " ++ const2 ++ ")";
 
   top.translation =
-      if isTreeStructureName(const1)
-      then matchingUnificationFailure(
-              argnum, structureToTreeName(const1),
-              structureToTreeName(const2))
-      else if isTreeNodeName(const1)
-      then matchingUnificationFailure(
-              argnum, nodeToTreeName(const1),
-              nodeToTreeName(const2))
-      else if isAccessRelation(const1)
+      if isAccessRelation(const1)
       then if isAccessRelation(const1)
            then if accessRelationToAttr(const1) == accessRelationToAttr(const2)
                 then matchingUnificationFailure(

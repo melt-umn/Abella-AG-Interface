@@ -149,6 +149,30 @@ top::Metaterm ::= tree::String attr::String val::Term
   top.pp = tree ++ "." ++ attr ++ " = " ++ val.pp;
   top.isAtomic = true;
   top.shouldHide = false;
+
+  top.usedNames := [tree];
+  top.gatheredTrees <- [tree];
+  top.gatheredDecoratedTrees <-
+      case val of
+      | pairTerm(
+           addPairContents(nameTerm(treeName, _),
+           singlePairContents(
+              applicationTerm(nameTerm(ntr, _),
+                 consTermList(nameTerm(nodeName, _),
+                 singleTermList(childList))))))
+        when isNodeTreeConstructorName(ntr) ->
+        [(treeName, nodeName, new(childList))]
+      | applicationTerm(nameTerm(pairMaker, _),
+           consTermList(nameTerm(treeName, _),
+           singleTermList(
+              applicationTerm(nameTerm(ntr, _),
+                 consTermList(nameTerm(nodeName, _),
+                 singleTermList(childList))))))
+        when pairMaker == pairConstructorName &&
+             isNodeTreeConstructorName(ntr) ->
+        [(treeName, nodeName, new(childList))]
+      | _ -> []
+      end;
 }
 
 abstract production attrAccessEmptyMetaterm
@@ -157,6 +181,9 @@ top::Metaterm ::= tree::String attr::String
   top.pp = tree ++ "." ++ attr ++ " = <no value>";
   top.isAtomic = true;
   top.shouldHide = false;
+
+  top.usedNames := [tree];
+  top.gatheredTrees <- [tree];
 }
 
 
@@ -166,6 +193,30 @@ top::Metaterm ::= tree::String attr::String val::Term
   top.pp = "local " ++ tree ++ "." ++ attr ++ " = " ++ val.pp;
   top.isAtomic = true;
   top.shouldHide = false;
+
+  top.usedNames := [tree];
+  top.gatheredTrees <- [tree];
+  top.gatheredDecoratedTrees <-
+      case val of
+      | pairTerm(
+           addPairContents(nameTerm(treeName, _),
+           singlePairContents(
+              applicationTerm(nameTerm(ntr, _),
+                 consTermList(nameTerm(nodeName, _),
+                 singleTermList(childList))))))
+        when isNodeTreeConstructorName(ntr) ->
+        [(treeName, nodeName, new(childList))]
+      | applicationTerm(nameTerm(pairMaker, _),
+           consTermList(nameTerm(treeName, _),
+           singleTermList(
+              applicationTerm(nameTerm(ntr, _),
+                 consTermList(nameTerm(nodeName, _),
+                 singleTermList(childList))))))
+        when pairMaker == pairConstructorName &&
+             isNodeTreeConstructorName(ntr) ->
+        [(treeName, nodeName, new(childList))]
+      | _ -> []
+      end;
 }
 
 abstract production localAttrAccessEmptyMetaterm
@@ -174,6 +225,9 @@ top::Metaterm ::= tree::String attr::String
   top.pp = "local " ++ tree ++ "." ++ attr ++ " = <no value>";
   top.isAtomic = true;
   top.shouldHide = false;
+
+  top.usedNames := [tree];
+  top.gatheredTrees <- [tree];
 }
 
 
@@ -246,7 +300,7 @@ top::Term ::= prodName::String args::ParenthesizedArgs
 
 
 
-nonterminal ParenthesizedArgs with pp, argList;
+nonterminal ParenthesizedArgs with pp, argList, knownTrees, usedNames;
 
 abstract production emptyParenthesizedArgs
 top::ParenthesizedArgs ::=
@@ -265,7 +319,7 @@ top::ParenthesizedArgs ::= t::Term rest::ParenthesizedArgs
 
 
 
-nonterminal ListContents with pp, argList;
+nonterminal ListContents with pp, argList, knownTrees, usedNames;
 
 abstract production emptyListContents
 top::ListContents ::=
@@ -284,7 +338,7 @@ top::ListContents ::= t::Term rest::ListContents
 
 
 
-nonterminal PairContents with pp, argList;
+nonterminal PairContents with pp, argList, knownTrees, usedNames;
 
 abstract production singlePairContents
 top::PairContents ::= t::Term

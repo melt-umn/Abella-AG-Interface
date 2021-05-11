@@ -379,14 +379,14 @@ top::ProofCommand ::= h::HHint tree::String attr::String
                        consTermList(
                           nameTerm(tr, _),
                           singleTermList(structure))), _))
-            when tr == treeToStructureName(tree) ->
+            when tr == tree ->
             just((hyp, new(structure)))
           | just(termMetaterm(
                     applicationTerm(_,
                        consTermList(
                           structure,
                           singleTermList(nameTerm(tr, _)))), _))
-            when tr == treeToStructureName(tree) ->
+            when tr == tree ->
             just((hyp, new(structure)))
           | _ -> nothing()
           end
@@ -417,7 +417,7 @@ top::ProofCommand ::= h::HHint tree::String attr::String
                     termMetaterm(
                        buildApplication(
                           nameTerm(typeToStructureEqName(treeTy), nothing()),
-                          [nameTerm(treeToStructureName(tree), nothing()),
+                          [nameTerm(tree, nothing()),
                            structure.fromJust.2]),
                        emptyRestriction()))
       ] ++
@@ -540,14 +540,14 @@ top::ProofCommand ::= h::HHint tree::String attr::String
                        consTermList(
                           nameTerm(tr, _),
                           singleTermList(structure))), _))
-            when tr == treeToStructureName(associatedTree) ->
+            when tr == associatedTree ->
             just((hyp, new(structure)))
           | just(termMetaterm(
                     applicationTerm(_,
                        consTermList(
                           structure,
                           singleTermList(nameTerm(tr, _)))), _))
-            when tr == treeToStructureName(associatedTree) ->
+            when tr == associatedTree ->
             just((hyp, new(structure)))
           | _ -> nothing()
           end
@@ -618,7 +618,7 @@ top::ProofCommand ::= h::HHint tree::String attr::String
                     termMetaterm(
                        buildApplication(
                           nameTerm(typeToStructureEqName(treeTy), nothing()),
-                          [nameTerm(treeToStructureName(associatedTree), nothing()),
+                          [nameTerm(associatedTree, nothing()),
                            structure.fromJust.2]),
                        emptyRestriction()))
       ] ++
@@ -756,7 +756,7 @@ top::ProofCommand ::=
                         nameTerm(tr, _),
                         singleTermList(struct))),
                   _))
-          when tr == treeToStructureName(otherTree) ->
+          when tr == otherTree ->
           struct
         | just(termMetaterm(
                   applicationTerm(
@@ -765,7 +765,7 @@ top::ProofCommand ::=
                         struct,
                         singleTermList(nameTerm(tr, _)))),
                   _))
-          when tr == treeToStructureName(otherTree) ->
+          when tr == otherTree ->
           struct
         | just(other) -> error("This must be eqMetaterm because of how it was found (just(" ++ other.pp ++ "))")
         | nothing() -> error("This must be eqMetaterm because of how it was found (nothing)")
@@ -795,9 +795,7 @@ top::ProofCommand ::=
             if tyIsNonterminal(ty)
             then let newName::String = makeUniqueNameFromTy(ty, usedNames)
                  in
-                   (nameTerm(
-                       treeToStructureName(newName),
-                       nothing()),
+                   (nameTerm(newName, nothing()),
                     newName, c, ty)::buildNewChildren(ctl, tytl, newName::usedNames)
                   end
             else (c, "_", c, ty)::buildNewChildren(ctl, tytl, usedNames)
@@ -828,14 +826,14 @@ top::ProofCommand ::=
                  buildApplication(
                     nameTerm(typeToStructureEqName(prodTy.fromJust.resultType),
                              nothing()),
-                    [nameTerm(treeToStructureName(tree), nothing()),
+                    [nameTerm(tree, nothing()),
                      buildApplication(nameTerm(prod, nothing()),
                         map(fst, newChildren))]),
                  emptyRestriction()), newChildren);
   local newBindings::[(String, Maybe<Type>)] =
         foldr(\ p::(Term, String, Term, Type) rest::[(String, Maybe<Type>)] ->
                 if tyIsNonterminal(p.4)
-                then (treeToStructureName(p.2), nothing())::rest
+                then (p.2, nothing())::rest
                 else rest,
               [], newChildren);
   local eqCommands::[ProofCommand] =
@@ -861,13 +859,13 @@ top::ProofCommand ::=
             if tr1 == tree
             then [
                   assertTactic(
-                     nameHint(correctDirectionName), nothing(), --just(length(newChildren) + 3),
+                     nameHint(correctDirectionName), just(length(newChildren) + 3),
                      termMetaterm(
                         buildApplication(
                            nameTerm(typeToStructureEqName(
                                        prodTy.fromJust.resultType), nothing()),
-                           [nameTerm(treeToStructureName(tr1), nothing()),
-                            nameTerm(treeToStructureName(tr2), nothing())]),
+                           [nameTerm(tr1, nothing()),
+                            nameTerm(tr2, nothing())]),
                         emptyRestriction()))
                  ]
             else [
@@ -1006,7 +1004,10 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> m::Metaterm
 
   m.boundVars = [];
   m.finalTys = [];
-  m.knownTrees = m.gatheredTrees;
+  m.knownNames = top.currentState.state.usedNames;
+  m.knownTrees = m.gatheredTrees ++ top.currentState.state.gatheredTrees;
+  m.knownDecoratedTrees =
+    m.gatheredDecoratedTrees ++ top.currentState.state.gatheredDecoratedTrees;
   top.translation = --error("Translation not done in assertTactic yet");
       [assertTactic(h, depth, m.translation)];
 

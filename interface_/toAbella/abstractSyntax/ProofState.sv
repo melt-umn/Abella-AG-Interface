@@ -3,8 +3,7 @@ grammar interface_:toAbella:abstractSyntax;
 
 attribute
    cleanUpCommands, numCleanUpCommands,
-   nextStateIn, nextStateOut,
-   gatheredTrees, usedNames
+   nextStateIn, nextStateOut
 occurs on ProofState;
 
 
@@ -21,10 +20,11 @@ top::ProofState ::=
             case p of
             | (hyp,
                termMetaterm(applicationTerm(nameTerm(access, _),
+                              consTermList(nameTerm(treeName, _),
                               consTermList(nameTerm(treeNode, _),
-                              singleTermList(val))), _))
+                              singleTermList(val)))), _))
               when isAccessRelation(access) ->
-              (hyp, nodeToTreeName(treeNode),
+              (hyp, treeName,
                accessRelationToAttr(access),
                accessRelationToType(access), new(val))::rest
             | (_, _) -> rest
@@ -70,10 +70,11 @@ top::ProofState ::=
             case p of
             | (hyp,
                termMetaterm(applicationTerm(nameTerm(access, _),
+                              consTermList(nameTerm(treeName, _),
                               consTermList(nameTerm(treeNode, _),
-                              singleTermList(val))), _))
+                              singleTermList(val)))), _))
               when isLocalAccessRelation(access) ->
-              (hyp, nodeToTreeName(treeNode),
+              (hyp, treeName,
                localAccessToProd(access),
                localAccessToAttr(access),
                localAccessToType(access).pp, new(val))::rest
@@ -169,8 +170,7 @@ top::ProofState ::=
       else 1;
 
   top.nextStateOut = top.nextStateIn;
-
-  top.usedNames = currGoal.usedNames;
+  currGoal.knownDecoratedTrees = top.gatheredDecoratedTrees;
 }
 
 
@@ -181,8 +181,6 @@ top::ProofState ::=
   top.numCleanUpCommands = 0;
 
   top.nextStateOut = top.nextStateIn;
-
-  top.usedNames = [];
 }
 
 
@@ -228,34 +226,24 @@ top::ProofState ::=
       then top.nextStateIn
       else extensible_proofInProgress(
               top.nextStateIn, originalTheorem, name, numProds);
-
-  top.usedNames = currentProofState.usedNames;
 }
 
 
 
 attribute
-   gatheredTrees, usedNames
+   knownDecoratedTrees
 occurs on CurrentGoal;
 
 aspect production currentGoal
 top::CurrentGoal ::= vars::[String] ctx::Context goal::Metaterm
 {
-  top.gatheredTrees :=
-      ctx.gatheredTrees ++ goal.gatheredTrees ++
-      foldr(\ s::String rest::[String] ->
-              if isTreeStructureName(s)
-              then structureToTreeName(s)::rest
-              else rest,
-            [], vars);
 
-  top.usedNames = vars;
 }
 
 
 
 attribute
-   gatheredTrees
+   knownDecoratedTrees
 occurs on Context;
 
 aspect production emptyContext
@@ -281,7 +269,7 @@ top::Context ::= c1::Context c2::Context
 
 
 attribute
-   gatheredTrees
+   knownDecoratedTrees
 occurs on Hypothesis;
 
 aspect production metatermHyp

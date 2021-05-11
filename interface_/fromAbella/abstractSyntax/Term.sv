@@ -68,10 +68,16 @@ top::Metaterm ::= t1::Metaterm t2::Metaterm
 aspect production bindingMetaterm
 top::Metaterm ::= b::Binder nameBindings::[(String, Maybe<Type>)] body::Metaterm
 {
-  --We need to remove $ names and replace $<tree>_Tm with <tree>
+  local isHidden::(Boolean ::= String) =
+        \ s::String ->
+          contains(s, flatMap(\ p::(String, String, Term) -> p.2::p.3.usedNames,
+                              body.gatheredDecoratedTrees));
   local cleanedNames::[(String, Maybe<Type>)] =
-        filter(\ p::(String, Maybe<Type>) -> p.fst != "",
-               map(\ p::(String, Maybe<Type>) -> (cleanVariable(p.fst), p.snd), nameBindings));
+        foldr(\ p::(String, Maybe<Type>) rest::[(String, Maybe<Type>)] ->
+                if isHidden(p.1)
+                then rest
+                else p::rest,
+              [], nameBindings);
   top.translation = bindingMetaterm(b, cleanedNames, body.translation);
 }
 
@@ -136,41 +142,42 @@ top::Term ::= f::Term args::TermList
        right(notBoolMetaterm(arg1, arg2))
      --Attribute Access
      | nameTerm(str, _),
+       consTermList(nameTerm(treeName, _),
        consTermList(nameTerm(treeNodeName, _),
                     singleTermList(applicationTerm(nameTerm("$attr_ex", _),
-                                                   singleTermList(val))))
+                                                   singleTermList(val)))))
        when isAccessRelation(str) ->
-       right(attrAccessMetaterm(nodeToTreeName(treeNodeName),
-                                accessRelationToAttr(str), val))
+       right(attrAccessMetaterm(treeName, accessRelationToAttr(str), val))
      | nameTerm(str, _),
+       consTermList(nameTerm(treeName, _),
        consTermList(nameTerm(treeNodeName, _),
-                    singleTermList(nameTerm("$attr_no", _)))
+                    singleTermList(nameTerm("$attr_no", _))))
        when isAccessRelation(str) ->
-       right(attrAccessEmptyMetaterm(nodeToTreeName(treeNodeName),
-                                     accessRelationToAttr(str)))
+       right(attrAccessEmptyMetaterm(treeName, accessRelationToAttr(str)))
      --Local Attribute Access
      | nameTerm(str, _),
+       consTermList(nameTerm(treeName, _),
        consTermList(nameTerm(treeNodeName, _),
                     singleTermList(applicationTerm(nameTerm("$attr_ex", _),
-                                                   singleTermList(val))))
+                                                   singleTermList(val)))))
        when isLocalAccessRelation(str) ->
        case val of
        | pairTerm(
             addPairContents(nameTerm(tree, _),
             singlePairContents(applicationTerm(nameTerm(ntr, _), _))))
          when isNodeTreeConstructorName(ntr) ->
-         right(localAttrAccessMetaterm(nodeToTreeName(treeNodeName),
+         right(localAttrAccessMetaterm(treeName,
                   localAccessToAttr(str), nameTerm(tree, nothing())))
        | _ ->
-         right(localAttrAccessMetaterm(nodeToTreeName(treeNodeName),
+         right(localAttrAccessMetaterm(treeName,
                   localAccessToAttr(str), val))
        end
      | nameTerm(str, _),
+       consTermList(nameTerm(treeName, _),
        consTermList(nameTerm(treeNodeName, _),
-                    singleTermList(nameTerm("$attr_no", _)))
+                    singleTermList(nameTerm("$attr_no", _))))
        when isLocalAccessRelation(str) ->
-       right(localAttrAccessEmptyMetaterm(nodeToTreeName(treeNodeName),
-                                     localAccessToAttr(str)))
+       right(localAttrAccessEmptyMetaterm(treeName, localAccessToAttr(str)))
      --Structural Equality
      | nameTerm(str, _), consTermList(t1, singleTermList(t2))
        when isStructureEqName(str) ->
@@ -213,9 +220,6 @@ top::Term ::= name::String ty::Maybe<Type>
           | "$bfalse" -> falseTerm()
           --Integers
           | "$zero" -> intTerm(0)
-          --Tree structure variable
-          | x when isTreeStructureName(x) ->
-            nameTerm(structureToTreeName(x), ty)
           --Productions
           | str when isProd(str) ->
             prodTerm(prodToName(str), emptyParenthesizedArgs())
