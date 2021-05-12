@@ -430,12 +430,3 @@ be split into two clauses which would be identical other than one
 replacing `ValValue` with `attr_ex Val` and one replacing it with
 `attr_no`.
 
-**Update**:  It turns out that this simplification does not work well
-with the theorem prover interface.  There it is better to know for
-certain whether an attribute has a value or no value.  Therefore we do
-not plan to implement this simplification, even though it increases
-the number of rules written.  Nearly always, if not always, we will
-only be concerned with the rule cases in the case the attribute has a
-value, making the no-value case trivial, or the case where it does not
-have a value, making the value case trivial.
-

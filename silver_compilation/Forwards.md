@@ -51,7 +51,7 @@ Type forward__Stmt   nt_Stmt -> node_tree -> prop.
 Each component which introduces a forwarding production needs to
 provide a component relation for the forward equation.  As with local
 attributes, we set any known inherited attributes for the forward in
-the equation defining the equation.  For our running example, we would
+the equation defining the forward.  For our running example, we would
 get the following:
 ```
 Define forward__Stmt__convenience : nt_Stmt -> node_tree -> prop by
