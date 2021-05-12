@@ -116,7 +116,7 @@ convenience, these are sorted by types.
 - `less_to_lesseq_integer` :  
   `forall N1 N2, N1 < N2 = true -> N1 <= N2 = true`
 
-### Greater Than or Equal To
+### Greater Than
 - `greater_integer_unique` :  
   `forall N1 N2 B B', N1 > N2 = B -> N1 > N2 = B' -> B = B'`
 - `greater_integer_total` :  
