@@ -74,15 +74,14 @@ induction on 1. intros. case H1.
 
 Set subgoals off.
 
-%/*
-%  Why do we have so many mutual theorems here?  Because we defined the
-%  value equation for letBind as having a value regardless of the
-%  existence of values for the environment or the value for expression
-%  E1 (in <let x = E1 in E2>), we need to consider the cases where they
-%  might not exist, which leads to a lot of theorems we wouldn't
-%  normally need to consider.
-%*/
-%I seem to have problems parsing multi-line comments.
+/*
+  Why do we have so many mutual theorems here?  Because we defined the
+  value equation for letBind as having a value regardless of the
+  existence of values for the environment or the value for expression
+  E1 (in <let x = E1 in E2>), we need to consider the cases where they
+  might not exist, which leads to a lot of theorems we wouldn't
+  normally need to consider.
+*/
 Extensible_Theorem value_unique_lemmas__Expr :
   (forall T1 T2,
      T1 = T2 ->
