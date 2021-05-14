@@ -1,0 +1,6 @@
+#/bin/bash
+
+GRAMMAR=abella_compilation
+
+silver $@ -I .. $GRAMMAR
+
