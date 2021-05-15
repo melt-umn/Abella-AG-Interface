@@ -408,6 +408,95 @@ String ::= prod::String prodTy::Type nt::Type component::String
 }
 
 
+function generateAccessUniquenessAxioms
+String ::= attrOccurrences::[(String, [String])]
+           localAttrs::[(String, [(String, Type)])]
+           prods::[(String, Type)]
+{
+  local attrs::[String] =
+        flatMap(\ p::(String, [String]) ->
+                  map(\ nt::String ->
+                        accessRelationName(nameToNonterminalType(nt), p.1),
+                      p.2), attrOccurrences);
+  local locals::[String] =
+        flatMap(\ p::(String, [(String, Type)]) ->
+                  map(\ pt::(String, Type) ->
+                        localAccessRelationName(
+                           findAssociated(pt.1, prods).fromJust.resultType,
+                           p.1, pt.1),
+                      p.2), localAttrs);
+  return
+     foldr(\ acc::String rest::String ->
+             "Theorem " ++ acc ++ "__unique : forall Tree Node V V',\n" ++
+             "   " ++ acc ++ " Tree Node V ->\n" ++
+             "   " ++ acc ++ " Tree Node V' -> V = V'.\n" ++
+             "skip.\n" ++
+             rest,
+           "", attrs ++ locals);
+}
+
+
+function generateAccessIAxioms
+String ::= attrOccurrences::[(String, [String])]
+           attrs::[(String, Type)]
+           localAttrs::[(String, [(String, Type)])]
+           prods::[(String, Type)]
+{
+  --[(access relation, attr type, nonterminal)]
+  local attrInfos::[(String, Type, Type)] =
+        flatMap(\ p::(String, [String]) ->
+                  map(\ nt::String ->
+                        (accessRelationName(
+                            nameToNonterminalType(nt), p.1),
+                         findAssociated(p.1, attrs).fromJust,
+                         nameToNonterminalType(nt)),
+                      p.2), attrOccurrences);
+  local locals::[(String, Type, Type)] =
+        flatMap(\ p::(String, [(String, Type)]) ->
+                  map(\ pt::(String, Type) ->
+                        (localAccessRelationName(
+                            findAssociated(pt.1, prods).fromJust.resultType,
+                            p.1, pt.1), pt.2,
+                         findAssociated(pt.1, prods).fromJust.resultType),
+                      p.2), localAttrs);
+  return
+     foldr(\ p::(String, Type, Type) rest::String ->
+             let isTree::Boolean =
+                 case p.2 of
+                 | functorType(
+                      functorType(nameType("$pair"), nt),
+                      node) when tyIsNonterminal(nt) -> true
+                 | _ -> false
+                 end in
+             let treeTy::Type =
+                 case p.2 of
+                 | functorType(
+                      functorType(nameType("$pair"), nt),
+                      node) when tyIsNonterminal(nt) -> nt
+                 | _ -> error("Should not access this")
+                 end
+             in
+               "Theorem " ++ p.1 ++ "__is : forall Tree Node CL "  ++
+                  ( if isTree
+                    then "VTr VNode"
+                    else "V" ) ++ ",\n" ++
+               "   " ++ wpdTypeName(p.3) ++ " Tree (" ++
+                        nodeTreeConstructorName(p.3) ++ " Node CL) ->\n" ++
+               "   " ++ p.1 ++ " Tree Node ($attr_ex " ++
+                  ( if isTree
+                    then "($pair_c VTr VNode)"
+                    else "V" ) ++ ") ->\n" ++
+               "   " ++
+                  ( if isTree
+                    then wpdTypeName(treeTy) ++ " VTr VNode"
+                    else p.2.isRelation ++ " V" ) ++ ".\n" ++
+               "skip.\n" ++
+               rest
+             end end,
+           "", attrInfos ++ locals);
+}
+
+
 function generateContents
 String ::= nonterminals::[String] attrs::[(String, Type)]
            --(attribute name, [nonterminal name])
@@ -437,7 +526,14 @@ String ::= nonterminals::[String] attrs::[(String, Type)]
      "     SubRel A B.\n\n" ++
      generateWpdNodeRelationsComponent(attrOccurrences, localAttrs,
         attrs, prods, componentName) ++ "\n" ++
-     generateWpdNtRelationsComponent(prods, componentName) ++ "\n\n";
+     generateWpdNtRelationsComponent(prods, componentName) ++ "\n\n" ++
+     --
+     --Switch over to generating axioms
+     --
+     generateAccessUniquenessAxioms(attrOccurrences,
+                                    localAttrs, prods) ++ "\n\n" ++
+     generateAccessIAxioms(attrOccurrences, attrs,
+                           localAttrs, prods) ++ "\n\n";
 }
 
 
