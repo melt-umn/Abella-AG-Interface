@@ -48,6 +48,11 @@ Type ::= name::String
 {
   return nameType(nameToNonterminal(name));
 }
+function nonterminalToName
+String ::= nt::String
+{
+  return substring(3, length(nt), nt);
+}
 
 function nameToNodeType
 String ::= name::String
@@ -154,6 +159,16 @@ String ::= treeTy::Type
 
 
 --Attribute Equations
+function equationName
+String ::= attr::String ty::Type
+{
+  return "$" ++ attr ++ "__" ++ ty.pp;
+}
+function localEquationName
+String ::= attr::String prod::String
+{
+  return "$" ++ prod ++ "_local_" ++ attr;
+}
 function wpdNode_to_AttrEq
 String ::= attr::String ty::Type
 {

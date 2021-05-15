@@ -15,3 +15,6 @@ synthesized attribute headTypeName::Maybe<String>;
 --The types before the final arrow
 synthesized attribute argumentTypes::[Type];
 
+--The is relation for a given type
+synthesized attribute isRelation::String;
+

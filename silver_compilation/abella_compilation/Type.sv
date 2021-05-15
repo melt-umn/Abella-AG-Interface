@@ -1,7 +1,10 @@
 grammar abella_compilation;
 
 
-nonterminal Type with pp, isAtomic, resultType, headTypeName, argumentTypes;
+nonterminal Type with
+   pp, isAtomic,
+   resultType, headTypeName, argumentTypes,
+   isRelation;
 
 abstract production arrowType
 top::Type ::= ty1::Type ty2::Type
@@ -12,6 +15,8 @@ top::Type ::= ty1::Type ty2::Type
   top.resultType = ty2.resultType;
   top.headTypeName = ty2.headTypeName;
   top.argumentTypes = ty1::ty2.argumentTypes;
+
+  top.isRelation = error("Cannot generate is relation for arrow type");
 }
 
 abstract production nameType
@@ -23,6 +28,15 @@ top::Type ::= name::String
   top.resultType = top;
   top.headTypeName = just(name);
   top.argumentTypes = [];
+
+  top.isRelation =
+      case name of
+      | "list" -> "is_list"
+      | "$pair" -> "is_pair"
+      | "integer" -> "is_integer"
+      | "bool" -> "is_bool"
+      | _ -> error("Cannot generate is relation for type " ++ name)
+      end;
 }
 
 abstract production functorType
@@ -34,6 +48,15 @@ top::Type ::= functorTy::Type argTy::Type
   top.resultType = top;
   top.headTypeName = functorTy.headTypeName;
   top.argumentTypes = [];
+
+  top.isRelation =
+      case functorTy, argTy of
+      | nameType("list"), nameType("$char") -> "is_string"
+      | functorType(nameType("$pair"), nt), node
+        when tyIsNonterminal(nt) ->
+        "$split " ++ wpdTypeName(nt)
+      | _, _ -> functorTy.isRelation ++ " (" ++ argTy.isRelation ++ ")"
+      end;
 }
 
 
