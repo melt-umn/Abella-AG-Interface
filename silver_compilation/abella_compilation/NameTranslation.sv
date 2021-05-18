@@ -53,6 +53,15 @@ String ::= nt::String
 {
   return substring(3, length(nt), nt);
 }
+function nonterminalTypeToName
+String ::= ty::Type
+{
+  return
+     case ty of
+     | nameType(nt) -> nonterminalToName(nt)
+     | _ -> error("Must call this on a nonterminal type")
+     end;
+}
 
 function nameToNodeType
 String ::= name::String

@@ -44,9 +44,9 @@ split.
   case_structure T2 in Eq with Structure. case T1.intVal.
   case T2.intVal.
     %lookup doesn't return
-     assert exists Ret, lookup(L, Env2) = Ret. apply H11 to H12.
+     assert exists Ret, lookup(L, Env2) = Ret. apply H12 to H13.
     %lookup returns
-     apply lookup__unique to H8 H11. search.
+     apply lookup__unique to H9 H12. search.
 
 
 Extensible_Theorem value_unique_B : forall (T1 T2 : nt_B) Env V,
@@ -167,7 +167,7 @@ split.
  %assign
   intros Structure L_Is Eq T1Env T2Env T1EnvOut. case T1.env_out.
   case_structure T2 in Eq with Structure. apply symmetry to H9.
-  case A.env. case A1.env. apply value_unique_A to H12 H14 H16 H6.
+  case A.env. case A1.env. apply value_unique_A to H13 H15 H17 H6.
   case T2.env_out. search.
  %ifThenElse
   intros IH1 IH2 Structure Eq T1Env T2Env T1EnvOut.

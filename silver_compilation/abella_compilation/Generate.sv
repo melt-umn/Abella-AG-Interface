@@ -497,6 +497,260 @@ String ::= attrOccurrences::[(String, [String])]
 }
 
 
+function generatePrimaryComponentTheorems
+String ::= attrOccurrences::[(String, [String])]
+           prods::[(String, Type)]
+           component::String
+{
+  --(nonterminal, [attribute name])
+  local attrsByNT::[(String, [String])] =
+        let expanded::[(String, String)] =
+            flatMap(\ p::(String, [String]) ->
+                      map(\ nt::String -> (p.1, nt), p.2),
+               attrOccurrences)
+        in
+        let sorted::[(String, String)] =
+            sortBy(\ p1::(String, String) p2::(String, String) ->
+                     p1.2 <= p2.2, expanded)
+        in
+        let grouped::[[(String, String)]] =
+            groupBy(\ p1::(String, String) p2::(String, String) ->
+                      p1.2 == p2.2, sorted)
+        in
+          map(\ l::[(String, String)] ->
+                (head(l).2, map(\ p::(String, String) -> p.1, l)),
+              grouped)
+        end end end;
+  --(nonterminal, [(prod name, prod type)])
+  local prodsByNT::[(String, [(String, Type)])] =
+        let expanded::[(String, Type, String)] =
+            map(\ p::(String, Type) ->
+                  (p.1, p.2, nonterminalTypeToName(p.2.resultType)),
+                prods)
+        in
+        let sorted::[(String, Type, String)] =
+            sortBy(\ p1::(String, Type, String)
+                     p2::(String, Type, String) -> p1.3 <= p2.3,
+                   expanded)
+        in
+        let grouped::[[(String, Type, String)]] =
+            groupBy(\ p1::(String, Type, String)
+                      p2::(String, Type, String) -> p1.3 == p2.3,
+                    sorted)
+        in
+          map(\ l::[(String, Type, String)] ->
+                (head(l).3, map(\ p::(String, Type, String) ->
+                                  (p.1, p.2), l)),
+              grouped)
+        end end end;
+  return generatePrimaryComponentTheoremBodies(
+            attrsByNT, prodsByNT, component);
+}
+function generatePrimaryComponentTheoremBodies
+String ::= attrGroups::[(String, [String])]
+           prodGroups::[(String, [(String, Type)])]
+           component::String
+{
+  --(nonterminal, [attrs])
+  local first::(String, [String]) = head(attrGroups);
+  local nt::Type = nameToNonterminalType(first.1);
+  local attrs::[String] = first.2;
+  local prods::[(String, Type)] =
+        case findAssociated(first.1, prodGroups) of
+        | nothing() -> []
+        | just(lst) -> lst
+        end;
+  local here::String =
+        foldr(
+           \ p::(String, Type) rest::String ->
+             let children::[String] =
+                 foldr(\ ty::Type rest::[String] ->
+                         makeUniqueNameFromTy(ty,
+                            "Node"::"TreeName"::"T"::rest)::rest,
+                       [], p.2.argumentTypes)
+             in
+               foldr(\ a::String rest::String ->
+                       "Theorem " ++ equationName(a, nt) ++ "__" ++
+                          nameToProd(p.1) ++ " : forall " ++
+                          implode(" ", children) ++
+                          " Node TreeName T,\n   " ++
+                       typeToStructureEqName(nt) ++ " T (" ++
+                          nameToProd(p.1) ++ " " ++
+                          implode(" ", children) ++ ") ->\n   " ++
+                       equationName(a, nt) ++ " TreeName T Node ->" ++
+                       "\n   " ++
+                       equationName(a, nt) ++ "__" ++ component ++
+                          " TreeName (" ++ nameToProd(p.1) ++ " " ++
+                          implode(" ", children) ++ ") Node.\n" ++
+                       "skip.\n" ++ rest,
+                     rest, attrs)
+             end,
+           "", prods);
+  return
+     case attrGroups of
+     | [] -> ""
+     | _::tl ->
+       here ++ generatePrimaryComponentTheoremBodies(tl, prodGroups,
+                                                     component)
+     end;
+}
+
+
+function generateWPDPrimaryComponentTheorems
+String ::= prods::[(String, Type)] component::String
+{
+  return
+     case prods of
+     | [] -> ""
+     | (pr, ty)::rest ->
+       let nt::Type = ty.resultType
+       in
+       let children::[String] =
+           foldr(\ ty::Type rest::[String] ->
+                   makeUniqueNameFromTy(ty,
+                      "T"::"NodeTree"::rest)::rest,
+                 [], ty.argumentTypes)
+       in
+         "Theorem " ++ wpdTypeName(nt) ++ "__" ++ nameToProd(pr) ++
+            " : forall T " ++ implode(" ", children) ++ " NodeTree," ++
+            "\n   " ++
+         typeToStructureEqName(nt) ++ " T (" ++ nameToProd(pr) ++
+            " " ++ implode(" ", children) ++ ") ->\n   " ++
+         wpdTypeName(nt) ++ " T NodeTree ->\n   " ++
+         wpdTypeName(nt) ++ "__" ++ component ++ " (" ++
+            nameToProd(pr) ++ " " ++ implode(" ", children) ++
+            ") NodeTree.\n" ++ "skip.\n" ++
+         generateWPDPrimaryComponentTheorems(rest, component)
+       end end
+     end;
+}
+
+
+function generateNodeTreeFormTheorems
+String ::= nonterminals::[String]
+{
+  return
+     case nonterminals of
+     | [] -> ""
+     | nt::rest ->
+       "Theorem " ++ wpdTypeName(nameToNonterminalType(nt)) ++
+          "__ntr_" ++
+          nameToNonterminal(nt) ++ " : forall Tree NodeTree,\n   " ++
+       wpdTypeName(nameToNonterminalType(nt)) ++
+          " Tree NodeTree ->\n   " ++
+       "exists Node ChildList, NodeTree = " ++
+          nodeTreeConstructorName(nameToNonterminalType(nt)) ++ 
+          " Node ChildList.\n" ++
+       "skip.\n" ++
+       generateNodeTreeFormTheorems(rest)
+     end;
+}
+
+
+function generateWpdToAttrEquationTheorems
+String ::= attrOccurrences::[(String, [String])]
+           attrs::[(String, Type)]
+           localAttrs::[(String, [(String, Type)])]
+           prods::[(String, Type)]
+{
+  --[(equation relation, attr, attr type, nonterminal)]
+  local attrInfos::[(String, String, Type, Type)] =
+        flatMap(\ p::(String, [String]) ->
+                  map(\ nt::String ->
+                        (equationName(p.1,
+                            nameToNonterminalType(nt)),
+                         p.1,
+                         findAssociated(p.1, attrs).fromJust,
+                         nameToNonterminalType(nt)),
+                      p.2), attrOccurrences);
+  --[(equation relation, prod, attr, attr type, nonterminal)]
+  local locals::[(String, String, String, Type, Type)] =
+        flatMap(\ p::(String, [(String, Type)]) ->
+                  map(\ pt::(String, Type) ->
+                        (localEquationName(p.1, pt.1), pt.1, p.1, pt.2,
+                         findAssociated(pt.1, prods).fromJust.resultType),
+                      p.2), localAttrs);
+  return
+     --attrs
+     foldr(\ p::(String, String, Type, Type) rest::String ->
+             "Theorem $wpd__to__" ++ p.2 ++ "__" ++ p.4.pp ++
+                " : forall Tree NodeTree,\n   " ++
+             wpdTypeName(p.4) ++ " Tree NodeTree ->\n   " ++
+             p.1 ++ " Tree Tree NodeTree.\n" ++
+             "skip.\n" ++
+             rest,
+           "", attrInfos) ++
+     --locals
+     foldr(\ p::(String, String, String, Type, Type) rest::String ->
+             "Theorem $wpd__to__" ++ p.2 ++ "_local_" ++ p.3 ++
+                "__" ++ p.5.pp ++ " : forall Tree Tree' NodeTree," ++
+                "\n   " ++
+             typeToStructureEqName(p.5) ++ " Tree Tree' ->\n   " ++
+             wpdTypeName(p.5) ++ " Tree NodeTree ->\n   " ++
+             p.1 ++ " Tree Tree' NodeTree.\n" ++
+             "skip.\n" ++
+             rest,
+           "", locals);
+}
+
+
+function generateStructureEqNtTheorems
+String ::= nonterminals::[String]
+{
+  return
+     case nonterminals of
+     | [] -> ""
+     | nt::rest ->
+       let ntTy::Type = nameToNonterminalType(nt) in
+         "Theorem " ++ typeToStructureEqName(ntTy) ++ "__equal" ++
+            " : forall T1 T2,\n   " ++
+         typeToStructureEqName(ntTy) ++ " T1 T2 -> T1 = T2.\n" ++
+         "skip.\n" ++
+         "Theorem " ++ typeToStructureEqName(ntTy) ++ "__symm" ++
+            " : forall T1 T2,\n   " ++
+         typeToStructureEqName(ntTy) ++ " T1 T2 ->\n   " ++
+         typeToStructureEqName(ntTy) ++ " T2 T1.\n" ++
+         "skip.\n" ++
+         "Theorem " ++ typeToStructureEqName(ntTy) ++ "__wpd" ++
+            " : forall T NTr,\n   " ++
+         wpdTypeName(ntTy) ++ " T NTr -> " ++
+            typeToStructureEqName(ntTy) ++ " T T.\n" ++
+         "skip.\n" ++
+         generateStructureEqNtTheorems(rest)
+       end
+     end;
+}
+
+
+function generateStructureEqPrimaryComponentTheorems
+String ::= prods::[(String, Type)] component::String
+{
+  return
+     case prods of
+     | [] -> ""
+     | (prod, ty)::rest ->
+       let nt::Type = ty.resultType
+       in
+       let children::[String] =
+           foldr(\ ty::Type rest::[String] ->
+                   makeUniqueNameFromTy(ty, "T"::rest)::rest,
+                 [], ty.argumentTypes)
+       in
+         "Theorem $structure_eq__" ++
+            nameToProd(prod) ++ " : forall T " ++
+            implode(" ", children) ++ ",\n   " ++
+         typeToStructureEqName(nt) ++ " T (" ++ nameToProd(prod) ++
+            " " ++ implode(" ", children) ++ ") -> \n   " ++
+         typeToStructureEqName(nt) ++ "__" ++ component ++
+            " T (" ++ nameToProd(prod) ++ " " ++
+            implode(" ", children) ++ ").\n" ++
+         "skip.\n" ++
+         generateStructureEqPrimaryComponentTheorems(rest, component)
+       end end
+     end;
+}
+
+
 function generateContents
 String ::= nonterminals::[String] attrs::[(String, Type)]
            --(attribute name, [nonterminal name])
@@ -533,7 +787,16 @@ String ::= nonterminals::[String] attrs::[(String, Type)]
      generateAccessUniquenessAxioms(attrOccurrences,
                                     localAttrs, prods) ++ "\n\n" ++
      generateAccessIAxioms(attrOccurrences, attrs,
-                           localAttrs, prods) ++ "\n\n";
+                           localAttrs, prods) ++ "\n\n" ++
+     generatePrimaryComponentTheorems(attrOccurrences, prods,
+                                      componentName) ++ "\n\n" ++
+     generateWPDPrimaryComponentTheorems(prods, componentName) ++
+        "\n\n" ++
+     generateNodeTreeFormTheorems(nonterminals) ++ "\n\n" ++
+     generateWpdToAttrEquationTheorems(attrOccurrences, attrs,
+                                       localAttrs, prods) ++ "\n\n" ++
+     generateStructureEqNtTheorems(nonterminals) ++ "\n\n" ++
+     generateStructureEqPrimaryComponentTheorems(prods, componentName);
 }
 
 

@@ -14,38 +14,28 @@ Import "../../../silver_compilation/encodingPrimitives/attr_val".
 
 
 Kind nt_A   type.
-
-Type $prod_plus   nt_A -> nt_A -> nt_A.
-Type $prod_num    integer -> nt_A.
-Type $prod_name   list $char -> nt_A.
-
-
 Kind nt_B   type.
-
-Type $prod_greater   nt_A -> nt_A -> nt_B.
-Type $prod_equal     nt_A -> nt_A -> nt_B.
-Type $prod_and       nt_B -> nt_B -> nt_B.
-Type $prod_or        nt_B -> nt_B -> nt_B.
-Type $prod_bTrue     nt_B.
-Type $prod_bFalse    nt_B.
-
-
 Kind nt_C   type.
 
-Type $prod_noop         nt_C.
-Type $prod_seq          nt_C -> nt_C -> nt_C.
-Type $prod_assign       list $char -> nt_A -> nt_C.
+Type $prod_plus   nt_A -> nt_A -> nt_A.
+Type $prod_num   integer -> nt_A.
+Type $prod_name   (list $char) -> nt_A.
+Type $prod_greater   nt_A -> nt_A -> nt_B.
+Type $prod_equal   nt_A -> nt_A -> nt_B.
+Type $prod_and   nt_B -> nt_B -> nt_B.
+Type $prod_or   nt_B -> nt_B -> nt_B.
+Type $prod_bTrue   nt_B.
+Type $prod_bFalse   nt_B.
+Type $prod_noop   nt_C.
+Type $prod_seq   nt_C -> nt_C -> nt_C.
+Type $prod_assign   (list $char) -> nt_A -> nt_C.
 Type $prod_ifThenElse   nt_B -> nt_C -> nt_C -> nt_C.
-Type $prod_while        nt_B -> nt_C -> nt_C.
-
-
+Type $prod_while   nt_B -> nt_C -> nt_C.
 
 
 Kind node_A   type.
 Kind node_B   type.
 Kind node_C   type.
-
-
 
 
 Kind $node_tree   type.
@@ -55,86 +45,73 @@ Type $ntr_nt_B   node_B -> list $node_tree -> $node_tree.
 Type $ntr_nt_C   node_C -> list $node_tree -> $node_tree.
 
 
-
-
-Type $access_$_env_$_nt_A
-     nt_A -> node_A -> $attrVal (list ($pair (list $char) integer)) ->
-     prop.
-Type $access_$_intVal_$_nt_A
-     nt_A -> node_A -> $attrVal integer -> prop.
-Type $access_$_env_$_nt_B
-     nt_B -> node_B -> $attrVal (list ($pair (list $char) integer)) ->
-     prop.
+Type $access_$_env_$_nt_A   nt_A -> node_A -> $attrVal (list ($pair (list $char) integer)) -> prop.
+Type $access_$_env_$_nt_B   nt_B -> node_B -> $attrVal (list ($pair (list $char) integer)) -> prop.
+Type $access_$_env_$_nt_C   nt_C -> node_C -> $attrVal (list ($pair (list $char) integer)) -> prop.
+Type $access_$_intVal_$_nt_A   nt_A -> node_A -> $attrVal integer -> prop.
 Type $access_$_boolVal_$_nt_B   nt_B -> node_B -> $attrVal bool -> prop.
-Type $access_$_env_$_nt_C
-     nt_C -> node_C -> $attrVal (list ($pair (list $char) integer)) ->
-     prop.
-Type $access_$_env_out_$_nt_C
-     nt_C -> node_C -> $attrVal (list ($pair (list $char) integer)) ->
-     prop.
-Type $local_access_$_$prod_while_$_subWhile_$_nt_C
-     nt_C -> node_C -> $attrVal ($pair nt_C $node_tree) -> prop.
+Type $access_$_env_out_$_nt_C   nt_C -> node_C -> $attrVal (list ($pair (list $char) integer)) -> prop.
+
+Type $local_access_$_$prod_while_$_subWhile_$_nt_C   nt_C -> node_C -> $attrVal ($pair nt_C $node_tree) -> prop.
 
 
-
-
-/*
-  This is just so the interface can read in which attributes are
-  inherited.  It serves no purpose in the encoding itself.
-*/
 Type $env$_is_inherited   prop.
-
-
 
 
 Type $structure_eq__nt_A   nt_A -> nt_A -> prop.
 Type $structure_eq__nt_B   nt_B -> nt_B -> prop.
 Type $structure_eq__nt_C   nt_C -> nt_C -> prop.
 
-
 Define $structure_eq__nt_A__host : nt_A -> nt_A -> prop by
-  $structure_eq__nt_A__host ($prod_plus A1x A2x) ($prod_plus A3x A4x) :=
-     $structure_eq__nt_A A1x A3x /\
-     $structure_eq__nt_A A2x A4x;
+  $structure_eq__nt_A__host ($prod_plus A2 A) ($prod_plus A3 A1) :=
+     $structure_eq__nt_A A2 A3 /\
+     $structure_eq__nt_A A A1;
   $structure_eq__nt_A__host ($prod_num N) ($prod_num N);
-  $structure_eq__nt_A__host ($prod_name N) ($prod_name N).
-
+  $structure_eq__nt_A__host ($prod_name L) ($prod_name L).
 Define $structure_eq__nt_B__host : nt_B -> nt_B -> prop by
-  $structure_eq__nt_B__host ($prod_greater A1x A2x)
-                            ($prod_greater A3x A4x) :=
-     $structure_eq__nt_A A1x A3x /\
-     $structure_eq__nt_A A2x A4x;
-  $structure_eq__nt_B__host ($prod_equal A1x A2x)
-                            ($prod_equal A3x A4x) :=
-     $structure_eq__nt_A A1x A3x /\
-     $structure_eq__nt_A A2x A4x;
-  $structure_eq__nt_B__host ($prod_and B1x B2x) ($prod_and B3x B4x) :=
-     $structure_eq__nt_B B1x B3x /\
-     $structure_eq__nt_B B2x B4x;
-  $structure_eq__nt_B__host ($prod_or B1x B2x) ($prod_or B3x B4x) :=
-     $structure_eq__nt_B B1x B3x /\
-     $structure_eq__nt_B B2x B4x;
-  $structure_eq__nt_B__host $prod_bTrue $prod_bTrue;
-  $structure_eq__nt_B__host $prod_bFalse $prod_bFalse.
-
+  $structure_eq__nt_B__host ($prod_greater A2 A) ($prod_greater A3 A1) :=
+     $structure_eq__nt_A A2 A3 /\
+     $structure_eq__nt_A A A1;
+  $structure_eq__nt_B__host ($prod_equal A2 A) ($prod_equal A3 A1) :=
+     $structure_eq__nt_A A2 A3 /\
+     $structure_eq__nt_A A A1;
+  $structure_eq__nt_B__host ($prod_and B2 B) ($prod_and B3 B1) :=
+     $structure_eq__nt_B B2 B3 /\
+     $structure_eq__nt_B B B1;
+  $structure_eq__nt_B__host ($prod_or B2 B) ($prod_or B3 B1) :=
+     $structure_eq__nt_B B2 B3 /\
+     $structure_eq__nt_B B B1;
+  $structure_eq__nt_B__host ($prod_bTrue ) ($prod_bTrue );
+  $structure_eq__nt_B__host ($prod_bFalse ) ($prod_bFalse ).
 Define $structure_eq__nt_C__host : nt_C -> nt_C -> prop by
-  $structure_eq__nt_C__host $prod_noop $prod_noop;
-  $structure_eq__nt_C__host ($prod_seq C1x C2x) ($prod_seq C3x C4x) :=
-     $structure_eq__nt_C C1x C3x /\
-     $structure_eq__nt_C C2x C4x;
-  $structure_eq__nt_C__host ($prod_assign N A1x) ($prod_assign N A2x) :=
-     $structure_eq__nt_A A1x A2x;
-  $structure_eq__nt_C__host ($prod_ifThenElse B1x C1x C2x)
-                            ($prod_ifThenElse B2x C3x C4x) :=
-     $structure_eq__nt_B B1x B2x /\
-     $structure_eq__nt_C C1x C3x /\
-     $structure_eq__nt_C C2x C4x;
-  $structure_eq__nt_C__host ($prod_while B1x C1x)
-                            ($prod_while B2x C2x) :=
-     $structure_eq__nt_B B1x B2x /\
-     $structure_eq__nt_C C1x C2x.
+  $structure_eq__nt_C__host ($prod_noop ) ($prod_noop );
+  $structure_eq__nt_C__host ($prod_seq C2 C) ($prod_seq C3 C1) :=
+     $structure_eq__nt_C C2 C3 /\
+     $structure_eq__nt_C C C1;
+  $structure_eq__nt_C__host ($prod_assign L A) ($prod_assign L A1) :=
+     $structure_eq__nt_A A A1;
+  $structure_eq__nt_C__host ($prod_ifThenElse B C2 C) ($prod_ifThenElse B1 C3 C1) :=
+     $structure_eq__nt_B B B1 /\
+     $structure_eq__nt_C C2 C3 /\
+     $structure_eq__nt_C C C1;
+  $structure_eq__nt_C__host ($prod_while B C) ($prod_while B1 C1) :=
+     $structure_eq__nt_B B B1 /\
+     $structure_eq__nt_C C C1.
 
 
+Type $env__nt_A   nt_A -> nt_A -> $node_tree -> prop.
+Type $env__nt_B   nt_B -> nt_B -> $node_tree -> prop.
+Type $env__nt_C   nt_C -> nt_C -> $node_tree -> prop.
+Type $intVal__nt_A   nt_A -> nt_A -> $node_tree -> prop.
+Type $boolVal__nt_B   nt_B -> nt_B -> $node_tree -> prop.
+Type $env_out__nt_C   nt_C -> nt_C -> $node_tree -> prop.
+
+Type $wpd_node_nt_A   nt_A -> $node_tree -> prop.
+Type $wpd_nt_A   nt_A -> $node_tree -> prop.
+Type $wpd_node_nt_B   nt_B -> $node_tree -> prop.
+Type $wpd_nt_B   nt_B -> $node_tree -> prop.
+Type $wpd_node_nt_C   nt_C -> $node_tree -> prop.
+Type $wpd_nt_C   nt_C -> $node_tree -> prop.
 
 
 Define $fun__lookup :
@@ -144,25 +121,6 @@ Define $fun__lookup :
   $fun__lookup N (($pair_c Name Val)::Tail) Result :=
      (Name = N -> false) /\
      $fun__lookup N Tail Result.
-
-
-
-
-Type $env__nt_A       nt_A -> nt_A -> $node_tree -> prop.
-Type $intVal__nt_A    nt_A -> nt_A -> $node_tree -> prop.
-Type $env__nt_B       nt_B -> nt_B -> $node_tree -> prop.
-Type $boolVal__nt_B   nt_B -> nt_B -> $node_tree -> prop.
-Type $env__nt_C       nt_C -> nt_C -> $node_tree -> prop.
-Type $env_out__nt_C   nt_C -> nt_C -> $node_tree -> prop.
-
-
-Type $wpd_node_nt_A   nt_A -> $node_tree -> prop.
-Type $wpd_node_nt_B   nt_B -> $node_tree -> prop.
-Type $wpd_node_nt_C   nt_C -> $node_tree -> prop.
-
-Type $wpd_nt_A   nt_A -> $node_tree -> prop.
-Type $wpd_nt_B   nt_B -> $node_tree -> prop.
-Type $wpd_nt_C   nt_C -> $node_tree -> prop.
 
 
 Define $env__nt_A__host : nt_A -> nt_A -> $node_tree -> prop by
@@ -628,651 +586,506 @@ Define $while_local_subWhile : nt_C -> nt_C -> $node_tree -> prop by
         $access_$_env_$_nt_C SubWhile Node_SubWhile ($attr_ex Env).
 
 
-
-
 Define $split : (A -> B -> prop) -> ($pair A B) -> prop by
   $split SubRel ($pair_c A B) :=
      SubRel A B.
 
-
 Define $wpd_node_nt_A__host : nt_A -> $node_tree -> prop by
-  $wpd_node_nt_A__host Tree ($ntr_nt_A Node CL) :=
-     exists AEnv AIntVal,
-       $env__nt_A Tree Tree ($ntr_nt_A Node CL) /\
-          $access_$_env_$_nt_A Tree Node AEnv /\
-          $is_attrVal (is_list (is_pair is_string is_integer)) AEnv /\
-       $intVal__nt_A Tree Tree ($ntr_nt_A Node CL) /\
-          $access_$_intVal_$_nt_A Tree Node AIntVal /\
-          $is_attrVal is_integer AIntVal.
-
+   $wpd_node_nt_A__host Tree ($ntr_nt_A Node CL) :=
+      exists Aenv AintVal,
+         $env__nt_A Tree Tree ($ntr_nt_A Node CL) /\
+            $access_$_env_$_nt_A Tree Node Aenv /\
+            $is_attrVal (is_list (is_pair (is_string) (is_integer))) Aenv /\
+         $intVal__nt_A Tree Tree ($ntr_nt_A Node CL) /\
+            $access_$_intVal_$_nt_A Tree Node AintVal /\
+            $is_attrVal (is_integer) AintVal.
 Define $wpd_node_nt_B__host : nt_B -> $node_tree -> prop by
-  $wpd_node_nt_B__host Tree ($ntr_nt_B Node CL) :=
-     exists AEnv ABoolVal,
-       $env__nt_B Tree Tree ($ntr_nt_B Node CL) /\
-          $access_$_env_$_nt_B Tree Node AEnv /\
-          $is_attrVal (is_list (is_pair is_string is_integer)) AEnv /\
-       $boolVal__nt_B Tree Tree ($ntr_nt_B Node CL) /\
-          $access_$_boolVal_$_nt_B Tree Node ABoolVal /\
-          $is_attrVal is_bool ABoolVal.
-
+   $wpd_node_nt_B__host Tree ($ntr_nt_B Node CL) :=
+      exists Aenv AboolVal,
+         $env__nt_B Tree Tree ($ntr_nt_B Node CL) /\
+            $access_$_env_$_nt_B Tree Node Aenv /\
+            $is_attrVal (is_list (is_pair (is_string) (is_integer))) Aenv /\
+         $boolVal__nt_B Tree Tree ($ntr_nt_B Node CL) /\
+            $access_$_boolVal_$_nt_B Tree Node AboolVal /\
+            $is_attrVal (is_bool) AboolVal.
 Define $wpd_node_nt_C__host : nt_C -> $node_tree -> prop by
-  $wpd_node_nt_C__host Tree ($ntr_nt_C Node CL) :=
-     exists AEnv AEnvOut ASubWhile,
-       $env__nt_C Tree Tree ($ntr_nt_C Node CL) /\
-          $access_$_env_$_nt_C Tree Node AEnv /\
-          $is_attrVal (is_list (is_pair is_string is_integer)) AEnv /\
-       $env_out__nt_C Tree Tree ($ntr_nt_C Node CL) /\
-          $access_$_env_out_$_nt_C Tree Node AEnv /\
-          $is_attrVal (is_list (is_pair is_string is_integer))
-                      AEnvOut /\
-       $while_local_subWhile Tree Tree ($ntr_nt_C Node CL) /\
-          $local_access_$_$prod_while_$_subWhile_$_nt_C Tree Node
-                                                        ASubWhile /\
-          $is_attrVal ($split $wpd_nt_C) ASubWhile.
-
+   $wpd_node_nt_C__host Tree ($ntr_nt_C Node CL) :=
+      exists Aenv Aenv_out AsubWhile,
+         $env__nt_C Tree Tree ($ntr_nt_C Node CL) /\
+            $access_$_env_$_nt_C Tree Node Aenv /\
+            $is_attrVal (is_list (is_pair (is_string) (is_integer))) Aenv /\
+         $env_out__nt_C Tree Tree ($ntr_nt_C Node CL) /\
+            $access_$_env_out_$_nt_C Tree Node Aenv_out /\
+            $is_attrVal (is_list (is_pair (is_string) (is_integer))) Aenv_out /\
+         $while_local_subWhile Tree Tree ($ntr_nt_C Node CL) /\
+            $local_access_$_$prod_while_$_subWhile_$_nt_C Tree Node AsubWhile /\
+            $is_attrVal ($split $wpd_nt_C) AsubWhile.
 
 Define $wpd_nt_A__host : nt_A -> $node_tree -> prop by
-  $wpd_nt_A__host ($prod_plus A1 A2)
-                  ($ntr_nt_A Node (A1Ntr::A2Ntr::nil)) :=
-     $wpd_node_nt_A ($prod_plus A1 A2)
-                    ($ntr_nt_A Node (A1Ntr::A2Ntr::nil)) /\
+  $wpd_nt_A__host ($prod_plus A1 A) ($ntr_nt_A Node (A1Ntr::ANtr::nil)) :=
+     $wpd_node_nt_A ($prod_plus A1 A) ($ntr_nt_A Node (A1Ntr::ANtr::nil)) /\
      $wpd_nt_A A1 A1Ntr /\
-     $wpd_nt_A A2 A2Ntr;
-  $wpd_nt_A__host ($prod_num N) ($ntr_nt_A Node nil) :=
-     $wpd_node_nt_A ($prod_num N) ($ntr_nt_A Node nil);
-  $wpd_nt_A__host ($prod_name N) ($ntr_nt_A Node nil) :=
-     $wpd_node_nt_A ($prod_name N) ($ntr_nt_A Node nil).
-
-Define $wpd_nt_B__host : nt_B -> $node_tree -> prop by
-  $wpd_nt_B__host ($prod_greater A1 A2)
-                  ($ntr_nt_B Node (A1Ntr::A2Ntr::nil)) :=
-     $wpd_node_nt_B ($prod_greater A1 A2)
-                    ($ntr_nt_B Node (A1Ntr::A2Ntr::nil)) /\
-     $wpd_nt_A A1 A1Ntr /\
-     $wpd_nt_A A2 A2Ntr;
-  $wpd_nt_B__host ($prod_equal A1 A2)
-                  ($ntr_nt_B Node (A1Ntr::A2Ntr::nil)) :=
-     $wpd_node_nt_B ($prod_equal A1 A2)
-                    ($ntr_nt_B Node (A1Ntr::A2Ntr::nil)) /\
-     $wpd_nt_A A1 A1Ntr /\
-     $wpd_nt_A A2 A2Ntr;
-  $wpd_nt_B__host ($prod_and B1 B2)
-                  ($ntr_nt_B Node (B1Ntr::B2Ntr::nil)) :=
-     $wpd_node_nt_B ($prod_and B1 B2)
-                    ($ntr_nt_B Node (B1Ntr::B2Ntr::nil)) /\
-     $wpd_nt_B B1 B1Ntr /\
-     $wpd_nt_B B2 B2Ntr;
-  $wpd_nt_B__host ($prod_or B1 B2)
-                  ($ntr_nt_B Node (B1Ntr::B2Ntr::nil)) :=
-     $wpd_node_nt_B ($prod_or B1 B2)
-                    ($ntr_nt_B Node (B1Ntr::B2Ntr::nil)) /\
-     $wpd_nt_B B1 B1Ntr /\
-     $wpd_nt_B B2 B2Ntr;
-  $wpd_nt_B__host $prod_bTrue ($ntr_nt_B Node nil) :=
-     $wpd_node_nt_B $prod_bTrue ($ntr_nt_B Node nil);
-  $wpd_nt_B__host $prod_bFalse ($ntr_nt_B Node nil) :=
-     $wpd_node_nt_B $prod_bFalse ($ntr_nt_B Node nil).
-
-Define $wpd_nt_C__host : nt_C -> $node_tree -> prop by
-  $wpd_nt_C__host $prod_noop ($ntr_nt_C Node nil) :=
-     $wpd_node_nt_C $prod_noop ($ntr_nt_C Node nil);
-  $wpd_nt_C__host ($prod_seq C1 C2)
-                  ($ntr_nt_C Node (C1Ntr::C2Ntr::nil)) :=
-     $wpd_node_nt_C ($prod_seq C1 C2)
-                    ($ntr_nt_C Node (C1Ntr::C2Ntr::nil)) /\
-     $wpd_nt_C C1 C1Ntr /\
-     $wpd_nt_C C2 C2Ntr;
-  $wpd_nt_C__host ($prod_assign N A) ($ntr_nt_C Node (ANtr::nil)) :=
-     $wpd_node_nt_C ($prod_assign N A) ($ntr_nt_C Node (ANtr::nil)) /\
      $wpd_nt_A A ANtr;
-  $wpd_nt_C__host ($prod_ifThenElse B C1 C2)
-                  ($ntr_nt_C Node (BNtr::C1Ntr::C2Ntr::nil)) :=
-     $wpd_node_nt_C ($prod_ifThenElse B C1 C2)
-                    ($ntr_nt_C Node (BNtr::C1Ntr::C2Ntr::nil)) /\
+  $wpd_nt_A__host ($prod_num N) ($ntr_nt_A Node (nil)) :=
+     $wpd_node_nt_A ($prod_num N) ($ntr_nt_A Node (nil)) /\
+     is_integer N;
+  $wpd_nt_A__host ($prod_name L) ($ntr_nt_A Node (nil)) :=
+     $wpd_node_nt_A ($prod_name L) ($ntr_nt_A Node (nil)) /\
+     is_string L.
+Define $wpd_nt_B__host : nt_B -> $node_tree -> prop by
+  $wpd_nt_B__host ($prod_greater A1 A) ($ntr_nt_B Node (A1Ntr::ANtr::nil)) :=
+     $wpd_node_nt_B ($prod_greater A1 A) ($ntr_nt_B Node (A1Ntr::ANtr::nil)) /\
+     $wpd_nt_A A1 A1Ntr /\
+     $wpd_nt_A A ANtr;
+  $wpd_nt_B__host ($prod_equal A1 A) ($ntr_nt_B Node (A1Ntr::ANtr::nil)) :=
+     $wpd_node_nt_B ($prod_equal A1 A) ($ntr_nt_B Node (A1Ntr::ANtr::nil)) /\
+     $wpd_nt_A A1 A1Ntr /\
+     $wpd_nt_A A ANtr;
+  $wpd_nt_B__host ($prod_and B1 B) ($ntr_nt_B Node (B1Ntr::BNtr::nil)) :=
+     $wpd_node_nt_B ($prod_and B1 B) ($ntr_nt_B Node (B1Ntr::BNtr::nil)) /\
+     $wpd_nt_B B1 B1Ntr /\
+     $wpd_nt_B B BNtr;
+  $wpd_nt_B__host ($prod_or B1 B) ($ntr_nt_B Node (B1Ntr::BNtr::nil)) :=
+     $wpd_node_nt_B ($prod_or B1 B) ($ntr_nt_B Node (B1Ntr::BNtr::nil)) /\
+     $wpd_nt_B B1 B1Ntr /\
+     $wpd_nt_B B BNtr;
+  $wpd_nt_B__host ($prod_bTrue ) ($ntr_nt_B Node (nil)) :=
+     $wpd_node_nt_B ($prod_bTrue ) ($ntr_nt_B Node (nil));
+  $wpd_nt_B__host ($prod_bFalse ) ($ntr_nt_B Node (nil)) :=
+     $wpd_node_nt_B ($prod_bFalse ) ($ntr_nt_B Node (nil)).
+Define $wpd_nt_C__host : nt_C -> $node_tree -> prop by
+  $wpd_nt_C__host ($prod_noop ) ($ntr_nt_C Node (nil)) :=
+     $wpd_node_nt_C ($prod_noop ) ($ntr_nt_C Node (nil));
+  $wpd_nt_C__host ($prod_seq C1 C) ($ntr_nt_C Node (C1Ntr::CNtr::nil)) :=
+     $wpd_node_nt_C ($prod_seq C1 C) ($ntr_nt_C Node (C1Ntr::CNtr::nil)) /\
+     $wpd_nt_C C1 C1Ntr /\
+     $wpd_nt_C C CNtr;
+  $wpd_nt_C__host ($prod_assign L A) ($ntr_nt_C Node (ANtr::nil)) :=
+     $wpd_node_nt_C ($prod_assign L A) ($ntr_nt_C Node (ANtr::nil)) /\
+     is_string L /\
+     $wpd_nt_A A ANtr;
+  $wpd_nt_C__host ($prod_ifThenElse B C1 C) ($ntr_nt_C Node (BNtr::C1Ntr::CNtr::nil)) :=
+     $wpd_node_nt_C ($prod_ifThenElse B C1 C) ($ntr_nt_C Node (BNtr::C1Ntr::CNtr::nil)) /\
      $wpd_nt_B B BNtr /\
      $wpd_nt_C C1 C1Ntr /\
-     $wpd_nt_C C2 C2Ntr;
-  $wpd_nt_C__host ($prod_while B C)
-                  ($ntr_nt_C Node (BNtr::CNtr::nil)) :=
-     $wpd_node_nt_C ($prod_while B C)
-                    ($ntr_nt_C Node (BNtr::CNtr::nil)) /\
+     $wpd_nt_C C CNtr;
+  $wpd_nt_C__host ($prod_while B C) ($ntr_nt_C Node (BNtr::CNtr::nil)) :=
+     $wpd_node_nt_C ($prod_while B C) ($ntr_nt_C Node (BNtr::CNtr::nil)) /\
      $wpd_nt_B B BNtr /\
      $wpd_nt_C C CNtr.
 
 
-
-
-%Access Uniqueness Axioms
 Theorem $access_$_env_$_nt_A__unique : forall Tree Node V V',
-  $access_$_env_$_nt_A Tree Node V ->
-  $access_$_env_$_nt_A Tree Node V' -> V = V'.
+   $access_$_env_$_nt_A Tree Node V ->
+   $access_$_env_$_nt_A Tree Node V' -> V = V'.
+skip.
+Theorem $access_$_env_$_nt_B__unique : forall Tree Node V V',
+   $access_$_env_$_nt_B Tree Node V ->
+   $access_$_env_$_nt_B Tree Node V' -> V = V'.
+skip.
+Theorem $access_$_env_$_nt_C__unique : forall Tree Node V V',
+   $access_$_env_$_nt_C Tree Node V ->
+   $access_$_env_$_nt_C Tree Node V' -> V = V'.
 skip.
 Theorem $access_$_intVal_$_nt_A__unique : forall Tree Node V V',
-  $access_$_intVal_$_nt_A Tree Node V ->
-  $access_$_intVal_$_nt_A Tree Node V' -> V = V'.
-skip.
-
-Theorem $access_$_env_$_nt_B__unique : forall Tree Node V V',
-  $access_$_env_$_nt_B Tree Node V ->
-  $access_$_env_$_nt_B Tree Node V' -> V = V'.
+   $access_$_intVal_$_nt_A Tree Node V ->
+   $access_$_intVal_$_nt_A Tree Node V' -> V = V'.
 skip.
 Theorem $access_$_boolVal_$_nt_B__unique : forall Tree Node V V',
-  $access_$_boolVal_$_nt_B Tree Node V ->
-  $access_$_boolVal_$_nt_B Tree Node V' -> V = V'.
-skip.
-
-Theorem $access_$_env_$_nt_C__unique : forall Tree Node V V',
-  $access_$_env_$_nt_C Tree Node V ->
-  $access_$_env_$_nt_C Tree Node V' -> V = V'.
+   $access_$_boolVal_$_nt_B Tree Node V ->
+   $access_$_boolVal_$_nt_B Tree Node V' -> V = V'.
 skip.
 Theorem $access_$_env_out_$_nt_C__unique : forall Tree Node V V',
-  $access_$_env_out_$_nt_C Tree Node V ->
-  $access_$_env_out_$_nt_C Tree Node V' -> V = V'.
+   $access_$_env_out_$_nt_C Tree Node V ->
+   $access_$_env_out_$_nt_C Tree Node V' -> V = V'.
 skip.
-Theorem $local_access_$_$prod_while_$_subWhile_$_nt_C__unique :
-  forall Tree Node V V',
-     $local_access_$_$prod_while_$_subWhile_$_nt_C Tree Node V ->
-     $local_access_$_$prod_while_$_subWhile_$_nt_C Tree Node V' ->
-     V = V'.
+Theorem $local_access_$_$prod_while_$_subWhile_$_nt_C__unique : forall Tree Node V V',
+   $local_access_$_$prod_while_$_subWhile_$_nt_C Tree Node V ->
+   $local_access_$_$prod_while_$_subWhile_$_nt_C Tree Node V' -> V = V'.
 skip.
 
 
-%Access Is Axioms
-Theorem $access_$_env_$_nt_A__is : forall Tree Node ChildList V,
-  $wpd_nt_A Tree ($ntr_nt_A Node ChildList) ->
-  $access_$_env_$_nt_A Tree Node ($attr_ex V) ->
-  is_list (is_pair is_string is_integer) V.
+Theorem $access_$_env_$_nt_A__is : forall Tree Node CL V,
+   $wpd_nt_A Tree ($ntr_nt_A Node CL) ->
+   $access_$_env_$_nt_A Tree Node ($attr_ex V) ->
+   is_list (is_pair (is_string) (is_integer)) V.
 skip.
-Theorem $access_$_intVal_$_nt_A__is : forall Tree Node ChildList V,
-  $wpd_nt_A Tree ($ntr_nt_A Node ChildList) ->
-  $access_$_intVal_$_nt_A Tree Node ($attr_ex V) ->
-  is_integer V.
+Theorem $access_$_env_$_nt_B__is : forall Tree Node CL V,
+   $wpd_nt_B Tree ($ntr_nt_B Node CL) ->
+   $access_$_env_$_nt_B Tree Node ($attr_ex V) ->
+   is_list (is_pair (is_string) (is_integer)) V.
 skip.
-
-Theorem $access_$_env_$_nt_B__is : forall Tree Node ChildList V,
-  $wpd_nt_B Tree ($ntr_nt_B Node ChildList) ->
-  $access_$_env_$_nt_B Tree Node ($attr_ex V) ->
-  is_list (is_pair is_string is_integer) V.
+Theorem $access_$_env_$_nt_C__is : forall Tree Node CL V,
+   $wpd_nt_C Tree ($ntr_nt_C Node CL) ->
+   $access_$_env_$_nt_C Tree Node ($attr_ex V) ->
+   is_list (is_pair (is_string) (is_integer)) V.
 skip.
-Theorem $access_$_boolVal_$_nt_B__is : forall Tree Node ChildList V,
-  $wpd_nt_B Tree ($ntr_nt_B Node ChildList) ->
-  $access_$_boolVal_$_nt_B Tree Node ($attr_ex V) ->
-  is_bool V.
+Theorem $access_$_intVal_$_nt_A__is : forall Tree Node CL V,
+   $wpd_nt_A Tree ($ntr_nt_A Node CL) ->
+   $access_$_intVal_$_nt_A Tree Node ($attr_ex V) ->
+   is_integer V.
 skip.
-
-Theorem $access_$_env_$_nt_C__is : forall Tree Node ChildList V,
-  $wpd_nt_C Tree ($ntr_nt_C Node ChildList) ->
-  $access_$_env_$_nt_C Tree Node ($attr_ex V) ->
-  is_list (is_pair is_string is_integer) V.
+Theorem $access_$_boolVal_$_nt_B__is : forall Tree Node CL V,
+   $wpd_nt_B Tree ($ntr_nt_B Node CL) ->
+   $access_$_boolVal_$_nt_B Tree Node ($attr_ex V) ->
+   is_bool V.
 skip.
-Theorem $access_$_env_out_$_nt_C__is : forall Tree Node ChildList V,
-  $wpd_nt_C Tree ($ntr_nt_C Node ChildList) ->
-  $access_$_env_out_$_nt_C Tree Node ($attr_ex V) ->
-  is_list (is_pair is_string is_integer) V.
+Theorem $access_$_env_out_$_nt_C__is : forall Tree Node CL V,
+   $wpd_nt_C Tree ($ntr_nt_C Node CL) ->
+   $access_$_env_out_$_nt_C Tree Node ($attr_ex V) ->
+   is_list (is_pair (is_string) (is_integer)) V.
 skip.
-Theorem $local_access_$_$prod_while_$_subWhile_$_nt_C__is :
-  forall Tree Node ChildList VTr VNode,
-     $wpd_nt_C Tree ($ntr_nt_C Node ChildList) ->
-     $local_access_$_$prod_while_$_subWhile_$_nt_C Tree Node
-                     ($attr_ex ($pair_c VTr VNode)) ->
-     $wpd_nt_C VTr VNode.
+Theorem $local_access_$_$prod_while_$_subWhile_$_nt_C__is : forall Tree Node CL VTr VNode,
+   $wpd_nt_C Tree ($ntr_nt_C Node CL) ->
+   $local_access_$_$prod_while_$_subWhile_$_nt_C Tree Node ($attr_ex ($pair_c VTr VNode)) ->
+   $wpd_nt_C VTr VNode.
 skip.
 
 
-%Definition Expansion Theorems
-Theorem $env__nt_A__host__to__env__nt_A :
-  forall TreeName Tree Node,
-     $env__nt_A__host TreeName Tree Node ->
-     $env__nt_A TreeName Tree Node.
+Theorem $env__nt_A__$prod_plus : forall A1 A Node TreeName T,
+   $structure_eq__nt_A T ($prod_plus A1 A) ->
+   $env__nt_A TreeName T Node ->
+   $env__nt_A__host TreeName ($prod_plus A1 A) Node.
 skip.
-Theorem $intVal__nt_A__host__to__intVal__nt_A :
-  forall TreeName Tree Node,
-     $intVal__nt_A__host TreeName Tree Node ->
-     $intVal__nt_A TreeName Tree Node.
+Theorem $intVal__nt_A__$prod_plus : forall A1 A Node TreeName T,
+   $structure_eq__nt_A T ($prod_plus A1 A) ->
+   $intVal__nt_A TreeName T Node ->
+   $intVal__nt_A__host TreeName ($prod_plus A1 A) Node.
 skip.
-
-Theorem $env__nt_B__host__to__env__nt_B :
-  forall TreeName Tree Node,
-     $env__nt_B__host TreeName Tree Node ->
-     $env__nt_B TreeName Tree Node.
+Theorem $env__nt_A__$prod_num : forall N Node TreeName T,
+   $structure_eq__nt_A T ($prod_num N) ->
+   $env__nt_A TreeName T Node ->
+   $env__nt_A__host TreeName ($prod_num N) Node.
 skip.
-Theorem $boolVal__nt_B__host__to__boolVal__nt_B :
-  forall TreeName Tree Node,
-     $boolVal__nt_B__host TreeName Tree Node ->
-     $boolVal__nt_B TreeName Tree Node.
+Theorem $intVal__nt_A__$prod_num : forall N Node TreeName T,
+   $structure_eq__nt_A T ($prod_num N) ->
+   $intVal__nt_A TreeName T Node ->
+   $intVal__nt_A__host TreeName ($prod_num N) Node.
 skip.
-
-Theorem $env__nt_C__host__to__env__nt_C :
-  forall TreeName Tree Node,
-     $env__nt_C__host TreeName Tree Node ->
-     $env__nt_C TreeName Tree Node.
+Theorem $env__nt_A__$prod_name : forall L Node TreeName T,
+   $structure_eq__nt_A T ($prod_name L) ->
+   $env__nt_A TreeName T Node ->
+   $env__nt_A__host TreeName ($prod_name L) Node.
 skip.
-Theorem $env_out__nt_C__host__to__env_out__nt_C :
-  forall TreeName Tree Node,
-     $env_out__nt_C__host TreeName Tree Node ->
-     $env_out__nt_C TreeName Tree Node.
+Theorem $intVal__nt_A__$prod_name : forall L Node TreeName T,
+   $structure_eq__nt_A T ($prod_name L) ->
+   $intVal__nt_A TreeName T Node ->
+   $intVal__nt_A__host TreeName ($prod_name L) Node.
 skip.
-
-
-%Primary Component Theorems
-Theorem $env__nt_A__$prod_plus :
-  forall A1 A2 Node TreeName T,
-     $structure_eq__nt_A T ($prod_plus A1 A2) ->
-     $env__nt_A TreeName T Node ->
-     $env__nt_A__host TreeName ($prod_plus A1 A2) Node.
+Theorem $env__nt_B__$prod_greater : forall A1 A Node TreeName T,
+   $structure_eq__nt_B T ($prod_greater A1 A) ->
+   $env__nt_B TreeName T Node ->
+   $env__nt_B__host TreeName ($prod_greater A1 A) Node.
 skip.
-Theorem $env__nt_A__$prod_num :
-  forall N Node TreeName T,
-     $structure_eq__nt_A T ($prod_num N) ->
-     $env__nt_A TreeName T Node ->
-     $env__nt_A__host TreeName ($prod_num N) Node.
+Theorem $boolVal__nt_B__$prod_greater : forall A1 A Node TreeName T,
+   $structure_eq__nt_B T ($prod_greater A1 A) ->
+   $boolVal__nt_B TreeName T Node ->
+   $boolVal__nt_B__host TreeName ($prod_greater A1 A) Node.
 skip.
-Theorem $env__nt_A__$prod_name :
-  forall N Node TreeName T,
-     $structure_eq__nt_A T ($prod_name N) ->
-     $env__nt_A TreeName T Node ->
-     $env__nt_A__host TreeName ($prod_name N) Node.
+Theorem $env__nt_B__$prod_equal : forall A1 A Node TreeName T,
+   $structure_eq__nt_B T ($prod_equal A1 A) ->
+   $env__nt_B TreeName T Node ->
+   $env__nt_B__host TreeName ($prod_equal A1 A) Node.
 skip.
-
-Theorem $env__nt_B__$prod_greater :
-  forall A1 A2 Node TreeName T,
-     $structure_eq__nt_B T ($prod_greater A1 A2) ->
-     $env__nt_B TreeName T Node ->
-     $env__nt_B__host TreeName ($prod_greater A1 A2) Node.
+Theorem $boolVal__nt_B__$prod_equal : forall A1 A Node TreeName T,
+   $structure_eq__nt_B T ($prod_equal A1 A) ->
+   $boolVal__nt_B TreeName T Node ->
+   $boolVal__nt_B__host TreeName ($prod_equal A1 A) Node.
 skip.
-Theorem $env__nt_B__$prod_equal :
-  forall A1 A2 Node TreeName T,
-     $structure_eq__nt_B T ($prod_equal A1 A2) ->
-     $env__nt_B TreeName T Node ->
-     $env__nt_B__host TreeName ($prod_equal A1 A2) Node.
+Theorem $env__nt_B__$prod_and : forall B1 B Node TreeName T,
+   $structure_eq__nt_B T ($prod_and B1 B) ->
+   $env__nt_B TreeName T Node ->
+   $env__nt_B__host TreeName ($prod_and B1 B) Node.
 skip.
-Theorem $env__nt_B__$prod_and :
-  forall B1 B2 Node TreeName T,
-     $structure_eq__nt_B T ($prod_and B1 B2) ->
-     $env__nt_B TreeName T Node ->
-     $env__nt_B__host TreeName ($prod_and B1 B2) Node.
+Theorem $boolVal__nt_B__$prod_and : forall B1 B Node TreeName T,
+   $structure_eq__nt_B T ($prod_and B1 B) ->
+   $boolVal__nt_B TreeName T Node ->
+   $boolVal__nt_B__host TreeName ($prod_and B1 B) Node.
 skip.
-Theorem $env__nt_B__$prod_or :
-  forall B1 B2 Node TreeName T,
-     $structure_eq__nt_B T ($prod_or B1 B2) ->
-     $env__nt_B TreeName T Node ->
-     $env__nt_B__host TreeName ($prod_or B1 B2) Node.
+Theorem $env__nt_B__$prod_or : forall B1 B Node TreeName T,
+   $structure_eq__nt_B T ($prod_or B1 B) ->
+   $env__nt_B TreeName T Node ->
+   $env__nt_B__host TreeName ($prod_or B1 B) Node.
 skip.
-Theorem $env__nt_B__$prod_bTrue :
-  forall Node TreeName T,
-     $structure_eq__nt_B T $prod_bTrue ->
-     $env__nt_B TreeName T Node ->
-     $env__nt_B__host TreeName $prod_bTrue Node.
+Theorem $boolVal__nt_B__$prod_or : forall B1 B Node TreeName T,
+   $structure_eq__nt_B T ($prod_or B1 B) ->
+   $boolVal__nt_B TreeName T Node ->
+   $boolVal__nt_B__host TreeName ($prod_or B1 B) Node.
 skip.
-Theorem $env__nt_B__$prod_bFalse :
-  forall Node TreeName T,
-     $structure_eq__nt_B T $prod_bFalse ->
-     $env__nt_B TreeName T Node ->
-     $env__nt_B__host TreeName $prod_bFalse Node.
+Theorem $env__nt_B__$prod_bTrue : forall  Node TreeName T,
+   $structure_eq__nt_B T ($prod_bTrue ) ->
+   $env__nt_B TreeName T Node ->
+   $env__nt_B__host TreeName ($prod_bTrue ) Node.
 skip.
-
-Theorem $env__nt_C__$prod_noop :
-  forall Node TreeName T,
-     $structure_eq__nt_C T $prod_noop ->
-     $env__nt_C TreeName T Node ->
-     $env__nt_C__host TreeName $prod_noop Node.
+Theorem $boolVal__nt_B__$prod_bTrue : forall  Node TreeName T,
+   $structure_eq__nt_B T ($prod_bTrue ) ->
+   $boolVal__nt_B TreeName T Node ->
+   $boolVal__nt_B__host TreeName ($prod_bTrue ) Node.
 skip.
-Theorem $env__nt_C__$prod_seq :
-  forall C1 C2 Node TreeName T,
-     $structure_eq__nt_C T ($prod_seq C1 C2) ->
-     $env__nt_C TreeName T Node ->
-     $env__nt_C__host TreeName ($prod_seq C1 C2) Node.
+Theorem $env__nt_B__$prod_bFalse : forall  Node TreeName T,
+   $structure_eq__nt_B T ($prod_bFalse ) ->
+   $env__nt_B TreeName T Node ->
+   $env__nt_B__host TreeName ($prod_bFalse ) Node.
 skip.
-Theorem $env__nt_C__$prod_assign :
-  forall N A Node TreeName T,
-     $structure_eq__nt_C T ($prod_assign N A) ->
-     $env__nt_C TreeName T Node ->
-     $env__nt_C__host TreeName ($prod_assign N A) Node.
+Theorem $boolVal__nt_B__$prod_bFalse : forall  Node TreeName T,
+   $structure_eq__nt_B T ($prod_bFalse ) ->
+   $boolVal__nt_B TreeName T Node ->
+   $boolVal__nt_B__host TreeName ($prod_bFalse ) Node.
 skip.
-Theorem $env__nt_C__$prod_ifThenElse :
-  forall B C1 C2 Node TreeName T,
-     $structure_eq__nt_C T ($prod_ifThenElse B C1 C2) ->
-     $env__nt_C TreeName T Node ->
-     $env__nt_C__host TreeName ($prod_ifThenElse B C1 C2) Node.
+Theorem $env__nt_C__$prod_noop : forall  Node TreeName T,
+   $structure_eq__nt_C T ($prod_noop ) ->
+   $env__nt_C TreeName T Node ->
+   $env__nt_C__host TreeName ($prod_noop ) Node.
 skip.
-Theorem $env__nt_C__$prod_while :
-  forall B C Node TreeName T,
-     $structure_eq__nt_C T ($prod_while B C) ->
-     $env__nt_C TreeName T Node ->
-     $env__nt_C__host TreeName ($prod_while B C) Node.
+Theorem $env_out__nt_C__$prod_noop : forall  Node TreeName T,
+   $structure_eq__nt_C T ($prod_noop ) ->
+   $env_out__nt_C TreeName T Node ->
+   $env_out__nt_C__host TreeName ($prod_noop ) Node.
 skip.
-
-Theorem $intVal__nt_A__$prod_plus :
-  forall A1 A2 Node TreeName T,
-     $structure_eq__nt_A T ($prod_plus A1 A2) ->
-     $intVal__nt_A TreeName T Node ->
-     $intVal__nt_A__host TreeName ($prod_plus A1 A2) Node.
+Theorem $env__nt_C__$prod_seq : forall C1 C Node TreeName T,
+   $structure_eq__nt_C T ($prod_seq C1 C) ->
+   $env__nt_C TreeName T Node ->
+   $env__nt_C__host TreeName ($prod_seq C1 C) Node.
 skip.
-Theorem $intVal__nt_A__$prod_num :
-  forall N Node TreeName T,
-     $structure_eq__nt_A T ($prod_num N) ->
-     $intVal__nt_A TreeName T Node ->
-     $intVal__nt_A__host TreeName ($prod_num N) Node.
+Theorem $env_out__nt_C__$prod_seq : forall C1 C Node TreeName T,
+   $structure_eq__nt_C T ($prod_seq C1 C) ->
+   $env_out__nt_C TreeName T Node ->
+   $env_out__nt_C__host TreeName ($prod_seq C1 C) Node.
 skip.
-Theorem $intVal__nt_A__$prod_name :
-  forall N Node TreeName T,
-     $structure_eq__nt_A T ($prod_name N) ->
-     $intVal__nt_A TreeName T Node ->
-     $intVal__nt_A__host TreeName ($prod_name N) Node.
+Theorem $env__nt_C__$prod_assign : forall L A Node TreeName T,
+   $structure_eq__nt_C T ($prod_assign L A) ->
+   $env__nt_C TreeName T Node ->
+   $env__nt_C__host TreeName ($prod_assign L A) Node.
 skip.
-
-Theorem $boolVal__nt_B__$prod_greater :
-  forall A1 A2 Node TreeName T,
-     $structure_eq__nt_B T ($prod_greater A1 A2) ->
-     $boolVal__nt_B TreeName T Node ->
-     $boolVal__nt_B__host TreeName ($prod_greater A1 A2) Node.
+Theorem $env_out__nt_C__$prod_assign : forall L A Node TreeName T,
+   $structure_eq__nt_C T ($prod_assign L A) ->
+   $env_out__nt_C TreeName T Node ->
+   $env_out__nt_C__host TreeName ($prod_assign L A) Node.
 skip.
-Theorem $boolVal__nt_B__$prod_equal :
-  forall A1 A2 Node TreeName T,
-     $structure_eq__nt_B T ($prod_equal A1 A2) ->
-     $boolVal__nt_B TreeName T Node ->
-     $boolVal__nt_B__host TreeName ($prod_equal A1 A2) Node.
+Theorem $env__nt_C__$prod_ifThenElse : forall B C1 C Node TreeName T,
+   $structure_eq__nt_C T ($prod_ifThenElse B C1 C) ->
+   $env__nt_C TreeName T Node ->
+   $env__nt_C__host TreeName ($prod_ifThenElse B C1 C) Node.
 skip.
-Theorem $boolVal__nt_B__$prod_and :
-  forall B1 B2 Node TreeName T,
-     $structure_eq__nt_B T ($prod_and B1 B2) ->
-     $boolVal__nt_B TreeName T Node ->
-     $boolVal__nt_B__host TreeName ($prod_and B1 B2) Node.
+Theorem $env_out__nt_C__$prod_ifThenElse : forall B C1 C Node TreeName T,
+   $structure_eq__nt_C T ($prod_ifThenElse B C1 C) ->
+   $env_out__nt_C TreeName T Node ->
+   $env_out__nt_C__host TreeName ($prod_ifThenElse B C1 C) Node.
 skip.
-Theorem $boolVal__nt_B__$prod_or :
-  forall B1 B2 Node TreeName T,
-     $structure_eq__nt_B T ($prod_or B1 B2) ->
-     $boolVal__nt_B TreeName T Node ->
-     $boolVal__nt_B__host TreeName ($prod_or B1 B2) Node.
+Theorem $env__nt_C__$prod_while : forall B C Node TreeName T,
+   $structure_eq__nt_C T ($prod_while B C) ->
+   $env__nt_C TreeName T Node ->
+   $env__nt_C__host TreeName ($prod_while B C) Node.
 skip.
-Theorem $boolVal__nt_B__$prod_bTrue :
-  forall Node TreeName T,
-     $structure_eq__nt_B T $prod_bTrue ->
-     $boolVal__nt_B TreeName T Node ->
-     $boolVal__nt_B__host TreeName $prod_bTrue Node.
-skip.
-Theorem $boolVal__nt_B__$prod_bFalse :
-  forall Node TreeName T,
-     $structure_eq__nt_B T $prod_bFalse ->
-     $boolVal__nt_B TreeName T Node ->
-     $boolVal__nt_B__host TreeName $prod_bFalse Node.
-skip.
-
-Theorem $env_out__nt_C__$prod_noop :
-  forall Node TreeName T,
-     $structure_eq__nt_C T $prod_noop ->
-     $env_out__nt_C TreeName T Node ->
-     $env_out__nt_C__host TreeName $prod_noop Node.
-skip.
-Theorem $env_out__nt_C__$prod_seq :
-  forall C1 C2 Node TreeName T,
-     $structure_eq__nt_C T ($prod_seq C1 C2) ->
-     $env_out__nt_C TreeName T Node ->
-     $env_out__nt_C__host TreeName ($prod_seq C1 C2) Node.
-skip.
-Theorem $env_out__nt_C__$prod_assign :
-  forall N A Node TreeName T,
-     $structure_eq__nt_C T ($prod_assign N A) ->
-     $env_out__nt_C TreeName T Node ->
-     $env_out__nt_C__host TreeName ($prod_assign N A) Node.
-skip.
-Theorem $env_out__nt_C__$prod_ifThenElse :
-  forall B C1 C2 Node TreeName T,
-     $structure_eq__nt_C T ($prod_ifThenElse B C1 C2) ->
-     $env_out__nt_C TreeName T Node ->
-     $env_out__nt_C__host TreeName ($prod_ifThenElse B C1 C2) Node.
-skip.
-Theorem $env_out__nt_C__$prod_while :
-  forall B C Node TreeName T,
-     $structure_eq__nt_C T ($prod_while B C) ->
-     $env_out__nt_C TreeName T Node ->
-     $env_out__nt_C__host TreeName ($prod_while B C) Node.
+Theorem $env_out__nt_C__$prod_while : forall B C Node TreeName T,
+   $structure_eq__nt_C T ($prod_while B C) ->
+   $env_out__nt_C TreeName T Node ->
+   $env_out__nt_C__host TreeName ($prod_while B C) Node.
 skip.
 
 
-%WPD Theorems
-Theorem $wpd_node_nt_A__wpd_node_nt_A__host :
-  forall T NodeTree,
-     $wpd_node_nt_A T NodeTree ->
-     $wpd_node_nt_A__host T NodeTree.
+Theorem $wpd_nt_A__$prod_plus : forall T A1 A NodeTree,
+   $structure_eq__nt_A T ($prod_plus A1 A) ->
+   $wpd_nt_A T NodeTree ->
+   $wpd_nt_A__host ($prod_plus A1 A) NodeTree.
 skip.
-Theorem $wpd_node_nt_B__wpd_node_nt_B__host :
-  forall T NodeTree,
-     $wpd_node_nt_B T NodeTree ->
-     $wpd_node_nt_B__host T NodeTree.
+Theorem $wpd_nt_A__$prod_num : forall T N NodeTree,
+   $structure_eq__nt_A T ($prod_num N) ->
+   $wpd_nt_A T NodeTree ->
+   $wpd_nt_A__host ($prod_num N) NodeTree.
 skip.
-Theorem $wpd_node_nt_C__wpd_node_nt_C__host :
-  forall T NodeTree,
-     $wpd_node_nt_C T NodeTree ->
-     $wpd_node_nt_C__host T NodeTree.
+Theorem $wpd_nt_A__$prod_name : forall T L NodeTree,
+   $structure_eq__nt_A T ($prod_name L) ->
+   $wpd_nt_A T NodeTree ->
+   $wpd_nt_A__host ($prod_name L) NodeTree.
+skip.
+Theorem $wpd_nt_B__$prod_greater : forall T A1 A NodeTree,
+   $structure_eq__nt_B T ($prod_greater A1 A) ->
+   $wpd_nt_B T NodeTree ->
+   $wpd_nt_B__host ($prod_greater A1 A) NodeTree.
+skip.
+Theorem $wpd_nt_B__$prod_equal : forall T A1 A NodeTree,
+   $structure_eq__nt_B T ($prod_equal A1 A) ->
+   $wpd_nt_B T NodeTree ->
+   $wpd_nt_B__host ($prod_equal A1 A) NodeTree.
+skip.
+Theorem $wpd_nt_B__$prod_and : forall T B1 B NodeTree,
+   $structure_eq__nt_B T ($prod_and B1 B) ->
+   $wpd_nt_B T NodeTree ->
+   $wpd_nt_B__host ($prod_and B1 B) NodeTree.
+skip.
+Theorem $wpd_nt_B__$prod_or : forall T B1 B NodeTree,
+   $structure_eq__nt_B T ($prod_or B1 B) ->
+   $wpd_nt_B T NodeTree ->
+   $wpd_nt_B__host ($prod_or B1 B) NodeTree.
+skip.
+Theorem $wpd_nt_B__$prod_bTrue : forall T  NodeTree,
+   $structure_eq__nt_B T ($prod_bTrue ) ->
+   $wpd_nt_B T NodeTree ->
+   $wpd_nt_B__host ($prod_bTrue ) NodeTree.
+skip.
+Theorem $wpd_nt_B__$prod_bFalse : forall T  NodeTree,
+   $structure_eq__nt_B T ($prod_bFalse ) ->
+   $wpd_nt_B T NodeTree ->
+   $wpd_nt_B__host ($prod_bFalse ) NodeTree.
+skip.
+Theorem $wpd_nt_C__$prod_noop : forall T  NodeTree,
+   $structure_eq__nt_C T ($prod_noop ) ->
+   $wpd_nt_C T NodeTree ->
+   $wpd_nt_C__host ($prod_noop ) NodeTree.
+skip.
+Theorem $wpd_nt_C__$prod_seq : forall T C1 C NodeTree,
+   $structure_eq__nt_C T ($prod_seq C1 C) ->
+   $wpd_nt_C T NodeTree ->
+   $wpd_nt_C__host ($prod_seq C1 C) NodeTree.
+skip.
+Theorem $wpd_nt_C__$prod_assign : forall T L A NodeTree,
+   $structure_eq__nt_C T ($prod_assign L A) ->
+   $wpd_nt_C T NodeTree ->
+   $wpd_nt_C__host ($prod_assign L A) NodeTree.
+skip.
+Theorem $wpd_nt_C__$prod_ifThenElse : forall T B C1 C NodeTree,
+   $structure_eq__nt_C T ($prod_ifThenElse B C1 C) ->
+   $wpd_nt_C T NodeTree ->
+   $wpd_nt_C__host ($prod_ifThenElse B C1 C) NodeTree.
+skip.
+Theorem $wpd_nt_C__$prod_while : forall T B C NodeTree,
+   $structure_eq__nt_C T ($prod_while B C) ->
+   $wpd_nt_C T NodeTree ->
+   $wpd_nt_C__host ($prod_while B C) NodeTree.
 skip.
 
-Theorem $wpd_nt_A__$prod_plus :
-  forall T A1 A2 NodeTree,
-     $structure_eq__nt_A T ($prod_plus A1 A2) ->
-     $wpd_nt_A T NodeTree ->
-     $wpd_nt_A__host ($prod_plus A1 A2) NodeTree.
-skip.
-Theorem $wpd_nt_A__$prod_num :
-  forall T N NodeTree,
-     $structure_eq__nt_A T ($prod_num N) ->
-     $wpd_nt_A T NodeTree ->
-     $wpd_nt_A__host ($prod_num N) NodeTree.
-skip.
-Theorem $wpd_nt_A__$prod_name :
-  forall T N NodeTree,
-     $structure_eq__nt_A T ($prod_name N) ->
-     $wpd_nt_A T NodeTree ->
-     $wpd_nt_A__host ($prod_name N) NodeTree.
-skip.
-Theorem $wpd_nt_B__$prod_greater :
-  forall T A1 A2 NodeTree,
-     $structure_eq__nt_B T ($prod_greater A1 A2) ->
-     $wpd_nt_B T NodeTree ->
-     $wpd_nt_B__host ($prod_greater A1 A2) NodeTree.
-skip.
-Theorem $wpd_nt_B__$prod_equal :
-  forall T A1 A2 NodeTree,
-     $structure_eq__nt_B T ($prod_equal A1 A2) ->
-     $wpd_nt_B T NodeTree ->
-     $wpd_nt_B__host ($prod_equal A1 A2) NodeTree.
-skip.
-Theorem $wpd_nt_B__$prod_and :
-  forall T B1 B2 NodeTree,
-     $structure_eq__nt_B T ($prod_and B1 B2) ->
-     $wpd_nt_B T NodeTree ->
-     $wpd_nt_B__host ($prod_and B1 B2) NodeTree.
-skip.
-Theorem $wpd_nt_B__$prod_or :
-  forall T B1 B2 NodeTree,
-     $structure_eq__nt_B T ($prod_or B1 B2) ->
-     $wpd_nt_B T NodeTree ->
-     $wpd_nt_B__host ($prod_or B1 B2) NodeTree.
-skip.
-Theorem $wpd_nt_B__$prod_bTrue :
-  forall T NodeTree,
-     $structure_eq__nt_B T $prod_bTrue ->
-     $wpd_nt_B T NodeTree ->
-     $wpd_nt_B__host $prod_bTrue NodeTree.
-skip.
-Theorem $wpd_nt_B__$prod_bFalse :
-  forall T NodeTree,
-     $structure_eq__nt_B T $prod_bFalse ->
-     $wpd_nt_B T NodeTree ->
-     $wpd_nt_B__host $prod_bFalse NodeTree.
-skip.
-Theorem $wpd_nt_C__$prod_noop :
-  forall T NodeTree,
-     $structure_eq__nt_C T $prod_noop ->
-     $wpd_nt_C T NodeTree ->
-     $wpd_nt_C__host $prod_noop NodeTree.
-skip.
-Theorem $wpd_nt_C__$prod_seq :
-  forall T C1 C2 NodeTree,
-     $structure_eq__nt_C T ($prod_seq C1 C2) ->
-     $wpd_nt_C T NodeTree ->
-     $wpd_nt_C__host ($prod_seq C1 C2) NodeTree.
-skip.
-Theorem $wpd_nt_C__$prod_assign :
-  forall T N A NodeTree,
-     $structure_eq__nt_C T ($prod_assign N A) ->
-     $wpd_nt_C T NodeTree ->
-     $wpd_nt_C__host ($prod_assign N A) NodeTree.
-skip.
-Theorem $wpd_nt_C__$prod_ifThenElse :
-  forall T B C1 C2 NodeTree,
-     $structure_eq__nt_C T ($prod_ifThenElse B C1 C2) ->
-     $wpd_nt_C T NodeTree ->
-     $wpd_nt_C__host ($prod_ifThenElse B C1 C2) NodeTree.
-skip.
-Theorem $wpd_nt_C__$prod_while :
-  forall T B C NodeTree,
-     $structure_eq__nt_C T ($prod_while B C) ->
-     $wpd_nt_C T NodeTree ->
-     $wpd_nt_C__host ($prod_while B C) NodeTree.
-skip.
 
 Theorem $wpd_nt_A__ntr_nt_A : forall Tree NodeTree,
-  $wpd_nt_A Tree NodeTree ->
-  exists Node ChildList, NodeTree = $ntr_nt_A Node ChildList.
+   $wpd_nt_A Tree NodeTree ->
+   exists Node ChildList, NodeTree = $ntr_nt_A Node ChildList.
 skip.
 Theorem $wpd_nt_B__ntr_nt_B : forall Tree NodeTree,
-  $wpd_nt_B Tree NodeTree ->
-  exists Node ChildList, NodeTree = $ntr_nt_B Node ChildList.
+   $wpd_nt_B Tree NodeTree ->
+   exists Node ChildList, NodeTree = $ntr_nt_B Node ChildList.
 skip.
 Theorem $wpd_nt_C__ntr_nt_C : forall Tree NodeTree,
-  $wpd_nt_C Tree NodeTree ->
-  exists Node ChildList, NodeTree = $ntr_nt_C Node ChildList.
+   $wpd_nt_C Tree NodeTree ->
+   exists Node ChildList, NodeTree = $ntr_nt_C Node ChildList.
 skip.
 
 
-%WPD Nonterminal to Attribute Equations
 Theorem $wpd__to__env__nt_A : forall Tree NodeTree,
-  $wpd_nt_A Tree NodeTree ->
-  $env__nt_A Tree Tree NodeTree.
+   $wpd_nt_A Tree NodeTree ->
+   $env__nt_A Tree Tree NodeTree.
+skip.
+Theorem $wpd__to__env__nt_B : forall Tree NodeTree,
+   $wpd_nt_B Tree NodeTree ->
+   $env__nt_B Tree Tree NodeTree.
+skip.
+Theorem $wpd__to__env__nt_C : forall Tree NodeTree,
+   $wpd_nt_C Tree NodeTree ->
+   $env__nt_C Tree Tree NodeTree.
 skip.
 Theorem $wpd__to__intVal__nt_A : forall Tree NodeTree,
-  $wpd_nt_A Tree NodeTree ->
-  $intVal__nt_A Tree Tree NodeTree.
-skip.
-
-Theorem $wpd__to__env__nt_B : forall Tree NodeTree,
-  $wpd_nt_B Tree NodeTree ->
-  $env__nt_B Tree Tree NodeTree.
+   $wpd_nt_A Tree NodeTree ->
+   $intVal__nt_A Tree Tree NodeTree.
 skip.
 Theorem $wpd__to__boolVal__nt_B : forall Tree NodeTree,
-  $wpd_nt_B Tree NodeTree ->
-  $boolVal__nt_B Tree Tree NodeTree.
-skip.
-
-Theorem $wpd__to__env__nt_C : forall Tree NodeTree,
-  $wpd_nt_C Tree NodeTree ->
-  $env__nt_C Tree Tree NodeTree.
+   $wpd_nt_B Tree NodeTree ->
+   $boolVal__nt_B Tree Tree NodeTree.
 skip.
 Theorem $wpd__to__env_out__nt_C : forall Tree NodeTree,
-  $wpd_nt_C Tree NodeTree ->
-  $env_out__nt_C Tree Tree NodeTree.
+   $wpd_nt_C Tree NodeTree ->
+   $env_out__nt_C Tree Tree NodeTree.
 skip.
-/*We are only going to use this only when we have a
-  $structure_eq__nt_C hypothesis to do case analysis on the local tree
-  (case_local T.A).  To get it on the correct structure and not
-  replace the structure of the given tree, we can use the
-  $structure_eq assumption to replace the form for the case analysis.
-  This can still be proven easily automatically by using a
-  structure_eq theorem to get Tree = Tree', then proceeding as for the
-  other theorems in this section.*/
 Theorem $wpd__to__while_local_subWhile__nt_C : forall Tree Tree' NodeTree,
-  $structure_eq__nt_C Tree Tree' ->
-  $wpd_nt_C Tree NodeTree ->
-  $while_local_subWhile Tree Tree' NodeTree.
+   $structure_eq__nt_C Tree Tree' ->
+   $wpd_nt_C Tree NodeTree ->
+   $while_local_subWhile Tree Tree' NodeTree.
 skip.
 
 
-%Structural Equality
 Theorem $structure_eq__nt_A__equal : forall T1 T2,
-  $structure_eq__nt_A T1 T2 -> T1 = T2.
+   $structure_eq__nt_A T1 T2 -> T1 = T2.
+skip.
+Theorem $structure_eq__nt_A__symm : forall T1 T2,
+   $structure_eq__nt_A T1 T2 ->
+   $structure_eq__nt_A T2 T1.
+skip.
+Theorem $structure_eq__nt_A__wpd : forall T NTr,
+   $wpd_nt_A T NTr -> $structure_eq__nt_A T T.
 skip.
 Theorem $structure_eq__nt_B__equal : forall T1 T2,
-  $structure_eq__nt_B T1 T2 -> T1 = T2.
-skip.
-Theorem $structure_eq__nt_C__equal : forall T1 T2,
-  $structure_eq__nt_C T1 T2 -> T1 = T2.
-skip.
-
-Theorem $structure_eq__nt_A__wpd : forall T NTr,
-  $wpd_nt_A T NTr -> $structure_eq__nt_A T T.
-skip.
-Theorem $structure_eq__nt_B__wpd : forall T NTr,
-  $wpd_nt_B T NTr -> $structure_eq__nt_B T T.
-skip.
-Theorem $structure_eq__nt_C__wpd : forall T NTr,
-  $wpd_nt_C T NTr -> $structure_eq__nt_C T T.
-skip.
-
-Theorem $structure_eq__nt_A__symm : forall T1 T2,
-  $structure_eq__nt_A T1 T2 -> $structure_eq__nt_A T2 T1.
+   $structure_eq__nt_B T1 T2 -> T1 = T2.
 skip.
 Theorem $structure_eq__nt_B__symm : forall T1 T2,
-  $structure_eq__nt_B T1 T2 -> $structure_eq__nt_B T2 T1.
+   $structure_eq__nt_B T1 T2 ->
+   $structure_eq__nt_B T2 T1.
+skip.
+Theorem $structure_eq__nt_B__wpd : forall T NTr,
+   $wpd_nt_B T NTr -> $structure_eq__nt_B T T.
+skip.
+Theorem $structure_eq__nt_C__equal : forall T1 T2,
+   $structure_eq__nt_C T1 T2 -> T1 = T2.
 skip.
 Theorem $structure_eq__nt_C__symm : forall T1 T2,
-  $structure_eq__nt_C T1 T2 -> $structure_eq__nt_C T2 T1.
+   $structure_eq__nt_C T1 T2 ->
+   $structure_eq__nt_C T2 T1.
+skip.
+Theorem $structure_eq__nt_C__wpd : forall T NTr,
+   $wpd_nt_C T NTr -> $structure_eq__nt_C T T.
 skip.
 
-Theorem $structure_eq__$prod_plus : forall T A1 A2,
-  $structure_eq__nt_A T ($prod_plus A1 A2) ->
-  $structure_eq__nt_A__host T ($prod_plus A1 A2).
+
+Theorem $structure_eq__$prod_plus : forall T A1 A,
+   $structure_eq__nt_A T ($prod_plus A1 A) -> 
+   $structure_eq__nt_A__host T ($prod_plus A1 A).
 skip.
 Theorem $structure_eq__$prod_num : forall T N,
-  $structure_eq__nt_A T ($prod_num N) ->
-  $structure_eq__nt_A__host T ($prod_num N).
+   $structure_eq__nt_A T ($prod_num N) -> 
+   $structure_eq__nt_A__host T ($prod_num N).
 skip.
-Theorem $structure_eq__$prod_name : forall T N,
-  $structure_eq__nt_A T ($prod_name N) ->
-  $structure_eq__nt_A__host T ($prod_name N).
+Theorem $structure_eq__$prod_name : forall T L,
+   $structure_eq__nt_A T ($prod_name L) -> 
+   $structure_eq__nt_A__host T ($prod_name L).
 skip.
-Theorem $structure_eq__$prod_greater : forall T A1 A2,
-  $structure_eq__nt_B T ($prod_greater A1 A2) ->
-  $structure_eq__nt_B__host T ($prod_greater A1 A2).
+Theorem $structure_eq__$prod_greater : forall T A1 A,
+   $structure_eq__nt_B T ($prod_greater A1 A) -> 
+   $structure_eq__nt_B__host T ($prod_greater A1 A).
 skip.
-Theorem $structure_eq__$prod_equal : forall T A1 A2,
-  $structure_eq__nt_B T ($prod_equal A1 A2) ->
-  $structure_eq__nt_B__host T ($prod_equal A1 A2).
+Theorem $structure_eq__$prod_equal : forall T A1 A,
+   $structure_eq__nt_B T ($prod_equal A1 A) -> 
+   $structure_eq__nt_B__host T ($prod_equal A1 A).
 skip.
-Theorem $structure_eq__$prod_and : forall T B1 B2,
-  $structure_eq__nt_B T ($prod_and B1 B2) ->
-  $structure_eq__nt_B__host T ($prod_and B1 B2).
+Theorem $structure_eq__$prod_and : forall T B1 B,
+   $structure_eq__nt_B T ($prod_and B1 B) -> 
+   $structure_eq__nt_B__host T ($prod_and B1 B).
 skip.
-Theorem $structure_eq__$prod_or : forall T B1 B2,
-  $structure_eq__nt_B T ($prod_or B1 B2) ->
-  $structure_eq__nt_B__host T ($prod_or B1 B2).
+Theorem $structure_eq__$prod_or : forall T B1 B,
+   $structure_eq__nt_B T ($prod_or B1 B) -> 
+   $structure_eq__nt_B__host T ($prod_or B1 B).
 skip.
-Theorem $structure_eq__$prod_bTrue : forall T,
-  $structure_eq__nt_B T $prod_bTrue ->
-  $structure_eq__nt_B__host T $prod_bTrue.
+Theorem $structure_eq__$prod_bTrue : forall T ,
+   $structure_eq__nt_B T ($prod_bTrue ) -> 
+   $structure_eq__nt_B__host T ($prod_bTrue ).
 skip.
-Theorem $structure_eq__$prod_bFalse : forall T,
-  $structure_eq__nt_B T $prod_bFalse ->
-  $structure_eq__nt_B__host T $prod_bFalse.
+Theorem $structure_eq__$prod_bFalse : forall T ,
+   $structure_eq__nt_B T ($prod_bFalse ) -> 
+   $structure_eq__nt_B__host T ($prod_bFalse ).
 skip.
-Theorem $structure_eq__$prod_noop : forall T,
-  $structure_eq__nt_C T $prod_noop ->
-  $structure_eq__nt_C__host T $prod_noop.
+Theorem $structure_eq__$prod_noop : forall T ,
+   $structure_eq__nt_C T ($prod_noop ) -> 
+   $structure_eq__nt_C__host T ($prod_noop ).
 skip.
-Theorem $structure_eq__$prod_seq : forall T C1 C2,
-  $structure_eq__nt_C T ($prod_seq C1 C2) ->
-  $structure_eq__nt_C__host T ($prod_seq C1 C2).
+Theorem $structure_eq__$prod_seq : forall T C1 C,
+   $structure_eq__nt_C T ($prod_seq C1 C) -> 
+   $structure_eq__nt_C__host T ($prod_seq C1 C).
 skip.
-Theorem $structure_eq__$prod_assign : forall T N A,
-  $structure_eq__nt_C T ($prod_assign N A) ->
-  $structure_eq__nt_C__host T ($prod_assign N A).
+Theorem $structure_eq__$prod_assign : forall T L A,
+   $structure_eq__nt_C T ($prod_assign L A) -> 
+   $structure_eq__nt_C__host T ($prod_assign L A).
 skip.
-Theorem $structure_eq__$prod_ifThenElse : forall T B C1 C2,
-  $structure_eq__nt_C T ($prod_ifThenElse B C1 C2) ->
-  $structure_eq__nt_C__host T ($prod_ifThenElse B C1 C2).
+Theorem $structure_eq__$prod_ifThenElse : forall T B C1 C,
+   $structure_eq__nt_C T ($prod_ifThenElse B C1 C) -> 
+   $structure_eq__nt_C__host T ($prod_ifThenElse B C1 C).
 skip.
 Theorem $structure_eq__$prod_while : forall T B C,
-  $structure_eq__nt_C T ($prod_while B C) ->
-  $structure_eq__nt_C__host T ($prod_while B C).
+   $structure_eq__nt_C T ($prod_while B C) -> 
+   $structure_eq__nt_C__host T ($prod_while B C).
 skip.
-
