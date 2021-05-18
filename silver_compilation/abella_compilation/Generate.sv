@@ -751,6 +751,12 @@ String ::= prods::[(String, Type)] component::String
 }
 
 
+{-
+  This doesn't take into account that we can have equations on a
+  nonterminal for attributes which don't occur on that nonterminal if
+  they do occur on a child in some production.  We need to handle that
+  case in the future.
+-}
 function generateContents
 String ::= nonterminals::[String] attrs::[(String, Type)]
            --(attribute name, [nonterminal name])
@@ -801,8 +807,8 @@ String ::= nonterminals::[String] attrs::[(String, Type)]
 
 
 
-function main
-IOVal<Integer> ::= largs::[String] ioin::IO
+function imp
+String ::=
 {
   local nonterminals::[String] = ["A", "B", "C"];
   local attrs::[(String, Type)] =
@@ -892,6 +898,81 @@ IOVal<Integer> ::= largs::[String] ioin::IO
         generateContents(
            nonterminals, attrs, attrOccurrences, inheritedAttrs,
            localAttrs, prods, componentName);
+  return contents;
+}
+
+
+function stlc
+String ::=
+{
+  local nonterminals::[String] = ["Expr", "Root"];
+  local attrs::[(String, Type)] =
+        [ ( "env",
+            functorType(nameType("list"),
+               functorType(
+                  functorType(nameType("$pair"),
+                     functorType(nameType("list"),
+                                 nameType("$char"))),
+                  nameType("integer"))) ),
+          ( "value", nameType("integer") ),
+          ( "knownNames",
+            functorType(nameType("list"),
+               functorType(nameType("list"),
+                           nameType("$char"))) ),
+          ( "valExists", nameType("bool") ) ];
+  local attrOccurrences::[(String, [String])] =
+        [ ( "env", ["Expr"] ),
+          ( "value", ["Expr", "Root"] ),
+          ( "knownNames", ["Expr"] ),
+          ( "valExists", ["Expr", "Root"] ) ];
+  local inheritedAttrs::[String] = ["env", "knownNames"];
+  local localAttrs::[(String, [(String, Type)])] = [];
+  local prods::[(String, Type)] =
+        [ ( "intConst",
+            arrowType(nameType("integer"),
+                      nameType("nt_Expr")) ),
+          ( "plus",
+            arrowType(nameType("nt_Expr"),
+            arrowType(nameType("nt_Expr"),
+                      nameType("nt_Expr"))) ),
+          ( "minus",
+            arrowType(nameType("nt_Expr"),
+            arrowType(nameType("nt_Expr"),
+                      nameType("nt_Expr"))) ),
+          ( "mult",
+            arrowType(nameType("nt_Expr"),
+            arrowType(nameType("nt_Expr"),
+                      nameType("nt_Expr"))) ),
+          ( "letBind",
+            arrowType(functorType(nameType("list"),
+                                  nameType("$char")),
+            arrowType(nameType("nt_Expr"),
+            arrowType(nameType("nt_Expr"),
+                      nameType("nt_Expr")))) ),
+          ( "name",
+            arrowType(functorType(nameType("list"),
+                                  nameType("$char")),
+                      nameType("nt_Expr")) ),
+          ( "root",
+            arrowType(nameType("nt_Expr"),
+                      nameType("nt_Root")) ) ];
+  local componentName::String = "host";
+  local contents::String =
+        generateContents(
+           nonterminals, attrs, attrOccurrences, inheritedAttrs,
+           localAttrs, prods, componentName);
+  return contents;
+}
+
+
+function main
+IOVal<Integer> ::= largs::[String] ioin::IO
+{
+  local which::String = "stlc";
+  local contents::String =
+        if which == "imp"
+        then imp()
+        else stlc();
   local out::IO = print(contents, ioin);
   return ioval(out, 0);
 }
