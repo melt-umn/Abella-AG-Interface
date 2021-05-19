@@ -235,6 +235,7 @@ String ::= nonterminals::[String]
 function generateWpdNodeRelationsComponent
 String ::= attrOccurrences::[(String, [String])]
            localAttrs::[(String, [(String, Type)])]
+           associatedAttrs::[(String, [String])]
            attrs::[(String, Type)]
            prods::[(String, Type)] component::String
 {
@@ -266,25 +267,62 @@ String ::= attrOccurrences::[(String, [String])]
         groupBy(\ p1::(String, String, Type, String, String)
                   p2::(String, String, Type, String, String) ->
                   p1.4 == p2.4, sorted);
+  --(nonterminal, [associated attrs])
+  local associatedByGroups::[(String, [String])] =
+        let expanded::[(String, String)] =
+            flatMap(\ p::(String, [String]) ->
+                      map(\ nt::String -> (nt, p.1), p.2),
+                    associatedAttrs)
+        in
+        let sorted::[(String, String)] =
+            sortBy(\ p1::(String, String) p2::(String, String) ->
+                     p1.1 <= p2.2, expanded)
+        in
+        let grouped::[[(String, String)]] =
+            groupBy(\ p1::(String, String) p2::(String, String) ->
+                      p1.1 == p2.1, sorted)
+        in
+          map(\ l::[(String, String)] ->
+                (head(l).1, map(snd, l)), grouped)
+        end end end;
   return
      implode("",
-        map(generateWpdNodeRelationsComponentGroup(_, component),
+        map(generateWpdNodeRelationsComponentGroup(
+               _, associatedByGroups, component),
             grouped));
 }
 function generateWpdNodeRelationsComponentGroup
 String ::= group::[(String, String, Type, String, String)]
+           associatedByGroups::[(String, [String])]
            component::String
 {
   local nt::Type = nameToNonterminalType(head(group).4);
   local bodyCall::(String, [String]) =
         generateWpdNodeRelationsComponentGroupBody(group);
+  local theseAssociated::Maybe<[String]> =
+        findAssociated(head(group).4, associatedByGroups);
+  local associatedStr::String =
+        case theseAssociated of
+        | nothing() -> ""
+        | just(lst) ->
+          foldr(\ attr::String rest::String ->
+                  equationName(attr, nt) ++ " Tree Tree (" ++
+                  nodeTreeConstructorName(nt) ++ " Node CL)" ++
+                  if rest == "" then ""
+                                else " /\\\n         " ++ rest,
+                "", lst)
+        end;
   return
      "Define " ++ wpdNodeTypeName(nt) ++ "__" ++ component ++ " : " ++
      nt.pp ++ " -> $node_tree -> prop by\n" ++
      "   " ++ wpdNodeTypeName(nt) ++ "__" ++ component ++ " Tree (" ++
               nodeTreeConstructorName(nt) ++ " Node CL) :=\n" ++
      "      exists " ++ implode(" ", bodyCall.2) ++ ",\n" ++
-     bodyCall.1 ++ ".\n";
+     bodyCall.1 ++
+     ( if associatedStr == ""
+       then ""
+       else " /\\\n         " ++ associatedStr ) ++
+     ".\n";
 }
 function generateWpdNodeRelationsComponentGroupBody
 (String, [String]) ::= group::[(String, String, Type, String, String)]
@@ -752,10 +790,9 @@ String ::= prods::[(String, Type)] component::String
 
 
 {-
-  This doesn't take into account that we can have equations on a
-  nonterminal for attributes which don't occur on that nonterminal if
-  they do occur on a child in some production.  We need to handle that
-  case in the future.
+  The associatedAttrs are the attributes which don't occur on the
+  nonterminals associated with them, but which are set by some
+  production of that nonterminal on some child.
 -}
 function generateContents
 String ::= nonterminals::[String] attrs::[(String, Type)]
@@ -764,6 +801,8 @@ String ::= nonterminals::[String] attrs::[(String, Type)]
            inheritedAttrs::[String]
            --(local name, [(production name, attr type)])
            localAttrs::[(String, [(String, Type)])]
+           --(attr, [nonterminals])
+           associatedAttrs::[(String, [String])]
            prods::[(String, Type)]
            componentName::String
 {
@@ -778,14 +817,15 @@ String ::= nonterminals::[String] attrs::[(String, Type)]
      generateInheritedInformation(inheritedAttrs) ++ "\n\n" ++
      generateStructureEqFull(nonterminals) ++ "\n" ++
      generateStructureEqComponent(prods, componentName) ++ "\n\n" ++
-     generateEquationsFull(attrOccurrences) ++ "\n" ++
+     generateEquationsFull(attrOccurrences ++ associatedAttrs) ++
+        "\n" ++
      generateWpdRelationsFull(nonterminals) ++ "\n\n" ++
      --Here's where the component equation relations would go
      "Define $split : (A -> B -> prop) -> ($pair A B) -> prop by\n" ++
      "  $split SubRel ($pair_c A B) :=\n" ++
      "     SubRel A B.\n\n" ++
      generateWpdNodeRelationsComponent(attrOccurrences, localAttrs,
-        attrs, prods, componentName) ++ "\n" ++
+        associatedAttrs, attrs, prods, componentName) ++ "\n" ++
      generateWpdNtRelationsComponent(prods, componentName) ++ "\n\n" ++
      --
      --Switch over to generating axioms
@@ -794,13 +834,15 @@ String ::= nonterminals::[String] attrs::[(String, Type)]
                                     localAttrs, prods) ++ "\n\n" ++
      generateAccessIAxioms(attrOccurrences, attrs,
                            localAttrs, prods) ++ "\n\n" ++
-     generatePrimaryComponentTheorems(attrOccurrences, prods,
-                                      componentName) ++ "\n\n" ++
+     generatePrimaryComponentTheorems(
+        attrOccurrences ++ associatedAttrs, prods, componentName) ++
+        "\n\n" ++
      generateWPDPrimaryComponentTheorems(prods, componentName) ++
         "\n\n" ++
      generateNodeTreeFormTheorems(nonterminals) ++ "\n\n" ++
-     generateWpdToAttrEquationTheorems(attrOccurrences, attrs,
-                                       localAttrs, prods) ++ "\n\n" ++
+     generateWpdToAttrEquationTheorems(
+        attrOccurrences ++ associatedAttrs, attrs,
+        localAttrs, prods) ++ "\n\n" ++
      generateStructureEqNtTheorems(nonterminals) ++ "\n\n" ++
      generateStructureEqPrimaryComponentTheorems(prods, componentName);
 }
@@ -893,11 +935,12 @@ String ::=
              arrowType(nameType("nt_B"),
              arrowType(nameType("nt_C"),
                        nameType("nt_C"))) ) ];
+  local associatedAttrs::[(String, [String])] = [];
   local componentName::String = "host";
   local contents::String =
         generateContents(
            nonterminals, attrs, attrOccurrences, inheritedAttrs,
-           localAttrs, prods, componentName);
+           localAttrs, associatedAttrs, prods, componentName);
   return contents;
 }
 
@@ -956,11 +999,13 @@ String ::=
           ( "root",
             arrowType(nameType("nt_Expr"),
                       nameType("nt_Root")) ) ];
+  local associatedAttrs::[(String, [String])] =
+        [ ( "env", ["Root"] ), ( "knownNames", ["Root"] ) ];
   local componentName::String = "host";
   local contents::String =
         generateContents(
            nonterminals, attrs, attrOccurrences, inheritedAttrs,
-           localAttrs, prods, componentName);
+           localAttrs, associatedAttrs, prods, componentName);
   return contents;
 }
 

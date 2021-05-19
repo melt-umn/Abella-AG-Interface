@@ -76,6 +76,8 @@ Type $value__nt_Root   nt_Root -> nt_Root -> $node_tree -> prop.
 Type $knownNames__nt_Expr   nt_Expr -> nt_Expr -> $node_tree -> prop.
 Type $valExists__nt_Expr   nt_Expr -> nt_Expr -> $node_tree -> prop.
 Type $valExists__nt_Root   nt_Root -> nt_Root -> $node_tree -> prop.
+Type $env__nt_Root   nt_Root -> nt_Root -> $node_tree -> prop.
+Type $knownNames__nt_Root   nt_Root -> nt_Root -> $node_tree -> prop.
 
 Type $wpd_node_nt_Expr   nt_Expr -> $node_tree -> prop.
 Type $wpd_nt_Expr   nt_Expr -> $node_tree -> prop.
@@ -490,16 +492,6 @@ Define $valExists__nt_Root__host :
         $access_$_valExists_$_nt_Root TreeName Node ($attr_ex Val) /\
         $access_$_valExists_$_nt_Expr E ENode ($attr_ex Val).
 
-/*
-  Even though we don't have env and knownNames on Root, we still need
-  equation relations for them because we set them on the children.
-
-  The compilation process is currently not generating these, even
-  though it needs to do so.  This will be fixed in the future.
-*/
-Type $env__nt_Root          nt_Root -> nt_Root -> $node_tree -> prop.
-Type $knownNames__nt_Root   nt_Root -> nt_Root -> $node_tree -> prop.
-
 Define $env__nt_Root__host :
        nt_Root -> nt_Root -> $node_tree -> prop by
   $env__nt_Root__host TreeName ($prod_root E)
@@ -511,7 +503,6 @@ Define $knownNames__nt_Root__host :
   $knownNames__nt_Root__host TreeName ($prod_root E)
                  ($ntr_nt_Root Node (($ntr_nt_Expr ENode EL)::nil)) :=
      $access_$_knownNames_$_nt_Expr E ENode ($attr_ex nil).
-
 
 
 Define $split : (A -> B -> prop) -> ($pair A B) -> prop by
@@ -541,8 +532,7 @@ Define $wpd_node_nt_Root__host : nt_Root -> $node_tree -> prop by
             $is_attrVal (is_integer) Avalue /\
          $valExists__nt_Root Tree Tree ($ntr_nt_Root Node CL) /\
             $access_$_valExists_$_nt_Root Tree Node AvalExists /\
-            $is_attrVal (is_bool) AvalExists
-         %These need to be added into the generation
+            $is_attrVal (is_bool) AvalExists /\
          $env__nt_Root Tree Tree ($ntr_nt_Root Node CL) /\
          $knownNames__nt_Root Tree Tree ($ntr_nt_Root Node CL).
 
@@ -764,18 +754,15 @@ Theorem $valExists__nt_Root__$prod_root : forall E Node TreeName T,
    $valExists__nt_Root TreeName T Node ->
    $valExists__nt_Root__host TreeName ($prod_root E) Node.
 skip.
-%These two should be generated in the future, but are not currently.
-Theorem $env__nt_Root__$prod_root :
-  forall E Node TreeName T,
-     $structure_eq__nt_Root T ($prod_root E) ->
-     $env__nt_Root TreeName T Node ->
-     $env__nt_Root__host TreeName ($prod_root E) Node.
+Theorem $env__nt_Root__$prod_root : forall E Node TreeName T,
+   $structure_eq__nt_Root T ($prod_root E) ->
+   $env__nt_Root TreeName T Node ->
+   $env__nt_Root__host TreeName ($prod_root E) Node.
 skip.
-Theorem $knownNames__nt_Root__$prod_root :
-  forall E Node TreeName T,
-     $structure_eq__nt_Root T ($prod_root E) ->
-     $knownNames__nt_Root TreeName T Node ->
-     $knownNames__nt_Root__host TreeName ($prod_root E) Node.
+Theorem $knownNames__nt_Root__$prod_root : forall E Node TreeName T,
+   $structure_eq__nt_Root T ($prod_root E) ->
+   $knownNames__nt_Root TreeName T Node ->
+   $knownNames__nt_Root__host TreeName ($prod_root E) Node.
 skip.
 
 
@@ -850,14 +837,13 @@ Theorem $wpd__to__valExists__nt_Root : forall Tree NodeTree,
    $wpd_nt_Root Tree NodeTree ->
    $valExists__nt_Root Tree Tree NodeTree.
 skip.
-%These two should be generated in the future, but are not currently
 Theorem $wpd__to__env__nt_Root : forall Tree NodeTree,
-  $wpd_nt_Root Tree NodeTree ->
-  $env__nt_Root Tree Tree NodeTree.
+   $wpd_nt_Root Tree NodeTree ->
+   $env__nt_Root Tree Tree NodeTree.
 skip.
 Theorem $wpd__to__knownNames__nt_Root : forall Tree NodeTree,
-  $wpd_nt_Root Tree NodeTree ->
-  $knownNames__nt_Root Tree Tree NodeTree.
+   $wpd_nt_Root Tree NodeTree ->
+   $knownNames__nt_Root Tree Tree NodeTree.
 skip.
 
 
