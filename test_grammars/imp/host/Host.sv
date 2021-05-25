@@ -2,46 +2,45 @@ grammar imp:host;
 
 
 inherited attribute env::[(String, Integer)];
-synthesized attribute intVal::Integer;
-synthesized attribute boolVal::Boolean;
+synthesized attribute value<a>::a;
 synthesized attribute env_out::[(String, Integer)];
 
 
-nonterminal A with env, intVal;
+nonterminal A with env, value<Integer>;
 
 abstract production plus
 top::A ::= a1::A a2::A
 {
   a1.env = top.env;
   a2.env = top.env;
-  top.intVal = a1.intVal + a2.intVal;
+  top.value = a1.value + a2.value;
 }
 
 
 abstract production num
 top::A ::= i::Integer
 {
-  top.intVal = i;
+  top.value = i;
 }
 
 
 abstract production name
 top::A ::= s::String
 {
-  top.intVal = lookup(s, top.env);
+  top.value = lookup(s, top.env);
 }
 
 
 
 
-nonterminal B with env, boolVal;
+nonterminal B with env, value<Boolean>;
 
 abstract production greater
 top::B ::= a1::A a2::A
 {
   a1.env = top.env;
   a2.env = top.env;
-  top.boolVal = a1.intVal > a2.intVal;
+  top.value = a1.value > a2.value;
 }
 
 
@@ -50,7 +49,7 @@ top::B ::= a1::A a2::A
 {
   a1.env = top.env;
   a2.env = top.env;
-  top.boolVal = a1.intVal == a2.intVal;
+  top.value = a1.value == a2.value;
 }
 
 
@@ -59,7 +58,7 @@ top::B ::= b1::B b2::B
 {
   b1.env = top.env;
   b2.env = top.env;
-  top.boolVal = b1.boolVal && b2.boolVal;
+  top.value = b1.value && b2.value;
 }
 
 
@@ -68,21 +67,21 @@ top::B ::= b1::B b2::B
 {
   b1.env = top.env;
   b2.env = top.env;
-  top.boolVal = b1.boolVal && b2.boolVal;
+  top.value = b1.value && b2.value;
 }
 
 
 abstract production bTrue
 top::B ::=
 {
-  top.boolVal = true;
+  top.value = true;
 }
 
 
 abstract production bFalse
 top::B ::=
 {
-  top.boolVal = false;
+  top.value = false;
 }
 
 
@@ -110,7 +109,7 @@ abstract production assign
 top::C ::= name::String val::A
 {
   val.env = top.env;
-  top.env_out = (name, val.intVal)::top.env;
+  top.env_out = (name, val.value)::top.env;
 }
 
 
@@ -121,7 +120,7 @@ top::C ::= cond::B th::C el::C
   th.env = top.env;
   el.env = top.env;
   top.env_out =
-      if cond.boolVal
+      if cond.value
       then th.env_out
       else el.env_out;
 }
@@ -133,12 +132,12 @@ top::C ::= cond::B body::C
   cond.env = top.env;
   body.env = top.env;
   local subWhile::C =
-        if cond.boolVal
+        if cond.value
         then while(cond, body)
         else error("Should not access subWhile");
   subWhile.env = body.env_out;
   top.env_out =
-      if cond.boolVal
+      if cond.value
       then subWhile.env_out
       else top.env;
 }

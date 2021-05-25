@@ -56,21 +56,19 @@ String ::= nonterminals::[String]
 
 
 function generateAccessRelations
-String ::= attrOccurrences::[(String, [String])] attrs::[(String, Type)]
+String ::= attrOccurrences::[(String, [(String, Type)])]
 {
   return
      case attrOccurrences of
      | [] -> ""
-     | (attr, nts)::rest
-       when findAssociated(attr, attrs) matches just(attrTy) ->
-       foldr(\ nt::String rest::String ->
-               "Type " ++ accessRelationName(nameToNonterminalType(nt), attr) ++
-               "   " ++ nameToNonterminal(nt) ++ " -> " ++
-               nameToNodeType(nt) ++ " -> " ++
-               functorType(nameType(attrValTypeName), attrTy).pp ++
+     | (attr, ntstys)::rest ->
+       foldr(\ p::(String, Type) rest::String ->
+               "Type " ++ accessRelationName(nameToNonterminalType(p.1), attr) ++
+               "   " ++ nameToNonterminal(p.1) ++ " -> " ++
+               nameToNodeType(p.1) ++ " -> " ++
+               functorType(nameType(attrValTypeName), p.2).pp ++
                " -> prop.\n" ++ rest,
-             generateAccessRelations(rest, attrs), nts)
-     | _ -> error("Impossible for a well-typed grammar")
+             generateAccessRelations(rest), ntstys)
      end;
 }
 
@@ -199,19 +197,19 @@ String ::= prod::String prodTy::Type nt::Type component::String
 
 
 function generateEquationsFull
-String ::= attrOccurrences::[(String, [String])]
+String ::= attrOccurrences::[(String, [(String, Type)])]
 {
   return
      case attrOccurrences of
      | [] -> ""
-     | (attr, nts)::rest ->
+     | (attr, ntstys)::rest ->
        foldr(\ nt::String innerRest::String ->
                "Type " ++ equationName(attr,
                                        nameToNonterminalType(nt)) ++
                "   " ++ nameToNonterminal(nt) ++ " -> " ++
                nameToNonterminal(nt) ++ " -> $node_tree -> prop.\n" ++
                innerRest,
-             generateEquationsFull(rest), nts)
+             generateEquationsFull(rest), map(fst, ntstys))
      end;
 }
 
@@ -233,20 +231,16 @@ String ::= nonterminals::[String]
 
 
 function generateWpdNodeRelationsComponent
-String ::= attrOccurrences::[(String, [String])]
+String ::= attrOccurrences::[(String, [(String, Type)])]
            localAttrs::[(String, [(String, Type)])]
            associatedAttrs::[(String, [String])]
-           attrs::[(String, Type)]
            prods::[(String, Type)] component::String
 {
   --(tag, attr, attr type, nonterminal type on which it occurs, blank)
   local expanded::[(String, String, Type, String, String)] =
-        flatMap(\ p::(String, [String]) ->
-                  let attrTy::Type =
-                      findAssociated(p.1, attrs).fromJust in
-                      map(\ x::String ->
-                            ("attr", p.1, attrTy, x, ""), p.2)
-                  end,
+        flatMap(\ p::(String, [(String, Type)]) ->
+                  map(\ x::(String, Type) ->
+                        ("attr", p.1, x.2, x.1, ""), p.2),
                 attrOccurrences);
   --(tag, local attr, local type, nonterminal type, production)
   local locals::[(String, String, Type, String, String)] =
@@ -447,14 +441,14 @@ String ::= prod::String prodTy::Type nt::Type component::String
 
 
 function generateAccessUniquenessAxioms
-String ::= attrOccurrences::[(String, [String])]
+String ::= attrOccurrences::[(String, [(String, Type)])]
            localAttrs::[(String, [(String, Type)])]
            prods::[(String, Type)]
 {
   local attrs::[String] =
-        flatMap(\ p::(String, [String]) ->
-                  map(\ nt::String ->
-                        accessRelationName(nameToNonterminalType(nt), p.1),
+        flatMap(\ p::(String, [(String, Type)]) ->
+                  map(\ ntty::(String, Type) ->
+                        accessRelationName(nameToNonterminalType(ntty.1), p.1),
                       p.2), attrOccurrences);
   local locals::[String] =
         flatMap(\ p::(String, [(String, Type)]) ->
@@ -475,19 +469,18 @@ String ::= attrOccurrences::[(String, [String])]
 
 
 function generateAccessIAxioms
-String ::= attrOccurrences::[(String, [String])]
-           attrs::[(String, Type)]
+String ::= attrOccurrences::[(String, [(String, Type)])]
            localAttrs::[(String, [(String, Type)])]
            prods::[(String, Type)]
 {
   --[(access relation, attr type, nonterminal)]
   local attrInfos::[(String, Type, Type)] =
-        flatMap(\ p::(String, [String]) ->
-                  map(\ nt::String ->
+        flatMap(\ p::(String, [(String, Type)]) ->
+                  map(\ ntty::(String, Type) ->
                         (accessRelationName(
-                            nameToNonterminalType(nt), p.1),
-                         findAssociated(p.1, attrs).fromJust,
-                         nameToNonterminalType(nt)),
+                            nameToNonterminalType(ntty.1), p.1),
+                         ntty.2,
+                         nameToNonterminalType(ntty.1)),
                       p.2), attrOccurrences);
   local locals::[(String, Type, Type)] =
         flatMap(\ p::(String, [(String, Type)]) ->
@@ -536,15 +529,16 @@ String ::= attrOccurrences::[(String, [String])]
 
 
 function generatePrimaryComponentTheorems
-String ::= attrOccurrences::[(String, [String])]
+String ::= attrOccurrences::[(String, [(String, Type)])]
            prods::[(String, Type)]
            component::String
 {
   --(nonterminal, [attribute name])
   local attrsByNT::[(String, [String])] =
         let expanded::[(String, String)] =
-            flatMap(\ p::(String, [String]) ->
-                      map(\ nt::String -> (p.1, nt), p.2),
+            flatMap(\ p::(String, [(String, Type)]) ->
+                      map(\ ntty::(String, Type) ->
+                            (p.1, ntty.1), p.2),
                attrOccurrences)
         in
         let sorted::[(String, String)] =
@@ -686,20 +680,19 @@ String ::= nonterminals::[String]
 
 
 function generateWpdToAttrEquationTheorems
-String ::= attrOccurrences::[(String, [String])]
-           attrs::[(String, Type)]
+String ::= attrOccurrences::[(String, [(String, Type)])]
            localAttrs::[(String, [(String, Type)])]
            prods::[(String, Type)]
 {
   --[(equation relation, attr, attr type, nonterminal)]
   local attrInfos::[(String, String, Type, Type)] =
-        flatMap(\ p::(String, [String]) ->
-                  map(\ nt::String ->
+        flatMap(\ p::(String, [(String, Type)]) ->
+                  map(\ ntty::(String, Type) ->
                         (equationName(p.1,
-                            nameToNonterminalType(nt)),
+                            nameToNonterminalType(ntty.1)),
                          p.1,
-                         findAssociated(p.1, attrs).fromJust,
-                         nameToNonterminalType(nt)),
+                         ntty.2,
+                         nameToNonterminalType(ntty.1)),
                       p.2), attrOccurrences);
   --[(equation relation, prod, attr, attr type, nonterminal)]
   local locals::[(String, String, String, Type, Type)] =
@@ -804,9 +797,9 @@ String ::= prods::[(String, Type)] component::String
   production of that nonterminal on some child.
 -}
 function generateContents
-String ::= nonterminals::[String] attrs::[(String, Type)]
-           --(attribute name, [nonterminal name])
-           attrOccurrences::[(String, [String])]
+String ::= nonterminals::[String] attrs::[String]
+           --(attribute name, [(nonterminal name, attr ty)])
+           attrOccurrences::[(String, [(String, Type)])]
            inheritedAttrs::[String]
            --(local name, [(production name, attr type)])
            localAttrs::[(String, [(String, Type)])]
@@ -815,42 +808,47 @@ String ::= nonterminals::[String] attrs::[(String, Type)]
            prods::[(String, Type)]
            componentName::String
 {
+  local associatedAttrsExpanded::[(String, [(String, Type)])] =
+        map(\ p::(String, [String]) ->
+              (p.1, map(\ nt::String -> (nt, nameType("")), p.2)),
+            associatedAttrs);
   return
      generateNonterminalTypes(nonterminals) ++ "\n" ++
      generateProductions(prods) ++ "\n\n" ++
      generateNodeTypes(nonterminals) ++ "\n\n" ++
      "Kind $node_tree   type.\n\n" ++
      generateNodeTreeConstructors(nonterminals) ++ "\n\n" ++
-     generateAccessRelations(attrOccurrences, attrs) ++ "\n" ++
+     generateAccessRelations(attrOccurrences) ++ "\n" ++
      generateLocalAccessRelations(localAttrs, prods) ++ "\n\n" ++
      generateInheritedInformation(inheritedAttrs) ++ "\n\n" ++
      generateStructureEqFull(nonterminals) ++ "\n" ++
      generateStructureEqComponent(prods, componentName) ++ "\n\n" ++
-     generateEquationsFull(attrOccurrences ++ associatedAttrs) ++
-        "\n" ++
+     generateEquationsFull(
+        attrOccurrences ++ associatedAttrsExpanded) ++ "\n" ++
      generateWpdRelationsFull(nonterminals) ++ "\n\n" ++
      --Here's where the component equation relations would go
      "Define $split : (A -> B -> prop) -> ($pair A B) -> prop by\n" ++
      "  $split SubRel ($pair_c A B) :=\n" ++
      "     SubRel A B.\n\n" ++
      generateWpdNodeRelationsComponent(attrOccurrences, localAttrs,
-        associatedAttrs, attrs, prods, componentName) ++ "\n" ++
+        associatedAttrs, prods, componentName) ++ "\n" ++
      generateWpdNtRelationsComponent(prods, componentName) ++ "\n\n" ++
      --
      --Switch over to generating axioms
      --
      generateAccessUniquenessAxioms(attrOccurrences,
                                     localAttrs, prods) ++ "\n\n" ++
-     generateAccessIAxioms(attrOccurrences, attrs,
+     generateAccessIAxioms(attrOccurrences,
                            localAttrs, prods) ++ "\n\n" ++
      generatePrimaryComponentTheorems(
-        attrOccurrences ++ associatedAttrs, prods, componentName) ++
+        attrOccurrences ++ associatedAttrsExpanded,
+        prods, componentName) ++
         "\n\n" ++
      generateWPDPrimaryComponentTheorems(prods, componentName) ++
         "\n\n" ++
      generateNodeTreeFormTheorems(nonterminals) ++ "\n\n" ++
      generateWpdToAttrEquationTheorems(
-        attrOccurrences ++ associatedAttrs, attrs,
+        attrOccurrences ++ associatedAttrsExpanded,
         localAttrs, prods) ++ "\n\n" ++
      generateStructureEqNtTheorems(nonterminals, [componentName]) ++
         "\n\n" ++
@@ -863,28 +861,42 @@ function imp
 String ::=
 {
   local nonterminals::[String] = ["A", "B", "C"];
-  local attrs::[(String, Type)] =
+  local attrs::[String] =
+        [ "env", "value", "env_out" ];
+  local attrOccurrences::[(String, [(String, Type)])] =
         [ ( "env",
-            functorType(nameType("list"),
-               functorType(
-                  functorType(nameType("$pair"),
-                     functorType(nameType("list"),
-                                 nameType("$char"))),
-                  nameType("integer"))) ),
-          ( "intVal", nameType("integer") ),
-          ( "boolVal", nameType("bool") ),
+            [( "A",
+               functorType(nameType("list"),
+                  functorType(
+                     functorType(nameType("$pair"),
+                        functorType(nameType("list"),
+                                    nameType("$char"))),
+                     nameType("integer"))) ),
+             ( "B",
+               functorType(nameType("list"),
+                  functorType(
+                     functorType(nameType("$pair"),
+                        functorType(nameType("list"),
+                                    nameType("$char"))),
+                     nameType("integer"))) ),
+             ( "C",
+               functorType(nameType("list"),
+                  functorType(
+                     functorType(nameType("$pair"),
+                        functorType(nameType("list"),
+                                    nameType("$char"))),
+                     nameType("integer"))) )] ),
+          ( "value",
+            [( "A", nameType("integer") ),
+             ( "B", nameType("bool") )] ),
           ( "env_out",
-            functorType(nameType("list"),
-               functorType(
-                  functorType(nameType("$pair"),
-                     functorType(nameType("list"),
-                                 nameType("$char"))),
-                  nameType("integer"))) ) ];
-  local attrOccurrences::[(String, [String])] =
-        [ ( "env", ["A", "B", "C"] ),
-          ( "intVal", ["A"] ),
-          ( "boolVal", ["B"] ),
-          ( "env_out", ["C"] ) ];
+            [( "C",
+               functorType(nameType("list"),
+                  functorType(
+                     functorType(nameType("$pair"),
+                        functorType(nameType("list"),
+                                    nameType("$char"))),
+                     nameType("integer"))) )] ) ];
   local inheritedAttrs::[String] = ["env"];
   local localAttrs::[(String, [(String, Type)])] =
         [ ( "subWhile",
@@ -959,25 +971,28 @@ function stlc
 String ::=
 {
   local nonterminals::[String] = ["Expr", "Root"];
-  local attrs::[(String, Type)] =
+  local attrs::[String] =
+        [ "env", "value", "knownNames", "valExists" ];
+  local attrOccurrences::[(String, [(String, Type)])] =
         [ ( "env",
-            functorType(nameType("list"),
-               functorType(
-                  functorType(nameType("$pair"),
-                     functorType(nameType("list"),
-                                 nameType("$char"))),
-                  nameType("integer"))) ),
-          ( "value", nameType("integer") ),
+            [ ( "Expr",
+                functorType(nameType("list"),
+                   functorType(
+                      functorType(nameType("$pair"),
+                         functorType(nameType("list"),
+                                     nameType("$char"))),
+                      nameType("integer"))) )] ),
+          ( "value",
+            [ ( "Expr", nameType("integer") ),
+              ( "Root", nameType("integer") )] ),
           ( "knownNames",
-            functorType(nameType("list"),
-               functorType(nameType("list"),
-                           nameType("$char"))) ),
-          ( "valExists", nameType("bool") ) ];
-  local attrOccurrences::[(String, [String])] =
-        [ ( "env", ["Expr"] ),
-          ( "value", ["Expr", "Root"] ),
-          ( "knownNames", ["Expr"] ),
-          ( "valExists", ["Expr", "Root"] ) ];
+            [ ( "Expr",
+                functorType(nameType("list"),
+                   functorType(nameType("list"),
+                               nameType("$char"))) )] ),
+          ( "valExists",
+            [ ( "Expr", nameType("bool") ),
+              ( "Root", nameType("bool") )] ) ];
   local inheritedAttrs::[String] = ["env", "knownNames"];
   local localAttrs::[(String, [(String, Type)])] = [];
   local prods::[(String, Type)] =
