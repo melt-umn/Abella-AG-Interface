@@ -16,11 +16,11 @@ grammar interface_:toAbella:abstractSyntax;
   added.
 -}
 
-monoid attribute newAttrs::[(String, Type)] with [], ++;
+monoid attribute newAttrs::[String] with [], ++;
 propagate newAttrs on ListOfCommands, AnyCommand, TopCommand;
 
 
-monoid attribute newAttrOccurrences::[(String, [Type])]
+monoid attribute newAttrOccurrences::[(String, [(Type, Type)])]
        with [], combineAssociations(_, _);
 propagate newAttrOccurrences on ListOfCommands, AnyCommand, TopCommand;
 
@@ -153,18 +153,19 @@ top::TopCommand ::= names::[String] ty::Type
         end;
 
   top.newAttrs <-
-      foldr(\ s::String rest::[(String, Type)] ->
+      foldr(\ s::String rest::[String] ->
               if isAccessRelation(s)
-              then (accessRelationToAttr(s), new(attrTy))::rest
+              then accessRelationToAttr(s)::rest
               else rest,
             [], names);
 
   top.newAttrOccurrences <-
       --combining occurrence information for same attr happens by monoid join function
-      foldr(\ s::String rest::[(String, [Type])] ->
+      foldr(\ s::String rest::[(String, [(Type, Type)])] ->
               if isAccessRelation(s)
               then (accessRelationToAttr(s),
-                    [nameType(accessRelationToType(s))])::rest
+                    [(nameType(accessRelationToType(s)),
+                      new(attrTy))])::rest
               else rest,
             [], names);
 

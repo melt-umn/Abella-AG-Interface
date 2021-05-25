@@ -469,9 +469,9 @@ top::ProofCommand ::= h::HHint tree::String attr::String
       if treeExists && attrExists
       then case findAssociated(attr, top.currentState.knownAttrOccurrences) of
            | nothing() -> [] --covered by checking if attr exists, so impossible here
-           | just(nts) ->
+           | just(ntstys) ->
              if  wpdNtHyp.isJust
-             then if containsBy(tysEqual, errCheckTy, nts)
+             then if containsBy(tysEqual, errCheckTy, map(fst, ntstys))
                   then []
                   else [errorMsg("Attribute " ++ attr ++ " does not occur on " ++ tree)]
              else []
@@ -514,7 +514,7 @@ top::ProofCommand ::= h::HHint tree::String attr::String
       else [];
 
   local treeExists::Boolean = contains(tree, top.currentState.state.gatheredTrees);
-  local attrExists::Boolean = contains(attr, map(fst, top.currentState.knownAttrs));
+  local attrExists::Boolean = contains(attr, top.currentState.knownAttrs);
   --
   local newNum::String = toString(genInt());
   local eqHypName::String = "$Eq_" ++ newNum;

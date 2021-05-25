@@ -59,7 +59,7 @@ IOVal<Integer> ::=
 {
   local state::ProofState = head(stateList).snd.state;
   local debug::Boolean = head(stateList).snd.debug;
-  local attrs::[(String, Type)] = head(stateList).snd.knownAttrs;
+  local attrs::[String] = head(stateList).snd.knownAttrs;
   local prods::[(String, Type)] = head(stateList).snd.knownProductions;
 
   {-

@@ -41,8 +41,8 @@ synthesized attribute numCommandsSent::Integer;
 inherited attribute abellaFileParser::(Either<String ListOfCommands> ::= String String);
 
 --Gather new pieces for the prover state from the import
-synthesized attribute newKnownAttrs::[(String, Type)];
-synthesized attribute newKnownAttrOccurrences::[(String, [Type])];
+synthesized attribute newKnownAttrs::[String];
+synthesized attribute newKnownAttrOccurrences::[(String, [(Type, Type)])];
 synthesized attribute newKnownProductions::[(String, Type)];
 synthesized attribute newKnownFunctions::[(String, Type)];
 synthesized attribute newKnownWPDRelations::[(String, Type, [String])];
@@ -102,7 +102,7 @@ propagate treeTys on
 
 
 --Pairs of (attribute name, types it occurs on)
-autocopy attribute attrOccurrences::[(String, [Type])];
+autocopy attribute attrOccurrences::[(String, [(Type, Type)])];
 --Tuples of (WPD relation name, nonterminal type it is for, productions in order)
 autocopy attribute wpdRelations::[(String, Type, [String])];
 

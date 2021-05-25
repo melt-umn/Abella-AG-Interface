@@ -20,8 +20,9 @@ synthesized attribute state::ProofState;
 synthesized attribute debug::Boolean;
 synthesized attribute clean::Boolean;
 
-synthesized attribute knownAttrs::[(String, Type)];
-synthesized attribute knownAttrOccurrences::[(String, [Type])];
+synthesized attribute knownAttrs::[String];
+--[(attr, [(nonterminal, attr type)])]
+synthesized attribute knownAttrOccurrences::[(String, [(Type, Type)])];
 --any attr not in this list (and which is known) is synthesized
 synthesized attribute knownInheritedAttrs::[String];
 --local name and list of productions it occurs on and type there
@@ -50,8 +51,8 @@ synthesized attribute replacedState<a>::a;
 
 abstract production proverState
 top::ProverState ::=
-   state::ProofState debugMode::Boolean attrs::[(String, Type)]
-   attrOccurrences::[(String, [Type])] prods::[(String, Type)]
+   state::ProofState debugMode::Boolean attrs::[String]
+   attrOccurrences::[(String, [(Type, Type)])] prods::[(String, Type)]
    funs::[(String, Type)] wpdRelations::[(String, Type, [String])]
    inheritedAttrs::[String] localAttrs::[(String, [(String, Type)])]
    cleanMode::Boolean

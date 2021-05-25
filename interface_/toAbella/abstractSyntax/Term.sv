@@ -354,7 +354,7 @@ top::Metaterm ::= tree::String attr::String val::Term
 
   local occursOnTypes::[Type] =
         case findAssociated(attr, top.attrOccurrences) of
-        | just(tys) -> tys
+        | just(tys) -> map(fst, tys)
         | nothing() -> [] --unknown attribute
         end;
   local possibleTys::[Type] =
@@ -416,7 +416,7 @@ top::Metaterm ::= tree::String attr::String
 
   local occursOnTypes::[Type] =
         case findAssociated(attr, top.attrOccurrences) of
-        | just(tys) -> tys
+        | just(tys) -> map(fst, tys)
         | nothing() -> [] --unknown attribute
         end;
   local possibleTys::[Type] =
