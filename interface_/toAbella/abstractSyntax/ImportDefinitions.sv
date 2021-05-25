@@ -121,6 +121,7 @@ top::TopCommand ::= preds::[(String, Type)] defs::Defs
   top.newWPDRelations <-
       case preds of
       | [] -> [] --probably shouldn't get this
+      --Catches the components because of how isWpdTypeName checks
       | [(name, arrowType(ty, _))] when isWpdTypeName(name) ->
         [(name, ty, defs.wpdProdNames)]
         --aren't mutual in components, so can't be in longer list

@@ -9,6 +9,7 @@ attribute
    removeWPDTree, removedWPD,
    implicationPremises, conjunctionSplit,
    errors,
+   treeTys,
    knownDecoratedTrees, knownNames,
    currentState
 occurs on Metaterm;
@@ -43,6 +44,26 @@ top::Metaterm ::= t::Term r::Restriction
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
   top.removedWPD = top;
+
+  top.treeTys <-
+      case t of
+      | applicationTerm(nameTerm(f, _),
+                        consTermList(nameTerm(tree, _), _)) ->
+        if isAccessRelation(f)
+        then [(tree, nameType(accessRelationToType(f)))]
+        else if isWpdTypeName(f)
+        then [(tree, wpdNt_type(f))]
+        else if isStructureEqName(f)
+        then [(tree, structureEqToType(f))]
+        else []
+      | applicationTerm(nameTerm(f, _),
+                        consTermList(_,
+                        singleTermList(nameTerm(tree, _)))) ->
+        if isStructureEqName(f)
+        then [(tree, structureEqToType(f))]
+        else []
+      | _ -> []
+      end;
 }
 
 
@@ -304,6 +325,11 @@ top::Metaterm ::= b::Binder bindings::[(String, Maybe<Type>)] body::Metaterm
 
   top.conjunctionSplit =
       map(bindingMetaterm(b, bindings, _), body.conjunctionSplit);
+
+  top.treeTys :=
+      filter(\ p::(String, Type) ->
+               !containsAssociated(p.1, bindings),
+             body.treeTys);
 }
 
 

@@ -96,6 +96,8 @@ concrete productions top::PureCommand_c
   ambiguity.-}
 --| h::HHint_c 'assert' d::Depth_c m::Metaterm_c '.'
 --  { top.ast = assertTactic(h.ast, just(d.ast), m.ast); }
+| h::HHint_c 'trees_equal' hyp1::Hyp_c hyp2::Hyp_c '.'
+  { top.ast = treesEqual(h.ast, hyp1.ast, hyp2.ast); }
 | h::HHint_c 'assert' m::Metaterm_c '.'
   { top.ast = assertTactic(h.ast, nothing(), m.ast); }
 | 'exists' ew::EWitnesses_c '.'

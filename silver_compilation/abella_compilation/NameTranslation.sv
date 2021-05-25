@@ -221,6 +221,11 @@ String ::= prod::String
 {
   return "$structure_eq__" ++ prod;
 }
+function structureEqExpansionTheorem
+String ::= ty::Type component::String
+{
+  return "$structure_eq__" ++ ty.pp ++ "__" ++ component ++ "__expand";
+}
 
 
 --Productions

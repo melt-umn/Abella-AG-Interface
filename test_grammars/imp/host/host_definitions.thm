@@ -1011,6 +1011,10 @@ skip.
 Theorem $structure_eq__nt_A__wpd : forall T NTr,
    $wpd_nt_A T NTr -> $structure_eq__nt_A T T.
 skip.
+Theorem $structure_eq__nt_A__host__expand : forall T1 T2,
+   $structure_eq__nt_A__host T1 T2 ->
+   $structure_eq__nt_A T1 T2.
+skip.
 Theorem $structure_eq__nt_B__equal : forall T1 T2,
    $structure_eq__nt_B T1 T2 -> T1 = T2.
 skip.
@@ -1021,6 +1025,10 @@ skip.
 Theorem $structure_eq__nt_B__wpd : forall T NTr,
    $wpd_nt_B T NTr -> $structure_eq__nt_B T T.
 skip.
+Theorem $structure_eq__nt_B__host__expand : forall T1 T2,
+   $structure_eq__nt_B__host T1 T2 ->
+   $structure_eq__nt_B T1 T2.
+skip.
 Theorem $structure_eq__nt_C__equal : forall T1 T2,
    $structure_eq__nt_C T1 T2 -> T1 = T2.
 skip.
@@ -1030,6 +1038,10 @@ Theorem $structure_eq__nt_C__symm : forall T1 T2,
 skip.
 Theorem $structure_eq__nt_C__wpd : forall T NTr,
    $wpd_nt_C T NTr -> $structure_eq__nt_C T T.
+skip.
+Theorem $structure_eq__nt_C__host__expand : forall T1 T2,
+   $structure_eq__nt_C__host T1 T2 ->
+   $structure_eq__nt_C T1 T2.
 skip.
 
 
@@ -1089,3 +1101,4 @@ Theorem $structure_eq__$prod_while : forall T B C,
    $structure_eq__nt_C T ($prod_while B C) -> 
    $structure_eq__nt_C__host T ($prod_while B C).
 skip.
+

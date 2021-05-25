@@ -193,6 +193,13 @@ String ::= prod::String builtTy::Type
 {
   return "$wpd_" ++ builtTy.pp ++ "__" ++ prod;
 }
+function wpdComponentRelToComponentName
+String ::= rel::String
+{
+  --$wpd_<type name>__<component>
+  local index::Integer = lastIndexOf("__", rel);
+  return substring(index + 2, length(rel), rel);
+}
 
 function wpdNodeTreeForm
 String ::= ty::Type
@@ -273,6 +280,11 @@ function structureEqProdComponent
 String ::= prod::String
 {
   return "$structure_eq__" ++ prod;
+}
+function structureEqExpansionTheorem
+String ::= ty::Type component::String
+{
+  return "$structure_eq__" ++ ty.pp ++ "__" ++ component ++ "__expand";
 }
 
 

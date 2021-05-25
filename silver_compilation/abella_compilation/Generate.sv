@@ -733,7 +733,7 @@ String ::= attrOccurrences::[(String, [String])]
 
 
 function generateStructureEqNtTheorems
-String ::= nonterminals::[String]
+String ::= nonterminals::[String] components::[String]
 {
   return
      case nonterminals of
@@ -754,7 +754,16 @@ String ::= nonterminals::[String]
          wpdTypeName(ntTy) ++ " T NTr -> " ++
             typeToStructureEqName(ntTy) ++ " T T.\n" ++
          "skip.\n" ++
-         generateStructureEqNtTheorems(rest)
+         foldr(\ c::String rest::String ->
+                 "Theorem " ++ structureEqExpansionTheorem(ntTy, c) ++
+                    " : forall T1 T2,\n   " ++
+                 typeToStructureEqName(ntTy) ++ "__" ++ c ++
+                    " T1 T2 ->\n   " ++
+                 typeToStructureEqName(ntTy) ++ " T1 T2.\n" ++
+                 "skip.\n" ++
+                 rest,
+               "", components) ++
+         generateStructureEqNtTheorems(rest, components)
        end
      end;
 }
@@ -843,7 +852,8 @@ String ::= nonterminals::[String] attrs::[(String, Type)]
      generateWpdToAttrEquationTheorems(
         attrOccurrences ++ associatedAttrs, attrs,
         localAttrs, prods) ++ "\n\n" ++
-     generateStructureEqNtTheorems(nonterminals) ++ "\n\n" ++
+     generateStructureEqNtTheorems(nonterminals, [componentName]) ++
+        "\n\n" ++
      generateStructureEqPrimaryComponentTheorems(prods, componentName);
 }
 
@@ -1013,7 +1023,7 @@ String ::=
 function main
 IOVal<Integer> ::= largs::[String] ioin::IO
 {
-  local which::String = "stlc";
+  local which::String = "imp";
   local contents::String =
         if which == "imp"
         then imp()

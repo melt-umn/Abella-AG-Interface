@@ -135,3 +135,21 @@ function replaceAssociatedScopes
          end;
 }
 
+
+{-
+  Find the component which defines the given production.
+  The production is assumed to exist, and thus be found.
+  wpdRelations: [(wpd component name, nonterminal, [productions])]
+-}
+function findProdComponent
+String ::= prod::String wpdRelations::[(String, Type, [String])]
+{
+  local foundWpdComponentRel::Maybe<String> =
+        foldr(\ p::(String, Type, [String]) rest::Maybe<String> ->
+                if contains(prod, p.3)
+                then just(p.1)
+                else rest,
+              nothing(), wpdRelations);
+  return wpdComponentRelToComponentName(foundWpdComponentRel.fromJust);
+}
+

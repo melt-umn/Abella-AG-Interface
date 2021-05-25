@@ -857,6 +857,10 @@ skip.
 Theorem $structure_eq__nt_Expr__wpd : forall T NTr,
    $wpd_nt_Expr T NTr -> $structure_eq__nt_Expr T T.
 skip.
+Theorem $structure_eq__nt_Expr__host__expand : forall T1 T2,
+   $structure_eq__nt_Expr__host T1 T2 ->
+   $structure_eq__nt_Expr T1 T2.
+skip.
 Theorem $structure_eq__nt_Root__equal : forall T1 T2,
    $structure_eq__nt_Root T1 T2 -> T1 = T2.
 skip.
@@ -866,6 +870,10 @@ Theorem $structure_eq__nt_Root__symm : forall T1 T2,
 skip.
 Theorem $structure_eq__nt_Root__wpd : forall T NTr,
    $wpd_nt_Root T NTr -> $structure_eq__nt_Root T T.
+skip.
+Theorem $structure_eq__nt_Root__host__expand : forall T1 T2,
+   $structure_eq__nt_Root__host T1 T2 ->
+   $structure_eq__nt_Root T1 T2.
 skip.
 
 

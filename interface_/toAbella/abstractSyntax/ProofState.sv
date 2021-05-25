@@ -3,7 +3,8 @@ grammar interface_:toAbella:abstractSyntax;
 
 attribute
    cleanUpCommands, numCleanUpCommands,
-   nextStateIn, nextStateOut
+   nextStateIn, nextStateOut,
+   treeTys
 occurs on ProofState;
 
 
@@ -231,7 +232,8 @@ top::ProofState ::=
 
 
 attribute
-   knownDecoratedTrees
+   knownDecoratedTrees,
+   treeTys
 occurs on CurrentGoal;
 
 aspect production currentGoal
@@ -243,7 +245,8 @@ top::CurrentGoal ::= vars::[String] ctx::Context goal::Metaterm
 
 
 attribute
-   knownDecoratedTrees
+   knownDecoratedTrees,
+   treeTys
 occurs on Context;
 
 aspect production emptyContext
@@ -269,7 +272,8 @@ top::Context ::= c1::Context c2::Context
 
 
 attribute
-   knownDecoratedTrees
+   knownDecoratedTrees,
+   treeTys
 occurs on Hypothesis;
 
 aspect production metatermHyp

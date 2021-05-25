@@ -990,6 +990,198 @@ top::ProofCommand ::=
 }
 
 
+abstract production treesEqual
+top::ProofCommand ::= h::HHint hyp1::String hyp2::String
+{
+  top.pp = h.pp ++ "trees_equal " ++ hyp1 ++ " " ++ hyp2 ++ ".  ";
+
+  top.errors <-
+      case hyp1Find of
+      | just(_) -> []
+      | nothing() -> [errorMsg("Unknown hypothesis " ++ hyp1)]
+      end;
+  top.errors <-
+      case hyp2Find of
+      | just(_) -> []
+      | nothing() -> [errorMsg("Unknown hypothesis " ++ hyp2)]
+      end;
+  top.errors <-
+      case hyp1Find of
+      | nothing() -> []
+      | just(_) ->
+        if hyp1Good
+        then []
+        else [errorMsg("Hypothesis " ++ hyp1 ++ " must be an " ++
+                       "equality of a tree and a structure")]
+      end;
+  top.errors <-
+      case hyp2Find of
+      | nothing() -> []
+      | just(_) ->
+        if hyp2Good
+        then []
+        else [errorMsg("Hypothesis " ++ hyp2 ++ " must be an " ++
+                       "equality of a tree and a structure")]
+      end;
+  top.errors <-
+      if !(hyp1Good && hyp2Good)
+      then []
+      else if !tysEqual(treeTy, treeTy2)
+      then [errorMsg("Trees have different types:  " ++
+                     treeTy.pp ++ " and " ++ treeTy2.pp)]
+      else if prod != prod2
+      then [errorMsg("Trees are built by different productions " ++
+                     "and cannot be equal:  " ++ prodToName(prod) ++
+                     " and " ++ prodToName(prod2))]
+      else [];
+  --
+  local hyp1Good::Boolean =
+        case hyp1Find of
+        | just(termMetaterm(
+                  applicationTerm(_,
+                     consTermList(nameTerm(treeName, _),
+                     singleTermList(treeStructure))), _))
+          when treeStructure.isProdStructure -> true
+        | just(termMetaterm(
+                  applicationTerm(_,
+                     consTermList(treeStructure,
+                     singleTermList(nameTerm(treeName, _)))), _))
+          when treeStructure.isProdStructure -> true
+        | _ -> false
+        end;
+  local hyp2Good::Boolean =
+        case hyp2Find of
+        | just(termMetaterm(
+                  applicationTerm(_,
+                     consTermList(nameTerm(treeName, _),
+                     singleTermList(treeStructure))), _))
+          when treeStructure.isProdStructure -> true
+        | just(termMetaterm(
+                  applicationTerm(_,
+                     consTermList(treeStructure,
+                     singleTermList(nameTerm(treeName, _)))), _))
+          when treeStructure.isProdStructure -> true
+        | _ -> false
+        end;
+  
+  --
+  local hyp1Find::Maybe<Metaterm> =
+        findAssociated(hyp1, top.currentState.state.hypList);
+  local hyp2Find::Maybe<Metaterm> =
+        findAssociated(hyp2, top.currentState.state.hypList);
+  --gather all at once since I'm doing tho same matching for all three
+  --this is easier if I have to change the structure of the patterns
+  local stuff1::(String, Term) =
+        case hyp1Find of
+        | just(termMetaterm(
+                  applicationTerm(_,
+                     consTermList(nameTerm(treeName, _),
+                     singleTermList(treeStructure))), _))
+          when treeStructure.isProdStructure ->
+          (treeName, new(treeStructure))
+        | just(termMetaterm(
+                  applicationTerm(_,
+                     consTermList(treeStructure,
+                     singleTermList(nameTerm(treeName, _)))), _))
+          when treeStructure.isProdStructure ->
+          (treeName, new(treeStructure))
+        | _ -> error("Should not access this")
+        end;
+  local treeName1::String = stuff1.1;
+  local treeStructure1::Term = stuff1.2;
+  local stuff2::(String, Term) =
+        case hyp2Find of
+        | just(termMetaterm(
+                  applicationTerm(_,
+                     consTermList(nameTerm(treeName, _),
+                     singleTermList(treeStructure))), _))
+          when treeStructure.isProdStructure ->
+          (treeName, new(treeStructure))
+        | just(termMetaterm(
+                  applicationTerm(_,
+                     consTermList(treeStructure,
+                     singleTermList(nameTerm(treeName, _)))), _))
+          when treeStructure.isProdStructure ->
+          (treeName, new(treeStructure))
+        | _ -> error("Should not access this")
+        end;
+  local treeName2::String = stuff2.1;
+  local treeStructure2::Term = stuff2.2;
+  local prod::String =
+        case treeStructure1 of
+        | applicationTerm(nameTerm(prod, _), _) -> prod
+        | nameTerm(prod, _) -> prod
+        | _ -> error("Impossible (prod)")
+        end;
+  local treeTy::Type =
+        case findAssociated(prodToName(prod),
+                            top.currentState.knownProductions) of
+        | nothing() -> error("Impossible (treeTy)")
+        | just(ty) -> ty.resultType
+        end;
+  local prod2::String =
+        case treeStructure2 of
+        | applicationTerm(nameTerm(prod, _), _) -> prod
+        | nameTerm(prod, _) -> prod
+        | _ -> error("Impossible (prod2)")
+        end;
+  local treeTy2::Type =
+        case findAssociated(prodToName(prod2),
+                            top.currentState.knownProductions) of
+        | nothing() -> error("Impossible (treeTy)")
+        | just(ty) -> ty.resultType
+        end;
+  local component::String =
+        findProdComponent(prodToName(prod),
+                          top.currentState.knownWPDRelations);
+  --
+  local assertName::String = "$Assert_" ++ toString(genInt());
+  local structEqName::String = typeToStructureEqName(treeTy);
+  local structEqEqual::Clearable =
+        clearable(false, structureEqEqualTheorem(treeTy), []);
+  top.translation =
+      [
+       --set up what we want in the end
+       assertTactic(h, nothing(),
+          termMetaterm(
+             buildApplication(
+                nameTerm(structEqName, nothing()),
+                [nameTerm(treeName1, nothing()),
+                 nameTerm(treeName2, nothing())]),
+             emptyRestriction())),
+       --the way we're going to prove it
+       assertTactic(nameHint(assertName), nothing(),
+          impliesMetaterm(
+             termMetaterm(
+                buildApplication(
+                   nameTerm(structEqName, nothing()),
+                   [treeStructure1, treeStructure2]),
+                emptyRestriction()),
+             termMetaterm(
+                buildApplication(
+                   nameTerm(structEqName, nothing()),
+                   [nameTerm(treeName1, nothing()),
+                    nameTerm(treeName2, nothing())]),
+                emptyRestriction()))),
+       introsTactic([]),
+       applyTactic(noHint(), nothing(), structEqEqual,
+                   [hypApplyArg(hyp1, [])], []),
+       applyTactic(noHint(), nothing(), structEqEqual,
+                   [hypApplyArg(hyp2, [])], []),
+       searchTactic(),
+       --get the equality of structures as the goal
+       backchainTactic(nothing(), clearable(false, assertName, []), []),
+       clearCommand([assertName], false),
+       --change to the component version
+       backchainTactic(nothing(),
+          clearable(false,
+             structureEqExpansionTheorem(treeTy, component), []), [])
+      ];
+
+  top.shouldClean = true;
+}
+
+
 abstract production assertTactic
 top::ProofCommand ::= h::HHint depth::Maybe<Integer> m::Metaterm
 {
@@ -1003,7 +1195,9 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> m::Metaterm
   m.attrOccurrences = top.currentState.knownAttrOccurrences;
 
   m.boundVars = [];
-  m.finalTys = [];
+  m.finalTys =
+    [map(\ p::(String, Type) -> (p.1, just(p.2)),
+         top.currentState.state.treeTys)];
   m.knownNames = top.currentState.state.usedNames;
   m.knownTrees = m.gatheredTrees ++ top.currentState.state.gatheredTrees;
   m.knownDecoratedTrees =
@@ -1345,7 +1539,7 @@ top::ProofCommand ::= steps::Integer all::Boolean
 {
   top.pp = "unfold " ++ toString(steps) ++ if all then "(all).  " else ".  ";
 
-  top.translation = error("Translation not done in unfoldStepsTactic yet");
+  top.translation = [unfoldStepsTactic(steps, all)];
 
   --no real change to proof state
   top.shouldClean = false;
@@ -1374,7 +1568,7 @@ top::ProofCommand ::= all::Boolean
 {
   top.pp = "unfold " ++ if all then "(all).  " else ".  ";
 
-  top.translation = error("Translation not done in unfoldTactic yet");
+  top.translation = [unfoldTactic(all)];
 
   --no real change to proof state
   top.shouldClean = false;

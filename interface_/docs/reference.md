@@ -152,6 +152,14 @@ where `E3` and `E4` are fresh names:
 - `E3 = E1`
 - `E4 = E2`
 
+`trees_equal H1 H2.`  
+This tactic requires that `H1` and `H2` be equalities of trees with
+tree structures (e.g. `T = while(B, C)`).  It produces a hypothesis
+that the two tree names are equal, if the prover can determine that
+the two structures are equal.  If it cannot show they are equal, it
+produces a subgoal to show that the two structures are equal, after
+which it produces a hypothesis that the two structures are equal.
+
 
 
 ## Common Commands

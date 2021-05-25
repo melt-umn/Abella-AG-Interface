@@ -36,11 +36,11 @@
 (defconst silverabella-proof-commands
   '(
     ;;The actual proof commands (minus exists)
-    ;; case_structure | case_local |
+    ;; case_structure | case_local | trees_equal |
     ;; apply | assert | backchain | case | clear | induction | intros | left |
     ;; rename | right | search | split | split* | unfold |
     ;; witness | in | with
-    ("\\(case_structure\\)\\|\\(case_local\\)\\|\\(apply\\)\\|\\(assert\\)\\|\\(backchain\\)\\|\\(case\\)\\|\\(clear\\)\\|\\(induction\\)\\|\\(intros\\)\\|\\(left\\)\\|\\(rename\\)\\|\\(right\\)\\|\\(search\\)\\|\\(split\\)\\|\\(split*\\)\\|\\(unfold\\)\\|\\(witness\\)\\|\\(in\\)\\|\\(with\\)"
+    ("\\(case_structure\\)\\|\\(case_local\\)\\|\\(trees_equal\\)\\|\\(apply\\)\\|\\(assert\\)\\|\\(backchain\\)\\|\\(case\\)\\|\\(clear\\)\\|\\(induction\\)\\|\\(intros\\)\\|\\(left\\)\\|\\(rename\\)\\|\\(right\\)\\|\\(search\\)\\|\\(split\\)\\|\\(split*\\)\\|\\(unfold\\)\\|\\(witness\\)\\|\\(in\\)\\|\\(with\\)"
      . font-lock-function-name-face)
     ;;Auxiliary words to go with them
     ;; keep | on | to

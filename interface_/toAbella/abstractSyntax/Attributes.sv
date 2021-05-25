@@ -94,6 +94,13 @@ autocopy attribute knownDecoratedTrees::[(String, String, Term)];
 autocopy attribute knownNames::[String];
 
 
+--Find the types of all the trees
+monoid attribute treeTys::[(String, Type)];
+propagate treeTys on
+   Metaterm, ProofState, CurrentGoal, Context, Hypothesis
+   excluding bindingMetaterm;
+
+
 --Pairs of (attribute name, types it occurs on)
 autocopy attribute attrOccurrences::[(String, [Type])];
 --Tuples of (WPD relation name, nonterminal type it is for, productions in order)
