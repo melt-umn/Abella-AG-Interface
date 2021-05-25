@@ -194,6 +194,6 @@ split.
        %SubWhile1.env does exist
         apply IH to EqC H14 H17 H27. case_local T2.subWhile.
         trees_equal H24 H31.
-        apply IH_SubWhile to H20 _ H36 H28 H35 H21. case T2.env_out.
+        apply IH_SubWhile to H20 H36 H28 H35 H21. case T2.env_out.
         search.
 

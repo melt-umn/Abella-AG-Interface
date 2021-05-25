@@ -179,20 +179,24 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> theorem::Clearable
         end;
   --Add an extra arg for each WPD assumption
   --Only hidden premises should be WPD NT, but include WPD node to be safe
-  local buildExpandedArgs::([ApplyArg] ::= [Metaterm]) =
-        \ l::[Metaterm] ->
-          case l of
-          | termMetaterm(applicationTerm(nameTerm(rel, _), _), _)::tl
+  local buildExpandedArgs::([ApplyArg] ::= [Metaterm] [ApplyArg]) =
+        \ l::[Metaterm] args::[ApplyArg] ->
+          case l, args of
+          | [], _ -> args
+          | termMetaterm(applicationTerm(nameTerm(rel, _), _), _)::tl, _
             when isWpdTypeName(rel) || isWPD_NodeRelName(rel) ->
-            hypApplyArg("_", [])::buildExpandedArgs(tl)
-          | _ -> args
+            hypApplyArg("_", [])::buildExpandedArgs(tl, args)
+          | _::tl, a::argRest ->
+            a::buildExpandedArgs(tl, argRest)
+          --Going to be an error because there aren't enough arguments
+          | _, [] -> args
           end;
   local expandedArgs::[ApplyArg] =
         case foundTheorem of
         | nothing() ->
           error("Should not access expandedArgs without known theorem/hyp")
         | just(mt) ->
-          buildExpandedArgs(mt.implicationPremises)
+          buildExpandedArgs(mt.implicationPremises, args)
         end;
   local err_trans::Either<String [ProofCommand]> =
       case theorem of
