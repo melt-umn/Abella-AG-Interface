@@ -1,4 +1,6 @@
-
+Kind nat   type.
+Import "integers".
+Import "integer_addition".
 
 /*
   Lists are one of the few things actually built into Abella, so we
@@ -35,4 +37,22 @@ induction on 1. intros. case H1.
    case H2. search.
   %Subgoal 2
    case H2. apply IH to H3 H4. search.
+
+
+Define $fun__head : list A -> A -> prop by
+  $fun__head (H::T) H.
+
+Define $fun__tail : list A -> list A -> prop by
+  $fun__tail (H::T) T.
+
+Define $fun__length : list A -> integer -> prop by
+  $fun__length nil ($posInt $zero);
+  $fun__length (H::T) Length :=
+     exists TailLength,
+        $fun__length T TailLength /\
+        $plus_integer ($posInt ($succ $zero)) TailLength Length.
+
+Define $fun__null : list A -> bool -> prop by
+  $fun__null nil $btrue;
+  $fun__null (H::T) $bfalse.
 

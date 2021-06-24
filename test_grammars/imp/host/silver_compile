@@ -1,0 +1,7 @@
+#/bin/bash
+
+GRAMMAR=imp:host
+
+SVJVM_FLAGS="-Xmx8000M -Xss40M" silver $@ --abella-compile --abella-library "/home/tux/research/Abella-AG-Interface/silver_compilation/encodingPrimitives/" -I ../.. $GRAMMAR
+
+

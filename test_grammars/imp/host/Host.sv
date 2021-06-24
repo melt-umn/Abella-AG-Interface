@@ -67,7 +67,7 @@ top::B ::= b1::B b2::B
 {
   b1.env = top.env;
   b2.env = top.env;
-  top.value = b1.value && b2.value;
+  top.value = b1.value || b2.value;
 }
 
 
@@ -155,3 +155,9 @@ Integer ::= name::String env::[(String, Integer)]
      else lookup(name, tail(env));
 }
 
+--Just to test the encoding
+function impossible
+Integer ::= name::String
+{
+  return error("Impossible");
+}
