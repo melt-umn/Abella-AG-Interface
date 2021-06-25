@@ -9,6 +9,12 @@ Define is_pair : (A -> prop) -> (B -> prop) -> ($pair A B) -> prop by
      SubRelA A /\ SubRelB B.
 
 
+Define $fun__fst : $pair A B -> A -> prop by
+  $fun__fst ($pair_c A B) A.
+
+Define $fun__snd : $pair A B -> B -> prop by
+  $fun__snd ($pair_c A B) B.
+
 
 
 /*

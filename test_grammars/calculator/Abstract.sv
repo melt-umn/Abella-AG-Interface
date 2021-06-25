@@ -99,6 +99,14 @@ Integer ::= env::[(String, Integer)] n::String
          else lookup(tail(env), n);
 }
 
+function contains
+Boolean ::= n::String l::[String]
+{
+  return if null(l)
+         then false
+         else head(l) == n || contains(n, tail(l));
+}
+
 
 
 

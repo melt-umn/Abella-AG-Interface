@@ -254,3 +254,17 @@ only be concerned with the cases where the the attribute has a value,
 making the no-value case trivial, or the case where it does not have a
 value, making the value case trivial.
 
+
+
+## Encoding Function Operations on Primitive Types
+In the encoding, we said we could encode common functions on primitive
+types directly.  For example, we said we could encode `null`
+directly.  This turns out to be less useful than we might like.  It is
+easy enough to do if we have `null(l)` written directly in the code.
+However, these functions could be used without being applied directly
+(e.g. as an argument to a higher-order function), in which case it is
+necessary to have a relation for them anyway.  For this reason, even
+when they are applied directly, we will encode them as we encode other
+functions, by creating a relation the clauses of which encode the
+logic then using this relation when the function is called.
+
