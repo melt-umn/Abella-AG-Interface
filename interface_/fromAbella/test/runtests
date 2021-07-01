@@ -1,5 +1,5 @@
 #!/bin/bash
 
-silver --clean -I ../../../ interface_:fromAbella:test || exit 1
+SVJVM_FLAGS="-Xmx8000M -Xss40M" silver --clean -I ../../../ interface_:fromAbella:test || exit 1
 
 java -jar interface_.fromAbella.test.jar
