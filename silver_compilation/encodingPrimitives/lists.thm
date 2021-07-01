@@ -56,3 +56,29 @@ Define $fun__null : list A -> bool -> prop by
   $fun__null nil $btrue;
   $fun__null (H::T) $bfalse.
 
+
+Theorem head_unique[A] : forall L (H1 H2 : A),
+   $fun__head L H1 -> $fun__head L H2 -> H1 = H2.
+intros. case H1. case H2. search.
+
+Theorem tail_unique[A] : forall (L T1 T2 : list A),
+   $fun__tail L T1 -> $fun__tail L T2 -> T1 = T2.
+intros. case H1. case H2. search.
+
+Theorem length_unique[A] : forall (L : list A) Len1 Len2,
+   $fun__length L Len1 -> $fun__length L Len2 -> Len1 = Len2.
+induction on 1. intros. case H1.
+  %Subgoal 1:  null
+   case H2. search.
+  %Subgoal 2:  non-null
+   case H2. apply IH to H3 H5. apply plus_integer_unique to H4 H6.
+   search.
+
+Theorem null_unique[A] : forall (L : list A) B1 B2,
+   $fun__null L B1 -> $fun__null L B2 -> B1 = B2.
+intros. case H1.
+  %Subgoal 1:  null
+   case H2. search.
+  %Subgoal 2:  non-null
+   case H2. search.
+

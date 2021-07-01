@@ -30,6 +30,7 @@ top::Metaterm ::= leftSide::Term rightSide::Term
   --function name, function arguments
   local leftFun::Maybe<(String, ParenthesizedArgs)> =
         case leftSide of
+        --multiple arguments
         | applicationTerm(nameTerm(fun, _),
              singleTermList(pairTerm(contents)))
           when findAssociated(fun,
@@ -38,10 +39,18 @@ top::Metaterm ::= leftSide::Term rightSide::Term
                 foldr(addParenthesizedArgs(_, _),
                       emptyParenthesizedArgs(),
                       contents.argList)))
+        --single argument
+        | applicationTerm(nameTerm(fun, _),
+             singleTermList(contents))
+          when findAssociated(fun,
+                  top.currentState.knownFunctions).isJust ->
+          just((fun, addParenthesizedArgs(contents,
+                        emptyParenthesizedArgs())))
         | _ -> nothing()
         end;
   local rightFun::Maybe<(String, ParenthesizedArgs)> =
         case rightSide of
+        --multiple arguments
         | applicationTerm(nameTerm(fun, _),
              singleTermList(pairTerm(contents)))
           when findAssociated(fun,
@@ -50,11 +59,19 @@ top::Metaterm ::= leftSide::Term rightSide::Term
                 foldr(addParenthesizedArgs(_, _),
                       emptyParenthesizedArgs(),
                       contents.argList)))
+        --single argument
+        | applicationTerm(nameTerm(fun, _),
+             singleTermList(contents))
+          when findAssociated(fun,
+                  top.currentState.knownFunctions).isJust ->
+          just((fun, addParenthesizedArgs(contents,
+                        emptyParenthesizedArgs())))
         | _ -> nothing()
         end;
   --praduction term
   local leftProd::Maybe<Term> =
         case leftSide of
+        --multiple arguments
         | applicationTerm(nameTerm(prod, _),
              singleTermList(pairTerm(contents)))
           when findAssociated(prod,
@@ -62,9 +79,18 @@ top::Metaterm ::= leftSide::Term rightSide::Term
           just(prodTerm(prod,
                   foldr(addParenthesizedArgs(_, _),
                         emptyParenthesizedArgs(), contents.argList)))
+        --single argument
+        | applicationTerm(nameTerm(prod, _),
+             singleTermList(contents))
+          when findAssociated(prod,
+                  top.currentState.knownProductions).isJust ->
+          just(prodTerm(prod,
+                  addParenthesizedArgs(contents,
+                     emptyParenthesizedArgs())))
         | _ -> nothing()
         end;
   local rightProd::Maybe<Term> =
+        --multiple arguments
         case rightSide of
         | applicationTerm(nameTerm(prod, _),
              singleTermList(pairTerm(contents)))
@@ -73,6 +99,14 @@ top::Metaterm ::= leftSide::Term rightSide::Term
           just(prodTerm(prod,
                   foldr(addParenthesizedArgs(_, _),
                         emptyParenthesizedArgs(), contents.argList)))
+        --single argument
+        | applicationTerm(nameTerm(prod, _),
+             singleTermList(contents))
+          when findAssociated(prod,
+                  top.currentState.knownProductions).isJust ->
+          just(prodTerm(prod,
+                  addParenthesizedArgs(contents,
+                     emptyParenthesizedArgs())))
         | _ -> nothing()
         end;
   --

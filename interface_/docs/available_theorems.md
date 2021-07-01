@@ -235,6 +235,8 @@ convenience, these are sorted by types.
   `forall S1 S2 S3, is_string S1 -> is_string S2 -> S1 ++ S2 = S3 -> is_string S3`
 - `is_string_eq_or_not` :  
   `forall S1 S2, is_string S1 -> is_string S2 -> S1 = S2 \/ (S1 = S2 -> false)`
+- `append_unique` :  
+  `forall L1 L2 L3 L3', L1 ++ L2 = L3 -> L1 ++ L2 = L3' -> L3 = L3'`
 
 
 
@@ -249,4 +251,12 @@ convenience, these are sorted by types.
   `forall L E SubRel, is_list SubRel L -> member E L -> SubRel E`
 - `is_list_append` :  
   `forall L E SubRel, is_list SubRel L -> member E L -> SubRel E`
+- `head_unique` :  
+  `forall L H1 H2, head(L) = H1 -> head(L) = H2 -> H1 = H2`
+- `tail_unique` :  
+  `forall L T1 T2, tail(L) = T1 -> tail(L) = T2 -> T1 = T2`
+- `length_unique` :  
+  `forall L Len1 Len2, length(L) = Len1 -> length(L) = Len2 -> Len1 = Len2`
+- `null_unique` :  
+  `forall L B1 B2, null(L) = B1 -> null(L) = B2 -> B1 = B2`
 

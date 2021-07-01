@@ -52,6 +52,45 @@ the implementation details as described above.
 
 
 
+# Todo
+- Parse failure:
+```
+Error: While matching argument #1:
+Unification failure
+Subgoal 1.2.1:
+
+Variables: L N Ret Ret' P1 P2 P P3 FunResult1
+IH : forall L N Ret Ret', $fun__lookup N L Ret * -> $fun__lookup N L Ret' ->
+       Ret =
+     Ret'
+H3 : $fun__head L ($pair_c N P1)
+H4 : $fun__head L ($pair_c P2 Ret)
+H5 : $fun__head L ($pair_c P P3)
+H6 : P = N -> false
+H7 : $fun__tail L FunResult1
+H8 : $fun__lookup N FunResult1 Ret'
+============================
+ false
+
+Subgoal 1.2 is:
+ Ret = Ret'
+
+Subgoal 2 is:
+ Ret = Ret'
+
+```
+- Function calls can have inductive restrictions on them, but
+  translating to show them as functions eliminates those.
+  Unfortunately, this means the function production needs to include a
+  restriction child.
+- Doing `case_structure` again on the same tree after it was done once
+  seems to make it hang.  This should probably give an error based on
+  the tree already having a structure assigned.
+
+
+
+
+
 # Things to think about doing:
 
 - Perhaps keep track of abbreviated hypotheses.  This might be useful
@@ -76,6 +115,10 @@ the implementation details as described above.
 - It would be nice to have some kind of a `Search` like Coq has to
   find relevant theorems, based on the relation being used or
   something like that.
+- It is not always obvious what the necessary pieces are to prove a
+  function holds.  Perhaps there is a way to display function
+  definitions in an Abella way without the user needing to open the
+  definitions file and read the actual Abella relation.
 
 
 

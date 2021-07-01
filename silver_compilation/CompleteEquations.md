@@ -107,7 +107,7 @@ encode_failure Env (t1 / t1) (l1 ++ l2 ++ [l2_success /\ x2 = 0])
 ```
 
 
-**Addition (and other defined operations, conjunction/disjunction,
+**Addition (and other defined operations without short circuiting,
   equality checking):**
 ```
 encode_failure Env t1 l1

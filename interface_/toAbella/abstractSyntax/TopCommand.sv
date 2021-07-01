@@ -197,7 +197,7 @@ top::TopCommand ::= preds::[(String, Type)] defs::Defs
          error("Should not reach here; definitionDeclaration production")
        | [pair(a, b)] -> a ++ " : " ++ b.pp
        | pair(a,b)::rest ->
-         a ++ " := " ++ b.pp ++ ", " ++ buildPreds(rest)
+         a ++ " : " ++ b.pp ++ ", " ++ buildPreds(rest)
        end;
   local predsString::String =
      if null(preds)

@@ -83,7 +83,32 @@ top::ProverState ::=
 function defaultProverState
 ProverState ::=
 {
-  return proverState(noProof(), false, [], [], [], [],
+  --Functions which are part of lists and pairs
+  --Do I do any typechecking where I need variable types?
+  local builtInFunctions::[(String, Type)] =
+        [
+         ("head", arrowType(functorType(nameType("list"), nameType("A")),
+                  arrowType(nameType("A"),
+                            nameType("prop")))),
+         ("null", arrowType(functorType(nameType("list"), nameType("A")),
+                  arrowType(nameType("bool"),
+                            nameType("prop")))),
+         ("tail", arrowType(functorType(nameType("list"), nameType("A")),
+                  arrowType(functorType(nameType("list"), nameType("A")),
+                            nameType("prop")))),
+         ("length", arrowType(functorType(nameType("list"), nameType("A")),
+                    arrowType(nameType("integer"),
+                            nameType("prop")))),
+         ("fst", arrowType(functorType(functorType(nameType("$pair"),
+                                          nameType("A")), nameType("B")),
+                 arrowType(nameType("A"),
+                           nameType("prop")))),
+         ("snd", arrowType(functorType(functorType(nameType("$pair"),
+                                          nameType("A")), nameType("B")),
+                 arrowType(nameType("A"),
+                           nameType("prop"))))
+        ];
+  return proverState(noProof(), false, [], [], [], builtInFunctions,
                  [], [], [], true, []);
 }
 
