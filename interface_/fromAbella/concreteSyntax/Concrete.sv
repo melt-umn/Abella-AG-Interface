@@ -462,7 +462,9 @@ concrete productions top::ProcessingErrorMessage_c
 | 'Cannot go that far back!'
   { top.ast = cannotGoBack(); }
 | 'While matching argument #' argnum::Number_t ':' 'Unification failure (constant clash between' name1::ErrorId_t 'and' name2::ErrorId_t ')'
-  { top.ast = matchingUnificationFailure(toInteger(argnum.lexeme), name1.lexeme, name2.lexeme); }
+  { top.ast = matchingUnificationFailureConstants(toInteger(argnum.lexeme), name1.lexeme, name2.lexeme); }
+| 'While matching argument #' argnum::Number_t ':' 'Unification failure'
+  { top.ast = matchingUnificationFailure(toInteger(argnum.lexeme)); }
 | 'Unification failure'
   { top.ast = unificationFailure(); }
 | 'Type constructor' name::ErrorId_t 'has inconsistent kind declarations'

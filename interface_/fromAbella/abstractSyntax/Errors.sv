@@ -292,7 +292,7 @@ top::ProcessingErrorMessage ::=
 }
 
 
-abstract production matchingUnificationFailure
+abstract production matchingUnificationFailureConstants
 top::ProcessingErrorMessage ::= argnum::Integer const1::String const2::String
 {
   top.pp = "While matching argument #" ++ toString(argnum) ++
@@ -303,24 +303,34 @@ top::ProcessingErrorMessage ::= argnum::Integer const1::String const2::String
       if isAccessRelation(const1)
       then if isAccessRelation(const1)
            then if accessRelationToAttr(const1) == accessRelationToAttr(const2)
-                then matchingUnificationFailure(
+                then matchingUnificationFailureConstants(
                         argnum,
                         accessRelationToAttr(const1) ++ " on " ++
                            accessRelationToType(const1),
                         accessRelationToAttr(const2) ++ " on " ++
                            accessRelationToType(const2))
-                else matchingUnificationFailure(
+                else matchingUnificationFailureConstants(
                         argnum, accessRelationToAttr(const1),
                         accessRelationToAttr(const2))
-           else matchingUnificationFailure(argnum,
+           else matchingUnificationFailureConstants(argnum,
                    "attribute access", const2)
       else if isAccessRelation(const2)
-      then matchingUnificationFailure(argnum, const1, "attribute access")
+      then matchingUnificationFailureConstants(argnum, const1, "attribute access")
       else if const1 == "$attr_no"
-      then matchingUnificationFailure(argnum, "<no value>", "value")
+      then matchingUnificationFailureConstants(argnum, "<no value>", "value")
       else if const2 == "$attr_no"
-      then matchingUnificationFailure(argnum, "value", "<no value>")
-      else matchingUnificationFailure(argnum, const1, const2);
+      then matchingUnificationFailureConstants(argnum, "value", "<no value>")
+      else matchingUnificationFailureConstants(argnum, const1, const2);
+}
+
+
+abstract production matchingUnificationFailure
+top::ProcessingErrorMessage ::= argnum::Integer
+{
+  top.pp = "While matching argument #" ++ toString(argnum) ++
+           ":\nUnification failure";
+
+  top.translation = matchingUnificationFailure(argnum);
 }
 
 

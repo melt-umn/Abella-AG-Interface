@@ -25,12 +25,6 @@ the implementation details as described above.
 
 # General notes
 
-- We need to keep track of the extra things we add to theorems, or
-  some standard way of figuring out what we add.  When the user
-  applies something with the `apply` tactic, we migth need to add some
-  things to the premises they are applying with.  For example, if we
-  added a WPD premise, we need to give it a WPD premise.  The things
-  we add can probably just be underscores.
 - We probably want to ban case analysis on operations like addition.
   There is nothing the user should gain by looking at how arithmetic
   operations are implemented, since that isn't really how they should
@@ -100,8 +94,6 @@ Subgoal 2 is:
   abbreviation is gone.
 - I really like Coq's semantic bullet points.  It annoys me that
   Abella doesn't have them.  I would like to add them here.
-- It would be nice to have functions show as `fun(args) = result`
-  rather than as a relation `fun <args> result`.
 - I'm having problems with parsing in `fromAbella` if I include
   abbreviated hypotheses.  We could just disallow abbreviation;
   alternatively, we could change the command `abbrev H "text".` into

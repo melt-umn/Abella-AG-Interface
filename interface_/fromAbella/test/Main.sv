@@ -1,8 +1,8 @@
-grammar fromAbella:test;
+grammar interface_:fromAbella:test;
 
 
-imports fromAbella:concreteSyntax;
-imports fromAbella:abstractSyntax;
+imports interface_:fromAbella:concreteSyntax;
+imports interface_:fromAbella:abstractSyntax;
 
 
 {-
@@ -12,7 +12,7 @@ imports fromAbella:abstractSyntax;
 
 parser topparse::FullDisplay_c
 {
-  fromAbella:concreteSyntax;
+  interface_:fromAbella:concreteSyntax;
 }
 
 
