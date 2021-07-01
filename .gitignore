@@ -10,5 +10,8 @@ build.xml
 # Output from compiling Abella files
 *.out
 
+# Generated Abella files for example grammars
+test_grammars/**/*.thm
+
 # Emacs autosave
 *~
