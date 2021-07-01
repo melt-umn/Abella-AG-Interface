@@ -125,10 +125,11 @@ top::Metaterm ::= t::Term result::Term
   top.shouldHide = false;
 }
 
+--We need a restriction because we can do induction on functions
 abstract production funMetaterm
-top::Metaterm ::= funName::String args::ParenthesizedArgs result::Term
+top::Metaterm ::= funName::String args::ParenthesizedArgs result::Term r::Restriction
 {
-  top.pp = funName ++ "(" ++ args.pp ++ ") = " ++ result.pp;
+  top.pp = funName ++ "(" ++ args.pp ++ ") = " ++ result.pp ++ r.pp;
   top.isAtomic = true;
   top.shouldHide = false;
 }

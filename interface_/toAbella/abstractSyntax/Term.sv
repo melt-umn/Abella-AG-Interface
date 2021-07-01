@@ -774,7 +774,7 @@ top::Metaterm ::= t::Term result::Term
 
 
 aspect production funMetaterm
-top::Metaterm ::= funName::String args::ParenthesizedArgs result::Term
+top::Metaterm ::= funName::String args::ParenthesizedArgs result::Term r::Restriction
 {
   top.translation =
       termMetaterm(

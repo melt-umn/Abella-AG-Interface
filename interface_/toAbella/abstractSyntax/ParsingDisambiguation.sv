@@ -113,9 +113,9 @@ top::Metaterm ::= leftSide::Term rightSide::Term
   local fwd::Metaterm =
         case leftFun, rightFun, leftProd, rightProd of
         | just((fun, args)), _, _, _ ->
-          funMetaterm(fun, args, rightSide)
+          funMetaterm(fun, args, rightSide, emptyRestriction())
         | _, just((fun, args)), _, _ ->
-          funMetaterm(fun, args, leftSide)
+          funMetaterm(fun, args, leftSide, emptyRestriction())
         | _, _, just(l), just(r) ->
           eqMetaterm(l, r)
         | _, _, just(l), nothing() ->

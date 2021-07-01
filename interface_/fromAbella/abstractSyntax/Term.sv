@@ -11,6 +11,10 @@ top::Metaterm ::= t::Term r::Restriction
   top.translation =
       case t.translation of
       | left(tm) -> termMetaterm(tm, r)
+      --We need to include the restriction on the function, which we
+      --   can only do here where we have it
+      | right(funMetaterm(fun, args, result, _)) ->
+        funMetaterm(fun, args, result, r)
       | right(mtm) -> mtm
       end;
 }
@@ -188,7 +192,7 @@ top::Term ::= f::Term args::TermList
                 foldr(addParenthesizedArgs(_, _),
                       emptyParenthesizedArgs(),
                       take(length(args.argList) - 1, args.argList)),
-                last(args.argList)))
+                last(args.argList), emptyRestriction()))
      --Production Application
      | nameTerm(str, _), args when isProd(str) ->
        left(prodTerm(prodToName(str),
