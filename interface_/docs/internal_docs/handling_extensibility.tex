@@ -1,0 +1,508 @@
+\documentclass[11pt]{article}
+
+\usepackage[letterpaper,margin=1in]{geometry}
+
+\usepackage[hidelinks]{hyperref}
+
+\usepackage{color}
+\definecolor{orange}{rgb}{1.0,0.59,0}
+
+\usepackage{listings}
+
+\lstset{
+  language=C,
+  basicstyle=\ttfamily,
+  morekeywords={
+    Extensible_Theorem, Theorem, Existing_Theorem,
+    Grammar,
+    on
+  },
+  keywordstyle=\color{blue}\ttfamily,
+  morekeywords={
+    skip
+  },
+  stringstyle=\color{green}\ttfamily
+}
+
+
+%reference a given section
+\renewcommand{\sec}[1]{\hyperref[sec:#1]{Section~\ref*{sec:#1}}}
+%reference a given subsection
+\newcommand{\subsec}[1]{\hyperref[subsec:#1]{Subsection~\ref*{subsec:#1}}}
+%reference a given equation
+\newcommand{\eqn}[1]{\hyperref[eqn:#1]{equation~\ref*{eqn:#1}}}
+%reference a given figure
+\newcommand{\fig}[1]{\hyperref[fig:#1]{Figure~\ref*{fig:#1}}}
+
+
+\newcommand{\grammar}[1]{\texttt{#1}}
+\newcommand{\attr}[1]{\texttt{#1}}
+
+
+\newcommand{\tyarrow}{\ensuremath{\rightarrow}}
+
+
+%to make Eric happy
+\newcommand{\silver}{\textsc{Silver}}
+
+
+\newcommand{\enote}[1]{{\color{blue} \textbf{EVW:} \emph{#1}}}
+\newcommand{\enoteres}[1]{}
+\newcommand{\dnote}[1]{{\color{orange} \textbf{DM:} \emph{#1}}}
+\newcommand{\dnoteres}[1]{}
+\newcommand{\todo}[1]{{\color{red} #1}}
+
+
+\begin{document}
+
+
+
+
+
+\section{Introduction}
+
+Recall briefly the requirements we have laid out previously for
+proving properties of extensible languages encoded as attribute
+grammars.  Language properties are proven by induction on a decorated
+tree of a particular nonterminal type.  For host-introduced
+properties, each language component must provide a proof of the
+property in the inductive case for each production it introduces.  For
+extension-introduced properties, the procedure depends on the
+nonterminal on which induction is being done.  If the nonterminal was
+introduced by the extension, the extension must provide a proof case
+for all the productions it introduced for the nonterminal.  If the
+nonterminal was introduced by the host, the extension must provide a
+proof for all the productions it knows (both host- and
+extension-introduced productions) as well as prove preservability of
+the property.
+
+
+As we did above, we often discuss host languages and extensions when
+talking about \silver{}, as \silver{} is designed to write extensible
+languages with this structure.  However, languages written in
+\silver{} do not actually consist of a host language with extensions.
+All \silver{} has are grammars.
+%
+For example, we might initially think a host language doesn't import
+any grammars, but it probably imports \grammar{silver:core}.
+%
+We might also have a language which is truly composed of a host
+language and extensions to it, but then decide to build another
+extension on top of an existing extension or extensions.
+%
+For these reasons we cannot design the composition system of the
+prover to work on ``host'' grammars and ``extension'' grammars, only
+on \emph{grammars}, which may have host-like and extension-like
+features to them.
+%
+Despite these complications, we can still use our theory to construct
+a theorem prover to prove properties of \silver{} languages.  Because
+extension-introduced properties on extension-introduced nonterminals
+are treated the same as host-introduced properties on host-introduced
+nonterminals, we can essentially treat all grammars as extensions for
+constructing proofs.
+
+
+Our prover works by having \silver{} compile a grammar to an Abella
+specification.  The grammar's author then uses a theorem prover
+interface designed to permit the user to prove properties about this
+Abella specification in a way that looks and feels somewhat like
+\silver, with decorated trees, attribute accesses, and other \silver{}
+constructs.  This interface also handles the proof requirements for
+the theorems which arise from extensibility, such as ensuring proofs
+are given for new productions for theorems from imported grammars.
+%
+Our purpose here is to address the handling of extensibility of
+\silver{} languages in the processes of compilation by \silver{} and
+proving properties using the interface.
+
+
+
+
+\section{Generating Specifications} \label{sec:generation}
+
+In generating specifications, we want only to generate each
+non-component piece of the specification (e.g. full relations, encoded
+productions) once.  Therefore we generate the specification for each
+grammar to output the (full) encoded versions of the constructs it
+declares only, and none of those imported, as follows:
+\begin{itemize}
+\item Declared nonterminal:  Output encoded nonterminal type, node
+  type, node tree constructor, full structure equality relation, full
+  forwarding equation, full WPD relation, and full WPD node relation.
+\item Declared production:  Output encoded production constructor.
+\item Declared attribute:  Output \texttt{is\_inherited} property if
+  the attribute is inherited.
+\item Declared attribute occurrence:  Output access relation and full
+  equation relation
+\end{itemize}
+The component relations are output for the constructs which are
+introduced by the current grammar, since they are grammar-specific and
+can't be replicated accidentally.
+
+
+Another issue we find in generating specifications is that we cannot
+actually import one Abella specification we generate into another
+because we declare constants of a result type \texttt{prop}.  For
+example, our access relations have type
+\[\texttt{\textit{nonterminal} \tyarrow{} \textit{node} \tyarrow{} \$attrVal
+  (\textit{attr type}) \tyarrow{} prop}\]
+%
+For some reason, Abella disallows importing files containing such
+constants despite allowing them to be used in single files.  The
+interface gets around this by simply ``replaying'' the file into the
+background Abella process (essentially copying its text into the
+Abella process).  This isn't possible in the specifications, which are
+supposed to be written in straight Abella, which must use regular
+Abella imports.  Therefore the specification files output by
+compilation are not valid Abella (cannot be processed by Abella alone)
+if the \silver{} specification imports another grammar, since we will
+not output anything in the specification for the import, relying
+instead on it being imported in the theorem file.
+\dnote{I might open an Abella bug and see if I can get this to change,
+  but I don't want to open a bug and have them decide they don't need
+  \texttt{prop}-typed constants at all.}
+
+
+
+
+
+\section{Generating Theorem Files}
+
+One of the primary issues in handling extensibility is to ensure that
+each grammar provides not only proofs of its own properties, but also
+that it provides proofs in accordance with the grammars it imports.
+This requires either providing a way to check after the fact that the
+proofs have been provided satisfactorily, or a way to generate the
+correct set-up beforehand.  I prefer the latter idea, as the user
+essentially gets a skeleton of the necessary proofs to provide.  This
+also would let us put the correct imports in the file.  This is
+beneficial because they need to happen in the correct order, as each
+specification file is only acceptable if the specifications it imports
+are imported prior to its own import (discussed above in
+\sec{generation}).
+
+
+An alternative which we will mention here would be to have the
+interface generate the necessary theorems on the fly.  It would import
+the theorem files for the imported grammar in addition to the
+specification files and generate automatic goals for the new proof
+obligations.  The theorems would never be entered in the file, only
+the proofs.
+%
+This seems like a poor choice for several reasons.  One reason is that
+the theorems being proven would never be shown in the file, only the
+specific proof cases being done.  It would also make it confusing when
+the user is allowed to add his new theorems for the new grammar, as
+they would only be allowed between certain automatically-generated
+goals.  Finally, this approach, as opposed to the theorem-file
+generation approach, would require the work of gathering the imported
+theorems and ordering them every time, rather than just once at
+compilation time.
+%
+For these reasons, we discard this method and continue our discussion
+with the theorem-file generation method in mind, although many of the
+same issues apply.
+
+
+When compiling a grammar, then, we should not only output the
+specification, but also a file with the necessary theorems from the
+imported grammars.  This requires both finding the theorem files for
+the imported grammars and combining the theorems in an acceptable
+order from these imports.  We address these in turn before looking at
+how the interface needs to handle extensibility while proving.
+
+
+
+
+\subsection{Finding Imported Theorem Files} \label{subsec:findingThmFiles}
+
+In order to generate a theorem file, we need to find the theorem files
+for the grammars which are imported.  This is necessary because we
+need to know the theorems they introduce to ensure the current grammar
+fulfills its proof obligations in regards to the properties introduced
+by the grammars it imports.  We want to do this by placing these
+theorems in the theorem file for the current grammar.
+
+
+I'm not sure how to handle finding the theorem files.  We could
+require the developments be put in with the grammar and have a
+particular name for the file based on the grammar name
+(e.g. \texttt{a:b:c\_thms.svthm} for grammar \grammar{a:b:c}).  This
+would let us find it if it exists, since we would know \emph{where} to
+look and for \emph{what} we are looking.  Perhaps there are better
+ideas which rely less on conventions.  The main requirement for a good
+solution to this problem are, as I see it, is an ability to handle a
+large number of imported grammars graciously.  For example, if our
+current grammar imports five others, we don't want to have to type out
+the locations of five theorem files.
+
+
+In a similar vein, we may want to have a particular location for the
+specification file for a grammar.  This would make generating a
+theorem file easier, since we would not need to search for a
+specification file.  A gracious solution for identifying theorem files
+for imports would probably also be a gracious solution for finding the
+corresponding specification file.
+
+
+
+
+\subsection{Combining Theorems from Multiple Imported Grammars} \label{subsec:ordering}
+
+The order theorems are proven in a grammar is important because later
+proofs may rely on earlier theorems being used as lemmas.  When we
+take the theorems from multiple grammars, we need to combine them
+while maintaining the ordering from each grammar.  This is necessary
+for soundness of the composition of the proofs done in the imported
+grammars and the proofs done in the importing grammar, especially when
+composed with proofs from independent grammars which start with the
+same (quasi-)host grammar as a base.  By making consistent orderings
+in all grammars we ensure the composition will succeed.
+
+
+To combine the theorems from imported grammars into a coherent order,
+we need an idea of the import structure of the grammars.  If we import
+\grammar{A}, \grammar{B}, and \grammar{C}, but \grammar{A} also
+imports \grammar{C}, then all of \grammar{C}'s theorems should already
+be included in \grammar{A}'s theorems in its theorem file, and we only
+need to combine the theorems from \grammar{A} and \grammar{B}.  If
+they have a common base of theorems from an imported grammar,
+everything between the same theorems from the common base needs to be
+placed before the next shared theorem.  That is, if \grammar{A} has
+theorems $S_1$, $A_1$, $S_2$ and \grammar{B} has theorems $S_1$,
+$B_1$, $B_2$, $S_2$, then $A_1$, $B_1$, and $B_2$ all need to be
+placed in the ordering after $S_1$ and before $S_2$.  The same goes
+for everything before the first shared theorem and everything after
+the last shared theorem.  If there is no shared base, the theorems can
+be regarded as all coming after the last shared one.
+
+
+The theorems from grammars imported together but which have no
+relationship with one another have no order between them.  In our
+example from above, $A_1$ is neither inherently earlier nor later than
+$B_1$.  This suggests we could put them in any order, so long as we
+respected the order from each grammar.
+%
+If they were pure extensions and this were the final composition, that
+would be the case.  However, since this is simply another grammar, we
+need to ensure that the new pieces of the proof for the theorems
+brought in from other grammars do not rely on each other in a way
+which will not allow a sound composition with other grammars which
+also import both.
+%
+Suppose grammars \grammar{G} and \grammar{H} both import \grammar{A}
+and \grammar{B}.  Suppose \grammar{G} puts $A_1$ before $B_1$ and
+proves its obligations for $B_1$ by relying on $A_1$ and \grammar{H}
+puts $B_1$ before $A_1$ and proves its obligations for $A_1$ by
+relying on $B_1$.  Since these pieces of the proofs relied on the
+opposite order, the composition cannot succeed.
+
+
+The obvious question is whether MWDA makes such a dependence between
+theorems originating in independent grammars impossible.  It seems at
+first like it ought to make it impossible, since it prevents reliance
+of existing synthesized attributes on new inherited attributes.  This
+does not, however, mean no dependence can be introduced by the
+theorems.  Suppose $A_1$ is ``about'' the values an attribute \attr{a}
+introduced by \grammar{A} can take and $B_1$ is similarly ``about''
+the values an attribute \attr{b} introduced by \grammar{B} can take.
+If \attr{b} is defined on a production in the importing grammar in
+terms of \attr{a}, a valid equation under MWDA if the flow type of
+\attr{a} is a subset of the flow type of \attr{b} (which means
+\attr{a} cannot rely on any inherited attributes introduced by
+\grammar{A}, only inherited attributes from a shared underlying
+grammar or nothing), then the proof of $B_1$ can rely on $A_1$.
+%
+This dependence is only possible because we are building grammars on
+top of other, separate grammars, which is part of \silver{}'s only
+having grammars, not host languages and extensions.
+
+To avoid having inconsistent ordering dependencies in compositions, as
+unlikely as it seems someone will introduce such a dependency, we need
+to place the theorems consistently between different grammars which
+import the same grammars.  This ensures that any reliance on ordering
+from different grammars still has the same ordering in the
+composition.  We will ensure the ordering is consistent by placing the
+theorems in order alphabetically by grammar name.
+%
+If a grammar imports grammars \grammar{A} and \grammar{B} as described
+above, we will place their theorems in the order $A_1$, $B_1$, $B_2$.
+We can be certain any other grammar importing both will also place the
+theorems in the same order, so the composition can place them in the
+same order for consistency.  If the composition also includes another
+grammar \grammar{Another} with theorems $Another_1$ and $Another_2$,
+the composition will have theorems in the order $A_1$, $Another_1$,
+$Another_2$, $B_1$, $B_2$.  This does not interfere with any
+dependencies because the earlier theorems are still proven before
+being used, just with some intervening proofs done as well.
+
+Note that placing the theorems in the file to do the new proof pieces
+required in the new grammar means that we do \emph{not} need to import
+the theorem files from imported grammars at the time of proving the
+properties with the interface.  The only content they hold that we do
+place in the generated theorem file for the importing grammar is the
+actual proofs, which are not relevant to the new grammar.
+
+
+
+
+
+\section{Avoiding Overwriting Work}
+
+In generating the theorem file, we need to be careful to avoid
+overwriting someone's work.  If \grammar{B} imports \grammar{A} and I
+am proving theorems about \grammar{B} and realize I need to add a
+theorem to \grammar{A}, I don't want to regenerate the theorem file
+for \grammar{B} and accidentally lose all the work I have done.  This
+is a concern peculiar to the theorem file, as the specification file
+should never be edited by the user.
+
+
+To avoid accidental overwriting, we might do one of the following:
+\begin{itemize}
+\item Refuse to generate a theorem file if one is found.  This
+  requires the user to remove his work himself, probably by copying it
+  elsewhere, then integrating it into the new file.
+\item Ask the user for permission to overwrite.  This informs the user
+  his work will be lost if he says yes, and makes any loss his own
+  fault.
+\item Write to a new file with a different name.  This makes the
+  skeleton file available without destroying any work.
+\end{itemize}
+All these sort of assume the theorem file has a set location, which is
+suggested in \subsec{findingThmFiles} but not settled on.  Perhaps we
+will decide it doesn't, in which case the solutions to this issue
+might change as well.
+
+
+
+
+
+\section{Proving Process}
+
+With the imported grammars' theorems placed in order in the theorem
+file, as well as the correct specification imports, the user can start
+proving.  He does this not only by filling in the proofs generated by
+the theorem file compilation to fulfill his proof obligations based on
+the grammars imported, but also by adding theorems for the current
+grammar.  These can go between any existing theorems, at the
+beginning, or at the end.  They can also be made mutual with existing
+theorems.
+
+
+The interface needs to keep track of what needs to be proven for each
+theorem.
+%
+If we are in grammar \grammar{E} which imported grammar \grammar{H}
+and we have theorem $T$ from \grammar{H}, we need to provide proofs
+for $T$ only for the productions which \grammar{E} introduces for the
+theorem's induction nonterminal.
+%
+If we have theorem $U$ introduced by \grammar{E} on a nonterminal
+introduced by \grammar{E}, we only need cases for the productions
+building this nonterminal.
+%
+If theorem $V$ introduced by \grammar{E} is on a nonterminal
+introduced by \grammar{H} which \grammar{E} imported, \grammar{E}
+needs to do proofs for the cases for all productions which it knows as
+well as prove preservability.
+
+
+An obvious question is whether we could generate these proof
+obligations for imported theorems as part of the theorem file
+generation rather than have the interface determine them on the fly.
+The answer is yes, we could generate them then.  This would require
+adding text to the theorem declaration put in for imported theorems to
+state which productions require a proof case.
+%
+However, determining the proof cases required for imported theorems is
+similar to determining the proof cases required for newly-introduced
+theorems.  I don't think it would save any work in writing the
+interface and would require duplicating some of that work in the
+Silver extension for generating the theorem file.
+%
+It could also be somewhat confusing for the user to see a list of
+productions associated with a theorem declaration.
+%
+For these reasons, we are inclined to leave the generation of the
+particular cases entirely to the interface, not adding anything extra
+to indicate them in the theorem file itself.
+
+
+The interface can determine the correct proof obligations by keeping
+track of the current grammar in which the proofs are being done, the
+grammar introducing each theorem, and the grammar originating
+different productions and nonterminals.
+%
+The current grammar and the grammar introducing each theorem is
+probably best tracked by adding to the syntax of the interface files.
+We might add a grammar declaration similar to \silver{}'s grammar
+declarations to the language of the interface to declare the current
+grammar, something like
+\begin{lstlisting}
+  Grammar "gra:mm:ar".
+\end{lstlisting}
+For theorems, we might add a tag for the grammar to the syntax,
+resulting in something like
+\begin{lstlisting}
+  Extensible_Theorem <gra:mm:ar>theorem_name : statement on T.
+\end{lstlisting}
+\dnote{I came up with this syntax on the fly, and I'm not sure I like
+  it.  Any suggestions for how to place the grammar name?}
+Any theorems not labeled thusly would be assumed to be from the
+current grammar.
+%
+The grammars originating productions and nonterminals could be found
+by which grammar's specification we were reading when we found the
+type or constructor declared.
+
+
+
+
+
+\section{Imported Theorems Not Requiring New Proof Cases}
+
+In the preceding discussion we have somewhat implicitly been
+discussing extensible theorems, those proven by induction on a tree of
+a particular type, and assuming the new grammar was adding new
+productions to the induction type, resulting in new proof obligations
+for all the imported theorems.  New productions are not always added,
+nor are extensible theorems our only type of theorems.
+
+Regardless of the type of the theorem, we can still order it as
+described in \subsec{ordering}.  For extensible theorems with no new
+proof obligations, the theorem file generation can still enter the
+theorem as it otherwise would, with the interface determining at the
+time it processes the theorem declaration that there is nothing to
+prove and immediately finishing it.
+
+
+We also have non-extensible theorems.  One common use of these is to
+prove properties of the behavior of a function.  We might also have
+these arise as corollaries to extensible theorems, where we proved the
+general case of a theorem and are interested in a specific case or
+where we might combine two results proven as extensible theorems to
+prove another result as a direct consequence.
+%
+Because the full proofs of these theorems are given when they are
+introduced, there is nothing to be done in a grammar which imports the
+theorem.  We could enter these as a \lstinline{Theorem} declaration
+followed by a \lstinline{skip} command; however, this is likely to
+confuse the user as to whether he needs to provide a proof as it would
+look the same as a proof he skipped and intended to go back and do.
+Instead, we can add a new command to the interface language
+\begin{lstlisting}
+  Existing_Theorem theorem_name : statement.
+\end{lstlisting}
+This can simply enter the theorem into the development to allow it to
+be used later without providing a proof in the current grammar's
+theorem file.
+
+
+
+
+
+\end{document}
+
+
