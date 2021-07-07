@@ -776,6 +776,12 @@ top::ProofCommand ::=
         end;
   local wpdTreeHyp::Maybe<(String, Metaterm)> =
         find_WPD_nt_hyp(tree, top.translatedState.hypList);
+  local originalWpdTreeHyp::Maybe<Metaterm> =
+        case wpdTreeHyp of
+        | just((h, _)) ->
+          findAssociated(h, top.currentState.state.hypList)
+        | nothing() -> nothing()
+        end;
   --Find the production, its type, its children, etc.
   local prod::String =
         case structure of
@@ -927,16 +933,16 @@ top::ProofCommand ::=
           let innerBody::Metaterm =
              eqMetaterm(
                 --find the child list for the tree
-                case wpdTreeHyp of
-                | just((_, termMetaterm(
-                              applicationTerm(
-                                 wpdNT,
-                                 consTermList(tree,
-                                    singleTermList(
-                                       applicationTerm(ntrConstructor,
-                                          consTermList(node,
-                                          singleTermList(childList)))))),
-                              _))) ->
+                case originalWpdTreeHyp of
+                | just(termMetaterm(
+                          applicationTerm(
+                             wpdNT,
+                             consTermList(tree,
+                                singleTermList(
+                                   applicationTerm(ntrConstructor,
+                                      consTermList(node,
+                                      singleTermList(childList)))))),
+                          _)) ->
                   childList
                 | _ -> error("Must have above form")
                 end,

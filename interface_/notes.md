@@ -47,9 +47,6 @@ the implementation details as described above.
 
 
 # Todo
-- Doing `case_structure` again on the same tree after it was done once
-  seems to make it hang.  This should probably give an error based on
-  the tree already having a structure assigned.
 
 
 
