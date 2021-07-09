@@ -153,3 +153,13 @@ String ::= prod::String wpdRelations::[(String, Type, [String])]
   return wpdComponentRelToComponentName(foundWpdComponentRel.fromJust);
 }
 
+
+{-
+  Check the first character in the given string is a capitalized letter
+-}
+function isCapitalized
+Boolean ::= str::String
+{
+  return str != "" && isUpper(substring(0, 1, str));
+}
+

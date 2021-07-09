@@ -21,7 +21,7 @@ induction on 1. intros. case H1.
 
 
 
-Extensible_Theorem value_unique_A : forall (T1 T2 : nt_A) Env V,
+Extensible_Theorem value_unique_A : forall (T1 T2 : A) Env V,
    T1 = T2 ->
    T1.env = Env -> T2.env = Env ->
    T1.value = V ->
@@ -49,7 +49,7 @@ split.
      apply lookup__unique to H9 H12. search.
 
 
-Extensible_Theorem value_unique_B : forall (T1 T2 : nt_B) Env V,
+Extensible_Theorem value_unique_B : forall (T1 T2 : B) Env V,
    T1 = T2 ->
    T1.env = Env -> T2.env = Env ->
    T1.value = V ->
@@ -112,7 +112,7 @@ split.
   case T1.value. case T2.value. search.
 
 
-Extensible_Theorem no_env__no_env_out : forall (T : nt_C),
+Extensible_Theorem no_env__no_env_out : forall (T : C),
   T.env = <no value> -> T.env_out = <no value>
 on T.
 split.
@@ -154,7 +154,7 @@ split.
      case_local T.subWhile. apply IH_SubWhile to H11 H17.
 
 
-Extensible_Theorem env_out__unique__C : forall (T1 T2 : nt_C) Env V,
+Extensible_Theorem env_out__unique__C : forall (T1 T2 : C) Env V,
    T1 = T2 ->
    T1.env = Env -> T2.env = Env ->
    T1.env_out = V ->

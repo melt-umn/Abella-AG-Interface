@@ -358,7 +358,7 @@ Split value_unique_lemmas__Expr as
 
 
 Extensible_Theorem value_unique__Root :
-  forall (R1 R2 : nt_Root) V1 V2,
+  forall (R1 R2 : Root) V1 V2,
     R1 = R2 ->
     R1.value = V1 -> R2.value = V2 ->
     V1 = V2
@@ -370,7 +370,7 @@ on R1.
  apply value_unique__Expr to H9 _ _ _. case R2.value. search.
 
 Extensible_Theorem value_unique__no_value__Root :
-  forall (R1 R2 : nt_Root),
+  forall (R1 R2 : Root),
     R1 = R2 ->
     R1.value = <no value> ->
     R2.value = <no value>
@@ -434,7 +434,7 @@ split.
 
 
 Extensible_Theorem valExists__implies__value__Root :
-  forall (R : nt_Root),
+  forall (R : Root),
      R.valExists = true -> exists V, R.value = V
 on R.
 %root
@@ -508,7 +508,7 @@ split.
     exists FunResult. search.
 
 
-Extensible_Theorem valExists__Root : forall (R : nt_Root),
+Extensible_Theorem valExists__Root : forall (R : Root),
   exists B, R.valExists = B
 on R.
 %root

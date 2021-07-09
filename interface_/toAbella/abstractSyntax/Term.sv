@@ -9,6 +9,7 @@ attribute
    removeWPDTree, removedWPD,
    implicationPremises, conjunctionSplit,
    errors,
+   knownTyParams,
    treeTys,
    knownDecoratedTrees, knownNames,
    currentState
@@ -220,7 +221,9 @@ top::Metaterm ::= b::Binder bindings::[(String, Maybe<Type>)] body::Metaterm
   local transNames::[Pair<String Maybe<Type>>] =
         map(\ p::Pair<String Maybe<Type>> ->
               (fst(p), case snd(p) of
-                       | just(ty) -> just(ty.translation)
+                       | just(ty) ->
+                         just(decorate ty with
+                              {knownTyParams=top.knownTyParams;}.translation)
                        | nothing() -> nothing()
                        end),
             cleanedNames);
@@ -235,7 +238,7 @@ top::Metaterm ::= b::Binder bindings::[(String, Maybe<Type>)] body::Metaterm
   body.boundVars =
      map(\ p::Pair<String Maybe<Type>> ->
            case p of
-           | pair(a, just(b)) -> pair(a, just([b]))
+           | pair(a, just(b)) -> pair(a, just([decorate b with {knownTyParams=top.knownTyParams;}.translation]))
            | pair(a, nothing()) -> pair(a, nothing())
            end, bindings)::top.boundVars;
   top.boundVarsOut =

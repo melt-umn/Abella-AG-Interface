@@ -21,7 +21,7 @@ top::Kind ::= k::Kind
 
 
 attribute
-   translation<Type>, errors,
+   translation<Type>, errors, knownTyParams,
    eqTest<Type>, isEq,
    argumentTypes, headTypeName, resultType,
    isRelation
@@ -72,7 +72,10 @@ top::Type ::= name::String
   top.translation =
       if name == "string"
       then functorType(nameType("list"), nameType("$char"))
-      else nameType(name);
+      else if isCapitalized(name) && !contains(name, top.knownTyParams)
+           then --capitalized non-parameters must be nonterminals
+                nameType(nameToNonterminalName(name))
+           else nameType(name);
 
   top.errors <-
       if startsWith("$", name)

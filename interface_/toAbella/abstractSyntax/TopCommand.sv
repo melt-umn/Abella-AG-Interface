@@ -84,6 +84,7 @@ top::TopCommand ::= name::String depth::Integer body::Metaterm trees::[String]
                       attrOccurrences =
                          top.currentState.knownAttrOccurrences;
                       boundVars = [];
+                      knownTyParams = []; --we disallow parameterization currently
                    }.foundNameType of
               | left(msg) -> [errorMsg(msg)]
               | right(ty) ->
@@ -107,6 +108,7 @@ top::TopCommand ::= name::String depth::Integer body::Metaterm trees::[String]
                                 attrOccurrences =
                                    top.currentState.knownAttrOccurrences;
                                 boundVars = [];
+                                knownTyParams = []; --we disallow parameterization currently
                              }.foundNameType.fromRight
               in
               let trans::Metaterm =
@@ -119,6 +121,7 @@ top::TopCommand ::= name::String depth::Integer body::Metaterm trees::[String]
                      currentState = top.currentState;
                      attrOccurrences =
                         top.currentState.knownAttrOccurrences;
+                     knownTyParams = [];
                   }.translation
               in
                 (trans, p.1, ty,
@@ -136,6 +139,7 @@ top::TopCommand ::= name::String depth::Integer body::Metaterm trees::[String]
 
   body.knownTrees = trees ++ body.gatheredTrees;
   body.knownDecoratedTrees = body.gatheredDecoratedTrees;
+  body.knownTyParams = []; --Because we disallow parameterization here currently
   top.translatedTheorem = body.translation;
 
   --The number of splits to do when the theorem is done
@@ -180,6 +184,7 @@ top::TopCommand ::= name::String params::[String] body::Metaterm
   body.attrOccurrences = top.currentState.knownAttrOccurrences;
   body.knownTrees = body.gatheredTrees;
   body.knownDecoratedTrees = body.gatheredDecoratedTrees;
+  body.knownTyParams = params;
   top.translation = theoremDeclaration(name, params, body.translation);
 
   top.newKnownTheorems =
@@ -318,6 +323,7 @@ top::TopCommand ::= m::Metaterm
   m.attrOccurrences = top.currentState.knownAttrOccurrences;
   m.boundVars = [];
   m.knownNames = [];
+  m.knownTyParams = [];
 
   top.translation = error("Translation not done in queryCommand yet");
 }

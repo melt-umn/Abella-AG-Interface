@@ -500,7 +500,10 @@ top::Type ::= ty1::Type ty2::Type
 aspect production nameType
 top::Type ::= name::String
 {
-  top.translation = nameType(name);
+  top.translation =
+       if nameIsNonterminal(name)
+       then nameType(nonterminalNameToName(name))
+       else nameType(name);
 }
 
 

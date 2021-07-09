@@ -48,6 +48,26 @@ global falseName::String = "$bfalse";
 
 
 
+--Nonterminals
+function nameToNonterminalName
+String ::= ntName::String
+{
+  return "nt_" ++ ntName;
+}
+
+function nameIsNonterminal
+Boolean ::= name::String
+{
+  return startsWith("nt_", name);
+}
+
+function nonterminalNameToName
+String ::= ntName::String
+{
+  return substring(3, length(ntName), ntName);
+}
+
+
 --Decorated Trees
 function treeToNodeName
 String ::= treeName::String
