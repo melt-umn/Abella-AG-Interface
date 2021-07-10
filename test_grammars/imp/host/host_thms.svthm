@@ -20,14 +20,12 @@ induction on 1. intros. case H1.
       apply tail_unique to H5 H9. apply IH to H6 H10. search.
 
 
-
 Extensible_Theorem value_unique_A : forall (T1 T2 : A) Env V,
    T1 = T2 ->
    T1.env = Env -> T2.env = Env ->
    T1.value = V ->
    T2.value = V
 on T1.
-split.
  %plus
   intros IH1 IH2 Structure Eq T1Env T2Env T1Val.
   case_structure T2 in Eq with Structure. case A.env. case A2.env.
@@ -55,7 +53,6 @@ Extensible_Theorem value_unique_B : forall (T1 T2 : B) Env V,
    T1.value = V ->
    T2.value = V
 on T1.
-split.
  %greater
   intros Structure Eq T1Env T2Env T1Val.
   case_structure T2 in Eq with Structure. case A.env. case A2.env.
@@ -115,7 +112,6 @@ split.
 Extensible_Theorem no_env__no_env_out : forall (T : C),
   T.env = <no value> -> T.env_out = <no value>
 on T.
-split.
  %noop
   intros Structure TEnv. case T.env_out. search.
  %seq
@@ -160,7 +156,6 @@ Extensible_Theorem env_out__unique__C : forall (T1 T2 : C) Env V,
    T1.env_out = V ->
    T2.env_out = V
 on T1.
-split.
  %noop
   intros Structure Eq T1Env T2Env T1EnvOut.
   case_structure T2 in Eq with Structure. case T1.env_out.

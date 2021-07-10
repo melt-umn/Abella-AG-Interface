@@ -171,11 +171,12 @@ concrete productions top::PureTopCommand_c
 | 'Split' name::Id_t 'as' il::IdList_c '.'
   { top.ast = splitTheorem(name.lexeme, il.ast); }
 --New for Silver
-  --We'll eventually need multiple trees after 'on' for mutual induction
 | 'Extensible_Theorem' name::Id_t ':' body::Metaterm_c 'on' trees::PermIds_c '.'
   { top.ast = extensibleTheoremDeclaration(toString(name.lexeme), 1, body.ast, trees.ast); }
 | 'Extensible_Theorem' '[' depth::Number_t ']' name::Id_t ':' body::Metaterm_c 'on' trees::PermIds_c '.'
   { top.ast = extensibleTheoremDeclaration(toString(name.lexeme), toInteger(depth.lexeme), body.ast, trees.ast); }
+| 'Existing_Theorem' name::Id_t params::TheoremTyparams_c ':' body::Metaterm_c '.'
+  { top.ast = existingTheoremDeclaration(name.lexeme, params.ast, body.ast); }
 
 
 concrete productions top::CommonCommand_c

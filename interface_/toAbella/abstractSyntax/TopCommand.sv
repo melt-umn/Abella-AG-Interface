@@ -135,7 +135,18 @@ top::TopCommand ::= name::String depth::Integer body::Metaterm trees::[String]
            groupings, nub(body.usedNames),
            top.currentState.knownProductions,
            top.currentState.knownLocalAttrs);
-  top.translation = theoremDeclaration("$" ++ name, [], expandedBody);
+  --number of pieces in the generated theorem
+  local numBodies::Integer =
+        foldr(\ p::(Metaterm, String, Type, [String]) rest::Integer ->
+                rest + length(p.4), 0, groupings);
+  top.translation =
+      if numBodies > 1
+      then theoremAndProof("$" ++ name, [], expandedBody, [splitTactic()])
+      else theoremDeclaration("$" ++ name, [], expandedBody);
+  top.numCommandsSent =
+      if numBodies > 1
+      then 2
+      else 1;
 
   body.knownTrees = trees ++ body.gatheredTrees;
   body.knownDecoratedTrees = body.gatheredDecoratedTrees;
@@ -147,6 +158,46 @@ top::TopCommand ::= name::String depth::Integer body::Metaterm trees::[String]
       foldr(\ p::(Metaterm, String, Type, [String]) sum::Integer ->
               sum + length(p.4),
             0, groupings);
+
+  top.newKnownTheorems =
+      [(name, body.translation)] ++ top.currentState.knownTheorems;
+}
+
+
+abstract production existingTheoremDeclaration
+top::TopCommand ::= name::String params::[String] body::Metaterm
+{
+  local buildParams::(String ::= [String]) =
+     \ p::[String] ->
+       case p of
+       | [] ->
+         error("Should not reach here; theoremDeclaration production")
+       | [a] -> a
+       | a::rest ->
+         a ++ ", " ++ buildParams(rest)
+       end;
+  local paramsString::String =
+     if null(params)
+     then ""
+     else " [" ++ buildParams(params) ++ "] ";
+  top.pp = "Existing_Theorem " ++ name ++ paramsString ++ " : " ++
+           body.pp ++ ".\n";
+
+  top.errors <-
+      if startsWith("$", name)
+      then [errorMsg("Cannot start theorem names with \"$\"")]
+      else [];
+
+  body.boundVars = [];
+  body.finalTys = [];
+  body.knownNames = [];
+  body.attrOccurrences = top.currentState.knownAttrOccurrences;
+  body.knownTrees = body.gatheredTrees;
+  body.knownDecoratedTrees = body.gatheredDecoratedTrees;
+  body.knownTyParams = params;
+  top.translation =
+      theoremAndProof(name, params, body.translation, [skipTactic()]);
+  top.numCommandsSent = 2;
 
   top.newKnownTheorems =
       [(name, body.translation)] ++ top.currentState.knownTheorems;
@@ -449,5 +500,39 @@ top::TopCommand ::= text::String
 {
   top.pp = text;
   top.translation = textCommand(text);
+}
+
+
+{-
+  The purpose of this production is to allow us to declare a theorem
+  *AND* do some number of steps of the proof as well.  I don't know
+  that we will ever want to do more than one step of the proof, but
+  this allows it if we do want to do so.
+-}
+abstract production theoremAndProof
+top::TopCommand ::= name::String params::[String] body::Metaterm prf::[ProofCommand]
+{
+  local buildParams::(String ::= [String]) =
+     \ p::[String] ->
+       case p of
+       | [] ->
+         error("Should not reach here; theoremDeclaration production")
+       | [a] -> a
+       | a::rest ->
+         a ++ ", " ++ buildParams(rest)
+       end;
+  local paramsString::String =
+     if null(params)
+     then ""
+     else " [" ++ buildParams(params) ++ "] ";
+  top.pp =
+      "Theorem " ++ name ++ " " ++ paramsString ++
+      " : " ++ body.pp ++ ".\n" ++
+      implode("", map((.pp), prf));
+  top.translation = error("Should not be translating theoremAndProof");
+  top.numCommandsSent = 1 + length(prf);
+
+  top.newKnownTheorems =
+      [(name, new(body))] ++ top.currentState.knownTheorems;
 }
 

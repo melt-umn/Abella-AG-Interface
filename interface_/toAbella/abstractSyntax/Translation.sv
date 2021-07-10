@@ -149,13 +149,14 @@ top::NewPremise ::= tree::String
   This builds the metaterm for an extensible theorem based on the
   original theorem statement and the productions it works on.
 
-  original:  The original (translated) metaterm
-  treeName:  The name of the tree on which we are doing induction
-  treeTy:  The type of the tree treename
-  wpdRel:  The WPD nonterminal relation on which we are really doing
-           induction (type it is for and production order)
+  thms:  [(original (translated) metaterms for the mutual theorems,
+           name of the tree on which we are doing induction,
+           type of the tree on which we are doing induction,
+           production order for the type of tree on which we are doing induction)]
   usedNames:  Names which were used in the original theorem statement,
               which we can't use when generating children
+  allProds:  All the productions we know
+  localAttrs:  All the local attributes we know
 -}
 function buildExtensibleTheoremBody
 Metaterm ::= thms::[(Metaterm, String, Type, [String])]

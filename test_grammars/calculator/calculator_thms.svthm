@@ -4,7 +4,6 @@ Import "calculator_definition".
 
 Set debug off.
 
-
 Theorem contains__member : forall E N,
    member N E -> is_list is_string E -> contains(N, E) = true.
 induction on 1. intros. case H1.
@@ -107,7 +106,6 @@ Extensible_Theorem value_unique_lemmas__Expr :
      T1.value = V ->
      T2.value = V)
 on T1 T1 T1 T1.
-split.
 %No Environment, No Value
  %intConst
   intros Structure N_Is Eq T1Env T2Env T1Val. case T1.value.
@@ -390,7 +388,6 @@ Extensible_Theorem valExists__implies__value__Expr :
           exists Val, member (Name, Val) Env) ->
       T.valExists = true -> exists V, T.value = V
 on T.
-split.
 %intConst
  intros Structure. case T.value. exists N. search.
 %plus
@@ -455,7 +452,6 @@ Extensible_Theorem knownNames__implies__valExists__Expr :
      T.knownNames = KnownNames ->
      exists B, T.valExists = B
 on T.
-split.
 %intConst
  intros Structure. case T.valExists. search.
 %plus
