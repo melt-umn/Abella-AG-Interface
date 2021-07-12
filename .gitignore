@@ -15,3 +15,10 @@ test_grammars/**/*.thm
 
 # Emacs autosave
 *~
+
+# LaTeX generated files
+*.aux
+*.log
+*.bbl
+*.blg
+handling_extensibility.pdf
