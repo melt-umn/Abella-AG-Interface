@@ -87,12 +87,14 @@ top::ProofState ::=
 
   After that proof is finished, we want to split it into separate
   theorems with names of the form "$<name>_x" where "x" is a number
-  1..numProds.  We also want to admit the original theorem under the
+  1..n where n is the associated number for the current theorem in
+  numProds.  We also want to admit the original theorem under the
   original name so it can be used in further proofs.
 -}
 abstract production extensible_proofInProgress
-top::ProofState ::= currentProofState::ProofState originalTheorem::Metaterm
-                    name::String numProds::Integer
+top::ProofState ::= currentProofState::ProofState
+                    originalTheorems::[(String, Metaterm)]
+                    numProds::[(String, Integer)]
 {
   top.pp = forward.pp;
   --We could use this production to figure out what to label with * in the actual proof state

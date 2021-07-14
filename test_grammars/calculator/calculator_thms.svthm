@@ -84,28 +84,31 @@ Set subgoals off.
   might not exist, which leads to a lot of theorems we wouldn't
   normally need to consider.
 */
-Extensible_Theorem value_unique_lemmas__Expr :
-  (forall T1 T2,
-     T1 = T2 ->
-     T1.env = <no value> -> T2.env = <no value> ->
-     T1.value = <no value> ->
-     T2.value = <no value>) /\
-  (forall T1 T2 V,
-     T1 = T2 ->
-     T1.env = <no value> -> T2.env = <no value> ->
-     T1.value = V ->
-     T2.value = V) /\
-  (forall T1 T2 Env,
-     T1 = T2 ->
-     T1.env = Env -> T2.env = Env ->
-     T1.value = <no value> ->
-     T2.value = <no value>) /\
-  (forall T1 T2 Env V,
-     T1 = T2 ->
-     T1.env = Env -> T2.env = Env ->
-     T1.value = V ->
-     T2.value = V)
-on T1 T1 T1 T1.
+Extensible_Theorem
+  value_unique__no_env__no_value__Expr :
+     forall T1 T2,
+       T1 = T2 ->
+       T1.env = <no value> -> T2.env = <no value> ->
+       T1.value = <no value> ->
+       T2.value = <no value> on T1,
+  value_unique__no_env__Expr :
+     forall T1 T2 V,
+       T1 = T2 ->
+       T1.env = <no value> -> T2.env = <no value> ->
+       T1.value = V ->
+       T2.value = V on T1,
+  value_unique__no_value__Expr :
+     forall T1 T2 Env,
+       T1 = T2 ->
+       T1.env = Env -> T2.env = Env ->
+       T1.value = <no value> ->
+       T2.value = <no value> on T1,
+  value_unique__Expr :
+    forall T1 T2 Env V,
+       T1 = T2 ->
+       T1.env = Env -> T2.env = Env ->
+       T1.value = V ->
+       T2.value = V on T1.
 %No Environment, No Value
  %intConst
   intros Structure N_Is Eq T1Env T2Env T1Val. case T1.value.
@@ -348,11 +351,6 @@ on T1 T1 T1 T1.
     %lookup does return for T2
      apply lookup__unique to H9 H12. search.
 
-Split value_unique_lemmas__Expr as
-  value_unique__no_env__no_value__Expr,
-  value_unique__no_env__Expr,
-  value_unique__no_value__Expr,
-  value_unique__Expr.
 
 
 Extensible_Theorem value_unique__Root :

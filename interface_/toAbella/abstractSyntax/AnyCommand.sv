@@ -48,10 +48,11 @@ top::AnyCommand ::= c::TopCommand
   local currentState::ProverState = head(top.stateListIn).snd;
   local newProofState::ProofState =
         case c of
-        | extensibleTheoremDeclaration(name, depth, metaterm, tree) ->
+        | extensibleTheoremDeclaration(depth, thms) ->
           extensible_proofInProgress(
-             top.newProofState, c.translatedTheorem,
-             name, c.numRelevantProds)
+             top.newProofState,
+             c.translatedTheorems,
+             c.numRelevantProds)
         | _ -> top.newProofState
         end;
   top.stateListOut =
@@ -61,7 +62,6 @@ top::AnyCommand ::= c::TopCommand
             proverState(
                newProofState,
                currentState.debug,
-               --Next lines need to change when we actually get it from imports
                c.newKnownAttrs,
                c.newKnownAttrOccurrences,
                c.newKnownProductions,
@@ -86,7 +86,7 @@ top::AnyCommand ::= c::ProofCommand
   top.mustClean =
       --extensible proof completed, so need to clean to assert it
       case top.currentState.state, top.newProofState of
-      | extensible_proofInProgress(_, _, _, _),
+      | extensible_proofInProgress(_, _, _),
         proofCompleted() ->
         true
       | _, _ -> false
@@ -117,8 +117,8 @@ top::AnyCommand ::= c::ProofCommand
   local currentState::ProverState = head(top.stateListIn).snd;
   local newProofState::ProofState =
         case top.currentState.state of
-        | extensible_proofInProgress(_, oMt, name, numProds) ->
-          extensible_proofInProgress(top.newProofState, oMt, name, numProds)
+        | extensible_proofInProgress(_, oMt, numProds) ->
+          extensible_proofInProgress(top.newProofState, oMt, numProds)
         | _ -> top.newProofState
         end;
   top.stateListOut =

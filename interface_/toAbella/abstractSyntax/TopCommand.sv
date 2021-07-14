@@ -11,7 +11,7 @@ nonterminal TopCommand with
      newKnownProductions, newKnownWPDRelations, newKnownTheorems,
      newKnownInheritedAttrs, newKnownLocalAttrs, newKnownFunctions,
    errors, sendCommand, ownOutput,
-   translatedTheorem, numRelevantProds;
+   translatedTheorems, numRelevantProds;
 
 
 
@@ -24,7 +24,7 @@ top::TopCommand ::=
   top.numCommandsSent = 1;
 
   --These are only relevant to extensible theorems
-  top.translatedTheorem = error("Should only access translatedTheorem on extensibleTheoremDeclaration");
+  top.translatedTheorems = error("Should only access translatedTheorem on extensibleTheoremDeclaration");
   top.numRelevantProds = error("Should only access numRelevantProds on extensibleTheoremDeclaration");
 
   --Most commands aren't adding anything new
@@ -41,46 +41,36 @@ top::TopCommand ::=
 
 
 abstract production extensibleTheoremDeclaration
-top::TopCommand ::= name::String depth::Integer body::Metaterm trees::[String]
+top::TopCommand ::= depth::Integer thms::[(String, Metaterm, String)]
 {
-  local join::(String ::= [String]) =
-        \ l::[String] ->
+  local join::(String ::= [(String, Metaterm, String)]) =
+        \ l::[(String, Metaterm, String)] ->
           case l of
           | [] -> ""
-          | [h] -> h
-          | h::t -> h ++ " " ++ join(t)
+          | [(thm, body, tr)] ->
+            thm ++ " : " ++ body.pp ++ " on " ++ tr
+          | (thm, body, tr)::t ->
+            thm ++ " : " ++ body.pp ++ " on " ++ tr ++ ", " ++ join(t)
           end;
-  top.pp =
-      "Extensible_Theorem " ++ name ++ "[" ++ toString(depth) ++ "]" ++
-      " : " ++ body.pp ++ " on " ++ join(trees) ++ ".\n";
+  top.pp = "Extensible_Theorem " ++ join(thms) ++ ".\n";
 
-  body.attrOccurrences = top.currentState.knownAttrOccurrences;
-  body.boundVars = [];
-  body.finalTys = [];
-  body.knownNames = trees;
-
-  local thms::[Metaterm] = splitMetaterm(body);
 
   top.errors <-
-      if startsWith("$", name)
-      then [errorMsg("Cannot start theorem names with \"$\"")]
-      else [];
+      foldr(\ p::(String, Metaterm, String) rest::[Error] ->
+              if startsWith("$", p.1)
+              then [errorMsg("Theorem names cannot start with \"$\"")] ++ rest
+              else rest,
+            [], thms);
   top.errors <-
-      foldr(\ s::String rest::[Error] ->
-              if startsWith("$", s)
+      foldr(\ p::(String, Metaterm, String) rest::[Error] ->
+              if startsWith("$", p.3)
               then [errorMsg("Identifiers cannot start with \"$\"")] ++ rest
               else rest,
-            [], trees);
+            [], thms);
   top.errors <-
-      if length(trees) != length(thms)
-      then [errorMsg("Expecting " ++ toString(length(thms)) ++
-                     " induction arguments but got " ++
-                     toString(length(trees)))]
-      else [];
-  top.errors <-
-      foldr(\ p::(String, Metaterm) rest::[Error] ->
+      foldr(\ p::(String, Metaterm, String) rest::[Error] ->
               case decorate p.2 with {
-                      findNameType = p.1;
+                      findNameType = p.3;
                       attrOccurrences =
                          top.currentState.knownAttrOccurrences;
                       boundVars = [];
@@ -96,111 +86,93 @@ top::TopCommand ::= name::String depth::Integer body::Metaterm trees::[String]
                   | [] ->
                     [errorMsg("Unknown nonterminal type " ++ ty.pp)]
                   end
-                else [errorMsg("Cannot prove an extensible theorem based on a " ++
-                               "variable of type " ++ ty.pp ++ "; must be a tree")]
+                else [errorMsg("Cannot prove an extensible theorem based on " ++
+                               "variable " ++ p.3 ++ " of type " ++ ty.pp ++
+                               "; must be a tree")]
               end,
-            [], zipLists(trees, thms));
+            [], thms);
 
-  local groupings::[(Metaterm, String, Type, [String])] =
-        map(\ p::(String, Metaterm) ->
-              let ty::Type = decorate p.2 with {
-                                findNameType = p.1;
-                                attrOccurrences =
-                                   top.currentState.knownAttrOccurrences;
-                                boundVars = [];
-                                knownTyParams = []; --we disallow parameterization currently
-                             }.foundNameType.fromRight
-              in
-              let trans::Metaterm =
+  local translated::[(String, Metaterm, String)] =
+        translate_bodies(thms, top.currentState.knownAttrOccurrences);
+
+  --(translated theorem body, induction tree, induction type, prods, thm name)
+  local groupings::[(Metaterm, String, Type, [String], String)] =
+        map(\ p::(String, Metaterm, String) ->
+              let ty::Type =
                   decorate p.2 with {
-                     knownTrees = p.1::body.gatheredTrees;
-                     knownDecoratedTrees = body.gatheredDecoratedTrees;
-                     finalTys = [];
-                     boundVars = [];
-                     knownNames = body.usedNames;
-                     currentState = top.currentState;
+                     findNameType = p.3;
                      attrOccurrences =
                         top.currentState.knownAttrOccurrences;
-                     knownTyParams = [];
-                  }.translation
+                     boundVars = [];
+                     knownTyParams = []; --we disallow parameterization currently
+                  }.foundNameType.fromRight
               in
-                (trans, p.1, ty,
+                (p.2, p.3, ty,
                  head(findWPDRelations(ty,
-                         top.currentState.knownWPDRelations)).3)
-              end
-              end, zipLists(trees, thms));
+                         top.currentState.knownWPDRelations)).3, p.1)
+              end, translated);
 
+  local allUsedNames::[String] =
+        nub(flatMap(\ p::(String, Metaterm, String) ->
+                      p.2.usedNames, thms));
   local expandedBody::Metaterm =
         buildExtensibleTheoremBody(
-           groupings, nub(body.usedNames),
+           map(\ p::(Metaterm, String, Type, [String], String) ->
+                 (p.1, p.2, p.3, p.4), groupings), allUsedNames,
            top.currentState.knownProductions,
            top.currentState.knownLocalAttrs);
   --number of pieces in the generated theorem
   local numBodies::Integer =
-        foldr(\ p::(Metaterm, String, Type, [String]) rest::Integer ->
-                rest + length(p.4), 0, groupings);
+        foldr(\ p::(Metaterm, String, Type, [String], String) rest::Integer ->
+                rest + length(p.4),
+              0, groupings);
+  local combinedName::String =
+        case thms of
+        | (name, _, _)::_ -> extensible_theorem_name(name)
+        | [] -> error("Cannot have no theorems in Extensible_Theorem declaration")
+        end;
   top.translation =
       if numBodies > 1
-      then theoremAndProof("$" ++ name, [], expandedBody, [splitTactic()])
-      else theoremDeclaration("$" ++ name, [], expandedBody);
+      then theoremAndProof(combinedName, [], expandedBody, [splitTactic()])
+      else theoremDeclaration(combinedName, [], expandedBody);
   top.numCommandsSent =
       if numBodies > 1
       then 2
       else 1;
 
-  body.knownTrees = trees ++ body.gatheredTrees;
-  body.knownDecoratedTrees = body.gatheredDecoratedTrees;
-  body.knownTyParams = []; --Because we disallow parameterization here currently
-  top.translatedTheorem = body.translation;
+  top.translatedTheorems =
+      map(\ p::(String, Metaterm, String) -> (p.1, p.2), translated);
 
   --The number of splits to do when the theorem is done
   top.numRelevantProds =
-      foldr(\ p::(Metaterm, String, Type, [String]) sum::Integer ->
-              sum + length(p.4),
-            0, groupings);
+      map(\ p::(Metaterm, String, Type, [String], String) ->
+            (p.5, length(p.5)), groupings);
 
   top.newKnownTheorems =
-      [(name, body.translation)] ++ top.currentState.knownTheorems;
+      map(\ p::(String, Metaterm, String) -> (p.1, p.2), translated) ++
+      top.currentState.knownTheorems;
 }
 
-
-abstract production existingTheoremDeclaration
-top::TopCommand ::= name::String params::[String] body::Metaterm
+--Simply translate the metaterms in the thms argument
+--This is best done in a function where we can have each body be a local
+function translate_bodies
+[(String, Metaterm, String)] ::= thms::[(String, Metaterm, String)]
+      attrOccurs::[(String, [(Type, Type)])]
 {
-  local buildParams::(String ::= [String]) =
-     \ p::[String] ->
-       case p of
-       | [] ->
-         error("Should not reach here; theoremDeclaration production")
-       | [a] -> a
-       | a::rest ->
-         a ++ ", " ++ buildParams(rest)
-       end;
-  local paramsString::String =
-     if null(params)
-     then ""
-     else " [" ++ buildParams(params) ++ "] ";
-  top.pp = "Existing_Theorem " ++ name ++ paramsString ++ " : " ++
-           body.pp ++ ".\n";
-
-  top.errors <-
-      if startsWith("$", name)
-      then [errorMsg("Cannot start theorem names with \"$\"")]
-      else [];
-
+  local body::Metaterm = head(thms).2;
+  body.attrOccurrences = attrOccurs;
   body.boundVars = [];
   body.finalTys = [];
-  body.knownNames = [];
-  body.attrOccurrences = top.currentState.knownAttrOccurrences;
-  body.knownTrees = body.gatheredTrees;
+  body.knownNames = [head(thms).3];
+  body.knownTrees = head(thms).3::body.gatheredTrees;
   body.knownDecoratedTrees = body.gatheredDecoratedTrees;
-  body.knownTyParams = params;
-  top.translation =
-      theoremAndProof(name, params, body.translation, [skipTactic()]);
-  top.numCommandsSent = 2;
-
-  top.newKnownTheorems =
-      [(name, body.translation)] ++ top.currentState.knownTheorems;
+  body.knownTyParams = [];
+  return
+     case thms of
+     | [] -> []
+     | (name, _, tr)::tl -> 
+       (name, body.translation, tr)::translate_bodies(tl, attrOccurs)
+     end;
 }
 
 

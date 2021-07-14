@@ -185,8 +185,8 @@ synthesized attribute foundNameType::Either<String Type>;
 
 
 --These are just for handling extensible theorems
-synthesized attribute translatedTheorem::Metaterm;
-synthesized attribute numRelevantProds::Integer;
+synthesized attribute translatedTheorems::[(String, Metaterm)];
+synthesized attribute numRelevantProds::[(String, Integer)];
 
 
 

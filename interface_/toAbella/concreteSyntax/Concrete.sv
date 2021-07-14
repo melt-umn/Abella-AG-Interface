@@ -36,24 +36,17 @@ concrete productions top::ListOfCommands_c
 
 nonterminal PureCommand_c with ast<ProofCommand>;
 nonterminal CommonCommand_c with ast<NoOpCommand>;
-nonterminal PureTopCommand_c with ast<TopCommand>;
+nonterminal PureTopCommand_c with ast<AnyCommand>; --to handle common parsing errors gracefully
 nonterminal AnyCommand_c with ast<AnyCommand>;
+nonterminal TheoremStmts_c with ast<Either<String [(String, Metaterm, String)]>>;
 
 concrete productions top::AnyCommand_c
 | c::PureTopCommand_c
-  { top.ast = anyTopCommand(c.ast); }
+  { top.ast = c.ast; }
 | c::PureCommand_c
   { top.ast = anyProofCommand(c.ast); }
 | c::CommonCommand_c
   { top.ast = anyNoOpCommand(c.ast); }
-  --These are to get errors which are more helpful, because I forget
-  --   the trees a lot and can't figure out why it doesn't work.
-| 'Extensible_Theorem' name::Id_t ':' body::Metaterm_c '.'
-  { top.ast =
-        anyParseFailure("Must include a tree or trees on which to do induction"); }
-| 'Extensible_Theorem' '[' depth::Number_t ']' name::Id_t ':' body::Metaterm_c '.'
-  { top.ast =
-        anyParseFailure("Must include a tree or trees on which to do induction"); }
 
 concrete productions top::PureCommand_c
 | h::HHint_c 'induction' 'on' nl::NumList_c '.'
@@ -149,34 +142,67 @@ concrete productions top::PureCommand_c
 
 concrete productions top::PureTopCommand_c
 | 'Theorem' name::Id_t params::TheoremTyparams_c ':' body::Metaterm_c '.'
-  { top.ast = theoremDeclaration(name.lexeme, params.ast, body.ast); }
+  { top.ast = anyTopCommand(theoremDeclaration(name.lexeme, params.ast, body.ast)); }
 | 'Define' x::IdTys_c 'by' o::OptSemi_t d::Defs_c '.'
-  { top.ast = definitionDeclaration(x.ast, d.ast); }
+  { top.ast = anyTopCommand(definitionDeclaration(x.ast, d.ast)); }
 | 'CoDefine' x::IdTys_c 'by' o::OptSemi_t d::Defs_c '.'
-  { top.ast = codefinitionDeclaration(x.ast, d.ast); }
+  { top.ast = anyTopCommand(codefinitionDeclaration(x.ast, d.ast)); }
 | 'Query' m::Metaterm_c '.'
-  { top.ast = queryCommand(m.ast); }
+  { top.ast = anyTopCommand(queryCommand(m.ast)); }
 | 'Import' q::QString_t '.'
-  { top.ast = importCommand(removeQuotes(q.lexeme), []); }
+  { top.ast = anyTopCommand(importCommand(removeQuotes(q.lexeme), [])); }
 | 'Import' q::QString_t 'with' iw::ImportWiths_c '.'
-  { top.ast = importCommand(removeQuotes(q.lexeme), iw.ast); }
+  { top.ast = anyTopCommand(importCommand(removeQuotes(q.lexeme), iw.ast)); }
 | 'Kind' il::IdList_c k::Knd_c '.'
-  { top.ast = kindDeclaration(il.ast, k.ast); }
+  { top.ast = anyTopCommand(kindDeclaration(il.ast, k.ast)); }
 | 'Type' il::IdList_c t::Ty_c '.'
-  { top.ast = typeDeclaration(il.ast, t.ast); }
+  { top.ast = anyTopCommand(typeDeclaration(il.ast, t.ast)); }
 | 'Close' al::ATyList_c '.'
-  { top.ast = closeCommand(al.ast); }
+  { top.ast = anyTopCommand(closeCommand(al.ast)); }
 | 'Split' name::Id_t '.'
-  { top.ast = splitTheorem(name.lexeme, []); }
+  { top.ast = anyTopCommand(splitTheorem(name.lexeme, [])); }
 | 'Split' name::Id_t 'as' il::IdList_c '.'
-  { top.ast = splitTheorem(name.lexeme, il.ast); }
+  { top.ast = anyTopCommand(splitTheorem(name.lexeme, il.ast)); }
 --New for Silver
-| 'Extensible_Theorem' name::Id_t ':' body::Metaterm_c 'on' trees::PermIds_c '.'
-  { top.ast = extensibleTheoremDeclaration(toString(name.lexeme), 1, body.ast, trees.ast); }
-| 'Extensible_Theorem' '[' depth::Number_t ']' name::Id_t ':' body::Metaterm_c 'on' trees::PermIds_c '.'
-  { top.ast = extensibleTheoremDeclaration(toString(name.lexeme), toInteger(depth.lexeme), body.ast, trees.ast); }
-| 'Existing_Theorem' name::Id_t params::TheoremTyparams_c ':' body::Metaterm_c '.'
-  { top.ast = existingTheoremDeclaration(name.lexeme, params.ast, body.ast); }
+| 'Extensible_Theorem' thms::TheoremStmts_c '.'
+  { top.ast =
+        case thms.ast of
+        | left(msg) -> anyParseFailure(msg)
+        | right(lst) -> anyTopCommand(extensibleTheoremDeclaration(1, lst))
+        end; }
+| 'Extensible_Theorem' '[' depth::Number_t ']' thms::TheoremStmts_c '.'
+  { top.ast =
+        case thms.ast of
+        | left(msg) -> anyParseFailure(msg)
+        | right(lst) ->
+          anyTopCommand(extensibleTheoremDeclaration(toInteger(depth.lexeme), lst))
+        end; }
+
+
+concrete productions top::TheoremStmts_c
+| name::Id_t ':' body::Metaterm_c 'on' tree::Id_t
+  { top.ast = right([(toString(name.lexeme), body.ast, toString(tree.lexeme))]); }
+| name::Id_t ':' body::Metaterm_c 'on' tree::Id_t ',' rest::TheoremStmts_c
+  { top.ast =
+        case rest.ast of
+        | left(msg) -> left(msg)
+        | right(lst) ->
+          right((toString(name.lexeme), body.ast, toString(tree.lexeme))::lst)
+        end; }
+  --These are to get errors which are more helpful, because I forget
+  --   the trees a lot and can't figure out why it doesn't work.
+| name::Id_t ':' body::Metaterm_c
+  { top.ast =
+        left("Must include tree on which to do induction for theorem " ++
+             toString(name.lexeme)); }
+| name::Id_t ':' body::Metaterm_c ',' rest::TheoremStmts_c
+  { top.ast =       
+        left("Must include tree on which to do induction for theorem " ++
+              toString(name.lexeme) ++ "\n" ++
+             case rest.ast of
+             | left(msg) -> msg
+             | right(_) -> ""
+             end); }
 
 
 concrete productions top::CommonCommand_c

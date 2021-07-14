@@ -187,13 +187,16 @@ top::ProofState ::=
 
 aspect production extensible_proofInProgress
 top::ProofState ::=
-     currentProofState::ProofState originalTheorem::Metaterm
-     name::String numProds::Integer
+     currentProofState::ProofState
+     originalTheorems::[(String, Metaterm)]
+     numProds::[(String, Integer)]
 {
   --names for the split theorems
   local newThmNames::[String] =
-        map(\ i::Integer -> "$" ++ name ++ "_$_" ++ toString(i),
-            range(1, numProds + 1));
+        flatMap(\ p::(String, Integer) ->
+           map(\ i::Integer -> "$" ++ p.1 ++ "_$_" ++ toString(i),
+               range(1, p.2 + 1)),
+           numProds);
   local isDone::Boolean =
         case currentProofState of
         | proofInProgress(_, _, _) -> false
@@ -213,20 +216,23 @@ top::ProofState ::=
   top.cleanUpCommands =
       if isDone && shouldDeclare
       then --split, declare, and skip.
-           splitTheorem("$" ++ name, newThmNames).pp ++
-           theoremDeclaration(name, [], originalTheorem).pp ++
-           skipTactic().pp
+           splitTheorem(
+              extensible_theorem_name(head(originalTheorems).1),
+              newThmNames).pp ++
+           foldr(\ p::(String, Metaterm) rest::String ->
+                   theoremDeclaration(p.1, [], p.2).pp ++ "  " ++ skipTactic().pp ++ "\n" ++ rest,
+                 "", originalTheorems)
       else currentProofState.cleanUpCommands;
   top.numCleanUpCommands =
       if isDone && shouldDeclare
-      then 3
+      then 1 + 2 * length(originalTheorems)
       else currentProofState.numCleanUpCommands;
 
   top.nextStateOut =
       if isDone
       then top.nextStateIn
       else extensible_proofInProgress(
-              top.nextStateIn, originalTheorem, name, numProds);
+              top.nextStateIn, originalTheorems, numProds);
 }
 
 

@@ -144,6 +144,13 @@ top::NewPremise ::= tree::String
 
 
 
+function extensible_theorem_name
+String ::= name::String
+{
+  return "$Extensible_Theorem_" ++ name;
+}
+
+
 
 {-
   This builds the metaterm for an extensible theorem based on the
