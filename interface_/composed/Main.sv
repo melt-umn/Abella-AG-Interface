@@ -20,7 +20,8 @@ parser cmd_parse::AnyCommand_c
   interface_:toAbella:concreteSyntax;
 }
 
---We need this to pass down for reading files being imported
+--We need this to pass down for reading files being imported and for
+--   processing a file as a whole
 parser file_parse::ListOfCommands_c
 {
   interface_:toAbella:concreteSyntax;
@@ -32,14 +33,188 @@ parser file_parse::ListOfCommands_c
 function main
 IOVal<Integer> ::= largs::[String] ioin::IO
 {
+  local filename::String = head(largs);
+  --
+  return
+     case largs of
+     | [] -> run_interactive(ioin)
+     | [filename] ->
+       run_file(ioin, filename)
+     | _ ->
+       ioval(print("Can only process one file at a time\n", ioin), 1)
+     end;
+}
+
+
+function run_file
+IOVal<Integer> ::= ioin::IO filename::String
+{
+  local fileExists::IOVal<Boolean> = isFile(filename, ioin);
+  local fileContents::IOVal<String> =
+        readFile(filename, fileExists.io);
+  local fileParsed::ParseResult<ListOfCommands_c> =
+        file_parse(fileContents.iovalue, filename);
+  local fileAST::ListOfCommands = fileParsed.parseTree.ast;
+  --
+  local abella::IOVal<ProcessHandle> =
+        spawnProcess("abella", [], fileContents.io);
+  --Abella outputs a welcome message, which we want to clean out
+  local abella_initial_string::IOVal<String> =
+        read_abella_outputs(1, abella.iovalue, abella.io);
+
+  return
+     if fileExists.iovalue
+     then if fileParsed.parseSuccess
+          then run_step_file(fileAST.commandList,
+                             [(-1, defaultProverState())],
+                             abella.iovalue, abella_initial_string.io)
+          else ioval(print("Syntax error:\n" ++ fileParsed.parseErrors ++
+                           "\n", ioin), 1)
+     else ioval(print("Given file " ++ filename ++ " does not exist",
+                      fileExists.io), 1);
+}
+
+
+{--
+  - Walk through a list of commands, processing the proofs they represent
+  -
+  - @inputCommands  The list of commands through which to walk
+  - @statelist  The state of the prover after each command issued to the prover.
+  -             The current state of the prover is the first element of the list.
+  - @abella  The process in which Abella is running
+  - @ioin  The incoming IO token
+  - @return  The resulting IO token and exit status
+-}
+function run_step_file
+IOVal<Integer> ::=
+   inputCommands::[AnyCommand]
+   stateList::[(Integer, ProverState)]
+   abella::ProcessHandle ioin::IO
+{
+  local state::ProofState = head(stateList).snd.state;
+  local attrs::[String] = head(stateList).snd.knownAttrs;
+  local prods::[(String, Type)] = head(stateList).snd.knownProductions;
+
+  {-
+    PROCESS COMMAND
+  -}
+  --Translate command
+  ----------------------------
+  local any_a::AnyCommand = head(inputCommands);
+  any_a.currentState = head(stateList).snd;
+  any_a.translatedState = head(stateList).snd.state.translation;
+  any_a.inProof = state.inProof;
+  any_a.stateListIn = stateList;
+  any_a.abellaFileParser =
+        \ fileContents::String fileName::String ->
+          let result::ParseResult<ListOfCommands_c> =
+              file_parse(fileContents, fileName)
+          in
+            if result.parseSuccess
+            then right(result.parseTree.ast)
+            else left(result.parseErrors)
+          end;
+  --whether we have an actual command to send to Abella
+  local speak_to_abella::Boolean = any_a.sendCommand;
+  --Send to abella
+  ----------------------------
+  local out_to_abella::IO =
+        if speak_to_abella
+        then sendToProcess(abella, any_a.translation, ioin)
+        else ioin;
+
+
+  {-
+    PROCESS OUTPUT
+  -}
+  --Read output
+  ----------------------------
+  local back_from_abella::IOVal<String> =
+        if speak_to_abella
+        then read_abella_outputs(any_a.numCommandsSent, abella, out_to_abella)
+        else ioval(out_to_abella, "");
+  --Translate output
+  ----------------------------
+  local full_result::ParseResult<FullDisplay_c> =
+        from_parse(back_from_abella.iovalue, "<<output>>");
+  local full_a::FullDisplay = full_result.parseTree.ast;
+  any_a.wasError =
+        if speak_to_abella
+        then !full_result.parseSuccess || full_a.isError
+        else false;
+  any_a.newProofState = full_a.proof;
+  --Clean up state
+  ----------------------------
+  local shouldClean::Boolean =
+        full_result.parseSuccess && !full_a.isError && any_a.shouldClean &&
+        (head(stateList).snd.clean || any_a.mustClean);
+  local cleaned::(String, Integer, FullDisplay, [[Integer]], IO) =
+        if shouldClean
+        then cleanState(decorate full_a with
+                        {replaceState = head(any_a.stateListOut).snd.state;}.replacedState,
+                        abella, back_from_abella.io)
+        else ("", 0, decorate full_a with
+                     {replaceState = head(any_a.stateListOut).snd.state;}.replacedState,
+              [], back_from_abella.io);
+  local newStateList::[(Integer, ProverState)] =
+        (head(any_a.stateListOut).fst + cleaned.2,
+         --just replace the proof state in the ProverState
+         decorate head(any_a.stateListOut).snd with
+           {replaceState = cleaned.3.proof;}.replacedState)::tail(any_a.stateListOut);
+  --Show to user
+  ----------------------------
+
+
+  {-
+    EXIT
+  -}
+  local wait_on_exit::IO = waitForProcess(abella, out_to_abella);
+  --We can't use our normal read function because that looks for a new prompt
+  --Guaranteed to get all the output because we waited for the process to exit first
+  local exit_message::IOVal<String> =
+        readAllFromProcess(abella, wait_on_exit);
+
+
+  {-
+    RUN REPL AGAIN
+  -}
+  local again::IOVal<Integer> =
+        run_step_file(tail(inputCommands), newStateList, abella,
+                      back_from_abella.io);
+
+
+  return
+     case inputCommands of
+     | [] ->
+       if state.inProof
+       then ioval(print("Proof in progress at end of file\n", ioin), 1)
+       else ioval(print("Successfully processed file\n", ioin), 0)
+     | _::tl ->
+       if any_a.isQuit
+       then ioval(exit_message.io, 0)
+       else if any_a.isError
+       then ioval(print("Could not process full file:\n" ++
+                        any_a.ownOutput ++ "\n", back_from_abella.io),
+                  1)
+       else if full_a.isError
+       then ioval(print("Could not process full file:\n" ++ full_a.pp,
+                        back_from_abella.io), 1)
+       else again
+     end;
+}
+
+
+function run_interactive
+IOVal<Integer> ::= ioin::IO
+{
   local abella::IOVal<ProcessHandle> = spawnProcess("abella", [], ioin);
   --Abella outputs a welcome message, which we want to clean out
   local abella_initial_string::IOVal<String> =
         read_abella_outputs(1, abella.iovalue, abella.io);
 
   return
-     run_step([(-1, defaultProverState())],
-              abella.iovalue, abella_initial_string.io);
+     run_step_interactive([(-1, defaultProverState())],
+                          abella.iovalue, abella_initial_string.io);
 }
 
 
@@ -52,7 +227,7 @@ IOVal<Integer> ::= largs::[String] ioin::IO
   - @ioin  The incoming IO token
   - @return  The resulting IO token and exit status
 -}
-function run_step
+function run_step_interactive
 IOVal<Integer> ::=
    stateList::[(Integer, ProverState)]
    abella::ProcessHandle ioin::IO
@@ -206,7 +381,7 @@ IOVal<Integer> ::=
     RUN REPL AGAIN
   -}
   local again::IOVal<Integer> =
-        run_step(newStateList, abella, printed_output);
+        run_step_interactive(newStateList, abella, printed_output);
 
 
   return if any_a.isQuit

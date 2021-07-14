@@ -70,7 +70,10 @@ nonterminal ListOfCommands with
    newAttrs, newAttrOccurrences, newProductions, newWPDRelations,
       newTheorems, newInheritedAttrs, newLocalAttrs, newFunctions,
    numCommandsSent,
-   pp;
+   pp,
+   commandList;
+
+synthesized attribute commandList::[AnyCommand];
 
 
 abstract production emptyListOfCommands
@@ -79,6 +82,8 @@ top::ListOfCommands ::=
   top.pp = "";
 
   top.numCommandsSent = 0;
+
+  top.commandList = [];
 }
 
 
@@ -88,6 +93,8 @@ top::ListOfCommands ::= a::AnyCommand rest::ListOfCommands
   top.pp = a.pp ++ rest.pp;
 
   top.numCommandsSent = 1 + rest.numCommandsSent;
+
+  top.commandList = a::rest.commandList;
 }
 
 

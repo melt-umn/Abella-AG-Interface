@@ -62,6 +62,9 @@ inherited attribute newProofState::ProofState;
 --If Abella gave an error on the translation of this command
 inherited attribute wasError::Boolean;
 
+--If a command has an error we find before sending to Abella
+synthesized attribute isError::Boolean;
+
 
 
 {-

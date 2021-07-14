@@ -11,8 +11,8 @@
 (defconst silverabella-top-commands
   '(
     ;;The actual top commands
-    ;; Theorem | Define | Import | Kind | Split | Type | Extensible_Theorem
-    ("\\(Theorem\\)\\|\\(Define\\)\\|\\(Import\\)\\|\\(Kind\\)\\|\\(Split\\)\\|\\(Type\\)\\|\\(Extensible_Theorem\\)"
+    ;; Theorem | Define | Import | Kind | Split | Type | Extensible_Theorem | Existing_Theorem
+    ("\\(Theorem\\)\\|\\(Define\\)\\|\\(Import\\)\\|\\(Kind\\)\\|\\(Split\\)\\|\\(Type\\)\\|\\(Extensible_Theorem\\)\\|\\(Existing_Theorem\\)"
      . font-lock-keyword-face)
     ;;Auxiliary words to go with them
     ;; as | by

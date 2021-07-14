@@ -11,7 +11,7 @@ nonterminal AnyCommand with
    pp,
    translation<String>, currentState, translatedState, inProof, abellaFileParser,
    isQuit, isUndo, shouldClean, mustClean,
-   sendCommand, ownOutput, numCommandsSent,
+   sendCommand, ownOutput, numCommandsSent, isError,
    stateListIn, stateListOut, newProofState, wasError;
 
 
@@ -39,6 +39,7 @@ top::AnyCommand ::= c::TopCommand
       else if null(c.errors)
            then c.ownOutput
            else errors_to_string(c.errors);
+  top.isError = top.inProof || !null(c.errors);
   top.numCommandsSent =
       if top.sendCommand
       then c.numCommandsSent
@@ -105,6 +106,7 @@ top::AnyCommand ::= c::ProofCommand
            then c.ownOutput
            else errors_to_string(c.errors) ++ "\n\n"
       else "Error:  Cannot use proof commands outside a proof\n\n";
+  top.isError = !top.inProof || !null(c.errors);
   top.numCommandsSent =
       if top.sendCommand
       then length(c.translation)
@@ -158,6 +160,7 @@ top::AnyCommand ::= c::NoOpCommand
       if null(c.errors)
       then c.ownOutput
       else errors_to_string(c.errors) ++ "\n\n";
+  top.isError = !null(c.errors);
   top.numCommandsSent =
       if top.sendCommand
       then c.numCommandsSent
@@ -186,6 +189,7 @@ top::AnyCommand ::= parseErrors::String
 
   top.sendCommand = false;
   top.ownOutput = "Error:  Could not parse:\n" ++ parseErrors;
+  top.isError = true;
   top.numCommandsSent = 0;
 
   top.stateListOut = top.stateListIn;
