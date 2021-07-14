@@ -54,7 +54,7 @@
 
  proof-shell-annotated-prompt-regexp  "^.*< $"
  ;;error message regexp taken from Abella PG mode (https://github.com/abella-prover/PG)
- proof-shell-error-regexp            "Error:.*\\|\\(Syntax\\|Typing\\|Unification\\|Unknown\\) error\."
+ proof-shell-error-regexp            "Error:.*\\|\\(Syntax\\|Typing\\|Unification\\|Unknown\\) \\(e\\|E\\)rror\."
  proof-shell-proof-completed-regexp  "Proof completed."
  ;;This is not working to clear goals, even though it should match
  ;;proof-shell-clear-goals-regexp      "Proof \\(completed\\)\\|\\(aborted\\)."

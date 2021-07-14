@@ -37,7 +37,7 @@ induction on 1. intros. case H1 (keep).
       search.
      %Subgoal 2.2
       apply IH to H4 H2. exists B. assert null(H::T) = false.
-      assert head(H::T) = false. assert H = N -> false. search.
+      assert head(H::T) = H. assert H = N -> false. search.
       search.
 
 Theorem lookup__member : forall E V N,
