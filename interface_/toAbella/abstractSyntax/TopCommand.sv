@@ -259,55 +259,36 @@ top::TopCommand ::= preds::[(String, Type)] defs::Defs
 }
 
 
-abstract production importCommand
-top::TopCommand ::= importFile::String withs::[(String, String)]
+abstract production grammarCommand
+top::TopCommand ::= importGrammar::String
 {
-  local buildWiths::(String ::= [(String, String)]) =
-     \ w::[Pair<String String>] ->
-       case w of
-       | [] ->
-         error("Should not reach here; importCommand production")
-       | [pair(a, b)] -> a ++ " := " ++ b
-       | pair(a,b)::rest ->
-         a ++ " := " ++ b ++ ", " ++ buildWiths(rest)
-       end;
-  local withString::String =
-     if null(withs)
-     then ""
-     else " with " ++ buildWiths(withs);
-  top.pp = "Import \"" ++ importFile ++ "\"" ++ withString ++ ".\n";
+  top.pp = "Grammar " ++ importGrammar ++ ".\n";
 
   {-
     We can't import Abella files which include defined relations
     (constants with result type prop).  We use such constants all over
     in component definitions, so we are going to read the files and
-    pass their text to Abella directly.  I'm not handling withs in
-    that case, but there shouldn't be any withs anyway.
-
-    For simplicity, we are going to import our library files normally,
-    since they don't include any declared relations.
+    pass their text to Abella directly.
   -}
-  local libraryFiles::[String] =
-        ["bools", "integers", "integer_addition", "integer_multiplication",
-         "integer_division", "integer_comparison", "lists", "pairs",
-         "strings", "attr_val"];
-  local readFilename::String = importFile ++ ".thm";
-  local isLibrary::Boolean =
-        contains(fileNameInFilePath(importFile), libraryFiles);
-  local fileExists::Boolean = isFile(readFilename, unsafeIO()).iovalue;
-  local fileContents::String = readFile(readFilename, unsafeIO()).iovalue;
+  --Get the location of the generated directory
+  local gen_loc::IOVal<String> = envVar("SILVER_GEN", unsafeIO());
+  local gen_loc_exists::Boolean = gen_loc.iovalue != "";
+  --Make the correct filename for the grammar
+  local grammar_components::[String] = explode(":", importGrammar);
+  local readFilename::String =
+        gen_loc.iovalue ++ "/" ++ implode("/", grammar_components) ++
+        "/definitions.thm";
+  --TODO:  Currently not handling imports
+  local fileExists::IOVal<Boolean> =
+        isFile(readFilename, gen_loc.io);
+  local fileContents::IOVal<String> =
+        readFile(readFilename, fileExists.io);
   local fileParsed::Either<String ListOfCommands> =
-        top.abellaFileParser(fileContents, readFilename);
+        top.abellaFileParser(fileContents.iovalue, readFilename);
   local fileAST::ListOfCommands = fileParsed.fromRight;
-  top.translation =
-      if isLibrary
-      then importCommand(importFile, withs)
-      else textCommand(fileAST.pp);
+  top.translation = textCommand(fileAST.pp);
 
-  top.numCommandsSent =
-      if isLibrary
-      then 1
-      else fileAST.numCommandsSent;
+  top.numCommandsSent = fileAST.numCommandsSent;
 
   top.newKnownAttrs =
       fileAST.newAttrs ++ top.currentState.knownAttrs;
@@ -328,13 +309,14 @@ top::TopCommand ::= importFile::String withs::[(String, String)]
       fileAST.newLocalAttrs ++ top.currentState.knownLocalAttrs;
 
   top.errors <-
-      if fileExists
-      then if !isLibrary && fileParsed.isRight
-           then []
-           else [errorMsg("File \"" ++ readFilename ++
-                          "\" could not be parsed:\n" ++
-                          fileParsed.fromLeft)]
-      else [errorMsg("File \"" ++ readFilename ++ "\" does not exist")];
+      if !fileExists.iovalue
+      then [errorMsg("File \"" ++ readFilename ++ "\" does not exist")]
+      else if !gen_loc_exists
+      then [errorMsg("Silver generated directory location not set")]
+      else if !fileParsed.isRight
+      then [errorMsg("File \"" ++ readFilename ++ "\" could not " ++
+                     "be parsed:\n" ++ fileParsed.fromLeft)]
+      else [];
 }
 
 

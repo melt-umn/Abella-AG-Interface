@@ -1,5 +1,4 @@
-
-Import "calculator_definition".
+Grammar calculator.
 
 
 Set debug off.

@@ -46,6 +46,13 @@ IOVal<Integer> ::= largs::[String] ioin::IO
 }
 
 
+
+
+
+
+{--------------------------------------------------------------------
+                                FILES                                
+ --------------------------------------------------------------------}
 function run_file
 IOVal<Integer> ::= ioin::IO filename::String
 {
@@ -56,18 +63,20 @@ IOVal<Integer> ::= ioin::IO filename::String
         file_parse(fileContents.iovalue, filename);
   local fileAST::ListOfCommands = fileParsed.parseTree.ast;
   --
-  local abella::IOVal<ProcessHandle> =
-        spawnProcess("abella", [], fileContents.io);
-  --Abella outputs a welcome message, which we want to clean out
-  local abella_initial_string::IOVal<String> =
-        read_abella_outputs(1, abella.iovalue, abella.io);
+  local started::IOVal<Either<String ProcessHandle>> =
+        startAbella(fileContents.io);
 
   return
      if fileExists.iovalue
      then if fileParsed.parseSuccess
-          then run_step_file(fileAST.commandList,
-                             [(-1, defaultProverState())],
-                             abella.iovalue, abella_initial_string.io)
+          then case started.iovalue of
+               | left(msg) ->
+                 ioval(print("Error:  " ++ msg ++ "\n", started.io), 1)
+               | right(abella) ->
+                 run_step_file(fileAST.commandList,
+                               [(-1, defaultProverState())],
+                               abella, started.io)
+               end
           else ioval(print("Syntax error:\n" ++ fileParsed.parseErrors ++
                            "\n", ioin), 1)
      else ioval(print("Given file " ++ filename ++ " does not exist",
@@ -204,17 +213,27 @@ IOVal<Integer> ::=
 }
 
 
+
+
+
+
+{--------------------------------------------------------------------
+                             INTERACTIVE                             
+ --------------------------------------------------------------------}
 function run_interactive
 IOVal<Integer> ::= ioin::IO
 {
-  local abella::IOVal<ProcessHandle> = spawnProcess("abella", [], ioin);
-  --Abella outputs a welcome message, which we want to clean out
-  local abella_initial_string::IOVal<String> =
-        read_abella_outputs(1, abella.iovalue, abella.io);
+  local started::IOVal<Either<String ProcessHandle>> =
+        startAbella(ioin);
 
   return
-     run_step_interactive([(-1, defaultProverState())],
-                          abella.iovalue, abella_initial_string.io);
+     case started.iovalue of
+     | left(msg) ->
+       ioval(print("Error:  " ++ msg ++ "\n", started.io), 1)
+     | right(abella) ->
+       run_step_interactive([(-1, defaultProverState())],
+                            abella, started.io)
+     end;
 }
 
 
@@ -390,6 +409,13 @@ IOVal<Integer> ::=
 }
 
 
+
+
+
+
+{--------------------------------------------------------------------
+                          CLEAN PROOF STATE                          
+ --------------------------------------------------------------------}
 {-
  - Clean up the current proof state by doing actions dictated by the state
  -
@@ -446,6 +472,13 @@ function cleanState
 }
 
 
+
+
+
+
+{--------------------------------------------------------------------
+                           READ USER INPUT                           
+ --------------------------------------------------------------------}
 {-
   Read the command, which may be several lines, from stdin.
 -}
@@ -519,6 +552,52 @@ String ::= line::String
      if quote < slashquote --quote must be found for valid syntax
      then substring(quote + 1, length(line), line)
      else clear_string(substring(slashquote + 2, length(line), line));
+}
+
+
+
+
+
+
+{--------------------------------------------------------------------
+                           ABELLA FUNCTIONS                          
+ --------------------------------------------------------------------}
+--Either start Abella or fail with an error message
+function startAbella
+IOVal<Either<String ProcessHandle>> ::= ioin::IO
+{
+  --Find the library location (env variable set by startup script)
+  local library_loc::IOVal<String> =
+        envVar("SILVERABELLA_LIBRARY", ioin);
+  local library_string::String =
+        "Kind bool   type.\n" ++
+        "Import \"" ++ library_loc.iovalue ++ "bools\".\n" ++
+        "Kind nat   type.\n" ++
+        "Import \"" ++ library_loc.iovalue ++ "integer_addition\".\n" ++
+        "Import \"" ++ library_loc.iovalue ++ "integer_multiplication\".\n" ++
+        "Import \"" ++ library_loc.iovalue ++ "integer_comparison\".\n" ++
+        "Import \"" ++ library_loc.iovalue ++ "lists\".\n" ++
+        "Import \"" ++ library_loc.iovalue ++ "strings\".\n" ++
+        "Kind $pair   type -> type -> type.\n" ++
+        "Import \"" ++ library_loc.iovalue ++ "pairs\".\n" ++
+        "Kind $attrVal   type -> type.\n" ++
+        "Import \"" ++ library_loc.iovalue ++ "attr_val\".\n\n";
+
+  local abella::IOVal<ProcessHandle> =
+        spawnProcess("abella", [], library_loc.io);
+  --Send the library imports to Abella
+  local send_imports::IO =
+        sendToProcess(abella.iovalue, library_string, abella.io);
+  --Read Abella's outputs from the library imports, in addition to the
+  --   welcome message
+  local abella_initial_string::IOVal<String> =
+        read_abella_outputs(13, abella.iovalue, send_imports);
+
+  return
+     if library_loc.iovalue == ""
+     then ioval(library_loc.io,
+                left("Interface library location not set"))
+     else ioval(abella_initial_string.io, right(abella.iovalue));
 }
 
 

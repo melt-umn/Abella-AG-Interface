@@ -1,5 +1,5 @@
+Grammar imp:host.
 
-Import "imp:host_definition".
 
 Theorem lookup__unique : forall L N Ret Ret',
   lookup(N, L) = Ret -> lookup(N, L) = Ret' -> Ret = Ret'.

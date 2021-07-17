@@ -1,0 +1,38 @@
+#!/bin/bash
+
+SILVER_SCRIPT_LOCATION="$HOME/bin/silver"
+
+
+#Check if the silver script exists to find the installed location of Silver
+if [ ! -f $SILVER_SCRIPT_LOCATION ]; then
+    echo "Couldn't find Silver file (~/bin/silver) to find Silver's home"
+    exit 1
+fi
+
+#These next lines stolen from the Silver script
+# ~/bin/silver should be a link to somewhere, find out where!
+SILVER_EXECUTABLE=$(readlink -f $SILVER_SCRIPT_LOCATION)
+# Set Silver's home
+SILVER_HOME=${SILVER_EXECUTABLE/support\/bin\/silver/}
+#Set the generated directory
+export SILVER_GEN=${SILVER_HOME}generated/thm/
+
+
+
+#Find the SilverAbella home
+SILVERABELLA_LOC=$(dirname $(realpath $0))
+SILVERABELLA_ROOT=${SILVERABELLA_LOC/interface_}
+export SILVERABELLA_LIBRARY=${SILVERABELLA_ROOT}silver_compilation/encodingPrimitives/
+
+
+
+#Location where the jar should be
+SILVERABELLA_JAR="$SILVERABELLA_LOC/composed/interface_.composed.jar"
+#Check if the jar exists to run
+if [ ! -f "$SILVERABELLA_JAR" ]; then
+    echo "Coludn't find SilverAbella jar to execute, aborting."
+    exit 2
+fi
+#Run the interface
+java -jar "$SILVERABELLA_JAR" $@
+

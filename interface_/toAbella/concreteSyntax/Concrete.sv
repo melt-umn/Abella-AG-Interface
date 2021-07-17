@@ -149,10 +149,8 @@ concrete productions top::PureTopCommand_c
   { top.ast = anyTopCommand(codefinitionDeclaration(x.ast, d.ast)); }
 | 'Query' m::Metaterm_c '.'
   { top.ast = anyTopCommand(queryCommand(m.ast)); }
-| 'Import' q::QString_t '.'
-  { top.ast = anyTopCommand(importCommand(removeQuotes(q.lexeme), [])); }
-| 'Import' q::QString_t 'with' iw::ImportWiths_c '.'
-  { top.ast = anyTopCommand(importCommand(removeQuotes(q.lexeme), iw.ast)); }
+| 'Grammar' q::Qname_t '.'
+  { top.ast = anyTopCommand(grammarCommand(q.lexeme)); }
 | 'Kind' il::IdList_c k::Knd_c '.'
   { top.ast = anyTopCommand(kindDeclaration(il.ast, k.ast)); }
 | 'Type' il::IdList_c t::Ty_c '.'
@@ -929,19 +927,6 @@ concrete productions top::TheoremTyparams_c
   { top.ast = []; }
 | '[' il::IdList_c ']'
   { top.ast = il.ast; }
-
-
-
-
-
-nonterminal ImportWiths_c with ast <[Pair<String String>]>;
-
-
-concrete productions top::ImportWiths_c
-| i1::Id_t ':=' i2::Id_t
-{ top.ast = [pair(i1.lexeme, i2.lexeme)]; }
-| i1::Id_t ':=' i2::Id_t ',' rest::ImportWiths_c
-{ top.ast = pair(i1.lexeme, i2.lexeme)::rest.ast; }
 
 
 
