@@ -13,6 +13,7 @@ grammar interface_:fromAbella;
 parser topparse::FullDisplay_c
 {
   interface_:fromAbella:concreteSyntax;
+  interface_:common:concreteSyntax;
 }
 
 

@@ -1,7 +1,7 @@
 grammar interface_:toAbella:abstractSyntax;
 
 
-imports interface_:common;
+imports interface_:common:abstractSyntax;
 
 
 {-

@@ -1,4 +1,4 @@
-grammar interface_:common;
+grammar interface_:common:abstractSyntax;
 
 {-
   This file provides some common functions for name translation and

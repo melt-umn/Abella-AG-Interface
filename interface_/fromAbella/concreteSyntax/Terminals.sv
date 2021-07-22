@@ -2,13 +2,12 @@ grammar interface_:fromAbella:concreteSyntax;
 
 
 imports interface_:fromAbella:abstractSyntax;
-imports interface_:common;
+imports interface_:common:abstractSyntax;
+imports interface_:common:concreteSyntax;
 
 
 lexer class DISPLAY   dominates Id_t;
 lexer class ERROR;
-lexer class LOGIC     dominates Id_t;
-lexer class TOKEN     dominates Id_t;
 
 
 terminal Subgoal_t      'Subgoal'            lexer classes {DISPLAY};
@@ -94,40 +93,16 @@ terminal StructureApp_t      'Structure of applied term must be a substructure o
 terminal ApplyType_t         'forall A1 ... Ai, nabla z1 ... zj, H1 -> ... -> Hk -> C'              lexer classes {ERROR};
 
 
-terminal Exists_t       'exists'       lexer classes {LOGIC};
-terminal False_t        'false'        lexer classes {LOGIC};
-terminal Forall_t       'forall'       lexer classes {LOGIC};
-terminal Nabla_t        'nabla'        lexer classes {LOGIC};
-terminal True_t         'true'         lexer classes {LOGIC};
 terminal Type_t         'type'         lexer classes {LOGIC};
 
 
-terminal Comma_t       ','       lexer classes {TOKEN}, precedence=3;
 terminal Period_t      '.'       lexer classes {TOKEN};
 terminal Semicolon_t   ';'       lexer classes {TOKEN};
 terminal Backslash_t   '\'       lexer classes {TOKEN}, precedence=7;
-terminal LParen_t      '('       lexer classes {TOKEN};
-terminal RParen_t      ')'       lexer classes {TOKEN};
-terminal Eq_t          '='       lexer classes {TOKEN};
-terminal Colon_t       ':'       lexer classes {TOKEN};
-terminal RightArrow_t  '->'      lexer classes {TOKEN}, precedence=4, association=right;
-terminal At_t          '@'       lexer classes {TOKEN};
-terminal Octothorpe_t  '#'       lexer classes {TOKEN};
-terminal Or_t          '\/'      lexer classes {TOKEN}, precedence=5, association=left;
-terminal And_t         '/\'      lexer classes {TOKEN}, precedence=6, association=left;
-terminal LBracket_t    '['       lexer classes {TOKEN};
-terminal RBracket_t    ']'       lexer classes {TOKEN};
-terminal Underscore_t  '_'       lexer classes {TOKEN};
 terminal OptSemi_t     /;?/      lexer classes {TOKEN};
-terminal Cons_t        '::'      lexer classes {TOKEN}, precedence=11, association=right;
-terminal Nil_t         'nil'     lexer classes {TOKEN};
-terminal Plus_t        '+'       lexer classes {TOKEN};
-terminal Star_t        '*'       lexer classes {TOKEN};
 
 
-terminal Id_t  /[-A-Za-z^=`'?$][-A-Za-z^=`'?$0-9_*@+#!~\/]*/;
 terminal QString_t  /"[^"]*"/;
-terminal Number_t  /[0-9]+/;
 
 
 --To fix parsing problems, since it is computer-generated output
@@ -138,7 +113,8 @@ terminal IdComma_t  /[-A-Za-z^=`'?$][-A-Za-z^=`'?$0-9_*@+#!~\/]*,/;
 --For hypotheses which have been abbreviated to non-whitespace names
 --I'm having parsing problems if I try to handle whitespace names
 --terminal Abbreviated_t  /[^"\r\n[-a-zA-Z0-9_?\/=+!@#$%^&*<>,.;:][^"\r\n]*/   submits to {Id_t, TOKEN, LOGIC};
-terminal Abbreviated_t  /[^\ \t\n\r].*/  submits to {Id_t, TOKEN, LOGIC};
+terminal Abbreviated_t  /[^\ \t\n\r].*/  submits to
+        {Id_t, TOKEN, LOGIC};
 
 
 --For import errors
@@ -149,7 +125,4 @@ terminal FilePath_t  /[^\ \t\n\r]+/;
 terminal SingleQString_t  /'[^']*'/;
 --To include nil for error messages
 terminal ErrorId_t   /[-A-Za-z^=`'?$][-A-Za-z^=`'?$0-9_*@+#!~\/]*/;
-
-
-ignore terminal Whitespace_t /[\ \t\n\r]+/;
 

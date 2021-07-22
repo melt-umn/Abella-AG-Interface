@@ -1,4 +1,4 @@
-grammar interface_:common;
+grammar interface_:common:abstractSyntax;
 
 {-
   We put these in common rather than fromAbella because we need to

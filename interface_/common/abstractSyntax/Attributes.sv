@@ -1,4 +1,4 @@
-grammar interface_:common;
+grammar interface_:common:abstractSyntax;
 
 
 synthesized attribute pp::String;
@@ -44,4 +44,9 @@ propagate usedNames on
    Metaterm, Term, TermList, ParenthesizedArgs, ListContents, PairContents,
       Hypothesis, Context, CurrentGoal, ProofState
    excluding bindingMetaterm, nameTerm, attrAccessMetaterm, attrAccessEmptyMetaterm, localAttrAccessMetaterm, localAttrAccessEmptyMetaterm;
+
+
+
+--
+inherited attribute currentState::ProverState occurs on Metaterm, Term;
 

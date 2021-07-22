@@ -1,4 +1,4 @@
-grammar interface_:common;
+grammar interface_:common:abstractSyntax;
 
 
 function containsAssociated

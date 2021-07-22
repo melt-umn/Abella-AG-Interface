@@ -13,16 +13,19 @@ imports silver:util:subprocess;
 parser from_parse::FullDisplay_c
 {
   interface_:fromAbella:concreteSyntax;
+  interface_:common:concreteSyntax;
 }
 
 parser cmd_parse::AnyCommand_c
 {
   interface_:toAbella:concreteSyntax;
+  interface_:common:concreteSyntax;
 }
 
 parser grammar_decl_parse::GrammarDecl_c
 {
   interface_:toAbella:concreteSyntax;
+  interface_:common:concreteSyntax;
 }
 
 --Read a theorem interface file
@@ -35,12 +38,14 @@ parser grammar_decl_parse::GrammarDecl_c
 parser file_parse::FullFile_c
 {
   interface_:toAbella:concreteSyntax;
+  interface_:common:concreteSyntax;
 }
 
 --Read a definition file
 parser import_parse::ListOfCommands_c
 {
   interface_:toAbella:concreteSyntax;
+  interface_:common:concreteSyntax;
 }
 
 
