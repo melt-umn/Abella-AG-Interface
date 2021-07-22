@@ -22,7 +22,24 @@ function split_AttrAccess_t
 
 
 
+
+nonterminal GrammarDecl_c with ast<String>;
+
+concrete productions top::GrammarDecl_c
+| 'Grammar' q::Qname_t '.'
+  { top.ast = q.lexeme; }
+
+
+
+
+
+
+nonterminal FullFile_c with ast<(String, ListOfCommands)>;
 nonterminal ListOfCommands_c with ast<ListOfCommands>;
+
+concrete productions top::FullFile_c
+| g::GrammarDecl_c contents::ListOfCommands_c
+  { top.ast = (g.ast, contents.ast); }
 
 concrete productions top::ListOfCommands_c
 |
@@ -39,6 +56,7 @@ nonterminal CommonCommand_c with ast<NoOpCommand>;
 nonterminal PureTopCommand_c with ast<AnyCommand>; --to handle common parsing errors gracefully
 nonterminal AnyCommand_c with ast<AnyCommand>;
 nonterminal TheoremStmts_c with ast<Either<String [(String, Metaterm, String)]>>;
+nonterminal QnameList_c with ast<[String]>;
 
 concrete productions top::AnyCommand_c
 | c::PureTopCommand_c
@@ -149,8 +167,6 @@ concrete productions top::PureTopCommand_c
   { top.ast = anyTopCommand(codefinitionDeclaration(x.ast, d.ast)); }
 | 'Query' m::Metaterm_c '.'
   { top.ast = anyTopCommand(queryCommand(m.ast)); }
-| 'Grammar' q::Qname_t '.'
-  { top.ast = anyTopCommand(grammarCommand(q.lexeme)); }
 | 'Kind' il::IdList_c k::Knd_c '.'
   { top.ast = anyTopCommand(kindDeclaration(il.ast, k.ast)); }
 | 'Type' il::IdList_c t::Ty_c '.'
@@ -174,6 +190,14 @@ concrete productions top::PureTopCommand_c
         | left(msg) -> anyParseFailure(msg)
         | right(lst) ->
           anyTopCommand(extensibleTheoremDeclaration(toInteger(depth.lexeme), lst))
+        end; }
+| 'Prove' thms::QnameList_c '.'
+  { top.ast = error("Not done yet"); }
+| 'Extensible_Theorem' newthms::TheoremStmts_c 'with' oldthms::QnameList_c '.'
+  { top.ast =
+        case newthms.ast of
+        | left(msg) -> anyParseFailure(msg)
+        | right(lst) -> error("Not done yet")
         end; }
 
 
@@ -201,6 +225,13 @@ concrete productions top::TheoremStmts_c
              | left(msg) -> msg
              | right(_) -> ""
              end); }
+
+
+concrete productions top::QnameList_c
+| q::Qname_t
+  { top.ast = [q.lexeme]; }
+| q::Qname_t ',' rest::QnameList_c
+  { top.ast = q.lexeme::rest.ast; }
 
 
 concrete productions top::CommonCommand_c

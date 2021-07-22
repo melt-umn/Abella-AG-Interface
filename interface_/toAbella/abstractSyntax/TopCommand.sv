@@ -278,7 +278,7 @@ top::TopCommand ::= importGrammar::String
   local readFilename::String =
         gen_loc.iovalue ++ "/" ++ implode("/", grammar_components) ++
         "/definitions.thm";
-  --TODO:  Currently not handling imports
+  --TODO:  Currently not handling imports, interface file in general
   local fileExists::IOVal<Boolean> =
         isFile(readFilename, gen_loc.io);
   local fileContents::IOVal<String> =

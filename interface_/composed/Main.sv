@@ -20,9 +20,25 @@ parser cmd_parse::AnyCommand_c
   interface_:toAbella:concreteSyntax;
 }
 
---We need this to pass down for reading files being imported and for
---   processing a file as a whole
-parser file_parse::ListOfCommands_c
+parser grammar_decl_parse::GrammarDecl_c
+{
+  interface_:toAbella:concreteSyntax;
+}
+
+--Read a theorem interface file
+{-parser interface_parse::Interface_c
+{
+  interface_:theorem_interface_file;
+}-}
+
+--Process a theorem file
+parser file_parse::FullFile_c
+{
+  interface_:toAbella:concreteSyntax;
+}
+
+--Read a definition file
+parser import_parse::ListOfCommands_c
 {
   interface_:toAbella:concreteSyntax;
 }
@@ -59,9 +75,9 @@ IOVal<Integer> ::= ioin::IO filename::String
   local fileExists::IOVal<Boolean> = isFile(filename, ioin);
   local fileContents::IOVal<String> =
         readFile(filename, fileExists.io);
-  local fileParsed::ParseResult<ListOfCommands_c> =
+  local fileParsed::ParseResult<FullFile_c> =
         file_parse(fileContents.iovalue, filename);
-  local fileAST::ListOfCommands = fileParsed.parseTree.ast;
+  local fileAST::(String, ListOfCommands) = fileParsed.parseTree.ast;
   --
   local started::IOVal<Either<String ProcessHandle>> =
         startAbella(fileContents.io);
@@ -73,7 +89,7 @@ IOVal<Integer> ::= ioin::IO filename::String
                | left(msg) ->
                  ioval(print("Error:  " ++ msg ++ "\n", started.io), 1)
                | right(abella) ->
-                 run_step_file(fileAST.commandList,
+                 run_step_file(fileAST.2.commandList, --TODO need to check grammar
                                [(-1, defaultProverState())],
                                abella, started.io)
                end
@@ -117,7 +133,7 @@ IOVal<Integer> ::=
   any_a.abellaFileParser =
         \ fileContents::String fileName::String ->
           let result::ParseResult<ListOfCommands_c> =
-              file_parse(fileContents, fileName)
+              import_parse(fileContents, fileName)
           in
             if result.parseSuccess
             then right(result.parseTree.ast)
@@ -278,7 +294,7 @@ IOVal<Integer> ::=
   any_a.abellaFileParser =
         \ fileContents::String fileName::String ->
           let result::ParseResult<ListOfCommands_c> =
-              file_parse(fileContents, fileName)
+              import_parse(fileContents, fileName)
           in
             if result.parseSuccess
             then right(result.parseTree.ast)
@@ -651,4 +667,74 @@ function removeInitialSpaces
       else lst
     end;
 }
+
+
+
+
+
+
+{--------------------------------------------------------------------
+                     PROCESS GRAMMAR DECLARATION                     
+ --------------------------------------------------------------------}
+--Read the interface file for a grammar and import all the imported
+--   specifications
+{-function processGrammarDecl
+Either<String ?> ::= grammarName::String ioin::IO
+{
+  local silver_gen::IOVal<String> = envVar("SILVER_GEN", ioin);
+  local interface_file::String =
+        silver_gen.iovalue ++ replace(":", "/", grammarName) ++
+        "/thm_interface.svthmi";
+  local interface_is_file::IOVal<Boolean> =
+        isFile(interface_file, silver_gen.io);
+  local interface_file_contents::IOVal<String> =
+        readFile(interface_file, interface_is_file.io);
+  local parsed_interface::ParseTree<Interface_c> =
+        interface_parse(interface_file_contents.iovalue);
+  local 
+
+  return
+     if silver_gen == ""
+     then left("Silver generated location not set")
+     else if !interface_is_file.iovalue
+     then left("Could not find interface file for grammar " ++ grammarName)
+     else if !parsed_interface.parseSuccess
+     then left("Could not parse interface file for grammar " ++ grammarName)
+     else 
+}
+
+--Read all the grammars to be imported, in the order
+--Should include the current grammar at the end
+function readImports
+Either<String ListOfCommands> ::= grammars::[String] silver_gen::String ioin::IO
+{
+  local this_grammar::String = head(grammars);
+  local filename::String =
+        silver_gen ++ replace(":", "/", this_grammar) ++
+        "/definitions.thm";
+  local filename_is_file::IOVal<Boolean> = isFile(filename, ioin);
+  local file_contents::IOVal<String> =
+        readFile(filename, filename_is_file.io);
+  local paresd_file::ParseTree<ListOfCommands_c> =
+        import_parse(file_contents);
+  local subcall::Either<String ListOfCommands> =
+        readImports(tail(grammars), silver_gen, file_contents.io);
+
+  return
+     case grammars of
+     | [] -> 
+     | _::tl -> if !filename_is_file
+                then left("Definition file could not be found for " ++
+                          this_grammar)
+                else if !parsed_file.parseSuccess
+                then left("Could not parse definition file for " ++
+                          "grammar " ++ this_grammar)
+                else case subcall of
+                     | left(msg) -> left(msg)
+                     | right(cmds) ->
+                       right(joinListOfCommands(
+                                parsed_file.parseTree.ast, cmds))
+                     end
+     end;
+}-}
 
