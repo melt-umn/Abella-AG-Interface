@@ -18,17 +18,17 @@ top::ProofState ::=
         foldr(
           \ p::(String, Metaterm)
             rest::[(String, String, String, String, Term)] ->
-            case p of
-            | (hyp,
-               termMetaterm(applicationTerm(nameTerm(access, _),
-                              consTermList(nameTerm(treeName, _),
-                              consTermList(nameTerm(treeNode, _),
-                              singleTermList(val)))), _))
+            case p.1, decorate p.2 with {silverContext = top.silverContext;} of
+            | hyp,
+              termMetaterm(applicationTerm(nameTerm(access, _),
+                             consTermList(nameTerm(treeName, _),
+                             consTermList(nameTerm(treeNode, _),
+                             singleTermList(val)))), _)
               when isAccessRelation(access) ->
               (hyp, treeName,
                accessRelationToAttr(access),
                accessRelationToType(access), new(val))::rest
-            | (_, _) -> rest
+            | _, _ -> rest
             end,
           [], currGoal.hypList);
   local sortedAttrAccessHyps::[(String, String, String, String, Term)] =
@@ -68,18 +68,18 @@ top::ProofState ::=
         foldr(
           \ p::(String, Metaterm)
             rest::[(String, String, String, String, String, Term)] ->
-            case p of
-            | (hyp,
-               termMetaterm(applicationTerm(nameTerm(access, _),
-                              consTermList(nameTerm(treeName, _),
-                              consTermList(nameTerm(treeNode, _),
-                              singleTermList(val)))), _))
+            case p.1, decorate p.2 with {silverContext = top.silverContext;} of
+            | hyp,
+              termMetaterm(applicationTerm(nameTerm(access, _),
+                             consTermList(nameTerm(treeName, _),
+                             consTermList(nameTerm(treeNode, _),
+                             singleTermList(val)))), _)
               when isLocalAccessRelation(access) ->
               (hyp, treeName,
                localAccessToProd(access),
                localAccessToAttr(access),
                localAccessToType(access).pp, new(val))::rest
-            | (_, _) -> rest
+            | _, _ -> rest
             end,
           [], currGoal.hypList);
   local sortedLocalAccessHyps::[(String, String, String, String, String, Term)] =
@@ -119,30 +119,30 @@ top::ProofState ::=
   --(exists <Children>, <prod>(<Children'>) = <prod>(<Children>)) -> false
   local impossibleEqHyps::[String] =
         foldr(\ p::(String, Metaterm) rest::[String] ->
-                case p of
+                case p.1, decorate p.2 with {silverContext = top.silverContext;} of
                 --TODO need to handle non-tree children
-                | (hyp,
-                   impliesMetaterm(
-                      bindingMetaterm(
-                         existsBinder(),
-                         children,
-                         eqMetaterm(
-                            applicationTerm(nameTerm(prod1, _), args1),
-                            applicationTerm(nameTerm(prod2, _), args2))),
-                      falseMetaterm()))
+                | hyp,
+                  impliesMetaterm(
+                     bindingMetaterm(
+                        existsBinder(),
+                        children,
+                        eqMetaterm(
+                           applicationTerm(nameTerm(prod1, _), args1),
+                           applicationTerm(nameTerm(prod2, _), args2))),
+                     falseMetaterm())
                   when isProd(prod1) && prod1 == prod2 ->
                   hyp::rest
-                | (hyp,
-                   impliesMetaterm(
-                      bindingMetaterm(
-                         existsBinder(),
-                         children,
-                         eqMetaterm(
-                            nameTerm(prod1, _),
-                            nameTerm(prod2, _))),
-                      falseMetaterm()))
+                | hyp,
+                  impliesMetaterm(
+                     bindingMetaterm(
+                        existsBinder(),
+                        children,
+                        eqMetaterm(
+                           nameTerm(prod1, _),
+                           nameTerm(prod2, _))),
+                     falseMetaterm())
                   when isProd(prod1) && prod1 == prod2 -> hyp::rest
-                | _ -> rest
+                | _, _ -> rest
                 end,
               [], currGoal.hypList);
   local impossibleEqHypsCmd::String =

@@ -13,9 +13,12 @@ top::Metaterm ::= t::Term r::Restriction
       | left(tm) -> termMetaterm(tm, r)
       --We need to include the restriction on the function, which we
       --   can only do here where we have it
-      | right(funMetaterm(fun, args, result, _)) ->
-        funMetaterm(fun, args, result, r)
-      | right(mtm) -> mtm
+      | right(mtm) ->
+        case decorate mtm with {silverContext = top.silverContext;} of
+        | funMetaterm(fun, args, result, _) ->
+          funMetaterm(fun, args, result, r)
+        | _ -> mtm
+        end
       end;
 }
 
@@ -74,7 +77,9 @@ top::Metaterm ::= b::Binder nameBindings::[(String, Maybe<Type>)] body::Metaterm
 {
   local isHidden::(Boolean ::= String) =
         \ s::String ->
-          contains(s, flatMap(\ p::(String, String, Term) -> p.2::p.3.usedNames,
+          contains(s, flatMap(\ p::(String, String, Term) ->
+                                p.2::decorate p.3 with
+                                     {silverContext = top.silverContext;}.usedNames,
                               body.gatheredDecoratedTrees));
   local cleanedNames::[(String, Maybe<Type>)] =
         foldr(\ p::(String, Maybe<Type>) rest::[(String, Maybe<Type>)] ->
@@ -98,7 +103,7 @@ aspect production applicationTerm
 top::Term ::= f::Term args::TermList
 {
   top.translation =
-     case f, args.translation of
+      case f, decorate args.translation with {silverContext = top.silverContext;} of
      --Integer Operations
      | nameTerm("$plus_integer", _),
        consTermList(arg1, consTermList(arg2, singleTermList(arg3))) ->
@@ -244,15 +249,19 @@ top::Term ::= t1::Term t2::Term
 {
   top.translation =
       left(case t1.translation, t2.translation of
-           | left(charTerm(char)), left(stringTerm(contents)) ->
-             stringTerm(char ++ contents)
-           --we need this because we are using lists for strings, and don't know
-           --which we are looking at until we add a character to the beginning
-           | left(charTerm(char)), left(listTerm(emptyListContents())) ->
-             stringTerm(char)
-           | left(tm1), left(listTerm(contents)) ->
-             listTerm(addListContents(tm1, contents))
-           | left(tm1), left(tm2) -> consTerm(tm1, tm2)
+           | left(tm1), left(tm2) ->
+             case decorate tm1 with {silverContext = top.silverContext;},
+                  decorate tm2 with {silverContext = top.silverContext;} of
+             | charTerm(char), stringTerm(contents) ->
+               stringTerm(char ++ contents)
+             --we need this because we are using lists for strings, and don't know
+             --which we are looking at until we add a character to the beginning
+             | charTerm(char), listTerm(emptyListContents()) ->
+               stringTerm(char)
+             | tm1, listTerm(contents) ->
+               listTerm(addListContents(tm1, contents))
+             | tm1, tm2 -> consTerm(tm1, tm2)
+             end
            | _, _ -> error("Should not have metaterm translations in consTerm")
            end);
 }

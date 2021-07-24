@@ -169,8 +169,10 @@ function buildExtensibleTheoremBody
 Metaterm ::= thms::[(Metaterm, String, Type, [String])]
              usedNames::[String] allProds::[(String, Type)]
              localAttrs::[(String, [(String, Type)])]
+             silverContext::Decorated SilverContext
 {
-  return buildAllTheoremBodies(thms, thms, usedNames, allProds, localAttrs);
+  return buildAllTheoremBodies(thms, thms, usedNames, allProds,
+                               localAttrs, silverContext);
 }
 
 --We need to know all the theorems to make IH's for the body, so we
@@ -180,18 +182,24 @@ Metaterm ::= walkThroughThms::[(Metaterm, String, Type, [String])]
              allThms::[(Metaterm, String, Type, [String])]
              usedNames::[String] allProds::[(String, Type)]
              localAttrs::[(String, [(String, Type)])]
+             silverContext::Decorated SilverContext
 {
   local thm::(Metaterm, String, Type, [String]) = head(walkThroughThms);
   local body::Metaterm =
-        case thm.1 of
+        case decorate thm.1 with {silverContext = silverContext;} of
         | bindingMetaterm(_, _, body) -> body
         | _ -> error("Can't have anything but binding metaterm to start")
         end;
+  body.silverContext = silverContext;
   local thisThm::Metaterm =
         case findAssociated(thm.2, body.gatheredDecoratedTrees) of
-        | just((nodeName, nameTerm(childList, _))) ->
-          buildProdBodies(thm.4, thm.1, thm.2, nodeName, childList, thm.3,
-                          allThms, usedNames, allProds, localAttrs)
+        | just((nodeName, tm)) ->
+          case decorate tm with {silverContext = silverContext;} of
+          | nameTerm(childList, _) ->
+            buildProdBodies(thm.4, thm.1, thm.2, nodeName, childList, thm.3,
+                            allThms, usedNames, allProds, localAttrs, silverContext)
+          | _ -> error("Tree must be bound at root")
+          end
         | _ -> error("Tree must be bound at root")
         end;
 
@@ -202,7 +210,7 @@ Metaterm ::= walkThroughThms::[(Metaterm, String, Type, [String])]
      | hd::tl ->
        andMetaterm(thisThm,
           buildAllTheoremBodies(tl, allThms, usedNames,
-                                allProds, localAttrs))
+                                allProds, localAttrs, silverContext))
      end;
 }
 
@@ -216,7 +224,9 @@ Metaterm ::= prods::[String] original::Metaterm
              allThms::[(Metaterm, String, Type, [String])]
              usedNames::[String] allProds::[(String, Type)]
              localAttrs::[(String, [(String, Type)])]
+             silverContext::Decorated SilverContext
 {
+  original.silverContext = silverContext;
   local prodName::String = head(prods);
   --The productions referenced in WPD relations had better exist
   local prodTy::Type = findAssociated(prodName, allProds).fromJust;
@@ -267,6 +277,7 @@ Metaterm ::= prods::[String] original::Metaterm
   --Remove original WPD assumption
   local copyOriginalBody::Metaterm = originalBody;
   copyOriginalBody.removeWPDTree = treeName;
+  copyOriginalBody.silverContext = silverContext;
   local noWPD::Metaterm = copyOriginalBody.removedWPD;
   --Replace the original tree and child list
    --noWPD.replaceName = treeToStructureName(treeName);
@@ -274,6 +285,7 @@ Metaterm ::= prods::[String] original::Metaterm
   local replaceTree::Metaterm = noWPD; --.replaced;
   replaceTree.replaceName = treeCL;
   replaceTree.replaceTerm = newChildList;
+  replaceTree.silverContext = silverContext;
   local replaceTreeNode::Metaterm = replaceTree.replaced;
   --
   local thisCase::[Metaterm] =
@@ -324,7 +336,8 @@ Metaterm ::= prods::[String] original::Metaterm
                      prodLocalAttrs,
                      usedNames ++
                      flatMap(\ p::(Type, String, String, String) ->
-                               [p.2, p.3, p.4], children));
+                               [p.2, p.3, p.4], children),
+                     silverContext);
   local currentStep::Metaterm =
         bindingMetaterm(originalBinder, newBindings,
            foldr(\ m::Metaterm rest::Metaterm ->
@@ -337,7 +350,7 @@ Metaterm ::= prods::[String] original::Metaterm
      | _::t ->
        andMetaterm(currentStep,
           buildProdBodies(t, original, treeName, treeNode, treeCL, treeTy,
-                          allThms, usedNames, allProds, localAttrs))
+                          allThms, usedNames, allProds, localAttrs, silverContext))
      end;
 }
 
@@ -348,21 +361,31 @@ function buildFakeIHs
                --local name, local type
                relevantLocalAttrs::[(String, Type)]
                usedNames::[String]
+               silverContext::Decorated SilverContext
 {
   local first::(Metaterm, String, Type, [String]) = head(thms);
   local treeTy::Type = first.3;
   local treeName::String = first.2;
   local treeNode::String =
         case findAssociated(first.2, originalBody.gatheredDecoratedTrees) of
-        | just((nodeName, nameTerm(childList, _))) -> nodeName
+        | just((nodeName, tm)) ->
+          case decorate tm with {silverContext = silverContext;} of
+          | nameTerm(childList, _) -> nodeName
+          | _ -> error("Tree must be bound at root")
+          end
         | _ -> error("Tree must be bound at root")
         end;
   local treeCL::String =
         case findAssociated(first.2, originalBody.gatheredDecoratedTrees) of
-        | just((nodeName, nameTerm(childList, _))) -> childList
+        | just((nodeName, tm)) ->
+          case decorate tm with {silverContext = silverContext;} of
+          | nameTerm(childList, _) -> childList
+          | _ -> error("Tree must be bound at root")
+          end
         | _ -> error("Tree must be bound at root")
         end;
   local original::Metaterm = first.1;
+  original.silverContext = silverContext;
   local originalBinder::Binder =
         case original of
         | bindingMetaterm(binder, bindings, body) -> binder
@@ -379,6 +402,7 @@ function buildFakeIHs
         | _ -> error("Should not have anything but a binding to start")
         end;
   originalBody.removeWPDTree = treeName;
+  originalBody.silverContext = silverContext;
   local removedWPD::Metaterm = originalBody.removedWPD;
   local removedBindings::[(String, Maybe<Type>)] =
         removeAllBy(\ p1::(String, Maybe<Type>) p2::(String, Maybe<Type>) ->
@@ -397,11 +421,14 @@ function buildFakeIHs
                              (decorate
                                 (decorate removedWPD with
                                     {replaceName = treeCL;
-                                     replaceTerm = nameTerm(p.4, nothing());}.replaced)
+                                     replaceTerm = nameTerm(p.4, nothing());
+                                     silverContext = silverContext;}.replaced)
                               with {replaceName = treeNode;
-                                    replaceTerm = nameTerm(p.3, nothing());}.replaced)
+                                    replaceTerm = nameTerm(p.3, nothing());
+                                     silverContext = silverContext;}.replaced)
                           with {replaceName = treeName;
-                                replaceTerm = nameTerm(p.2, nothing());}.replaced::rest
+                                replaceTerm = nameTerm(p.2, nothing());
+                                silverContext = silverContext;}.replaced::rest
                      else bindingMetaterm(
                              originalBinder,
                              removedBindings,
@@ -410,11 +437,14 @@ function buildFakeIHs
                                    (decorate
                                       (decorate removedWPD with
                                           {replaceName = treeCL;
-                                           replaceTerm = nameTerm(p.4, nothing());}.replaced)
+                                           replaceTerm = nameTerm(p.4, nothing());
+                                           silverContext = silverContext;}.replaced)
                                     with {replaceName = treeNode;
-                                          replaceTerm = nameTerm(p.3, nothing());}.replaced)
+                                          replaceTerm = nameTerm(p.3, nothing());
+                                          silverContext = silverContext;}.replaced)
                                 with {replaceName = treeName;
-                                      replaceTerm = nameTerm(p.2, nothing());}.replaced)::rest
+                                      replaceTerm = nameTerm(p.2, nothing());
+                                      silverContext = silverContext;}.replaced)::rest
                 else rest,
               [], children);
   --Hypotheses for the local attributes which occur on the given production
@@ -461,13 +491,16 @@ function buildFakeIHs
                                  (decorate removedWPD with
                                      {replaceName = treeCL;
                                       replaceTerm = nameTerm(newCLName,
-                                                             nothing());}.replaced)
+                                                             nothing());
+                                      silverContext = silverContext;}.replaced)
                                with {replaceName = treeNode;
                                      replaceTerm = nameTerm(newNodeName,
-                                                            nothing());}.replaced)
+                                                            nothing());
+                                     silverContext = silverContext;}.replaced)
                            with {replaceName = treeName;
                                  replaceTerm = nameTerm(newName,
-                                                        nothing());}.replaced))::rest
+                                                        nothing());
+                                 silverContext = silverContext;}.replaced))::rest
                      end end end
                 else rest,
               [], relevantLocalAttrs);
@@ -477,7 +510,8 @@ function buildFakeIHs
      | [] -> []
      | hd::tl ->
        firstIHs ++ localIHs ++
-       buildFakeIHs(tl, children, prod, rootTy, rootNode, relevantLocalAttrs, usedNames)
+       buildFakeIHs(tl, children, prod, rootTy, rootNode,
+                    relevantLocalAttrs, usedNames, silverContext)
      end;
 }
 

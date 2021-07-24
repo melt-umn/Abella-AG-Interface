@@ -163,7 +163,7 @@ top::Type ::=
 
 
 
-nonterminal Defs with pp;
+nonterminal Defs with pp, silverContext;
 
 abstract production singleDefs
 top::Defs ::= d::Def
@@ -182,7 +182,7 @@ top::Defs ::= d::Def rest::Defs
 
 
 
-nonterminal Def with pp;
+nonterminal Def with pp, silverContext;
 
 abstract production factDef
 top::Def ::= clausehead::Metaterm

@@ -3,7 +3,7 @@ grammar interface_:fromAbella:abstractSyntax;
 
 nonterminal FullDisplay with
    pp,
-   translation<FullDisplay>,
+   translation<FullDisplay>, silverContext,
    proof, isError, isWarning, proofEnded,
    replaceState, replacedState<FullDisplay>;
 
@@ -54,7 +54,7 @@ top::FullDisplay ::= tl::TheoremList
 
 nonterminal TheoremList with
    pp,
-   translation<TheoremList>;
+   translation<TheoremList>, silverContext;
 
 abstract production theoremListEmpty
 top::TheoremList ::=
@@ -81,7 +81,7 @@ top::TheoremList ::= name::String body::Metaterm rest::TheoremList
 nonterminal ExtraInformation with
   pp,
   knownTrees,
-  translation<ExtraInformation>,
+  translation<ExtraInformation>, silverContext,
   isError, isWarning;
 
 

@@ -9,7 +9,7 @@ grammar interface_:toAbella:abstractSyntax;
 
 nonterminal AnyCommand with
    pp,
-   translation<String>, currentState, translatedState, inProof, abellaFileParser,
+   translation<String>, currentState, translatedState, inProof, silverContext,
    isQuit, isUndo, shouldClean, mustClean,
    sendCommand, ownOutput, numCommandsSent, isError,
    stateListIn, stateListOut, newProofState, wasError;
@@ -26,8 +26,6 @@ top::AnyCommand ::= c::TopCommand
   top.isUndo = false;
   top.shouldClean = false;
   top.mustClean = false;
-
-  c.abellaFileParser = top.abellaFileParser;
 
   top.sendCommand =
       if top.inProof
@@ -62,13 +60,6 @@ top::AnyCommand ::= c::TopCommand
             proverState(
                newProofState,
                currentState.debug,
-               c.newKnownAttrs,
-               c.newKnownAttrOccurrences,
-               c.newKnownProductions,
-               c.newKnownFunctions,
-               c.newKnownWPDRelations,
-               c.newKnownInheritedAttrs,
-               c.newKnownLocalAttrs,
                currentState.clean,
                c.newKnownTheorems)
            )::top.stateListIn;
@@ -130,13 +121,6 @@ top::AnyCommand ::= c::ProofCommand
                  proverState(
                     newProofState,
                     currentState.debug,
-                    currentState.knownAttrs,
-                    currentState.knownAttrOccurrences,
-                    currentState.knownProductions,
-                    currentState.knownFunctions,
-                    currentState.knownWPDRelations,
-                    currentState.knownInheritedAttrs,
-                    currentState.knownLocalAttrs,
                     currentState.clean,
                     currentState.knownTheorems)
                 )::top.stateListIn;

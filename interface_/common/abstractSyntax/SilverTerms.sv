@@ -301,7 +301,8 @@ top::Term ::= prodName::String args::ParenthesizedArgs
 
 
 
-nonterminal ParenthesizedArgs with pp, argList, knownTrees, usedNames;
+nonterminal ParenthesizedArgs with
+   pp, argList, knownTrees, usedNames, silverContext;
 
 abstract production emptyParenthesizedArgs
 top::ParenthesizedArgs ::=
@@ -320,7 +321,8 @@ top::ParenthesizedArgs ::= t::Term rest::ParenthesizedArgs
 
 
 
-nonterminal ListContents with pp, argList, knownTrees, usedNames;
+nonterminal ListContents with
+   pp, argList, knownTrees, usedNames, silverContext;
 
 abstract production emptyListContents
 top::ListContents ::=
@@ -339,7 +341,8 @@ top::ListContents ::= t::Term rest::ListContents
 
 
 
-nonterminal PairContents with pp, argList, knownTrees, usedNames;
+nonterminal PairContents with
+   pp, argList, knownTrees, usedNames, silverContext;
 
 abstract production singlePairContents
 top::PairContents ::= t::Term

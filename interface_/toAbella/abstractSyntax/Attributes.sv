@@ -35,20 +35,8 @@ synthesized attribute ownOutput::String;
 synthesized attribute numCommandsSent::Integer;
 
 
---We need to pass the parser in for parsing imported files because we
---   don't have the concrete syntax to build the parser here
---Return parse errors or the AST given the file contents and file name
-inherited attribute abellaFileParser::(Either<String ListOfCommands> ::= String String);
-
---Gather new pieces for the prover state from the import
-synthesized attribute newKnownAttrs::[String];
-synthesized attribute newKnownAttrOccurrences::[(String, [(Type, Type)])];
-synthesized attribute newKnownProductions::[(String, Type)];
-synthesized attribute newKnownFunctions::[(String, Type)];
-synthesized attribute newKnownWPDRelations::[(String, Type, [String])];
+--Gather new theorems for the prover state
 synthesized attribute newKnownTheorems::[(String, Metaterm)];
-synthesized attribute newKnownInheritedAttrs::[String];
-synthesized attribute newKnownLocalAttrs::[(String, [(String, Type)])];
 
 
 

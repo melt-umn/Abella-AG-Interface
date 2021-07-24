@@ -2,8 +2,8 @@ grammar interface_:fromAbella:concreteSyntax;
 
 
 
-nonterminal FullDisplay_c with ast<FullDisplay>;
-nonterminal TheoremList_c with ast<TheoremList>;
+closed nonterminal FullDisplay_c with ast<FullDisplay>;
+closed nonterminal TheoremList_c with ast<TheoremList>;
 
 concrete productions top::FullDisplay_c
 | ei::ExtraInformation_c ps::ProofState_c
@@ -21,7 +21,7 @@ concrete productions top::TheoremList_c
 
 
 
-nonterminal ExtraInformation_c with ast<ExtraInformation>;
+closed nonterminal ExtraInformation_c with ast<ExtraInformation>;
 
 concrete productions top::ExtraInformation_c
 |
@@ -47,7 +47,7 @@ concrete productions top::ExtraInformation_c
 
 
 
-nonterminal ProofState_c with ast<ProofState>;
+closed nonterminal ProofState_c with ast<ProofState>;
 
 concrete productions top::ProofState_c
 |
@@ -67,8 +67,8 @@ concrete productions top::ProofState_c
 
 
 
-nonterminal CurrentGoal_c with ast<CurrentGoal>;
-nonterminal ExistantVars_c with ast<[String]>;
+closed nonterminal CurrentGoal_c with ast<CurrentGoal>;
+closed nonterminal ExistantVars_c with ast<[String]>;
 
 concrete productions top::CurrentGoal_c
 | hyps::HypothesisList_c gl::GoalLine_t goal::Metaterm_c
@@ -87,9 +87,9 @@ concrete productions top::ExistantVars_c
 
 
 
-nonterminal CurrentSubgoal_c with ast<[Integer]>;
-nonterminal MoreSubgoals_c with ast<[Subgoal]>; --after the current goal
-nonterminal SubgoalNum_c with ast<[Integer]>;
+closed nonterminal CurrentSubgoal_c with ast<[Integer]>;
+closed nonterminal MoreSubgoals_c with ast<[Subgoal]>; --after the current goal
+closed nonterminal SubgoalNum_c with ast<[Integer]>;
 
 
 --Current subgoal may or may not be labeled
@@ -124,9 +124,9 @@ concrete productions top::SubgoalNum_c
 
 
 
-nonterminal Hypothesis_c with ast<Context>; --we aren't going to group
-nonterminal HypNameList_c with ast<[String]>;
-nonterminal HypothesisList_c with ast<Context>;
+closed nonterminal Hypothesis_c with ast<Context>; --we aren't going to group
+closed nonterminal HypNameList_c with ast<[String]>;
+closed nonterminal HypothesisList_c with ast<Context>;
 
 
 concrete productions top::Hypothesis_c
@@ -166,9 +166,9 @@ concrete productions top::HypothesisList_c
 
 
 
-nonterminal ProcessingErrorMessage_c with ast<ProcessingErrorMessage>;
-nonterminal TypingErrorMessage_c with ast<TypingErrorMessage>;
-nonterminal WarningMessage_c with ast<WarningMessage>;
+closed nonterminal ProcessingErrorMessage_c with ast<ProcessingErrorMessage>;
+closed nonterminal TypingErrorMessage_c with ast<TypingErrorMessage>;
+closed nonterminal WarningMessage_c with ast<WarningMessage>;
 
 concrete productions top::WarningMessage_c
 | 'Definition might not be stratified' '(' name::QString_t 'occurs to the left of ->)'
@@ -279,7 +279,7 @@ concrete productions top::TypingErrorMessage_c
 
 
 
-nonterminal IdList_c with ast<[String]>;
+closed nonterminal IdList_c with ast<[String]>;
 
 concrete productions top::IdList_c
 | name::Id_t

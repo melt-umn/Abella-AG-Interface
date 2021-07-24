@@ -14,7 +14,8 @@ nonterminal ProofState with
    pp,
    hypList, currentSubgoal, goal,
    gatheredTrees, gatheredDecoratedTrees,
-   usedNames;
+   usedNames,
+   silverContext;
 
 abstract production proofInProgress
 top::ProofState ::= subgoalNum::[Integer] currGoal::CurrentGoal futureGoals::[Subgoal]
@@ -109,7 +110,8 @@ nonterminal CurrentGoal with
    pp,
    hypList, goal,
    gatheredTrees, knownTrees, gatheredDecoratedTrees,
-   usedNames;
+   usedNames,
+   silverContext;
 
 abstract production currentGoal
 top::CurrentGoal ::= vars::[String] ctx::Context goal::Metaterm
@@ -131,7 +133,8 @@ top::CurrentGoal ::= vars::[String] ctx::Context goal::Metaterm
 nonterminal Context with
    pp, hypList,
    gatheredTrees, knownTrees, gatheredDecoratedTrees,
-   usedNames;
+   usedNames,
+   silverContext;
 
 abstract production emptyContext
 top::Context ::=
@@ -166,7 +169,8 @@ nonterminal Hypothesis with
    pp,
    hypList, shouldHide,
    gatheredTrees, knownTrees, gatheredDecoratedTrees,
-   usedNames;
+   usedNames,
+   silverContext;
 
 abstract production metatermHyp
 top::Hypothesis ::= name::String body::Metaterm
@@ -181,7 +185,7 @@ top::Hypothesis ::= name::String body::Metaterm
 
 
 --A subgoal is a goal to proven in the future, after the current goal
-nonterminal Subgoal with pp;
+nonterminal Subgoal with pp, silverContext;
 
 abstract production subgoal
 top::Subgoal ::= num::[Integer] goal::Metaterm

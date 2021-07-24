@@ -27,6 +27,7 @@ IOVal<Integer> ::= largs::[String] ioin::IO
   result = topparse(args, "<<args>>");
   local res_c::FullDisplay_c = result.parseTree;
   local res::FullDisplay = res_c.ast;
+  res.silverContext = decorate emptySilverContext() with {};
   local trans::FullDisplay = res.translation;
 
 

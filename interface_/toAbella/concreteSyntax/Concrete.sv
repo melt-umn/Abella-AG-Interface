@@ -5,7 +5,7 @@ grammar interface_:toAbella:concreteSyntax;
 
 
 
-nonterminal GrammarDecl_c with ast<String>;
+closed nonterminal GrammarDecl_c with ast<String>;
 
 concrete productions top::GrammarDecl_c
 | 'Grammar' q::Qname_t '.'
@@ -16,8 +16,8 @@ concrete productions top::GrammarDecl_c
 
 
 
-nonterminal FullFile_c with ast<(String, ListOfCommands)>;
-nonterminal ListOfCommands_c with ast<ListOfCommands>;
+closed nonterminal FullFile_c with ast<(String, ListOfCommands)>;
+closed nonterminal ListOfCommands_c with ast<ListOfCommands>;
 
 concrete productions top::FullFile_c
 | g::GrammarDecl_c contents::ListOfCommands_c
@@ -33,12 +33,12 @@ concrete productions top::ListOfCommands_c
 
 
 
-nonterminal PureCommand_c with ast<ProofCommand>;
-nonterminal CommonCommand_c with ast<NoOpCommand>;
-nonterminal PureTopCommand_c with ast<AnyCommand>; --to handle common parsing errors gracefully
-nonterminal AnyCommand_c with ast<AnyCommand>;
-nonterminal TheoremStmts_c with ast<Either<String [(String, Metaterm, String)]>>;
-nonterminal QnameList_c with ast<[String]>;
+closed nonterminal PureCommand_c with ast<ProofCommand>;
+closed nonterminal CommonCommand_c with ast<NoOpCommand>;
+closed nonterminal PureTopCommand_c with ast<AnyCommand>; --to handle common parsing errors gracefully
+closed nonterminal AnyCommand_c with ast<AnyCommand>;
+closed nonterminal TheoremStmts_c with ast<Either<String [(String, Metaterm, String)]>>;
+closed nonterminal QnameList_c with ast<[String]>;
 
 concrete productions top::AnyCommand_c
 | c::PureTopCommand_c
@@ -237,7 +237,7 @@ concrete productions top::CommonCommand_c
   { top.ast = showCurrentCommand(); }
 
 
-nonterminal Backs_c with ast<Integer>;
+closed nonterminal Backs_c with ast<Integer>;
 
 concrete productions top::Backs_c
 | b::Backs_t
@@ -267,10 +267,10 @@ concrete productions top::Exp_c
 
 
 
-nonterminal Knd_c with ast<Kind>;
-nonterminal UTy_c with ast<Type>;
-nonterminal UTyList_c with ast<[Type]>;
-nonterminal ATyList_c with ast<[Type]>;
+closed nonterminal Knd_c with ast<Kind>;
+closed nonterminal UTy_c with ast<Type>;
+closed nonterminal UTyList_c with ast<[Type]>;
+closed nonterminal ATyList_c with ast<[Type]>;
 
 
 concrete productions top::Knd_c
@@ -304,8 +304,8 @@ concrete productions top::ATyList_c
 
 
 
-nonterminal Defs_c with ast<Defs>;
-nonterminal Def_c with ast<Def>;
+closed nonterminal Defs_c with ast<Defs>;
+closed nonterminal Def_c with ast<Def>;
 
 
 concrete productions top::Defs_c
@@ -325,8 +325,8 @@ concrete productions top::Def_c
 
 
 
-nonterminal Perm_c with ast<[String]>;
-nonterminal PermIds_c with ast<[String]>;
+closed nonterminal Perm_c with ast<[String]>;
+closed nonterminal PermIds_c with ast<[String]>;
 
 
 concrete productions top::Perm_c
@@ -344,8 +344,8 @@ concrete productions top::PermIds_c
 
 
 
-nonterminal SearchWitness_c with ast<SearchWitness>;
-nonterminal SearchWitnessList_c with ast<[SearchWitness]>;
+closed nonterminal SearchWitness_c with ast<SearchWitness>;
+closed nonterminal SearchWitnessList_c with ast<[SearchWitness]>;
 
 
 concrete productions top::SearchWitness_c
@@ -385,8 +385,8 @@ concrete productions top::SearchWitnessList_c
 
 
 
-nonterminal EWitnesses_c with ast<[EWitness]>;
-nonterminal EWitness_c with ast<EWitness>;
+closed nonterminal EWitnesses_c with ast<[EWitness]>;
+closed nonterminal EWitness_c with ast<EWitness>;
 
 
 concrete productions top::EWitnesses_c
@@ -406,8 +406,8 @@ concrete productions top::EWitness_c
 
 
 
-nonterminal ApplyArgs_c with ast<[ApplyArg]>;
-nonterminal ApplyArg_c with ast<ApplyArg>;
+closed nonterminal ApplyArgs_c with ast<[ApplyArg]>;
+closed nonterminal ApplyArg_c with ast<ApplyArg>;
 
 
 concrete productions top::ApplyArgs_c
@@ -427,7 +427,7 @@ concrete productions top::ApplyArg_c
 
 
 
-nonterminal ExistsBinds_c with ast<[Pair<String Term>]>;
+closed nonterminal ExistsBinds_c with ast<[Pair<String Term>]>;
 
 
 concrete productions top::ExistsBinds_c
@@ -440,12 +440,12 @@ concrete productions top::ExistsBinds_c
 
 
 
-nonterminal IdList_c with ast<[String]>;
-nonterminal IdTy_c with ast<Pair<String Type>>;
-nonterminal IdTys_c with ast<[Pair<String Type>]>;
-nonterminal HHint_c with ast<HHint>;
-nonterminal Clearable_c with ast<Clearable>;
-nonterminal Withs_c with ast<[Pair<String Term>]>;
+closed nonterminal IdList_c with ast<[String]>;
+closed nonterminal IdTy_c with ast<Pair<String Type>>;
+closed nonterminal IdTys_c with ast<[Pair<String Type>]>;
+closed nonterminal HHint_c with ast<HHint>;
+closed nonterminal Clearable_c with ast<Clearable>;
+closed nonterminal Withs_c with ast<[Pair<String Term>]>;
 
 
 concrete productions top::IdList_c
@@ -491,8 +491,8 @@ concrete productions top::Withs_c
 
 
 
-nonterminal Hyp_c with ast<String>;
-nonterminal HypList_c with ast<[String]>;
+closed nonterminal Hyp_c with ast<String>;
+closed nonterminal HypList_c with ast<[String]>;
 
 
 concrete productions top::Hyp_c
@@ -512,8 +512,8 @@ concrete productions top::HypList_c
 
 
 
-nonterminal MaybeInst_c with ast<[Type]>;
-nonterminal MaybeDepth_c with ast<Maybe<Integer>>;
+closed nonterminal MaybeInst_c with ast<[Type]>;
+closed nonterminal MaybeDepth_c with ast<Maybe<Integer>>;
 
 
 concrete productions top::MaybeInst_c
@@ -530,7 +530,7 @@ concrete productions top::MaybeDepth_c
   { top.ast = nothing(); }
 
 --this is solely a helper to fix a parsing error with MaybeDepth
-nonterminal Depth_c with ast<Integer>;
+closed nonterminal Depth_c with ast<Integer>;
 concrete productions top::Depth_c
 | n::Number_t
   { top.ast = toInteger(n.lexeme); }
@@ -539,7 +539,7 @@ concrete productions top::Depth_c
 
 
 
-nonterminal NumList_c with ast<[Integer]>;
+closed nonterminal NumList_c with ast<[Integer]>;
 
 
 concrete productions top::NumList_c
@@ -552,8 +552,8 @@ concrete productions top::NumList_c
 
 
 
-nonterminal ClauseSel_c with ast<(ProofCommand ::= Boolean)>;
-nonterminal SolSel_c with ast<Boolean>;
+closed nonterminal ClauseSel_c with ast<(ProofCommand ::= Boolean)>;
+closed nonterminal SolSel_c with ast<Boolean>;
 
 
 concrete productions top::ClauseSel_c
@@ -575,7 +575,7 @@ concrete productions top::SolSel_c
 
 
 
-nonterminal TheoremTyparams_c with ast<[String]>;
+closed nonterminal TheoremTyparams_c with ast<[String]>;
 
 
 concrete productions top::TheoremTyparams_c

@@ -2,7 +2,7 @@ grammar interface_:thm_interface_file:concreteSyntax;
 
 
 --(current grammar, imports, defined relations, theorems)
-nonterminal Interface_c with ast<(String, [String], [DefElement], [ParsedElement])>;
+closed nonterminal Interface_c with ast<(String, [String], [DefElement], [ParsedElement])>;
 
 
 concrete productions top::Interface_c
@@ -12,8 +12,8 @@ concrete productions top::Interface_c
 
 
 
-nonterminal Imports_c with ast<[String]>;
-nonterminal Imports_List_c with ast<[String]>;
+closed nonterminal Imports_c with ast<[String]>;
+closed nonterminal Imports_List_c with ast<[String]>;
 
 concrete productions top::Imports_c
 |
@@ -30,10 +30,10 @@ concrete productions top::Imports_List_c
 
 
 
-nonterminal Definitions_c with ast<[DefElement]>;
-nonterminal Definitions_List_c with ast<[DefElement]>;
-nonterminal RelNames_c with ast<[(String, Type)]>;
-nonterminal Clauses_c with ast<[(Metaterm, Maybe<Metaterm>)]>;
+closed nonterminal Definitions_c with ast<[DefElement]>;
+closed nonterminal Definitions_List_c with ast<[DefElement]>;
+closed nonterminal RelNames_c with ast<[(String, Type)]>;
+closed nonterminal Clauses_c with ast<[(Metaterm, Maybe<Metaterm>)]>;
 
 concrete productions top::Definitions_c
 | 
@@ -68,9 +68,9 @@ concrete productions top::Clauses_c
 
 
 
-nonterminal InterfaceContents_c with ast<[ParsedElement]>;
-nonterminal InterfaceContents_List_c with ast<[ParsedElement]>;
-nonterminal InterfaceElement_c with ast<ParsedElement>;
+closed nonterminal InterfaceContents_c with ast<[ParsedElement]>;
+closed nonterminal InterfaceContents_List_c with ast<[ParsedElement]>;
+closed nonterminal InterfaceElement_c with ast<ParsedElement>;
 
 concrete productions top::InterfaceContents_c
 |
@@ -99,7 +99,7 @@ concrete productions top::InterfaceElement_c
 
 
 
-nonterminal ExtensibleTheorems_c with ast<[(String, Metaterm, String)]>;
+closed nonterminal ExtensibleTheorems_c with ast<[(String, Metaterm, String)]>;
 
 concrete productions top::ExtensibleTheorems_c
 | name::Qname_colon_t '&' stmt::Metaterm_c '&' tree::Id_t
@@ -110,7 +110,7 @@ concrete productions top::ExtensibleTheorems_c
 
 
 
-nonterminal NameList_c with ast<[String]>;
+closed nonterminal NameList_c with ast<[String]>;
 
 concrete productions top::NameList_c
 | name::Id_t

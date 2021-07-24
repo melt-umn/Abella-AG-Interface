@@ -11,6 +11,7 @@ grammar interface_:toAbella:abstractSyntax;
 function theorem__attr_unique
 Either<String String> ::=
    args::[ApplyArg] withs::[(String, Term)] hyps::[(String, Metaterm)]
+   silverContext::Decorated SilverContext
 {
   --forall Ty (T : Ty) A V1 V2, T.A = V1 -> T.A = V2 -> V1 = V2
 
@@ -27,18 +28,31 @@ Either<String String> ::=
 
   local attr_ty::Either<String (String, String)> =
         case findH1, findH2 of
-        | nothing(), just(termMetaterm(applicationTerm(nameTerm(access, _), _), _))
-          when isAccessRelation(access) ->
-          right((accessRelationToAttr(access), accessRelationToType(access)))
-        | just(termMetaterm(applicationTerm(nameTerm(access, _), _), _)), nothing()
-          when isAccessRelation(access) ->
-          right((accessRelationToAttr(access), accessRelationToType(access)))
-        | just(termMetaterm(applicationTerm(nameTerm(access1, _), _), _)),
-          just(termMetaterm(applicationTerm(nameTerm(access2, _), _), _)) ->
-          if isAccessRelation(access1) && isAccessRelation(access2) &&
-             access1 == access2
-          then right((accessRelationToAttr(access1), accessRelationToType(access1)))
-          else left("Arguments do not share the same attribute")
+        | nothing(), just(mtm) ->
+          case decorate mtm with {silverContext = silverContext;} of
+          | termMetaterm(applicationTerm(nameTerm(access, _), _), _)
+            when isAccessRelation(access) ->
+            right((accessRelationToAttr(access), accessRelationToType(access)))
+          | _ -> left("")
+          end
+        | just(mtm), nothing() ->
+          case decorate mtm with {silverContext = silverContext;} of
+          | termMetaterm(applicationTerm(nameTerm(access, _), _), _)
+            when isAccessRelation(access) ->
+            right((accessRelationToAttr(access), accessRelationToType(access)))
+          | _ -> left("")
+          end
+        | just(mtm1), just(mtm2) ->
+          case decorate mtm1 with {silverContext = silverContext;},
+               decorate mtm2 with {silverContext = silverContext;} of
+          | termMetaterm(applicationTerm(nameTerm(access1, _), _), _),
+            termMetaterm(applicationTerm(nameTerm(access2, _), _), _) ->
+            if isAccessRelation(access1) && isAccessRelation(access2) &&
+               access1 == access2
+            then right((accessRelationToAttr(access1), accessRelationToType(access1)))
+            else left("Arguments do not share the same attribute")
+          | _, _ -> left("")
+          end
         | _, _ -> left("")
         end;
 
@@ -50,10 +64,16 @@ Either<String String> ::=
             case findAssociated("A", withs), findAssociated("Ty", withs) of
             | nothing(), _ ->
               left("Could not find instantiation for attribute")
-            | just(nameTerm(attr, _)), just(nameTerm(ty, _)) when startsWith("nt_", ty)->
-              right(accessUniqueThm(attr, ty))
-            | _, _ ->
-              left("Could not find type of tree")
+            | just(tm1), just(tm2) ->
+              case decorate tm1 with {silverContext = silverContext;},
+                   decorate tm2 with {silverContext = silverContext;} of
+              | nameTerm(attr, _), nameTerm(ty, _)
+                when startsWith("nt_", ty)->
+                right(accessUniqueThm(attr, ty))
+              | _, _ ->
+                left("Could not find type of tree")
+              end
+            | _, _ -> left("Could not find type of tree")
             end
           | right((attr, ty)) ->
             right(accessUniqueThm(attr, ty))
@@ -66,6 +86,7 @@ function theorem__attr_is
 Either<String ProofCommand> ::=
    h::HHint depth::Maybe<Integer> args::[ApplyArg]
    withs::[(String, Term)] hyps::[(String, Metaterm)]
+   silverContext::Decorated SilverContext
 {
   --forall Ty (T : Ty) A V,  T.A = V -> is_<Ty> V
 
@@ -76,12 +97,15 @@ Either<String ProofCommand> ::=
         else findAssociated(nameH, hyps);
 
   local attr_ty::Maybe<(String, String)> =
-        case findH of
-        | just(termMetaterm(applicationTerm(nameTerm(access, _), _), _))
-          when isAccessRelation(access) ->
-          just((accessRelationToAttr(access), accessRelationToType(access)))
-        | _ -> nothing()
-        end;
+        if findH.isJust
+        then case decorate findH.fromJust with
+                  {silverContext = silverContext;} of
+             | termMetaterm(applicationTerm(nameTerm(access, _), _), _)
+               when isAccessRelation(access) ->
+               just((accessRelationToAttr(access), accessRelationToType(access)))
+             | _ -> nothing()
+             end
+        else nothing();
   local cleanedWiths::[(String, Term)] =
         filter(\ p::(String, Term) -> p.fst != "A" && p.fst != "Ty",
                withs);
@@ -94,10 +118,17 @@ Either<String ProofCommand> ::=
             case findAssociated("A", withs), findAssociated("Ty", withs) of
             | nothing(), _ ->
               left("Could not find instantiation for attribute")
-            | just(nameTerm(attr, _)), just(nameTerm(ty, _)) when startsWith("nt_", ty)->
-              right(applyTactic(h, depth,
-                     clearable(false, accessIsThm(attr, ty), []),
-                     hypApplyArg("_", [])::args, cleanedWiths))
+            | just(tm1), just(tm2) ->
+              case decorate tm1 with {silverContext = silverContext;},
+                   decorate tm2 with {silverContext = silverContext;} of
+              | nameTerm(attr, _), nameTerm(ty, _)
+                when startsWith("nt_", ty)->
+                right(applyTactic(h, depth,
+                       clearable(false, accessIsThm(attr, ty), []),
+                       hypApplyArg("_", [])::args, cleanedWiths))
+              | _, _ ->
+                left("Could not find type of tree")
+              end
             | _, _ ->
               left("Could not find type of tree")
             end

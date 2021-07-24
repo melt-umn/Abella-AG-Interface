@@ -2,9 +2,11 @@ grammar interface_:common:abstractSyntax;
 
 
 synthesized attribute pp::String;
+flowtype pp {} on Subgoal,  Hypothesis, Context, CurrentGoal, ProofState, Metaterm, Term, TermList;
 
 --This tells us whether something is essentially atomic for pretty printing purposes
 synthesized attribute isAtomic::Boolean;
+flowtype isAtomic {} on Metaterm, Term;
 
 
 --The arguments in a TermList, but in an actual list
@@ -47,6 +49,9 @@ propagate usedNames on
 
 
 
---
-inherited attribute currentState::ProverState occurs on Metaterm, Term;
+--Contains the known attributes, productions, nonterminals, functions
+--Anything encoded from the Silver grammars imported
+--Decorated because I think that will end up being more efficient,
+--   since we only really have one SilverContext object while running
+autocopy attribute silverContext::Decorated SilverContext;
 

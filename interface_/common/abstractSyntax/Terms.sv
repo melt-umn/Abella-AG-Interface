@@ -6,7 +6,8 @@ grammar interface_:common:abstractSyntax;
 nonterminal Metaterm with
    pp, isAtomic, shouldHide,
    gatheredTrees, knownTrees, gatheredDecoratedTrees,
-   usedNames;
+   usedNames,
+   silverContext;
 
 abstract production termMetaterm
 top::Metaterm ::= t::Term r::Restriction
@@ -187,7 +188,8 @@ top::Binder::=
 nonterminal Term with
    pp, isAtomic, shouldHide,
    gatheredTrees, knownTrees, gatheredDecoratedTrees,
-   usedNames;
+   usedNames,
+   silverContext;
 
 abstract production applicationTerm
 top::Term ::= f::Term args::TermList
@@ -303,7 +305,8 @@ top::Term ::= ty::Maybe<Type>
 nonterminal TermList with
    pp, argList,
    knownTrees,
-   usedNames;
+   usedNames,
+   silverContext;
 
 abstract production singleTermList
 top::TermList ::= t::Term

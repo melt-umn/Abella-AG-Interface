@@ -25,8 +25,8 @@ function split_AttrAccess_t
 
 
 
-nonterminal Metaterm_c with ast<Metaterm>;
-nonterminal SubMetaterm_c with ast<Metaterm>;
+closed nonterminal Metaterm_c with ast<Metaterm>;
+closed nonterminal SubMetaterm_c with ast<Metaterm>;
 
 
 {-concrete productions top::Metaterm_c
@@ -68,11 +68,23 @@ concrete productions top::Metaterm_c
     Silver Booleans.  If it is simply "true" or "false" where a
     metaterm is needed, that is the Abella metaterm; otherwise, it
     must be the Silver Boolean.-}
-  { top.ast = case t.ast of
-              | trueTerm() -> trueMetaterm()
-              | falseTerm() -> falseMetaterm()
-              | _ -> termMetaterm(t.ast, emptyRestriction())
-              end; }
+  { top.ast =
+        if t.ast.pp == "true"
+        then trueMetaterm()
+        else if t.ast.pp == "false"
+        then falseMetaterm()
+        else termMetaterm(t.ast, emptyRestriction());
+    {-Originally, I had this:
+         case t.ast of
+         | trueTerm() -> trueMetaterm()
+         | falseTerm() -> falseMetaterm()
+         | _ -> termMetaterm(t.ast, emptyRestriction())
+         end;
+      However, this breaks MWDA because forwarding relies on the
+      silverContext attribute.  Because only the true and false terms
+      should be printed as "true" and "false", we can rely on this
+      cheap imitation which does not break MWDA.-}
+  }
 | s::SubMetaterm_c
   { top.ast = s.ast; }
 
@@ -170,13 +182,13 @@ concrete productions top::SubMetaterm_c
 
 
 
-nonterminal Term_c with ast<Term>;
-nonterminal MidTerm_c with ast<Term>;
-nonterminal Exp_c with ast<Term>;
-nonterminal ExpList_c with ast<TermList>;
-nonterminal PairBody_c with ast<PairContents>;
-nonterminal ListBody_c with ast<ListContents>;
-nonterminal PAId_c with ast<Term>;
+closed nonterminal Term_c with ast<Term>;
+closed nonterminal MidTerm_c with ast<Term>;
+closed nonterminal Exp_c with ast<Term>;
+closed nonterminal ExpList_c with ast<TermList>;
+closed nonterminal PairBody_c with ast<PairContents>;
+closed nonterminal ListBody_c with ast<ListContents>;
+closed nonterminal PAId_c with ast<Term>;
 
 
 concrete productions top::Term_c
@@ -257,9 +269,9 @@ concrete productions top::PAId_c
 
 
 
-nonterminal PTy_c with ast<Type>;
-nonterminal ATy_c with ast<Type>;
-nonterminal Ty_c with ast<Type>;
+closed nonterminal PTy_c with ast<Type>;
+closed nonterminal ATy_c with ast<Type>;
+closed nonterminal Ty_c with ast<Type>;
 
 
 concrete productions top::PTy_c
@@ -288,10 +300,10 @@ concrete productions top::Ty_c
 
 
 
-nonterminal Binder_c with ast<Binder>;
-nonterminal BindingList_c with ast<[Pair<String Maybe<Type>>]>;
-nonterminal BindingOne_c with ast<[Pair<String Maybe<Type>>]>;
-nonterminal BindingVars_c with ast<[String]>;
+closed nonterminal Binder_c with ast<Binder>;
+closed nonterminal BindingList_c with ast<[Pair<String Maybe<Type>>]>;
+closed nonterminal BindingOne_c with ast<[Pair<String Maybe<Type>>]>;
+closed nonterminal BindingVars_c with ast<[String]>;
 
 
 concrete productions top::Binder_c
@@ -327,10 +339,10 @@ concrete productions top::BindingVars_c
 
 
 
-nonterminal Stars_c with ast<Restriction>, count;
-nonterminal Ats_c with ast<Restriction>, count;
-nonterminal Pluses_c with ast<Restriction>, count;
-nonterminal Hashes_c with ast<Restriction>, count;
+closed nonterminal Stars_c with ast<Restriction>, count;
+closed nonterminal Ats_c with ast<Restriction>, count;
+closed nonterminal Pluses_c with ast<Restriction>, count;
+closed nonterminal Hashes_c with ast<Restriction>, count;
 
 
 concrete productions top::Stars_c

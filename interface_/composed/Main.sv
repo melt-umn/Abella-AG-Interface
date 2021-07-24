@@ -88,12 +88,13 @@ IOVal<Integer> ::= ioin::IO filename::String
   local processed::IOVal<Either<String (ListOfCommands, [DefElement],
                                         [ParsedElement])>> =
         processGrammarDecl(fileAST.1, fileContents.io);
+  local commands::ListOfCommands = processed.iovalue.fromRight.1;
   --
   local started::IOVal<Either<String ProcessHandle>> =
         startAbella(processed.io);
   --
   local sendToAbella::String =
-        processed.iovalue.fromRight.1.pp ++
+        commands.pp ++
         implode("", map((.pp), processed.iovalue.fromRight.2));
   local numCommands::Integer =
         processed.iovalue.fromRight.1.numCommandsSent +
@@ -106,6 +107,9 @@ IOVal<Integer> ::= ioin::IO filename::String
                             sent);
   local parsedOutput::ParseResult<FullDisplay_c> =
         from_parse(back.iovalue, "<<output>>");
+  --
+  local ourSilverContext::SilverContext =
+        buildSilverContext(fileAST.1, commands);
 
   return
      if !fileExists.iovalue
@@ -122,7 +126,7 @@ IOVal<Integer> ::= ioin::IO filename::String
                       "\n", started.io), 1)
      else if !parsedOutput.parseSuccess
      then error("Could not parse Abella output:\n\n" ++ back.iovalue)
-     else run_step_file(fileAST.2.commandList,
+     else run_step_file(fileAST.2.commandList, ourSilverContext,
                         [(-1, defaultProverState())],
                         started.iovalue.fromRight, started.io);
 }
@@ -141,12 +145,15 @@ IOVal<Integer> ::= ioin::IO filename::String
 function run_step_file
 IOVal<Integer> ::=
    inputCommands::[AnyCommand]
+   silverContext::Decorated SilverContext
    stateList::[(Integer, ProverState)]
    abella::ProcessHandle ioin::IO
 {
-  local state::ProofState = head(stateList).snd.state;
-  local attrs::[String] = head(stateList).snd.knownAttrs;
-  local prods::[(String, Type)] = head(stateList).snd.knownProductions;
+  local currentProverState::ProverState = head(stateList).snd;
+  local state::ProofState = currentProverState.state;
+  state.silverContext = silverContext;
+  local attrs::[String] = silverContext.knownAttrs;
+  local prods::[(String, Type)] = silverContext.knownProductions;
 
   {-
     PROCESS COMMAND
@@ -154,19 +161,11 @@ IOVal<Integer> ::=
   --Translate command
   ----------------------------
   local any_a::AnyCommand = head(inputCommands);
-  any_a.currentState = head(stateList).snd;
-  any_a.translatedState = head(stateList).snd.state.translation;
+  any_a.silverContext = silverContext;
+  any_a.currentState = currentProverState;
+  any_a.translatedState = state.translation;
   any_a.inProof = state.inProof;
   any_a.stateListIn = stateList;
-  any_a.abellaFileParser =
-        \ fileContents::String fileName::String ->
-          let result::ParseResult<ListOfCommands_c> =
-              import_parse(fileContents, fileName)
-          in
-            if result.parseSuccess
-            then right(result.parseTree.ast)
-            else left(result.parseErrors)
-          end;
   --whether we have an actual command to send to Abella
   local speak_to_abella::Boolean = any_a.sendCommand;
   --Send to abella
@@ -191,6 +190,7 @@ IOVal<Integer> ::=
   local full_result::ParseResult<FullDisplay_c> =
         from_parse(back_from_abella.iovalue, "<<output>>");
   local full_a::FullDisplay = full_result.parseTree.ast;
+  full_a.silverContext = silverContext;
   any_a.wasError =
         if speak_to_abella
         then !full_result.parseSuccess || full_a.isError
@@ -200,12 +200,12 @@ IOVal<Integer> ::=
   ----------------------------
   local shouldClean::Boolean =
         full_result.parseSuccess && !full_a.isError && any_a.shouldClean &&
-        (head(stateList).snd.clean || any_a.mustClean);
+        (currentProverState.clean || any_a.mustClean);
   local cleaned::(String, Integer, FullDisplay, [[Integer]], IO) =
         if shouldClean
         then cleanState(decorate full_a with
                         {replaceState = head(any_a.stateListOut).snd.state;}.replacedState,
-                        abella, back_from_abella.io)
+                        silverContext, abella, back_from_abella.io)
         else ("", 0, decorate full_a with
                      {replaceState = head(any_a.stateListOut).snd.state;}.replacedState,
               [], back_from_abella.io);
@@ -232,8 +232,8 @@ IOVal<Integer> ::=
     RUN REPL AGAIN
   -}
   local again::IOVal<Integer> =
-        run_step_file(tail(inputCommands), newStateList, abella,
-                      back_from_abella.io);
+        run_step_file(tail(inputCommands), silverContext,
+                      newStateList, abella, back_from_abella.io);
 
 
   return
@@ -295,10 +295,13 @@ IOVal<Integer> ::=
    stateList::[(Integer, ProverState)]
    abella::ProcessHandle ioin::IO
 {
-  local state::ProofState = head(stateList).snd.state;
-  local debug::Boolean = head(stateList).snd.debug;
-  local attrs::[String] = head(stateList).snd.knownAttrs;
-  local prods::[(String, Type)] = head(stateList).snd.knownProductions;
+  local silverContext::SilverContext = error("The silverContext should be an argument to run_step_interactive");
+  local currentProverState::ProverState = head(stateList).snd;
+  local state::ProofState = currentProverState.state;
+  state.silverContext = silverContext;
+  local debug::Boolean = currentProverState.debug;
+  local attrs::[String] = silverContext.knownAttrs;
+  local prods::[(String, Type)] = silverContext.knownProductions;
 
   {-
     PROCESS COMMAND
@@ -315,19 +318,11 @@ IOVal<Integer> ::=
         if result.parseSuccess
         then result.parseTree.ast
         else anyParseFailure(result.parseErrors);
-  any_a.currentState = head(stateList).snd;
-  any_a.translatedState = head(stateList).snd.state.translation;
+  any_a.silverContext = error("No silverContext in interactive running yet");
+  any_a.currentState = currentProverState;
+  any_a.translatedState = state.translation;
   any_a.inProof = state.inProof;
   any_a.stateListIn = stateList;
-  any_a.abellaFileParser =
-        \ fileContents::String fileName::String ->
-          let result::ParseResult<ListOfCommands_c> =
-              import_parse(fileContents, fileName)
-          in
-            if result.parseSuccess
-            then right(result.parseTree.ast)
-            else left(result.parseErrors)
-          end;
   local is_blank::Boolean = isSpace(input);
   --whether we have an actual command to send to Abella
   local speak_to_abella::Boolean = !is_blank && any_a.sendCommand;
@@ -365,6 +360,7 @@ IOVal<Integer> ::=
   local full_result::ParseResult<FullDisplay_c> =
         from_parse(back_from_abella.iovalue, "<<output>>");
   local full_a::FullDisplay = full_result.parseTree.ast;
+  full_a.silverContext = silverContext;
   any_a.wasError =
         if speak_to_abella
         then !full_result.parseSuccess || full_a.isError
@@ -374,12 +370,12 @@ IOVal<Integer> ::=
   ----------------------------
   local shouldClean::Boolean =
         full_result.parseSuccess && !full_a.isError && any_a.shouldClean &&
-        (head(stateList).snd.clean || any_a.mustClean);
+        (currentProverState.clean || any_a.mustClean);
   local cleaned::(String, Integer, FullDisplay, [[Integer]], IO) =
         if shouldClean
         then cleanState(decorate full_a with
                         {replaceState = head(any_a.stateListOut).snd.state;}.replacedState,
-                        abella, back_from_abella.io)
+                        silverContext, abella, back_from_abella.io)
         else ("", 0, decorate full_a with
                      {replaceState = head(any_a.stateListOut).snd.state;}.replacedState,
               [], back_from_abella.io);
@@ -418,7 +414,9 @@ IOVal<Integer> ::=
              then foldr(\ x::[Integer] rest::String ->
                           "Subgoal " ++ subgoalNumToString(x) ++
                           " completed automatically\n" ++ rest,
-                        "\n", cleaned.4) ++ cleaned.3.translation.pp ++ "\n"
+                        "\n", cleaned.4) ++
+                        decorate cleaned.3 with
+                        {silverContext = silverContext;}.translation.pp ++ "\n"
              else full_a.translation.pp ++ "\n"
         else our_own_output ++ state.translation.pp ++ "\n";
   local printed_output::IO =
@@ -473,9 +471,12 @@ IOVal<Integer> ::=
 -}
 function cleanState
 (String, Integer, FullDisplay, [[Integer]], IO) ::=
-         currentDisplay::FullDisplay abella::ProcessHandle ioin::IO
+         currentDisplay::FullDisplay
+         silverContext::Decorated SilverContext
+         abella::ProcessHandle ioin::IO
 {
   local currentState::ProofState = currentDisplay.proof;
+  currentState.silverContext = silverContext;
   --Send to Abella
   local send::IO = sendToProcess(abella, currentState.cleanUpCommands, ioin);
   --Read back from Abella
@@ -505,7 +506,7 @@ function cleanState
         else [];
   --See if there is more to clean
   local sub::(String, Integer, FullDisplay, [[Integer]], IO) =
-        cleanState(cleanedDisplay, abella, back.io);
+        cleanState(cleanedDisplay, silverContext, abella, back.io);
 
   return
      if currentState.numCleanUpCommands == 0

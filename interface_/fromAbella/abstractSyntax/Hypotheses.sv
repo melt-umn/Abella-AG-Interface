@@ -11,7 +11,10 @@ aspect production proofInProgress
 top::ProofState ::= subgoalNum::[Integer] currGoal::CurrentGoal futureGoals::[Subgoal]
 {
   top.translation = proofInProgress(subgoalNum, currGoal.translation,
-                                    map(\ a::Subgoal -> a.translation, futureGoals));
+                       map(\ a::Subgoal ->
+                             decorate a with
+                             {silverContext = top.silverContext;}.translation,
+                           futureGoals));
 
   top.inProof = true;
   top.hypList = currGoal.hypList;
@@ -125,7 +128,9 @@ top::CurrentGoal ::= vars::[String] ctx::Context goal::Metaterm
 {
   local isHidden::(Boolean ::= String) =
         \ s::String ->
-          contains(s, flatMap(\ p::(String, String, Term) -> p.2::p.3.usedNames,
+          contains(s, flatMap(\ p::(String, String, Term) ->
+                                p.2::decorate p.3 with
+                                     {silverContext = top.silverContext;}.usedNames,
                               ctx.gatheredDecoratedTrees));
   local cleanVars::[String] =
         foldr(\ s::String rest::[String] ->

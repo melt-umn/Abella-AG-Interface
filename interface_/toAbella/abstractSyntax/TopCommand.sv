@@ -6,10 +6,8 @@ grammar interface_:toAbella:abstractSyntax;
 nonterminal TopCommand with
    --pp should always end with a newline
    pp,
-   translation<TopCommand>, numCommandsSent, currentState,
-   abellaFileParser,  newKnownAttrs, newKnownAttrOccurrences,
-     newKnownProductions, newKnownWPDRelations, newKnownTheorems,
-     newKnownInheritedAttrs, newKnownLocalAttrs, newKnownFunctions,
+   translation<TopCommand>, numCommandsSent, currentState, silverContext,
+   newKnownTheorems,
    errors, sendCommand, ownOutput,
    translatedTheorems, numRelevantProds;
 
@@ -29,13 +27,6 @@ top::TopCommand ::=
 
   --Most commands aren't adding anything new
   top.newKnownTheorems = top.currentState.knownTheorems;
-  top.newKnownAttrs = top.currentState.knownAttrs;
-  top.newKnownAttrOccurrences = top.currentState.knownAttrOccurrences;
-  top.newKnownProductions = top.currentState.knownProductions;
-  top.newKnownFunctions = top.currentState.knownFunctions;
-  top.newKnownWPDRelations = top.currentState.knownWPDRelations;
-  top.newKnownInheritedAttrs = top.currentState.knownInheritedAttrs;
-  top.newKnownLocalAttrs = top.currentState.knownLocalAttrs;
 }
 
 
@@ -72,16 +63,17 @@ top::TopCommand ::= depth::Integer thms::[(String, Metaterm, String)]
               case decorate p.2 with {
                       findNameType = p.3;
                       attrOccurrences =
-                         top.currentState.knownAttrOccurrences;
+                         top.silverContext.knownAttrOccurrences;
                       boundVars = [];
                       knownTyParams = []; --we disallow parameterization currently
+                      silverContext = top.silverContext;
                    }.foundNameType of
               | left(msg) -> [errorMsg(msg)]
               | right(ty) ->
                 if tyIsNonterminal(ty)
                 then
                   case findWPDRelations(ty,
-                          top.currentState.knownWPDRelations) of
+                          top.silverContext.knownWPDRelations) of
                   | h::t -> []
                   | [] ->
                     [errorMsg("Unknown nonterminal type " ++ ty.pp)]
@@ -93,7 +85,8 @@ top::TopCommand ::= depth::Integer thms::[(String, Metaterm, String)]
             [], thms);
 
   local translated::[(String, Metaterm, String)] =
-        translate_bodies(thms, top.currentState.knownAttrOccurrences);
+        translate_bodies(thms, top.silverContext.knownAttrOccurrences,
+                         top.currentState, top.silverContext);
 
   --(translated theorem body, induction tree, induction type, prods, thm name)
   local groupings::[(Metaterm, String, Type, [String], String)] =
@@ -102,25 +95,29 @@ top::TopCommand ::= depth::Integer thms::[(String, Metaterm, String)]
                   decorate p.2 with {
                      findNameType = p.3;
                      attrOccurrences =
-                        top.currentState.knownAttrOccurrences;
+                        top.silverContext.knownAttrOccurrences;
                      boundVars = [];
                      knownTyParams = []; --we disallow parameterization currently
+                     silverContext = top.silverContext;
                   }.foundNameType.fromRight
               in
                 (p.2, p.3, ty,
                  head(findWPDRelations(ty,
-                         top.currentState.knownWPDRelations)).3, p.1)
+                         top.silverContext.knownWPDRelations)).3, p.1)
               end, translated);
 
   local allUsedNames::[String] =
         nub(flatMap(\ p::(String, Metaterm, String) ->
-                      p.2.usedNames, thms));
+                      decorate p.2 with
+                      {silverContext = top.silverContext;}.usedNames,
+                    thms));
   local expandedBody::Metaterm =
         buildExtensibleTheoremBody(
            map(\ p::(Metaterm, String, Type, [String], String) ->
                  (p.1, p.2, p.3, p.4), groupings), allUsedNames,
-           top.currentState.knownProductions,
-           top.currentState.knownLocalAttrs);
+           top.silverContext.knownProductions,
+           top.silverContext.knownLocalAttrs,
+           top.silverContext);
   --number of pieces in the generated theorem
   local numBodies::Integer =
         foldr(\ p::(Metaterm, String, Type, [String], String) rest::Integer ->
@@ -157,7 +154,9 @@ top::TopCommand ::= depth::Integer thms::[(String, Metaterm, String)]
 --This is best done in a function where we can have each body be a local
 function translate_bodies
 [(String, Metaterm, String)] ::= thms::[(String, Metaterm, String)]
-      attrOccurs::[(String, [(Type, Type)])]
+          attrOccurs::[(String, [(Type, Type)])]
+          currentState::ProverState
+          silverContext::Decorated SilverContext
 {
   local body::Metaterm = head(thms).2;
   body.attrOccurrences = attrOccurs;
@@ -167,11 +166,14 @@ function translate_bodies
   body.knownTrees = head(thms).3::body.gatheredTrees;
   body.knownDecoratedTrees = body.gatheredDecoratedTrees;
   body.knownTyParams = [];
+  body.silverContext = silverContext;
+  body.currentState = currentState;
   return
      case thms of
      | [] -> []
      | (name, _, tr)::tl -> 
-       (name, body.translation, tr)::translate_bodies(tl, attrOccurs)
+       (name, body.translation, tr)::
+       translate_bodies(tl, attrOccurs, currentState, silverContext)
      end;
 }
 
@@ -204,7 +206,7 @@ top::TopCommand ::= name::String params::[String] body::Metaterm
   body.boundVars = [];
   body.finalTys = [];
   body.knownNames = [];
-  body.attrOccurrences = top.currentState.knownAttrOccurrences;
+  body.attrOccurrences = top.silverContext.knownAttrOccurrences;
   body.knownTrees = body.gatheredTrees;
   body.knownDecoratedTrees = body.gatheredDecoratedTrees;
   body.knownTyParams = params;
@@ -259,73 +261,12 @@ top::TopCommand ::= preds::[(String, Type)] defs::Defs
 }
 
 
-abstract production grammarCommand
-top::TopCommand ::= importGrammar::String
-{
-  top.pp = "Grammar " ++ importGrammar ++ ".\n";
-
-  {-
-    We can't import Abella files which include defined relations
-    (constants with result type prop).  We use such constants all over
-    in component definitions, so we are going to read the files and
-    pass their text to Abella directly.
-  -}
-  --Get the location of the generated directory
-  local gen_loc::IOVal<String> = envVar("SILVER_GEN", unsafeIO());
-  local gen_loc_exists::Boolean = gen_loc.iovalue != "";
-  --Make the correct filename for the grammar
-  local grammar_components::[String] = explode(":", importGrammar);
-  local readFilename::String =
-        gen_loc.iovalue ++ "/" ++ implode("/", grammar_components) ++
-        "/definitions.thm";
-  --TODO:  Currently not handling imports, interface file in general
-  local fileExists::IOVal<Boolean> =
-        isFile(readFilename, gen_loc.io);
-  local fileContents::IOVal<String> =
-        readFile(readFilename, fileExists.io);
-  local fileParsed::Either<String ListOfCommands> =
-        top.abellaFileParser(fileContents.iovalue, readFilename);
-  local fileAST::ListOfCommands = fileParsed.fromRight;
-  top.translation = textCommand(fileAST.pp);
-
-  top.numCommandsSent = fileAST.numCommandsSent;
-
-  top.newKnownAttrs =
-      fileAST.newAttrs ++ top.currentState.knownAttrs;
-  top.newKnownAttrOccurrences =
-      combineAssociations(fileAST.newAttrOccurrences,
-                          top.currentState.knownAttrOccurrences);
-  top.newKnownProductions =
-      fileAST.newProductions ++ top.currentState.knownProductions;
-  top.newKnownFunctions =
-      fileAST.newFunctions ++ top.currentState.knownFunctions;
-  top.newKnownWPDRelations =
-      fileAST.newWPDRelations ++ top.currentState.knownWPDRelations;
-  top.newKnownTheorems =
-      fileAST.newTheorems ++ top.currentState.knownTheorems;
-  top.newKnownInheritedAttrs =
-      fileAST.newInheritedAttrs ++ top.currentState.knownInheritedAttrs;
-  top.newKnownLocalAttrs =
-      fileAST.newLocalAttrs ++ top.currentState.knownLocalAttrs;
-
-  top.errors <-
-      if !fileExists.iovalue
-      then [errorMsg("File \"" ++ readFilename ++ "\" does not exist")]
-      else if !gen_loc_exists
-      then [errorMsg("Silver generated directory location not set")]
-      else if !fileParsed.isRight
-      then [errorMsg("File \"" ++ readFilename ++ "\" could not " ++
-                     "be parsed:\n" ++ fileParsed.fromLeft)]
-      else [];
-}
-
-
 abstract production queryCommand
 top::TopCommand ::= m::Metaterm
 {
   top.pp = "Query " ++ m.pp ++ ".\n";
 
-  m.attrOccurrences = top.currentState.knownAttrOccurrences;
+  m.attrOccurrences = top.silverContext.knownAttrOccurrences;
   m.boundVars = [];
   m.knownNames = [];
   m.knownTyParams = [];
@@ -377,7 +318,9 @@ top::TopCommand ::= theoremName::String newTheoremNames::[String]
       case findAssociated(theoremName, top.currentState.knownTheorems) of
       | nothing() -> []
       | just(mt) ->
-        buildnames(mt.conjunctionSplit, newTheoremNames, 1)
+        buildnames(decorate mt with
+                   {silverContext = top.silverContext;}.conjunctionSplit,
+                   newTheoremNames, 1)
       end ++ top.currentState.knownTheorems;
 }
 
@@ -485,6 +428,10 @@ top::TopCommand ::= name::String params::[String] body::Metaterm prf::[ProofComm
       implode("", map((.pp), prf));
   top.translation = error("Should not be translating theoremAndProof");
   top.numCommandsSent = 1 + length(prf);
+
+  body.attrOccurrences = top.silverContext.knownAttrOccurrences;
+  body.knownTyParams = params;
+  body.boundVars = [];
 
   top.newKnownTheorems =
       [(name, new(body))] ++ top.currentState.knownTheorems;

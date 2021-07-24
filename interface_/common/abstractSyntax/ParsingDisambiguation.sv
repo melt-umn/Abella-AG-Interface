@@ -19,6 +19,7 @@ abstract production disambiguateEqMetaterm
 top::Metaterm ::= leftSide::Term rightSide::Term
 {
   top.pp = leftSide.pp ++ " = " ++ rightSide.pp;
+  top.isAtomic = true;
 
   --function name, function arguments
   production leftFun::Maybe<(String, ParenthesizedArgs)> =
@@ -27,7 +28,7 @@ top::Metaterm ::= leftSide::Term rightSide::Term
         | applicationTerm(nameTerm(fun, _),
              singleTermList(pairTerm(contents)))
           when findAssociated(fun,
-                  top.currentState.knownFunctions).isJust ->
+                  top.silverContext.knownFunctions).isJust ->
           just((fun,
                 foldr(addParenthesizedArgs(_, _),
                       emptyParenthesizedArgs(),
@@ -36,7 +37,7 @@ top::Metaterm ::= leftSide::Term rightSide::Term
         | applicationTerm(nameTerm(fun, _),
              singleTermList(contents))
           when findAssociated(fun,
-                  top.currentState.knownFunctions).isJust ->
+                  top.silverContext.knownFunctions).isJust ->
           just((fun, addParenthesizedArgs(contents,
                         emptyParenthesizedArgs())))
         | _ -> nothing()
@@ -47,7 +48,7 @@ top::Metaterm ::= leftSide::Term rightSide::Term
         | applicationTerm(nameTerm(fun, _),
              singleTermList(pairTerm(contents)))
           when findAssociated(fun,
-                  top.currentState.knownFunctions).isJust ->
+                  top.silverContext.knownFunctions).isJust ->
           just((fun,
                 foldr(addParenthesizedArgs(_, _),
                       emptyParenthesizedArgs(),
@@ -56,7 +57,7 @@ top::Metaterm ::= leftSide::Term rightSide::Term
         | applicationTerm(nameTerm(fun, _),
              singleTermList(contents))
           when findAssociated(fun,
-                  top.currentState.knownFunctions).isJust ->
+                  top.silverContext.knownFunctions).isJust ->
           just((fun, addParenthesizedArgs(contents,
                         emptyParenthesizedArgs())))
         | _ -> nothing()
@@ -68,7 +69,7 @@ top::Metaterm ::= leftSide::Term rightSide::Term
         | applicationTerm(nameTerm(prod, _),
              singleTermList(pairTerm(contents)))
           when findAssociated(prod,
-                  top.currentState.knownProductions).isJust ->
+                  top.silverContext.knownProductions).isJust ->
           just(prodTerm(prod,
                   foldr(addParenthesizedArgs(_, _),
                         emptyParenthesizedArgs(), contents.argList)))
@@ -76,7 +77,7 @@ top::Metaterm ::= leftSide::Term rightSide::Term
         | applicationTerm(nameTerm(prod, _),
              singleTermList(contents))
           when findAssociated(prod,
-                  top.currentState.knownProductions).isJust ->
+                  top.silverContext.knownProductions).isJust ->
           just(prodTerm(prod,
                   addParenthesizedArgs(contents,
                      emptyParenthesizedArgs())))
@@ -88,7 +89,7 @@ top::Metaterm ::= leftSide::Term rightSide::Term
         | applicationTerm(nameTerm(prod, _),
              singleTermList(pairTerm(contents)))
           when findAssociated(prod,
-                  top.currentState.knownProductions).isJust ->
+                  top.silverContext.knownProductions).isJust ->
           just(prodTerm(prod,
                   foldr(addParenthesizedArgs(_, _),
                         emptyParenthesizedArgs(), contents.argList)))
@@ -96,7 +97,7 @@ top::Metaterm ::= leftSide::Term rightSide::Term
         | applicationTerm(nameTerm(prod, _),
              singleTermList(contents))
           when findAssociated(prod,
-                  top.currentState.knownProductions).isJust ->
+                  top.silverContext.knownProductions).isJust ->
           just(prodTerm(prod,
                   addParenthesizedArgs(contents,
                      emptyParenthesizedArgs())))
@@ -127,20 +128,21 @@ abstract production disambiguateApplicationTerm
 top::Term ::= f::Term args::TermList
 {
   top.pp = f.pp ++ " " ++ args.pp;
+  top.isAtomic = false; --might get some extra parentheses
 
   local fwd::Term =
         case f, args of
         | nameTerm(prod, _),
           singleTermList(pairTerm(contents))
           when findAssociated(prod,
-                  top.currentState.knownProductions).isJust ->
+                  top.silverContext.knownProductions).isJust ->
           prodTerm(prod,
                    foldr(addParenthesizedArgs(_, _),
                          emptyParenthesizedArgs(),
                          args.argList))
         | nameTerm(prod, _), emptyTermList()
           when findAssociated(prod,
-                  top.currentState.knownProductions).isJust ->
+                  top.silverContext.knownProductions).isJust ->
           prodTerm(prod, emptyParenthesizedArgs())
         | _, _ -> applicationTerm(f, args)
         end;

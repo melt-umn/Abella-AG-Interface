@@ -10,10 +10,12 @@ Boolean ::= ty1::Type ty2::Type
 }
 
 function termsEqual
-Boolean ::= tm1::Term tm2::Term
+Boolean ::= tm1::Term tm2::Term silverContext::Decorated SilverContext
 {
   tm1.eqTest = tm2;
+  tm1.silverContext = silverContext;
   tm2.eqTest = tm1;
+  tm2.silverContext = silverContext;
   return tm1.isEq && tm2.isEq;
 }
 
@@ -79,12 +81,14 @@ TermList ::= args::[Term]
 --Split based on actual conjunctions
 --Different than attribute
 function splitMetaterm
-[Metaterm] ::= mt::Metaterm
+[Metaterm] ::= mt::Metaterm silverContext::Decorated SilverContext
 {
+  mt.silverContext = silverContext;
   return
      case mt of
      | andMetaterm(mt1, mt2) ->
-       splitMetaterm(mt1) ++ splitMetaterm(mt2)
+       splitMetaterm(mt1, silverContext) ++
+       splitMetaterm(mt2, silverContext)
      | _ -> [mt]
      end;
 }
@@ -146,61 +150,66 @@ Maybe<Metaterm> ::= arg::ApplyArg hyps::[(String, Metaterm)]
 --Find the WPD nonterminal relation for a given treename, if it exists
 function find_WPD_nt_hyp
 Maybe<(String, Metaterm)> ::= treename::String hyps::[(String, Metaterm)]
+                              silverContext::Decorated SilverContext
 {
   local structure::Term =
-        case find_structure_hyp(treename, hyps) of
+        case find_structure_hyp(treename, hyps, silverContext) of
         | just((_, s)) -> s
         | nothing() -> nameTerm(treename, nothing())
         end;
-  return find_WPD_nt_help(structure, treename, hyps);
+  return find_WPD_nt_help(structure, treename, hyps, silverContext);
 }
 
 
 function find_WPD_nt_help
 Maybe<(String, Metaterm)> ::= tree::Term treename::String hyps::[(String, Metaterm)]
+                              silverContext::Decorated SilverContext
 {
   return
      case hyps of
      | [] -> nothing()
-       --(hyp, wpd_<ty> tr (ntr_<ty> treeNode childList))
-     | (hyp, termMetaterm(applicationTerm(nameTerm(str, x),
-                consTermList(tr,
-                singleTermList(
-                   applicationTerm(nameTerm(ntr, ntrty),
-                      consTermList(
-                         nameTerm(treeNode, treeNodeTy),
-                      singleTermList(childList)))))),
-                _))::_
-       when isWpdTypeName(str) && termsEqual(tree, tr) ->
-       just((hyp,
-          termMetaterm(applicationTerm(nameTerm(str, x),
-                consTermList(tr,
-                singleTermList(
-                   applicationTerm(nameTerm(ntr, ntrty),
-                      consTermList(
-                         nameTerm(treeNode, treeNodeTy),
-                      singleTermList(childList)))))),
-                emptyRestriction())))
-       --(hyp, wpd_<ty> tr (ntr_<ty> treeNode childList)) where tr is a tree name
-     | (hyp, termMetaterm(applicationTerm(nameTerm(str, x),
-                consTermList(nameTerm(tr, trty),
-                singleTermList(
-                   applicationTerm(nameTerm(ntr, ntrty),
-                      consTermList(
-                         nameTerm(treeNode, treeNodeTy),
-                      singleTermList(childList)))))),
-                _))::_
-       when isWpdTypeName(str) && tr == treename ->
-       just((hyp,
-          termMetaterm(applicationTerm(nameTerm(str, x),
-                consTermList(nameTerm(tr, trty),
-                singleTermList(
-                   applicationTerm(nameTerm(ntr, ntrty),
-                      consTermList(
-                         nameTerm(treeNode, treeNodeTy),
-                      singleTermList(childList)))))),
-                emptyRestriction())))
-     | (hyp, mt)::tl -> find_WPD_nt_help(tree, treename, tl)
+     | (hyp, mt)::tl ->
+       case decorate mt with {silverContext = silverContext;} of
+         --(hyp, wpd_<ty> tr (ntr_<ty> treeNode childList))
+       | termMetaterm(applicationTerm(nameTerm(str, x),
+            consTermList(tr,
+            singleTermList(
+               applicationTerm(nameTerm(ntr, ntrty),
+                  consTermList(
+                     nameTerm(treeNode, treeNodeTy),
+                  singleTermList(childList)))))),
+            _)
+         when isWpdTypeName(str) && termsEqual(tree, tr, silverContext) ->
+         just((hyp,
+            termMetaterm(applicationTerm(nameTerm(str, x),
+                  consTermList(tr,
+                  singleTermList(
+                     applicationTerm(nameTerm(ntr, ntrty),
+                        consTermList(
+                           nameTerm(treeNode, treeNodeTy),
+                        singleTermList(childList)))))),
+                  emptyRestriction())))
+         --(hyp, wpd_<ty> tr (ntr_<ty> treeNode childList)) where tr is a tree name
+       | termMetaterm(applicationTerm(nameTerm(str, x),
+            consTermList(nameTerm(tr, trty),
+            singleTermList(
+               applicationTerm(nameTerm(ntr, ntrty),
+                  consTermList(
+                     nameTerm(treeNode, treeNodeTy),
+                  singleTermList(childList)))))),
+            _)
+         when isWpdTypeName(str) && tr == treename ->
+         just((hyp,
+            termMetaterm(applicationTerm(nameTerm(str, x),
+                  consTermList(nameTerm(tr, trty),
+                  singleTermList(
+                     applicationTerm(nameTerm(ntr, ntrty),
+                        consTermList(
+                           nameTerm(treeNode, treeNodeTy),
+                        singleTermList(childList)))))),
+                  emptyRestriction())))
+       | _ -> find_WPD_nt_help(tree, treename, tl, silverContext)
+       end
      end;
 }
 
@@ -208,17 +217,25 @@ Maybe<(String, Metaterm)> ::= tree::Term treename::String hyps::[(String, Metate
 --find a hypthesis of the form "<treename> = ___" or "___ = <treename>"
 function find_structure_hyp
 Maybe<(String, Term)> ::= treename::String hyps::[(String, Metaterm)]
+                          silverContext::Decorated SilverContext
 {
   return
      case hyps of
      | [] -> nothing()
-     | (hyp, eqMetaterm(nameTerm(str, _), structure))::_
-       when str == treename && structure.isProdStructure ->
-       just((hyp, new(structure)))
-     | (hyp, eqMetaterm(structure, nameTerm(str, _)))::_
-       when str == treename && structure.isProdStructure ->
-       just((hyp, new(structure)))
-     | (hyp, mt)::tl -> find_structure_hyp(treename, tl)
+     | (hyp, mt)::tl ->
+       case decorate mt with {silverContext = silverContext;} of
+       | eqMetaterm(nameTerm(str, _), structure)
+         when str == treename &&
+              decorate structure with
+              {silverContext = silverContext;}.isProdStructure ->
+         just((hyp, new(structure)))
+       | eqMetaterm(structure, nameTerm(str, _))
+         when str == treename &&
+              decorate structure with
+              {silverContext = silverContext;}.isProdStructure ->
+         just((hyp, new(structure)))
+       | _ -> find_structure_hyp(treename, tl, silverContext)
+       end
      end;
 }
 
@@ -226,23 +243,31 @@ Maybe<(String, Term)> ::= treename::String hyps::[(String, Metaterm)]
 --Find the tree which is the immediate parent of the given tree and the term it is in
 function find_parent_tree
 Maybe<(String, Term)> ::= treename::String hyps::[(String, Metaterm)]
+                          silverContext::Decorated SilverContext
 {
   return
      case hyps of
      | [] -> nothing()
-     | (hyp, eqMetaterm(nameTerm(prod, _), applicationTerm(f, args)))::_
-       when decorate args with {findParentOf = treename;}.isArgHere.isJust ->
-       just((prod, applicationTerm(f, args)))
-     | (hyp, eqMetaterm(applicationTerm(f, args), nameTerm(prod, _)))::_
-       when decorate args with {findParentOf = treename;}.isArgHere.isJust ->
-       just((prod, applicationTerm(f, args)))
-     | (hyp, eqMetaterm(nameTerm(tree, _), prodTerm(prodName, args)))::_
-       when decorate args with {findParentOf = treename;}.isArgHere.isJust ->
-       just((tree, prodTerm(prodName, args)))
-     | (hyp, eqMetaterm(prodTerm(prodName, args), nameTerm(tree, _)))::_
-       when decorate args with {findParentOf = treename;}.isArgHere.isJust ->
-       just((tree, prodTerm(prodName, args)))
-     | _::tl -> find_parent_tree(treename, tl)
+     | (hyp, mt)::tl ->
+       case decorate mt with {silverContext = silverContext;} of
+       | eqMetaterm(nameTerm(prod, _), applicationTerm(f, args))
+         when decorate args with {findParentOf = treename;
+                                  silverContext = silverContext;}.isArgHere.isJust ->
+         just((prod, applicationTerm(f, args)))
+       | eqMetaterm(applicationTerm(f, args), nameTerm(prod, _))
+         when decorate args with {findParentOf = treename;
+                                  silverContext = silverContext;}.isArgHere.isJust ->
+         just((prod, applicationTerm(f, args)))
+       | eqMetaterm(nameTerm(tree, _), prodTerm(prodName, args))
+         when decorate args with {findParentOf = treename;
+                                  silverContext = silverContext;}.isArgHere.isJust ->
+         just((tree, prodTerm(prodName, args)))
+       | eqMetaterm(prodTerm(prodName, args), nameTerm(tree, _))
+         when decorate args with {findParentOf = treename;
+                                  silverContext = silverContext;}.isArgHere.isJust ->
+         just((tree, prodTerm(prodName, args)))
+       | _ -> find_parent_tree(treename, tl, silverContext)
+       end
      end;
 }
 

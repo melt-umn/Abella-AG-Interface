@@ -15,6 +15,7 @@ Either<String [ProofCommand]> ::=
    h::HHint depth::Maybe<Integer> args::[ApplyArg] withs::[(String, Term)]
    --The hypotheses in the current context
    hyps::[(String, Metaterm)]
+   silverContext::Decorated SilverContext
 {
   --forall L E, is_list subrel L -> member E L -> subrel E
 
@@ -32,7 +33,7 @@ Either<String [ProofCommand]> ::=
         | [arg1, _] ->
           case get_arg_hyp_metaterm(arg1, hyps) of
           | just(mt) ->
-            case get_is_list_subrel_metaterm(mt) of
+            case get_is_list_subrel_metaterm(mt, silverContext) of
             | just(subrel) -> subrel
             | nothing() -> 
               case findAssociated("SubRel", withs) of
@@ -99,7 +100,7 @@ Either<String [ProofCommand]> ::=
         | [arg1, _] ->
           case get_arg_hyp_metaterm(arg1, hyps) of
           | just(mt) ->
-            case get_is_list_subrel_metaterm(mt) of
+            case get_is_list_subrel_metaterm(mt, silverContext) of
             | just(subrel) -> nothing()
             | nothing() -> 
               case findAssociated("SubRel", withs) of
@@ -134,6 +135,7 @@ Either<String [ProofCommand]> ::=
    h::HHint depth::Maybe<Integer> args::[ApplyArg] withs::[(String, Term)]
    --The hypotheses in the current context
    hyps::[(String, Metaterm)]
+   silverContext::Decorated SilverContext
 {
   --forall L E, is_list subrel L -> member E L -> subrel E
   
@@ -154,8 +156,8 @@ Either<String [ProofCommand]> ::=
           case get_arg_hyp_metaterm(arg1, hyps), get_arg_hyp_metaterm(arg2, hyps),
                findAssociated("SubRel", withs) of
           | _, _, just(subrel) -> subrel
-          | just(mt), _, _ when get_is_list_subrel_metaterm(mt) matches just(subrel) -> subrel
-          | _, just(mt), _ when get_is_list_subrel_metaterm(mt) matches just(subrel) -> subrel
+          | just(mt), _, _ when get_is_list_subrel_metaterm(mt, silverContext) matches just(subrel) -> subrel
+          | _, just(mt), _ when get_is_list_subrel_metaterm(mt, silverContext) matches just(subrel) -> subrel
           | _, _, _ -> error("Should not access this")
           end
         | _ -> error("Wrong number of args to is_list_append")
@@ -218,8 +220,8 @@ Either<String [ProofCommand]> ::=
           case get_arg_hyp_metaterm(arg1, hyps), get_arg_hyp_metaterm(arg2, hyps),
                findAssociated("SubRel", withs) of
           | _, _, just(subrel) -> nothing()
-          | just(mt), _, _ when get_is_list_subrel_metaterm(mt) matches just(subrel) -> nothing()
-          | _, just(mt), _ when get_is_list_subrel_metaterm(mt) matches just(subrel) -> nothing()
+          | just(mt), _, _ when get_is_list_subrel_metaterm(mt, silverContext) matches just(subrel) -> nothing()
+          | _, just(mt), _ when get_is_list_subrel_metaterm(mt, silverContext) matches just(subrel) -> nothing()
           | nothing(), _, _ when arg1.name != "_" ->
             just("Could not find hypothesis or lemma " ++ arg1.name)
           | _, nothing(), _ when arg1.name != "_" ->
@@ -241,10 +243,10 @@ Either<String [ProofCommand]> ::=
 
 --Try to find the subrelation term for is_list in a given metaterm
 function get_is_list_subrel_metaterm
-Maybe<Term> ::= tm::Metaterm
+Maybe<Term> ::= tm::Metaterm silverContext::Decorated SilverContext
 {
   return
-     case tm of
+     case decorate tm with {silverContext = silverContext;} of
      | termMetaterm(applicationTerm(nameTerm("is_list", _),
            consTermList(subrel, _)), _) -> just(subrel)
      | _ -> nothing()
@@ -270,6 +272,7 @@ Either<String [ProofCommand]> ::=
    hyps::[(String, Metaterm)]
    --Types of known productions
    knownProds::[(String, Type)]
+   silverContext::Decorated SilverContext
 {
   --Theorem symmetry[A] : forall (A B : A), A = B -> B = A
 
@@ -282,70 +285,91 @@ Either<String [ProofCommand]> ::=
              findAssociated("A", withs),
              findAssociated("B", withs) of
           | _, just(atrm), just(btrm) -> (atrm, btrm)
-          | just(eqMetaterm(atrm, btrm)), _, _ ->(new(atrm), new(btrm))
-          | just(termMetaterm(applicationTerm(_,
-                    consTermList(atrm, singleTermList(btrm))), _)), _, _ ->
-            (new(atrm), new(btrm))
+          | just(mtm), _, _ ->
+            case decorate mtm with {silverContext = silverContext;} of
+            | eqMetaterm(atrm, btrm) ->(new(atrm), new(btrm))
+            | termMetaterm(applicationTerm(_,
+                 consTermList(atrm, singleTermList(btrm))), _) ->
+              (new(atrm), new(btrm))
+            | _ -> error("Should not access trms in presence of errors")
+            end
           | _, _, _ -> error("Should not access trms in presence of errors")
           end;
   local isNt::Boolean =
         case get_arg_hyp_metaterm(head(args), hyps) of
-        | just(eqMetaterm(_, _)) -> false
-        | just(termMetaterm(applicationTerm(_,
-                  consTermList(atrm, singleTermList(btrm))), _)) ->
-          true
-        | nothing() ->
-          case trms of
-          | (nameTerm(str, _), _)
-            when isProd(str) -> true
-          | (_, nameTerm(str, _))
-            when isProd(str) -> true
-          | (applicationTerm(nameTerm(str, _), _), _)
-            when isProd(str) -> true
-          | (_, applicationTerm(nameTerm(str, _), _))
-            when isProd(str) -> true
+        | just(mtm) ->
+          case decorate mtm with {silverContext = silverContext;} of
+          | eqMetaterm(_, _) -> false
+          | termMetaterm(applicationTerm(_,
+               consTermList(atrm, singleTermList(btrm))), _) -> true
           | _ -> false
+          end
+        | nothing() ->
+          case decorate trms.1 with {silverContext = silverContext;},
+               decorate trms.2 with {silverContext = silverContext;} of
+          | nameTerm(str, _), _
+            when isProd(str) -> true
+          | _, nameTerm(str, _)
+            when isProd(str) -> true
+          | applicationTerm(nameTerm(str, _), _), _
+            when isProd(str) -> true
+          | _, applicationTerm(nameTerm(str, _), _)
+            when isProd(str) -> true
+          | _, _ -> false
           end
         | _ -> false
         end;
   local tyNT::Maybe<Type> =
       case get_arg_hyp_metaterm(head(args), hyps) of
-      | just(termMetaterm(applicationTerm(nameTerm(str, _), _), _)) ->
-        just(structureEqToType(str))
+      | just(tm) ->
+        case decorate tm with {silverContext = silverContext;} of
+        | termMetaterm(applicationTerm(nameTerm(str, _), _), _) ->
+          just(structureEqToType(str))
+        | _ -> nothing()
+        end
       | nothing() -> --check trms for productions
-        case trms of
-        | (nameTerm(str, _), _) when isProd(str) ->
+        case decorate trms.1 with {silverContext = silverContext;},
+             decorate trms.2 with {silverContext = silverContext;} of
+        | nameTerm(str, _), _ when isProd(str) ->
           case findAssociated(str, knownProds) of
           | nothing() -> nothing()
           | just(ty) -> just(ty.resultType)
           end
-        | (_, nameTerm(str, _)) when isProd(str) ->
+        | _, nameTerm(str, _) when isProd(str) ->
           case findAssociated(str, knownProds) of
           | nothing() -> nothing()
           | just(ty) -> just(ty.resultType)
           end
-        | (applicationTerm(nameTerm(str, _), _), _) when isProd(str) ->
+        | applicationTerm(nameTerm(str, _), _), _ when isProd(str) ->
           case findAssociated(str, knownProds) of
           | nothing() -> nothing()
           | just(ty) -> just(ty.resultType)
           end
-        | (_, applicationTerm(nameTerm(str, _), _)) when isProd(str) ->
+        | _, applicationTerm(nameTerm(str, _), _) when isProd(str) ->
           case findAssociated(str, knownProds) of
           | nothing() -> nothing()
           | just(ty) -> just(ty.resultType)
           end
-        | (nameTerm(tr1, _), nameTerm(tr2, _)) -> --go search for WPD assumptions
-          case find_WPD_nt_hyp(tr1, hyps) of
-          | just((_, termMetaterm(applicationTerm(nameTerm(str, _), _), _))) -> 
-            just(wpdNt_type(str))
-          | _ -> 
-            case find_WPD_nt_hyp(tr1, hyps) of
-            | just((_, termMetaterm(applicationTerm(nameTerm(str, _), _), _))) -> 
+        | nameTerm(tr1, _), nameTerm(tr2, _) -> --go search for WPD assumptions
+          case find_WPD_nt_hyp(tr1, hyps, silverContext) of
+          | just((_, tm)) ->
+            case decorate tm with {silverContext = silverContext;} of
+            | termMetaterm(applicationTerm(nameTerm(str, _), _), _) -> 
               just(wpdNt_type(str))
+            | _ ->nothing()
+            end
+          | _ -> 
+            case find_WPD_nt_hyp(tr1, hyps, silverContext) of
+            | just((_, mt)) ->
+              case decorate mt with {silverContext = silverContext;} of
+              | termMetaterm(applicationTerm(nameTerm(str, _), _), _) -> 
+                just(wpdNt_type(str))
+              | _ -> nothing()
+              end
             | _ -> nothing()
             end
           end
-        | _ -> nothing()
+        | _, _ -> nothing()
         end
       | _ -> nothing()
       end;
@@ -387,48 +411,53 @@ Either<String [ProofCommand]> ::=
             just("Logic variable found at top level")
           | nothing(), _, nothing() ->
             just("Logic variable found at top level")
-          | just(eqMetaterm(atrm1, btrm1)), just(atrm2), just(btrm2) ->
-            if termsEqual(atrm1, atrm2)
-            then if termsEqual(btrm1, btrm2)
-                 then nothing()
-                 else just("While matching argument #1:\nUnification failure for argument B")
-            else just("While matching argument #1:\nUnification failure for argument A")
-          | just(eqMetaterm(atrm1, btrm1)), just(atrm2), nothing() ->
-            if termsEqual(atrm1, atrm2)
-            then nothing()
-            else just("While matching argument #1:\nUnification failure for argument A")
-          | just(eqMetaterm(atrm1, btrm1)), nothing(), just(btrm2) ->
-            if termsEqual(btrm1, btrm2)
-            then nothing()
-            else just("While matching argument #1:\nUnification failure for argument B")
-          | just(eqMetaterm(atrm1, btrm1)), nothing(), nothing() ->
-            nothing()
-          | just(termMetaterm(applicationTerm(nameTerm(structEq, _),
-                    consTermList(atrm1, singleTermList(btrm1))), _)),
-            just(atrm2), just(btrm2) when isStructureEqName(structEq) ->
-            if termsEqual(atrm1, atrm2)
-            then if termsEqual(btrm1, btrm2)
-                 then nothing()
-                 else just("While matching argument #1:\nUnification failure for argument B")
-            else just("While matching argument #1:\nUnification failure for argument A")
-          | just(termMetaterm(applicationTerm(nameTerm(structEq, _),
-                    consTermList(atrm1, singleTermList(btrm1))), _)),
-            just(atrm2), nothing() when isStructureEqName(structEq) ->
-            if termsEqual(atrm1, atrm2)
-            then nothing()
-            else just("While matching argument #1:\nUnification failure for argument A")
-          | just(termMetaterm(applicationTerm(nameTerm(structEq, _),
-                    consTermList(atrm1, singleTermList(btrm1))), _)),
-            nothing(), just(btrm2) when isStructureEqName(structEq) ->
-            if termsEqual(btrm1, btrm2)
-            then nothing()
-            else just("While matching argument #1:\nUnification failure for argument B")
-          | just(termMetaterm(applicationTerm(nameTerm(structEq, _),
-                    consTermList(atrm1, singleTermList(btrm1))), _)),
-            nothing(), nothing() when isStructureEqName(structEq) ->
-            nothing()
-          | just(_), _, _ -> just("While matching argument #1:\nUnification failure")
           | nothing(), just(atrm), just(btrm) -> nothing()
+          | just(tm), a, b ->
+            case decorate tm with {silverContext = silverContext;}, a, b of
+            | eqMetaterm(atrm1, btrm1), just(atrm2), just(btrm2) ->
+              if termsEqual(atrm1, atrm2, silverContext)
+              then if termsEqual(btrm1, btrm2, silverContext)
+                   then nothing()
+                   else just("While matching argument #1:\nUnification " ++
+                             "failure for argument B")
+              else just("While matching argument #1:\nUnification failure for argument A")
+            | eqMetaterm(atrm1, btrm1), just(atrm2), nothing() ->
+              if termsEqual(atrm1, atrm2, silverContext)
+              then nothing()
+              else just("While matching argument #1:\nUnification failure for argument A")
+            | termMetaterm(applicationTerm(nameTerm(structEq, _),
+                 consTermList(atrm1, singleTermList(btrm1))), _),
+              just(atrm2), just(btrm2) when isStructureEqName(structEq) ->
+              if termsEqual(atrm1, atrm2, silverContext)
+              then if termsEqual(btrm1, btrm2, silverContext)
+                   then nothing()
+                   else just("While matching argument #1:\nUnification " ++
+                             "failure for argument B")
+              else just("While matching argument #1:\nUnification failure for argument A")
+            | eqMetaterm(atrm1, btrm1), nothing(), just(btrm2) ->
+              if termsEqual(btrm1, btrm2, silverContext)
+              then nothing()
+              else just("While matching argument #1:\nUnification failure for argument B")
+            | eqMetaterm(atrm1, btrm1), nothing(), nothing() ->
+              nothing()
+            | termMetaterm(applicationTerm(nameTerm(structEq, _),
+                 consTermList(atrm1, singleTermList(btrm1))), _),
+              just(atrm2), nothing() when isStructureEqName(structEq) ->
+              if termsEqual(atrm1, atrm2, silverContext)
+              then nothing()
+              else just("While matching argument #1:\nUnification failure for argument A")
+            | termMetaterm(applicationTerm(nameTerm(structEq, _),
+                 consTermList(atrm1, singleTermList(btrm1))), _),
+              nothing(), just(btrm2) when isStructureEqName(structEq) ->
+              if termsEqual(btrm1, btrm2, silverContext)
+              then nothing()
+              else just("While matching argument #1:\nUnification failure for argument B")
+            | termMetaterm(applicationTerm(nameTerm(structEq, _),
+                 consTermList(atrm1, singleTermList(btrm1))), _),
+              nothing(), nothing() when isStructureEqName(structEq) ->
+              nothing()
+            | _, _, _ -> just("While matching argument #1:\nUnification failure")
+            end
           end
         | _ -> just("symmetry expects 1 argument but was given " ++
                     toString(length(args)))

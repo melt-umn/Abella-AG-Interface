@@ -98,7 +98,8 @@ aspect production eqMetaterm
 top::Metaterm ::= t1::Term t2::Term
 {
   top.translation =
-      case t1.translation, t2.translation of
+      case decorate t1.translation with {silverContext = top.silverContext;},
+           decorate t2.translation with {silverContext = top.silverContext;} of
       | nameTerm(t1n, _), _ when contains(t1n, top.knownTrees) ->
         case findAssociatedScopes(t1n, top.finalTys) of
         | just(just(ty)) ->
@@ -790,7 +791,7 @@ top::Metaterm ::= funName::String args::ParenthesizedArgs result::Term r::Restri
          emptyRestriction());
 
   top.errors <-
-      case findAssociated(funName, top.currentState.knownFunctions) of
+      case findAssociated(funName, top.silverContext.knownFunctions) of
       | just(ty) ->
         --Subtract 1 because return type is included
         if length(ty.argumentTypes) - 1 == length(args.argList)
@@ -837,10 +838,12 @@ top::Term ::= f::Term args::TermList
   top.boundVarsOut = args.boundVarsOut;
 
   top.isEq =
-      case top.eqTest of
+      case decorate top.eqTest with {silverContext = top.silverContext;} of
       | applicationTerm(f2, args2) ->
-        decorate f with {eqTest = f2;}.isEq &&
-        decorate args with {eqTest = args2;}.isEq
+        decorate f with {eqTest = f2;
+                         silverContext = top.silverContext;}.isEq &&
+        decorate args with {eqTest = args2;
+                            silverContext = top.silverContext;}.isEq
       | _ -> false
       end;
 
@@ -890,7 +893,7 @@ top::Term ::= name::String ty::Maybe<Type>
       else top;
 
   top.isEq =
-      case top.eqTest of
+      case decorate top.eqTest with {silverContext = top.silverContext;} of
       | nameTerm(name2, _) -> name == name2
       | _ -> false
       end;
@@ -911,10 +914,12 @@ top::Term ::= t1::Term t2::Term
   top.boundVarsOut = t2.boundVarsOut;
 
   top.isEq =
-      case top.eqTest of
+      case decorate top.eqTest with {silverContext = top.silverContext;} of
       | consTerm(t1_2, t2_2) ->
-        decorate t1 with {eqTest = t1_2;}.isEq &&
-        decorate t2 with {eqTest = t2_2;}.isEq
+        decorate t1 with {eqTest = t1_2;
+                          silverContext = top.silverContext;}.isEq &&
+        decorate t2 with {eqTest = t2_2;
+                          silverContext = top.silverContext;}.isEq
       | _ -> false
       end;
 
@@ -932,7 +937,7 @@ top::Term ::=
   top.boundVarsOut = top.boundVars;
 
   top.isEq =
-      case top.eqTest of
+      case decorate top.eqTest with {silverContext = top.silverContext;} of
       | nilTerm() -> true
       | _ -> false
       end;
@@ -966,7 +971,7 @@ top::Term ::= i::Integer
   top.boundVarsOut = top.boundVars;
 
   top.isEq =
-      case top.eqTest of
+      case decorate top.eqTest with {silverContext = top.silverContext;} of
       | intTerm(i2) -> i == i2
       | _ -> false
       end;
@@ -988,7 +993,7 @@ top::Term ::= contents::String
   top.boundVarsOut = top.boundVars;
 
   top.isEq =
-      case top.eqTest of
+      case decorate top.eqTest with {silverContext = top.silverContext;} of
       | stringTerm(contents2) -> contents == contents2
       | _ -> false
       end;
@@ -1007,7 +1012,7 @@ top::Term ::=
   top.boundVarsOut = top.boundVars;
 
   top.isEq =
-      case top.eqTest of
+      case decorate top.eqTest with {silverContext = top.silverContext;} of
       | trueTerm() -> true
       | _ -> false
       end;
@@ -1026,7 +1031,7 @@ top::Term ::=
   top.boundVarsOut = top.boundVars;
 
   top.isEq =
-      case top.eqTest of
+      case decorate top.eqTest with {silverContext = top.silverContext;} of
       | falseTerm() -> true
       | _ -> false
       end;
@@ -1045,7 +1050,7 @@ top::Term ::= c::String
   top.boundVarsOut = error("Should not have charTerm in toAbella");
 
   top.isEq =
-      case top.eqTest of
+      case decorate top.eqTest with {silverContext = top.silverContext;} of
       | charTerm(c2) -> c == c2
       | _ -> false
       end;
@@ -1070,9 +1075,10 @@ top::Term ::= prodName::String args::ParenthesizedArgs
   top.boundVarsOut = args.boundVarsOut;
 
   top.isEq =
-      case top.eqTest of
+      case decorate top.eqTest with {silverContext = top.silverContext;} of
       | prodTerm(prod, args2) when prod == prodName ->
-        decorate args with {eqTest = args2;}.isEq
+        decorate args with {eqTest = args2;
+                            silverContext = top.silverContext;}.isEq
       | _ -> false
       end;
 
@@ -1095,9 +1101,10 @@ top::Term ::= contents::PairContents
   top.boundVarsOut = contents.boundVarsOut;
 
   top.isEq =
-      case top.eqTest of
+      case decorate top.eqTest with {silverContext = top.silverContext;} of
       | pairTerm(contents2) ->
-        decorate contents with {eqTest = contents2;}.isEq
+        decorate contents with {eqTest = contents2;
+                                silverContext = top.silverContext;}.isEq
       | _ -> false
       end;
 
@@ -1116,9 +1123,10 @@ top::Term ::= contents::ListContents
   top.boundVarsOut = contents.boundVarsOut;
 
   top.isEq =
-      case top.eqTest of
+      case decorate top.eqTest with {silverContext = top.silverContext;} of
       | listTerm(contents2) ->
-        decorate contents with {eqTest = contents2;}.isEq
+        decorate contents with {eqTest = contents2;
+                                silverContext = top.silverContext;}.isEq
       | _ -> false
       end;
 
@@ -1167,8 +1175,10 @@ top::ListContents ::= hd::Term tl::ListContents
   top.isEq =
       case top.eqTest of
       | addListContents(hd2, tl2) ->
-        decorate hd with {eqTest = hd2;}.isEq &&
-        decorate tl with {eqTest = tl2;}.isEq
+        decorate hd with {eqTest = hd2;
+                          silverContext = top.silverContext;}.isEq &&
+        decorate tl with {eqTest = tl2;
+                          silverContext = top.silverContext;}.isEq
       | _ -> false
       end;
 }
@@ -1197,7 +1207,8 @@ top::PairContents ::= t::Term
   top.isEq =
       case top.eqTest of
       | singlePairContents(t2) ->
-        decorate t with {eqTest = t2;}.isEq
+        decorate t with {eqTest = t2;
+                         silverContext = top.silverContext;}.isEq
       | _ -> false
       end;
 }
@@ -1217,8 +1228,10 @@ top::PairContents ::= t::Term rest::PairContents
   top.isEq =
       case top.eqTest of
       | addPairContents(t2, rest2) ->
-        decorate t with {eqTest = t2;}.isEq &&
-        decorate rest with {eqTest = rest2;}.isEq
+        decorate t with {eqTest = t2;
+                         silverContext = top.silverContext;}.isEq &&
+        decorate rest with {eqTest = rest2;
+                            silverContext = top.silverContext;}.isEq
       | _ -> false
       end;
 }
@@ -1271,8 +1284,10 @@ top::ParenthesizedArgs ::= hd::Term tl::ParenthesizedArgs
   top.isEq =
       case top.eqTest of
       | addParenthesizedArgs(hd2, tl2) ->
-        decorate hd with {eqTest = hd2;}.isEq &&
-        decorate tl with {eqTest = tl2;}.isEq
+        decorate hd with {eqTest = hd2;
+                          silverContext = top.silverContext;}.isEq &&
+        decorate tl with {eqTest = tl2;
+                          silverContext = top.silverContext;}.isEq
       | _ -> false
       end;
 
@@ -1316,7 +1331,8 @@ top::TermList ::= t::Term
   top.isEq =
       case top.eqTest of
       | singleTermList(t2) ->
-        decorate t with {eqTest = t2;}.isEq
+        decorate t with {eqTest = t2;
+                         silverContext = top.silverContext;}.isEq
       | _ -> false
       end;
 
@@ -1343,8 +1359,10 @@ top::TermList ::= t::Term rest::TermList
   top.isEq =
       case top.eqTest of
       | consTermList(t2, rest2) ->
-        decorate t with {eqTest = t2;}.isEq &&
-        decorate rest with {eqTest = rest2;}.isEq
+        decorate t with {eqTest = t2;
+                         silverContext = top.silverContext;}.isEq &&
+        decorate rest with {eqTest = rest2;
+                            silverContext = top.silverContext;}.isEq
       | _ -> false
       end;
 

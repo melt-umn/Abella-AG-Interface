@@ -43,7 +43,7 @@ top::WarningMessage ::= name::String
 nonterminal ProcessingErrorMessage with
    pp,
    knownTrees,
-   translation<ProcessingErrorMessage>;
+   translation<ProcessingErrorMessage>, silverContext;
 
 abstract production undeterminedVarType
 top::ProcessingErrorMessage ::=

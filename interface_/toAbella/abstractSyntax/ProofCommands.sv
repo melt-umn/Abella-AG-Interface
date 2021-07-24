@@ -6,6 +6,7 @@ grammar interface_:toAbella:abstractSyntax;
 nonterminal ProofCommand with
    pp, --pp should end with two spaces
    translation<[ProofCommand]>, currentState, translatedState,
+   silverContext,
    errors, sendCommand, ownOutput,
    isUndo, shouldClean,
    stateListIn, stateListOut;
@@ -87,8 +88,15 @@ top::ProofCommand ::= names::[String]
             [], names);
 
   local goalPremises::[Metaterm] =
-        top.currentState.state.goal.fromJust.implicationPremises;
-  local hidePremises::[Boolean] = map((.shouldHide), goalPremises);
+        decorate
+           decorate top.currentState.state with
+           {silverContext = top.silverContext;}.goal.fromJust with
+        {silverContext = top.silverContext;}.implicationPremises;
+  local hidePremises::[Boolean] =
+        map(\ mt::Metaterm ->
+              decorate mt with
+              {silverContext = top.silverContext;}.shouldHide,
+            goalPremises);
   local setUpPremises::([String] ::= [String] [Boolean]) =
         \ names::[String] hides::[Boolean] ->
           case names, hides of
@@ -146,9 +154,11 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> theorem::Clearable
       foldr(\ a::ApplyArg rest::[Error]->
               if a.name == "_"
               then []
-              else case findAssociated(a.name, top.translatedState.hypList) of
+              else case decorate findAssociated(a.name,
+                                    top.translatedState.hypList).fromJust with
+                        {silverContext = top.silverContext;} of
                    --Hidden hypotheses cannot be what the user meant
-                   | just(mt) when !mt.shouldHide -> rest
+                   | mt when !mt.shouldHide -> rest
                    | _ ->
                      errorMsg("Unknown hypothesis " ++ a.name)::rest
                    end,
@@ -183,11 +193,16 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> theorem::Clearable
         \ l::[Metaterm] args::[ApplyArg] ->
           case l, args of
           | [], _ -> args
-          | termMetaterm(applicationTerm(nameTerm(rel, _), _), _)::tl, _
-            when isWpdTypeName(rel) || isWPD_NodeRelName(rel) ->
-            hypApplyArg("_", [])::buildExpandedArgs(tl, args)
-          | _::tl, a::argRest ->
-            a::buildExpandedArgs(tl, argRest)
+          | hd::tl, args ->
+            case decorate hd with
+                 {silverContext = top.silverContext;}, args of
+            | termMetaterm(applicationTerm(nameTerm(rel, _), _), _), _
+              when isWpdTypeName(rel) || isWPD_NodeRelName(rel) ->
+              hypApplyArg("_", [])::buildExpandedArgs(tl, args)
+            | _, a::argRest ->
+              a::buildExpandedArgs(tl, argRest)
+            | _, [] -> args
+            end
           --Going to be an error because there aren't enough arguments
           | _, [] -> args
           end;
@@ -196,19 +211,22 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> theorem::Clearable
         | nothing() ->
           error("Should not access expandedArgs without known theorem/hyp")
         | just(mt) ->
-          buildExpandedArgs(mt.implicationPremises, args)
+          buildExpandedArgs(
+             decorate mt with
+             {silverContext = top.silverContext;}.implicationPremises,
+             args)
         end;
   local err_trans::Either<String [ProofCommand]> =
       case theorem of
       | clearable(_, "is_list_member", _) ->
         case theorem__is_list_member(h, depth, args, withs,
-                top.translatedState.hypList) of
+                top.translatedState.hypList, top.silverContext) of
         | right(prf) -> right(prf)
         | left(err) -> left(err)
         end
       | clearable(_, "is_list_append", _) ->
         case theorem__is_list_append(h, depth, args, withs,
-                top.translatedState.hypList) of
+                top.translatedState.hypList, top.silverContext) of
         | right(prf) -> right(prf)
         | left(err) -> left(err)
         end
@@ -217,22 +235,25 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> theorem::Clearable
                 map(\ p::(String, Term) ->
                       (p.1, decorate p.2 with
                             {knownTrees =
-                             top.currentState.state.gatheredTrees;}.translation),
+                             top.currentState.state.gatheredTrees;
+                             silverContext = top.silverContext;}.translation),
                     withs),
                 top.currentState.state.hypList,
-                top.currentState.knownProductions) of
+                top.silverContext.knownProductions,
+                top.silverContext) of
         | right(prf) -> right(prf)
         | left(err) -> left(err)
         end
       | clearable(x, "attr_unique", y) ->
         case theorem__attr_unique(args, withs,
-                top.currentState.state.hypList) of
-        | right(thm) -> right([applyTactic(h, depth, clearable(x, thm, y), args, [])])
+                top.currentState.state.hypList, top.silverContext) of
+        | right(thm) ->
+          right([applyTactic(h, depth, clearable(x, thm, y), args, [])])
         | left(err) -> left(err)
         end
       | clearable(x, "attr_is", y) ->
         case theorem__attr_is(h, depth, args, withs,
-                top.currentState.state.hypList) of
+                top.currentState.state.hypList, top.silverContext) of
         | right(thm) -> right([thm])
         | left(err) -> left(err)
         end
@@ -241,12 +262,14 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> theorem::Clearable
                  map(\ p::Pair<String Term> ->
                        pair(p.fst, decorate p.snd with
                          {knownTrees = top.currentState.state.gatheredTrees;
+                          silverContext = top.silverContext;
                          }.translation), withs))])
       | _ ->
         right([applyTactic(h, depth, theorem, expandedArgs,
                  map(\ p::Pair<String Term> ->
                        pair(p.fst, decorate p.snd with
                          {knownTrees = top.currentState.state.gatheredTrees;
+                          silverContext = top.silverContext;
                          }.translation), withs))])
       end;
 
@@ -281,6 +304,7 @@ top::ProofCommand ::= depth::Maybe<Integer> theorem::Clearable withs::[Pair<Stri
                 pair(p.fst,
                      decorate p.snd with
                        {knownTrees = top.currentState.state.gatheredTrees;
+                        silverContext = top.silverContext;
                        }.translation),
               withs))];
 
@@ -299,27 +323,33 @@ top::ProofCommand ::= h::HHint hyp::String keep::Boolean
       case findAssociated(hyp, top.translatedState.hypList) of
       --Unknown hypotheses---could also let it go through and Abella catch it
       | nothing() -> [errorMsg("Unknown hypothesis " ++ hyp)]
-      --Hidden hypotheses should be left alone
-      | just(mt) when mt.shouldHide ->
-        [errorMsg("Unknown hypothesis " ++ hyp)]
-      --Disallow case analysis on structure-showing "$<tree>_Tm = <structure>"
-      | just(eqMetaterm(nameTerm(str, _), structure))
-        when contains(str, top.currentState.state.gatheredTrees) ->
-        [errorMsg("Cannot do case analysis on tree structure hypothesis")]
-      | just(eqMetaterm(structure, nameTerm(str, _)))
-        when contains(str, top.currentState.state.gatheredTrees) ->
-        [errorMsg("Cannot do case analysis on tree structure hypothesis")]
-      --Case analysis on an access doesn't make sense
-      | just(attrAccessMetaterm(tree, attr, _)) ->
-        [errorMsg("Cannot do case analysis on this hypothesis; to do case " ++
-                  "analysis on equation for " ++ tree ++ "." ++ attr ++
-                  ", use \"case " ++ tree ++ "." ++ attr ++ "\"")]
-      | just(attrAccessEmptyMetaterm(tree, attr)) ->
-        [errorMsg("Cannot do case analysis on this hypothesis; to do case " ++
-                  "analysis on equation for " ++ tree ++ "." ++ attr ++
-                  ", use \"case " ++ tree ++ "." ++ attr ++ "\"")]
-      --Anything else is fine
-      | just(_) -> []
+      | just(mt) ->
+        case decorate mt with
+             {silverContext = top.silverContext;} of
+        --Hidden hypotheses should be left alone
+        | mt when mt.shouldHide ->
+          [errorMsg("Unknown hypothesis " ++ hyp)]
+        --Disallow case analysis on structure-showing "$<tree>_Tm = <structure>"
+        | eqMetaterm(nameTerm(str, _), structure)
+          when contains(str, decorate top.currentState.state with
+                             {silverContext = top.silverContext;}.gatheredTrees) ->
+          [errorMsg("Cannot do case analysis on tree structure hypothesis")]
+        | eqMetaterm(structure, nameTerm(str, _))
+          when contains(str, decorate top.currentState.state with
+                             {silverContext = top.silverContext;}.gatheredTrees) ->
+          [errorMsg("Cannot do case analysis on tree structure hypothesis")]
+        --Case analysis on an access doesn't make sense
+        | attrAccessMetaterm(tree, attr, _) ->
+          [errorMsg("Cannot do case analysis on this hypothesis; to do case " ++
+                    "analysis on equation for " ++ tree ++ "." ++ attr ++
+                    ", use \"case " ++ tree ++ "." ++ attr ++ "\"")]
+        | attrAccessEmptyMetaterm(tree, attr) ->
+          [errorMsg("Cannot do case analysis on this hypothesis; to do case " ++
+                    "analysis on equation for " ++ tree ++ "." ++ attr ++
+                    ", use \"case " ++ tree ++ "." ++ attr ++ "\"")]
+        --Anything else is fine
+        | _ -> []
+        end
       end;
 
   top.shouldClean = true;
@@ -355,61 +385,72 @@ top::ProofCommand ::= h::HHint tree::String attr::String
                           associatedProd)]
       else [];
 
-  local treeExists::Boolean = contains(tree, top.currentState.state.gatheredTrees);
-  local attrExists::Boolean = contains(attr, map(fst, top.currentState.knownLocalAttrs));
+  local treeExists::Boolean =
+        contains(tree,
+           decorate top.currentState.state with
+           {silverContext = top.silverContext;}.gatheredTrees);
+  local attrExists::Boolean = contains(attr, map(fst, top.silverContext.knownLocalAttrs));
   local structureKnown::Boolean =
-        case structure of
-        | just((_, applicationTerm(nameTerm(prod, _), _)))
-          when isProd(prod) -> true
-        | just((_, nameTerm(prod, _))) when isProd(prod) -> true
-        | _ -> false
-        end;
+        if structure.isJust
+        then case decorate structure.fromJust.2 with
+                  {silverContext = top.silverContext;} of
+             | applicationTerm(nameTerm(prod, _), _)
+               when isProd(prod) -> true
+             | nameTerm(prod, _) when isProd(prod) -> true
+             | _ -> false
+             end
+        else false;
   local attrOccursOn::Boolean =
         findAssociated(associatedProd,
-           findAssociated(attr, top.currentState.knownLocalAttrs).fromJust).isJust;
+           findAssociated(attr, top.silverContext.knownLocalAttrs).fromJust).isJust;
   --
   local newNum::String = toString(genInt());
   local eqHypName::String = "$Eq_" ++ newNum;
   local equalityName::String = "$Equality_" ++ newNum;
   --
   local structure::Maybe<(String, Term)> =
-        case find_structure_hyp(tree, top.translatedState.hypList) of
+        case find_structure_hyp(tree, top.translatedState.hypList,
+                                top.silverContext) of
         | nothing() -> nothing()
         | just((hyp, _)) ->
           --This must exist and have the form of "$structure_eq T Structure" or symm
           case findAssociated(hyp, top.currentState.state.hypList) of
-          | just(termMetaterm(
-                    applicationTerm(_,
-                       consTermList(
-                          nameTerm(tr, _),
-                          singleTermList(structure))), _))
-            when tr == tree ->
-            just((hyp, new(structure)))
-          | just(termMetaterm(
-                    applicationTerm(_,
-                       consTermList(
-                          structure,
-                          singleTermList(nameTerm(tr, _)))), _))
-            when tr == tree ->
-            just((hyp, new(structure)))
+          | just(mtm) ->
+            case decorate mtm with
+                {silverContext = top.silverContext;} of
+            | termMetaterm(
+                 applicationTerm(_,
+                    consTermList(
+                       nameTerm(tr, _),
+                       singleTermList(structure))), _)
+              when tr == tree ->
+              just((hyp, new(structure)))
+            | termMetaterm(
+                 applicationTerm(_,
+                    consTermList(
+                       structure,
+                       singleTermList(nameTerm(tr, _)))), _)
+              when tr == tree ->
+              just((hyp, new(structure)))
+            end
           | _ -> nothing()
           end
         end;
   local associatedProd::String =
-        case structure of
-        | just((_, applicationTerm(nameTerm(prod, _), _))) -> prodToName(prod)
-        | just((_, nameTerm(prod, _))) -> prodToName(prod)
-        | just((_, tm)) -> error("It should be a production (associatedProd):  " ++ tm.pp)
-        | nothing() -> error("It should have a value (associatedProd)")
+        case decorate structure.fromJust.2 with
+             {silverContext = top.silverContext;} of
+        | applicationTerm(nameTerm(prod, _), _) -> prodToName(prod)
+        | nameTerm(prod, _) -> prodToName(prod)
+        | tm -> error("It should be a production (associatedProd):  " ++ tm.pp)
         end;
   local wpdNtHyp::Maybe<(String, Metaterm)> =
-        find_WPD_nt_hyp(tree, top.translatedState.hypList);
+        find_WPD_nt_hyp(tree, top.translatedState.hypList, top.silverContext);
   local treeTy::Type =
-        case wpdNtHyp of
-        | just((_, termMetaterm(applicationTerm(nameTerm(rel, _), _), _))) ->
+        case decorate wpdNtHyp.fromJust.2 with
+             {silverContext = top.silverContext;} of
+        | termMetaterm(applicationTerm(nameTerm(rel, _), _), _) ->
           wpdNt_type(rel)
-        | just((_, tm)) -> error("Should not get here (caseAttrAccess bad just)")
-        | nothing() -> error("Should not get here (caseAttrAccess nothing)")
+        | _ -> error("Should not get here (caseAttrAccess)")
         end;
   local makeEqHypThm::Clearable =
         clearable(false, wpdNt_to_LocalAttrEq(associatedProd, attr, treeTy), []);
@@ -428,12 +469,16 @@ top::ProofCommand ::= h::HHint tree::String attr::String
        --Need to solve previous goal by case analysis if structure hyp is backward
       ( case findAssociated(structure.fromJust.fst, top.translatedState.hypList) of
         | nothing() -> error("This hypothesis must exist")
-        | just(eqMetaterm(nameTerm(str, _), _)) -> []
-        | just(eqMetaterm(_, nameTerm(str, _))) ->
-          [ backchainTactic(nothing(),
-               clearable(false, typeToStructureEq_Symm(treeTy), []), []) ]
-        | just(_) ->
-          error("This hypothesis must be \"<tree> = structure\" or \"structure = <tree>\"")
+        | just(mtm) ->
+          case decorate mtm with
+               {silverContext = top.silverContext;} of
+          | eqMetaterm(nameTerm(str, _), _) -> []
+          | eqMetaterm(_, nameTerm(str, _)) ->
+            [ backchainTactic(nothing(),
+                 clearable(false, typeToStructureEq_Symm(treeTy), []), []) ]
+          | _ ->
+            error("This hypothesis must be \"<tree> = structure\" or \"structure = <tree>\"")
+          end
         end
       ) ++
       [
@@ -467,7 +512,7 @@ top::ProofCommand ::= h::HHint tree::String attr::String
       else [errorMsg("Unknown attribute " ++ attr)];
   top.errors <-
       if treeExists && attrExists
-      then case findAssociated(attr, top.currentState.knownAttrOccurrences) of
+      then case findAssociated(attr, top.silverContext.knownAttrOccurrences) of
            | nothing() -> [] --covered by checking if attr exists, so impossible here
            | just(ntstys) ->
              if  wpdNtHyp.isJust
@@ -501,20 +546,27 @@ top::ProofCommand ::= h::HHint tree::String attr::String
   top.errors <-
       if treeExists && attrExists
       then case structure of
-           | just((_, applicationTerm(nameTerm(prod, _), _)))
-             when isProd(prod) -> []
-           | just((_, nameTerm(prod, _))) when isProd(prod) -> []
            | just((hyp, tm)) ->
-             [errorMsg("Cannot do case analysis on attribute access" ++
-                       " for tree of unknown structure (" ++ hyp ++ ", just(" ++ tm.pp ++ "))")]
+             case decorate tm with
+                  {silverContext = top.silverContext;} of
+             | applicationTerm(nameTerm(prod, _), _)
+               when isProd(prod) -> []
+             | nameTerm(prod, _) when isProd(prod) -> []
+             | tm ->
+               [errorMsg("Cannot do case analysis on attribute access" ++
+                         " for tree of unknown structure (" ++ hyp ++ ", just(" ++ tm.pp ++ "))")]
+             end
            | nothing() ->
              [errorMsg("Cannot do case analysis on attribute access" ++
                        " for tree of unknown structure (nothing)")]
            end
       else [];
 
-  local treeExists::Boolean = contains(tree, top.currentState.state.gatheredTrees);
-  local attrExists::Boolean = contains(attr, top.currentState.knownAttrs);
+  local treeExists::Boolean =
+        contains(tree,
+           decorate top.currentState.state with
+           {silverContext = top.silverContext;}.gatheredTrees);
+  local attrExists::Boolean = contains(attr, top.silverContext.knownAttrs);
   --
   local newNum::String = toString(genInt());
   local eqHypName::String = "$Eq_" ++ newNum;
@@ -522,9 +574,9 @@ top::ProofCommand ::= h::HHint tree::String attr::String
   local equalityName::String = "$Equality_" ++ newNum;
   --
   local isInherited::Boolean =
-        contains(attr, top.currentState.knownInheritedAttrs);
+        contains(attr, top.silverContext.knownInheritedAttrs);
   local findParent::Maybe<(String, Term)> =
-        find_parent_tree(tree, top.translatedState.hypList);
+        find_parent_tree(tree, top.translatedState.hypList, top.silverContext);
   local associatedTree::String =
         if isInherited
         then case findParent of
@@ -534,77 +586,88 @@ top::ProofCommand ::= h::HHint tree::String attr::String
         else tree;
   local structure::Maybe<(String, Term)> =
         case find_structure_hyp(associatedTree,
-                                top.translatedState.hypList) of
+                                top.translatedState.hypList,
+                                top.silverContext) of
         | nothing() -> nothing()
         | just((hyp, _)) ->
           --This must exist and have the form of "$structure_eq T Structure" or symm
           case findAssociated(hyp, top.currentState.state.hypList) of
-          | just(termMetaterm(
-                    applicationTerm(_,
-                       consTermList(
-                          nameTerm(tr, _),
-                          singleTermList(structure))), _))
-            when tr == associatedTree ->
-            just((hyp, new(structure)))
-          | just(termMetaterm(
-                    applicationTerm(_,
-                       consTermList(
-                          structure,
-                          singleTermList(nameTerm(tr, _)))), _))
-            when tr == associatedTree ->
-            just((hyp, new(structure)))
+          | just(mtm) ->
+            case decorate mtm with
+                 {silverContext = top.silverContext;} of
+            | termMetaterm(
+                 applicationTerm(_,
+                    consTermList(
+                       nameTerm(tr, _),
+                       singleTermList(structure))), _)
+              when tr == associatedTree ->
+              just((hyp, new(structure)))
+            | termMetaterm(
+                 applicationTerm(_,
+                    consTermList(
+                       structure,
+                       singleTermList(nameTerm(tr, _)))), _)
+              when tr == associatedTree ->
+              just((hyp, new(structure)))
+            end
           | _ -> nothing()
           end
         end;
   local associatedProd::String =
-        case structure of
-        | just((_, applicationTerm(nameTerm(prod, _), _))) -> prod
-        | just((_, nameTerm(prod, _))) -> prod
-        | just((_, tm)) -> error("It should be a production (associatedProd):  " ++ tm.pp)
-        | nothing() -> error("It should have a value (associatedProd)")
+        case decorate structure.fromJust.2 with
+             {silverContext = top.silverContext;} of
+        | applicationTerm(nameTerm(prod, _), _) -> prod
+        | nameTerm(prod, _) -> prod
+        | tm -> error("It should be a production (associatedProd):  " ++ tm.pp)
         end;
   local makeEqHypThm::Clearable =
         clearable(false, wpdNt_to_AttrEq(attr, treeTy), []);
   local wpdNtHyp::Maybe<(String, Metaterm)> =
-        find_WPD_nt_hyp(associatedTree, top.translatedState.hypList);
+        find_WPD_nt_hyp(associatedTree, top.translatedState.hypList, top.silverContext);
   local treeTy::Type =
         if isInherited
         then case decorate findParent.fromJust.snd with
-                  {findParentOf = tree;}.foundParent of
+                  {findParentOf = tree;
+                   silverContext = top.silverContext;}.foundParent of
              | nothing() -> error("We picked this term based on it being included")
              | just((prod, index)) ->
                 case findAssociated(prodToName(prod),
-                                    top.currentState.knownProductions) of
+                                    top.silverContext.knownProductions) of
                 | just(val) -> val.resultType
                 | nothing() -> error("Production " ++ prod ++ " must exist")
                 end
              end
-        else case wpdNtHyp of
-             | just((_, termMetaterm(applicationTerm(nameTerm(rel, _), _), _))) ->
+        else case decorate wpdNtHyp.fromJust.2 with
+                  {silverContext = top.silverContext;} of
+             | termMetaterm(applicationTerm(nameTerm(rel, _), _), _) ->
                wpdNt_type(rel)
-             | just((_, tm)) -> error("Should not get here (caseAttrAccess bad just)")
-             | nothing() -> error("Should not get here (caseAttrAccess nothing)")
+             | _ -> error("Should not get here (caseAttrAccess)")
              end;
   --We need this to check that the attribute occurs on the tree we said, not the associated tree
   local errCheckTy::Type =
         if isInherited
-        then case findParent of
-             | just((_, applicationTerm(nameTerm(prod, _), args))) ->
-               case decorate args with {findParentOf = tree;}.isArgHere of
+        then case decorate findParent.fromJust.2 with
+                  {silverContext = top.silverContext;} of
+             | applicationTerm(nameTerm(prod, _), args) ->
+               case decorate args with
+                    {findParentOf = tree;
+                     silverContext = top.silverContext;}.isArgHere of
                | nothing() -> error("Must exist because of where this came from")
                | just(ind) ->
                  case findAssociated(prodToName(prod),
-                                     top.currentState.knownProductions) of
+                                     top.silverContext.knownProductions) of
                  | nothing() -> error("Production must exist 1 (" ++ prod ++ ")")
                  | just(prodTy) -> elemAtIndex(prodTy.argumentTypes, ind)
                  end
                end
-             | just((_, prodTerm(prod, args))) ->
-               case decorate args with {findParentOf = tree;}.isArgHere of
+             | prodTerm(prod, args) ->
+               case decorate args with
+                    {findParentOf = tree;
+                     silverContext = top.silverContext;}.isArgHere of
                | nothing() -> error("Must exist because of where this came from")
                | just(ind) ->
                  case findAssociated(prod,
-                                     top.currentState.knownProductions) of
+                                     top.silverContext.knownProductions) of
                  | nothing() ->
                    error("Production must exist 2 (" ++ prod ++ ")")
                  | just(prodTy) -> elemAtIndex(prodTy.argumentTypes, ind)
@@ -629,12 +692,15 @@ top::ProofCommand ::= h::HHint tree::String attr::String
        --Need to solve previous goal by case analysis if structure hyp is backward
       ( case findAssociated(structure.fromJust.fst, top.translatedState.hypList) of
         | nothing() -> error("This hypothesis must exist")
-        | just(eqMetaterm(nameTerm(str, _), _)) -> []
-        | just(eqMetaterm(_, nameTerm(str, _))) ->
-          [ backchainTactic(nothing(),
-               clearable(false, typeToStructureEq_Symm(treeTy), []), []) ]
-        | just(_) ->
-          error("This hypothesis must be \"<tree> = structure\" or \"structure = <tree>\"")
+        | just(mtm) ->
+          case decorate mtm with {silverContext = top.silverContext;} of
+          | eqMetaterm(nameTerm(str, _), _) -> []
+          | eqMetaterm(_, nameTerm(str, _)) ->
+            [ backchainTactic(nothing(),
+                 clearable(false, typeToStructureEq_Symm(treeTy), []), []) ]
+          | _ ->
+            error("This hypothesis must be \"<tree> = structure\" or \"structure = <tree>\"")
+          end
         end
       ) ++
       [
@@ -671,7 +737,8 @@ top::ProofCommand ::=
       then [errorMsg("Identifiers cannot start with \"$\"")]
       else [];
   top.errors <-
-      if contains(tree, top.currentState.state.gatheredTrees)
+      if contains(tree, decorate top.currentState.state with
+                        {silverContext = top.silverContext;}.gatheredTrees)
       then []
       else [errorMsg("Unknown tree " ++ tree)];
   top.errors <-
@@ -679,55 +746,70 @@ top::ProofCommand ::=
       then [errorMsg("Unknown hypothesis " ++ hyp)]
       else case hypBody of
            | nothing() -> [errorMsg("Unknown hypothesis " ++ hyp)]
-           | just(mt) when mt.shouldHide ->
-             [errorMsg("Unknown hypothesis " ++ hyp)]
-           | just(eqMetaterm(nameTerm(tr1, _), nameTerm(tr2, _)))
-             when tr1 == tree || tr2 == tree -> []
-           | just(eqMetaterm(_, _)) ->
-             [errorMsg("Hypothesis " ++ hyp ++ " is not an equality of " ++
-                       tree ++ " and another tree")]
-           | just(_) ->
-             [errorMsg("Hypothesis " ++ hyp ++ " is not an equality")]
+           | just(mt) ->
+             case decorate mt with
+                  {silverContext = top.silverContext;} of
+             | mt when mt.shouldHide ->
+               [errorMsg("Unknown hypothesis " ++ hyp)]
+             | eqMetaterm(nameTerm(tr1, _), nameTerm(tr2, _))
+               when tr1 == tree || tr2 == tree -> []
+             | eqMetaterm(_, _) ->
+               [errorMsg("Hypothesis " ++ hyp ++ " is not an equality of " ++
+                         tree ++ " and another tree")]
+             | _ ->
+               [errorMsg("Hypothesis " ++ hyp ++ " is not an equality")]
+             end
            end;
   local hypOkay::Boolean = --Don't check more unless this is true
         !startsWith("$", hyp) && hyp != "_" &&
-        case hypBody of
-        | just(eqMetaterm(nameTerm(tr1, _), nameTerm(tr2, _))) ->
-          tr1 == tree || tr2 == tree
-        | _ -> false
-        end;
+        if hypBody.isJust
+        then case decorate hypBody.fromJust with
+                  {silverContext = top.silverContext;} of
+             | eqMetaterm(nameTerm(tr1, _), nameTerm(tr2, _)) ->
+               tr1 == tree || tr2 == tree
+             | _ -> false
+             end
+        else false;
   top.errors <-
       if startsWith("$", otherTreeHyp)
       then [errorMsg("Unknown hypothesis " ++ otherTreeHyp)]
       else case otherTreeHypBody of
            | nothing() -> [errorMsg("Unknown hypothesis " ++ otherTreeHyp)]
-           | just(mt) when mt.shouldHide ->
-             [errorMsg("Unknown hypothesis " ++ otherTreeHyp)]
-           | just(eqMetaterm(nameTerm(tr, _), trm))
-             when hypOkay && otherTree == tr && trm.isProdStructure ->
-             []
-           | just(eqMetaterm(trm, nameTerm(tr, _)))
-             when hypOkay && otherTree == tr && trm.isProdStructure ->
-             []
-           | just(eqMetaterm(nameTerm(tr, _), trm))
-             when hypOkay && otherTree == tr ->
-             [errorMsg(otherTreeHyp ++ " does not equate " ++ otherTree ++ " to a structure")]
-           | just(eqMetaterm(trm, nameTerm(tr, _)))
-             when hypOkay && otherTree == tr ->
-             [errorMsg(otherTreeHyp ++ " does not equate " ++ otherTree ++ " to a structure")]
-           | just(eqMetaterm(_, _)) when hypOkay ->
-             [errorMsg("Hypothesis " ++ otherTreeHyp ++ " is not an equality of " ++
-                       tree ++ " another tree")]
-           | just(_) ->
-             [errorMsg("Hypothesis " ++ otherTreeHyp ++ " is not an equality")]
+           | just(mt) ->
+             case decorate mt with {silverContext = top.silverContext;} of
+             | mt when mt.shouldHide ->
+               [errorMsg("Unknown hypothesis " ++ otherTreeHyp)]
+             | eqMetaterm(nameTerm(tr, _), trm)
+               when hypOkay && otherTree == tr && trm.isProdStructure ->
+               []
+             | eqMetaterm(trm, nameTerm(tr, _))
+               when hypOkay && otherTree == tr && trm.isProdStructure ->
+               []
+             | eqMetaterm(nameTerm(tr, _), trm)
+               when hypOkay && otherTree == tr ->
+               [errorMsg(otherTreeHyp ++ " does not equate " ++ otherTree ++ " to a structure")]
+             | eqMetaterm(trm, nameTerm(tr, _))
+               when hypOkay && otherTree == tr ->
+               [errorMsg(otherTreeHyp ++ " does not equate " ++ otherTree ++ " to a structure")]
+             | eqMetaterm(_, _) when hypOkay ->
+               [errorMsg("Hypothesis " ++ otherTreeHyp ++ " is not an equality of " ++
+                         tree ++ " another tree")]
+             | _ ->
+               [errorMsg("Hypothesis " ++ otherTreeHyp ++ " is not an equality")]
+             end
            end;
   local hypsOkay::Boolean = --Don't check more unless this is true
         hypOkay && !startsWith("$", otherTreeHyp) && otherTreeHyp != "_" &&
-        case otherTreeHypBody of
-        | just(eqMetaterm(nameTerm(tr, _), trm)) when tree == tr -> trm.isProdStructure
-        | just(eqMetaterm(trm, nameTerm(tr, _))) when tree == tr -> trm.isProdStructure
-        | _ -> false
-        end;
+        if otherTreeHypBody.isJust
+        then case decorate otherTreeHypBody.fromJust with
+                  {silverContext = top.silverContext;} of
+             | eqMetaterm(nameTerm(tr, _), trm) when tree == tr ->
+               trm.isProdStructure
+             | eqMetaterm(trm, nameTerm(tr, _)) when tree == tr ->
+               trm.isProdStructure
+             | _ -> false
+             end
+        else false;
   top.errors <-
       if hypsOkay
       then case prodTy of
@@ -742,8 +824,9 @@ top::ProofCommand ::=
   local hypBody::Maybe<Metaterm> =
         findAssociated(hyp, top.translatedState.hypList);
   local otherTree::String =
-        case hypBody of
-        | just(eqMetaterm(nameTerm(tr1, _), nameTerm(tr2, _))) ->
+        case decorate hypBody.fromJust with
+             {silverContext = top.silverContext;} of
+        | eqMetaterm(nameTerm(tr1, _), nameTerm(tr2, _)) ->
           if tr1 == tree
           then tr2
           else tr1
@@ -752,30 +835,32 @@ top::ProofCommand ::=
   local otherTreeHypBody::Maybe<Metaterm> =
         findAssociated(otherTreeHyp, top.translatedState.hypList);
   local structure::Term =
-        case findAssociated(otherTreeHyp, top.currentState.state.hypList) of
-        | just(termMetaterm(
-                  applicationTerm(
-                     _,
-                     consTermList(
-                        nameTerm(tr, _),
-                        singleTermList(struct))),
-                  _))
+        case decorate findAssociated(otherTreeHyp,
+                         top.currentState.state.hypList).fromJust with
+             {silverContext = top.silverContext;} of
+        | termMetaterm(
+             applicationTerm(
+                _,
+                consTermList(
+                   nameTerm(tr, _),
+                   singleTermList(struct))),
+             _)
           when tr == otherTree ->
           struct
-        | just(termMetaterm(
-                  applicationTerm(
-                     _,
-                     consTermList(
-                        struct,
-                        singleTermList(nameTerm(tr, _)))),
-                  _))
+        | termMetaterm(
+             applicationTerm(
+                _,
+                consTermList(
+                   struct,
+                   singleTermList(nameTerm(tr, _)))),
+             _)
           when tr == otherTree ->
           struct
-        | just(other) -> error("This must be eqMetaterm because of how it was found (just(" ++ other.pp ++ "))")
-        | nothing() -> error("This must be eqMetaterm because of how it was found (nothing)")
+        | other -> error("This must be eqMetaterm because of how it was found (just(" ++ other.pp ++ "))")
         end;
+  structure.silverContext = top.silverContext;
   local wpdTreeHyp::Maybe<(String, Metaterm)> =
-        find_WPD_nt_hyp(tree, top.translatedState.hypList);
+        find_WPD_nt_hyp(tree, top.translatedState.hypList, top.silverContext);
   local originalWpdTreeHyp::Maybe<Metaterm> =
         case wpdTreeHyp of
         | just((h, _)) ->
@@ -790,7 +875,7 @@ top::ProofCommand ::=
         | _ -> error("This must be one of these because of error checking")
         end;
   local prodTy::Maybe<Type> =
-        findAssociated(prodToName(prod), top.currentState.knownProductions);
+        findAssociated(prodToName(prod), top.silverContext.knownProductions);
   local prodChildren::[Term] =
         case structure of
         | applicationTerm(_, args) -> args.argList
@@ -815,7 +900,8 @@ top::ProofCommand ::=
       --(New child, new child name, original child, type of child)
   local newChildren::[(Term, String, Term, Type)] =
         buildNewChildren(prodChildren, prodTy.fromJust.argumentTypes,
-                         top.translatedState.usedNames);
+                         decorate top.translatedState with
+                         {silverContext = top.silverContext;}.usedNames);
   --Generate commands to get the correct structures
   local eqName::String = "$Eq_" ++ newIndex;
   local tempName::String = "$Temp_" ++ newIndex;
@@ -864,8 +950,9 @@ top::ProofCommand ::=
                                 prodTy.fromJust.resultType), []),
             [hypApplyArg(otherTreeHyp, [])], [])
         ] ++
-        ( case hypBody of
-          | just(eqMetaterm(nameTerm(tr1, _), nameTerm(tr2, _))) ->
+        ( case decorate hypBody.fromJust with
+               {silverContext = top.silverContext;} of
+          | eqMetaterm(nameTerm(tr1, _), nameTerm(tr2, _)) ->
             if tr1 == tree
             then [
                   assertTactic(
@@ -933,16 +1020,17 @@ top::ProofCommand ::=
           let innerBody::Metaterm =
              eqMetaterm(
                 --find the child list for the tree
-                case originalWpdTreeHyp of
-                | just(termMetaterm(
-                          applicationTerm(
-                             wpdNT,
-                             consTermList(tree,
-                                singleTermList(
-                                   applicationTerm(ntrConstructor,
-                                      consTermList(node,
-                                      singleTermList(childList)))))),
-                          _)) ->
+                case decorate originalWpdTreeHyp.fromJust with
+                     {silverContext = top.silverContext;} of
+                | termMetaterm(
+                     applicationTerm(
+                        wpdNT,
+                        consTermList(tree,
+                           singleTermList(
+                              applicationTerm(ntrConstructor,
+                                 consTermList(node,
+                                 singleTermList(childList)))))),
+                     _) ->
                   childList
                 | _ -> error("Must have above form")
                 end,
@@ -1046,33 +1134,39 @@ top::ProofCommand ::= h::HHint hyp1::String hyp2::String
       else [];
   --
   local hyp1Good::Boolean =
-        case hyp1Find of
-        | just(termMetaterm(
+        if hyp1Find.isJust
+        then case decorate hyp1Find.fromJust with
+                  {silverContext = top.silverContext;} of
+             | termMetaterm(
                   applicationTerm(_,
                      consTermList(nameTerm(treeName, _),
-                     singleTermList(treeStructure))), _))
-          when treeStructure.isProdStructure -> true
-        | just(termMetaterm(
+                     singleTermList(treeStructure))), _)
+               when treeStructure.isProdStructure -> true
+             | termMetaterm(
                   applicationTerm(_,
                      consTermList(treeStructure,
-                     singleTermList(nameTerm(treeName, _)))), _))
-          when treeStructure.isProdStructure -> true
-        | _ -> false
-        end;
+                     singleTermList(nameTerm(treeName, _)))), _)
+               when treeStructure.isProdStructure -> true
+             | _ -> false
+             end
+        else false;
   local hyp2Good::Boolean =
-        case hyp2Find of
-        | just(termMetaterm(
+        if hyp2Find.isJust
+        then case decorate hyp2Find.fromJust with
+                  {silverContext = top.silverContext;} of
+             | termMetaterm(
                   applicationTerm(_,
                      consTermList(nameTerm(treeName, _),
-                     singleTermList(treeStructure))), _))
-          when treeStructure.isProdStructure -> true
-        | just(termMetaterm(
+                     singleTermList(treeStructure))), _)
+               when treeStructure.isProdStructure -> true
+             | termMetaterm(
                   applicationTerm(_,
                      consTermList(treeStructure,
-                     singleTermList(nameTerm(treeName, _)))), _))
-          when treeStructure.isProdStructure -> true
-        | _ -> false
-        end;
+                     singleTermList(nameTerm(treeName, _)))), _)
+               when treeStructure.isProdStructure -> true
+             | _ -> false
+             end
+        else false;
   
   --
   local hyp1Find::Maybe<Metaterm> =
@@ -1082,41 +1176,45 @@ top::ProofCommand ::= h::HHint hyp1::String hyp2::String
   --gather all at once since I'm doing tho same matching for all three
   --this is easier if I have to change the structure of the patterns
   local stuff1::(String, Term) =
-        case hyp1Find of
-        | just(termMetaterm(
-                  applicationTerm(_,
-                     consTermList(nameTerm(treeName, _),
-                     singleTermList(treeStructure))), _))
+        case decorate hyp1Find.fromJust with
+             {silverContext = top.silverContext;} of
+        | termMetaterm(
+             applicationTerm(_,
+                consTermList(nameTerm(treeName, _),
+                singleTermList(treeStructure))), _)
           when treeStructure.isProdStructure ->
           (treeName, new(treeStructure))
-        | just(termMetaterm(
-                  applicationTerm(_,
-                     consTermList(treeStructure,
-                     singleTermList(nameTerm(treeName, _)))), _))
+        | termMetaterm(
+             applicationTerm(_,
+                consTermList(treeStructure,
+                singleTermList(nameTerm(treeName, _)))), _)
           when treeStructure.isProdStructure ->
           (treeName, new(treeStructure))
         | _ -> error("Should not access this")
         end;
   local treeName1::String = stuff1.1;
   local treeStructure1::Term = stuff1.2;
+  treeStructure1.silverContext = top.silverContext;
   local stuff2::(String, Term) =
-        case hyp2Find of
-        | just(termMetaterm(
-                  applicationTerm(_,
-                     consTermList(nameTerm(treeName, _),
-                     singleTermList(treeStructure))), _))
+        case decorate hyp2Find.fromJust with
+             {silverContext = top.silverContext;} of
+        | termMetaterm(
+             applicationTerm(_,
+                consTermList(nameTerm(treeName, _),
+                singleTermList(treeStructure))), _)
           when treeStructure.isProdStructure ->
           (treeName, new(treeStructure))
-        | just(termMetaterm(
-                  applicationTerm(_,
-                     consTermList(treeStructure,
-                     singleTermList(nameTerm(treeName, _)))), _))
+        | termMetaterm(
+             applicationTerm(_,
+                consTermList(treeStructure,
+                singleTermList(nameTerm(treeName, _)))), _)
           when treeStructure.isProdStructure ->
           (treeName, new(treeStructure))
         | _ -> error("Should not access this")
         end;
   local treeName2::String = stuff2.1;
   local treeStructure2::Term = stuff2.2;
+  treeStructure2.silverContext = top.silverContext;
   local prod::String =
         case treeStructure1 of
         | applicationTerm(nameTerm(prod, _), _) -> prod
@@ -1125,7 +1223,7 @@ top::ProofCommand ::= h::HHint hyp1::String hyp2::String
         end;
   local treeTy::Type =
         case findAssociated(prodToName(prod),
-                            top.currentState.knownProductions) of
+                            top.silverContext.knownProductions) of
         | nothing() -> error("Impossible (treeTy)")
         | just(ty) -> ty.resultType
         end;
@@ -1137,13 +1235,13 @@ top::ProofCommand ::= h::HHint hyp1::String hyp2::String
         end;
   local treeTy2::Type =
         case findAssociated(prodToName(prod2),
-                            top.currentState.knownProductions) of
+                            top.silverContext.knownProductions) of
         | nothing() -> error("Impossible (treeTy)")
         | just(ty) -> ty.resultType
         end;
   local component::String =
         findProdComponent(prodToName(prod),
-                          top.currentState.knownWPDRelations);
+                          top.silverContext.knownWPDRelations);
   --
   local assertName::String = "$Assert_" ++ toString(genInt());
   local structEqName::String = typeToStructureEqName(treeTy);
@@ -1202,16 +1300,18 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> m::Metaterm
      end;
   top.pp = h.pp ++ "assert " ++ depthString ++ m.pp ++ ".  ";
 
-  m.attrOccurrences = top.currentState.knownAttrOccurrences;
+  m.attrOccurrences = top.silverContext.knownAttrOccurrences;
 
+  local decState::ProofState = top.currentState.state;
+  decState.silverContext = top.silverContext;
   m.boundVars = [];
   m.finalTys =
     [map(\ p::(String, Type) -> (p.1, just(p.2)),
-         top.currentState.state.treeTys)];
-  m.knownNames = top.currentState.state.usedNames;
-  m.knownTrees = m.gatheredTrees ++ top.currentState.state.gatheredTrees;
+         decState.treeTys)];
+  m.knownNames = decState.usedNames;
+  m.knownTrees = m.gatheredTrees ++ decState.gatheredTrees;
   m.knownDecoratedTrees =
-    m.gatheredDecoratedTrees ++ top.currentState.state.gatheredDecoratedTrees;
+    m.gatheredDecoratedTrees ++ decState.gatheredDecoratedTrees;
   m.knownTyParams = [];
   top.translation = --error("Translation not done in assertTactic yet");
       [assertTactic(h, depth, m.translation)];
@@ -1239,11 +1339,13 @@ top::ProofCommand ::= ew::[EWitness]
           map(\ e::EWitness ->
                 decorate e with
                 {knownTrees = top.currentState.state.gatheredTrees;
+                 silverContext = top.silverContext;
                 }.translation, ew))];
 
   top.errors <-
       foldr(\ e::EWitness rest::[Error] ->
-              e.errors ++ rest,
+              decorate e with
+              {silverContext = top.silverContext;}.errors ++ rest,
             [], ew);
 
   --no real change to proof state
@@ -1269,11 +1371,13 @@ top::ProofCommand ::= ew::[EWitness]
           map(\ e::EWitness ->
                 decorate e with
                 {knownTrees = top.currentState.state.gatheredTrees;
+                 silverContext = top.silverContext;
                 }.translation, ew))];
 
   top.errors <-
       foldr(\ e::EWitness rest::[Error] ->
-              e.errors ++ rest,
+              decorate e with
+              {silverContext = top.silverContext;}.errors ++ rest,
             [], ew);
 
   --no real change to proof state
@@ -1442,7 +1546,8 @@ top::ProofCommand ::= removes::[String] hasArrow::Boolean
   top.errors <-
       foldr(\ n::String rest::[Error] ->
               case findAssociated(n, top.currentState.state.hypList) of
-              | just(mt) when !mt.shouldHide -> rest
+              | just(mt) when !decorate mt with
+                               {silverContext = top.silverContext;}.shouldHide -> rest
               | _ -> errorMsg("Unknown hypothesis " ++ n)::rest
               end,
             [], removes);
@@ -1647,7 +1752,7 @@ top::ApplyArg ::= name::String instantiation::[Type]
 
 nonterminal EWitness with
    pp,
-   translation<EWitness>, knownTrees, errors;
+   translation<EWitness>, silverContext, knownTrees, errors;
 
 abstract production termEWitness
 top::EWitness ::= t::Term
