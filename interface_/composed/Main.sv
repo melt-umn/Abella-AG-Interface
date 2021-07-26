@@ -86,30 +86,15 @@ IOVal<Integer> ::= ioin::IO filename::String
   local processed::IOVal<Either<String (ListOfCommands, [DefElement],
                                         [ParsedElement])>> =
         processGrammarDecl(fileAST.1, fileContents.io);
-  local commands::ListOfCommands = processed.iovalue.fromRight.1;
   --
   local started::IOVal<Either<String ProcessHandle>> =
         startAbella(processed.io);
   --
-  local sendToAbella::String =
-        commands.pp ++
-        implode("", map((.pp), processed.iovalue.fromRight.2));
-  local numCommands::Integer =
-        processed.iovalue.fromRight.1.numCommandsSent +
-        length(processed.iovalue.fromRight.2);
-  local sent::IO =
-        sendToProcess(started.iovalue.fromRight, sendToAbella,
-                      started.io);
-  local back::IOVal<String> =
-        if numCommands > 0
-        then read_abella_outputs(numCommands,
-                started.iovalue.fromRight, sent)
-        else ioval(sent, "");
-  local parsedOutput::ParseResult<FullDisplay_c> =
-        from_parse(back.iovalue, "<<output>>");
-  --
-  local ourSilverContext::SilverContext =
-        buildSilverContext(fileAST.1, commands);
+  local ourSilverContext::IOVal<Decorated SilverContext> =
+        set_up_abella_silver(
+           fileAST.1, processed.iovalue.fromRight.1,
+           processed.iovalue.fromRight.2, started.iovalue.fromRight,
+           started.io);
 
   return
      if !fileExists.iovalue
@@ -124,11 +109,11 @@ IOVal<Integer> ::= ioin::IO filename::String
      else if !started.iovalue.isRight
      then ioval(print("Error:  " ++ started.iovalue.fromLeft ++
                       "\n", started.io), 1)
-     else if numCommands > 0 && !parsedOutput.parseSuccess
-     then error("Could not parse Abella output:\n\n" ++ back.iovalue)
-     else run_step_file(fileAST.2.commandList, ourSilverContext,
+     else run_step_file(fileAST.2.commandList,
+                        ourSilverContext.iovalue,
                         [(-1, defaultProverState())],
-                        started.iovalue.fromRight, started.io);
+                        started.iovalue.fromRight,
+                        ourSilverContext.io);
 }
 
 
@@ -268,17 +253,29 @@ function run_interactive
 IOVal<Integer> ::= ioin::IO
 {
   local grammarName::IOVal<String> = get_grammar_interactive(ioin);
+  local processed::IOVal<Either<String (ListOfCommands, [DefElement],
+                                        [ParsedElement])>> =
+        processGrammarDecl(grammarName.iovalue, grammarName.io);
+  --
   local started::IOVal<Either<String ProcessHandle>> =
         startAbella(grammarName.io);
+  --
+  local build_context::IOVal<Decorated SilverContext> =
+        set_up_abella_silver(grammarName.iovalue,
+           processed.iovalue.fromRight.1,
+           processed.iovalue.fromRight.2,
+           started.iovalue.fromRight.1, started.io);
 
   return
-     case started.iovalue of
-     | left(msg) ->
-       ioval(print("Error:  " ++ msg ++ "\n", started.io), 1)
-     | right(abella) ->
-       run_step_interactive([(-1, defaultProverState())],
-                            abella, started.io)
-     end;
+     if !processed.iovalue.isRight
+     then ioval(print("Error:  " ++ processed.iovalue.fromLeft ++
+                      "\n", processed.io), 1)
+     else if !started.iovalue.isRight
+     then ioval(print("Error:  " ++ started.iovalue.fromLeft ++
+                      "\n", started.io), 1)
+     else run_step_interactive([(-1, defaultProverState())],
+             build_context.iovalue, started.iovalue.fromRight,
+             build_context.io);
 }
 
 
@@ -295,8 +292,8 @@ IOVal<String> ::= ioin::IO
      if result.parseSuccess
      then ioval(raw_input.io, result.parseTree.ast)
      else get_grammar_interactive(
-             print("Error:  First entry must be a grammar\n" ++ result.parseErrors ++ "\n\n",
-                   raw_input.io));
+             print("Error:  First entry must be a grammar\n" ++
+                   result.parseErrors ++ "\n\n", raw_input.io));
 }
 
 
@@ -312,10 +309,9 @@ IOVal<String> ::= ioin::IO
 function run_step_interactive
 IOVal<Integer> ::=
    stateList::[(Integer, ProverState)]
+   silverContext::Decorated SilverContext
    abella::ProcessHandle ioin::IO
 {
-  local silverContext::SilverContext =
-        emptySilverContext(); --error("The silverContext should be an argument to run_step_interactive");
   local currentProverState::ProverState = head(stateList).snd;
   local state::ProofState = currentProverState.state;
   state.silverContext = silverContext;
@@ -462,7 +458,8 @@ IOVal<Integer> ::=
     RUN REPL AGAIN
   -}
   local again::IOVal<Integer> =
-        run_step_interactive(newStateList, abella, printed_output);
+        run_step_interactive(newStateList, silverContext, abella,
+                             printed_output);
 
 
   return if any_a.isQuit
@@ -725,7 +722,7 @@ function removeInitialSpaces
 {--------------------------------------------------------------------
                      PROCESS GRAMMAR DECLARATION                     
  --------------------------------------------------------------------}
---Read the interface file for a grammar and import all the imported
+--Read the interface file for a grammar and all the imported
 --   specifications
 function processGrammarDecl
 IOVal<Either<String
@@ -811,5 +808,36 @@ IOVal<Either<String ListOfCommands>> ::=
                                    parsed_file.parseTree.ast, cmds)))
                      end
      end;
+}
+
+
+--Send the commands from importing grammar specifications and build
+--   the Silver context from the same
+function set_up_abella_silver
+IOVal<Decorated SilverContext> ::=
+     currentGrammar::String comms::ListOfCommands defs::[DefElement]
+     abella::ProcessHandle ioin::IO
+{
+  local sendToAbella::String =
+        comms.pp ++ implode("", map((.pp), defs));
+  local numComms::Integer =
+        comms.numCommandsSent + length(defs);
+  local sent::IO = sendToProcess(abella, sendToAbella, ioin);
+  local back::IOVal<String> =
+        if numComms > 0
+        then read_abella_outputs(numComms, abella, sent)
+        else ioval(sent, "");
+  local parsedOutput::ParseResult<FullDisplay_c> =
+        from_parse(back.iovalue, "<<output>>");
+  --
+  local newSilverContext::SilverContext =
+        buildSilverContext(currentGrammar, comms);
+
+  return
+     if numComms > 0 && !parsedOutput.parseSuccess
+     then error("Could not parse Abella output:\n\n" ++ back.iovalue)
+     else if parsedOutput.parseTree.ast.isError
+     then error("Error passing grammar specifications to Abella")
+     else ioval(back.io, newSilverContext);
 }
 
