@@ -56,8 +56,6 @@ parser import_parse::ListOfCommands_c
 function main
 IOVal<Integer> ::= largs::[String] ioin::IO
 {
-  local filename::String = head(largs);
-  --
   return
      case largs of
      | [] -> run_interactive(ioin)
@@ -103,8 +101,10 @@ IOVal<Integer> ::= ioin::IO filename::String
         sendToProcess(started.iovalue.fromRight, sendToAbella,
                       started.io);
   local back::IOVal<String> =
-        read_abella_outputs(numCommands, started.iovalue.fromRight,
-                            sent);
+        if numCommands > 0
+        then read_abella_outputs(numCommands,
+                started.iovalue.fromRight, sent)
+        else ioval(sent, "");
   local parsedOutput::ParseResult<FullDisplay_c> =
         from_parse(back.iovalue, "<<output>>");
   --
@@ -124,7 +124,7 @@ IOVal<Integer> ::= ioin::IO filename::String
      else if !started.iovalue.isRight
      then ioval(print("Error:  " ++ started.iovalue.fromLeft ++
                       "\n", started.io), 1)
-     else if !parsedOutput.parseSuccess
+     else if numCommands > 0 && !parsedOutput.parseSuccess
      then error("Could not parse Abella output:\n\n" ++ back.iovalue)
      else run_step_file(fileAST.2.commandList, ourSilverContext,
                         [(-1, defaultProverState())],
@@ -267,8 +267,9 @@ IOVal<Integer> ::=
 function run_interactive
 IOVal<Integer> ::= ioin::IO
 {
+  local grammarName::IOVal<String> = get_grammar_interactive(ioin);
   local started::IOVal<Either<String ProcessHandle>> =
-        startAbella(ioin);
+        startAbella(grammarName.io);
 
   return
      case started.iovalue of
@@ -278,6 +279,24 @@ IOVal<Integer> ::= ioin::IO
        run_step_interactive([(-1, defaultProverState())],
                             abella, started.io)
      end;
+}
+
+
+function get_grammar_interactive
+IOVal<String> ::= ioin::IO
+{
+  local printed_prompt::IO = print(" < ", ioin);
+  local raw_input::IOVal<String> = read_full_input(printed_prompt);
+  local input::String = stripExternalWhiteSpace(raw_input.iovalue);
+  --
+  local result::ParseResult<GrammarDecl_c> =
+        grammar_decl_parse(input, "<<input>>");
+  return
+     if result.parseSuccess
+     then ioval(raw_input.io, result.parseTree.ast)
+     else get_grammar_interactive(
+             print("Error:  First entry must be a grammar\n" ++ result.parseErrors ++ "\n\n",
+                   raw_input.io));
 }
 
 
@@ -295,7 +314,8 @@ IOVal<Integer> ::=
    stateList::[(Integer, ProverState)]
    abella::ProcessHandle ioin::IO
 {
-  local silverContext::SilverContext = error("The silverContext should be an argument to run_step_interactive");
+  local silverContext::SilverContext =
+        emptySilverContext(); --error("The silverContext should be an argument to run_step_interactive");
   local currentProverState::ProverState = head(stateList).snd;
   local state::ProofState = currentProverState.state;
   state.silverContext = silverContext;
@@ -318,7 +338,7 @@ IOVal<Integer> ::=
         if result.parseSuccess
         then result.parseTree.ast
         else anyParseFailure(result.parseErrors);
-  any_a.silverContext = error("No silverContext in interactive running yet");
+  any_a.silverContext = silverContext;
   any_a.currentState = currentProverState;
   any_a.translatedState = state.translation;
   any_a.inProof = state.inProof;
@@ -654,7 +674,7 @@ IOVal<String> ::= n::Integer abella::ProcessHandle ioin::IO
   local read::IOVal<String> = readUntilFromProcess(abella, "< ", ioin);
   return
      case n of
-     | x when x <= 0 -> error("Should not call read_n_abella_outputs with n <= 0")
+     | x when x <= 0 -> error("Should not call read_n_abella_outputs with n <= 0 (n = " ++ toString(x) ++ ")")
      | 1 -> ioval(read.io, removeLastWord(read.iovalue))
      | x -> read_abella_outputs(x - 1, abella, read.io)
      end;
@@ -727,7 +747,8 @@ IOVal<Either<String
         parsed_interface.parseTree.ast;
 
   local modules_read::IOVal<Either<String ListOfCommands>> =
-        readImports(interface_info.2, silver_gen.iovalue,
+        readImports(interface_info.2 ++ [grammarName],
+                    silver_gen.iovalue,
                     interface_file_contents.io);
 
   return
@@ -741,7 +762,8 @@ IOVal<Either<String
      else if !parsed_interface.parseSuccess
      then ioval(interface_file_contents.io,
                 left("Could not parse interface file for grammar " ++
-                     grammarName))
+                     grammarName ++ ":\n" ++
+                     parsed_interface.parseErrors ++ "\n"))
      else case modules_read.iovalue of
           | left(msg) -> ioval(modules_read.io, left(msg))
           | right(lst) ->
@@ -778,7 +800,9 @@ IOVal<Either<String ListOfCommands>> ::=
                 else if !parsed_file.parseSuccess
                 then ioval(file_contents.io,
                            left("Could not parse definition file " ++
-                                "for grammar " ++ this_grammar))
+                                "for grammar " ++ this_grammar ++
+                                ":\n" ++ parsed_file.parseErrors ++
+                                "\n"))
                 else case subcall.iovalue of
                      | left(msg) -> ioval(subcall.io, left(msg))
                      | right(cmds) ->

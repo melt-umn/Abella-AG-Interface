@@ -2,6 +2,7 @@ grammar interface_:common:abstractSyntax;
 
 
 nonterminal SilverContext with
+   pp,
    currentGrammar,
    knownAttrs, knownAttrOccurrences, knownProductions,
    knownWPDRelations, knownInheritedAttrs, knownLocalAttrs,
@@ -40,6 +41,14 @@ top::SilverContext ::=
    inheritedAttrs::[String]
    localAttrs::[(String, [(String, Type)])]
 {
+  --for debugging purposes only
+  top.pp =
+      "Current Grammar:  " ++ currentGrammar ++ "\n" ++
+      "Attrs:  [" ++ implode(", ", attrs) ++ "]\n" ++
+      "Occurrences:  [" ++ implode(";  ", map(\ p::(String, [(Type, Type)]) -> "{ " ++ p.1 ++ ", [" ++ implode("; ", map(\ p::(Type, Type) -> "<" ++ p.1.pp ++ ", " ++ p.2.pp ++ ">", p.2)) ++ "] }", attrOccurrences)) ++ "]\n" ++
+      "Prods:  [" ++ implode(";  ", map(\ p::(String, Type) -> "(" ++ p.1 ++ ", " ++ p.2.pp ++ ")", prods)) ++ "]\n" ++
+      "Funs:  [" ++ implode(";  ", map(\ p::(String, Type) -> "(" ++ p.1 ++ ", " ++ p.2.pp ++ ")", funs)) ++ "]\n";
+
   top.currentGrammar = currentGrammar;
   top.knownAttrs = attrs;
   top.knownAttrOccurrences = attrOccurrences;

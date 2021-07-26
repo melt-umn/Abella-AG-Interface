@@ -2,7 +2,9 @@ grammar interface_:fromAbella:concreteSyntax;
 
 
 
-closed nonterminal FullDisplay_c with ast<FullDisplay>;
+closed nonterminal FullDisplay_c
+   layout {Whitespace_t}
+   with ast<FullDisplay>;
 closed nonterminal TheoremList_c with ast<TheoremList>;
 
 concrete productions top::FullDisplay_c

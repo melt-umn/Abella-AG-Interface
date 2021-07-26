@@ -5,7 +5,9 @@ grammar interface_:toAbella:concreteSyntax;
 
 
 
-closed nonterminal GrammarDecl_c with ast<String>;
+closed nonterminal GrammarDecl_c
+   layout {Whitespace_t, BlockComment_t, OneLineComment_t}
+   with ast<String>;
 
 concrete productions top::GrammarDecl_c
 | 'Grammar' q::Qname_t '.'
@@ -16,8 +18,12 @@ concrete productions top::GrammarDecl_c
 
 
 
-closed nonterminal FullFile_c with ast<(String, ListOfCommands)>;
-closed nonterminal ListOfCommands_c with ast<ListOfCommands>;
+closed nonterminal FullFile_c
+   layout {Whitespace_t, BlockComment_t, OneLineComment_t}
+   with ast<(String, ListOfCommands)>;
+closed nonterminal ListOfCommands_c
+   layout {Whitespace_t, BlockComment_t, OneLineComment_t}
+   with ast<ListOfCommands>;
 
 concrete productions top::FullFile_c
 | g::GrammarDecl_c contents::ListOfCommands_c
@@ -36,7 +42,9 @@ concrete productions top::ListOfCommands_c
 closed nonterminal PureCommand_c with ast<ProofCommand>;
 closed nonterminal CommonCommand_c with ast<NoOpCommand>;
 closed nonterminal PureTopCommand_c with ast<AnyCommand>; --to handle common parsing errors gracefully
-closed nonterminal AnyCommand_c with ast<AnyCommand>;
+closed nonterminal AnyCommand_c
+   layout {Whitespace_t, BlockComment_t, OneLineComment_t}
+   with ast<AnyCommand>;
 closed nonterminal TheoremStmts_c with ast<Either<String [(String, Metaterm, String)]>>;
 closed nonterminal QnameList_c with ast<[String]>;
 

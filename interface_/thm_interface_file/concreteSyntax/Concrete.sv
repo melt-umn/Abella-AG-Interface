@@ -2,7 +2,9 @@ grammar interface_:thm_interface_file:concreteSyntax;
 
 
 --(current grammar, imports, defined relations, theorems)
-closed nonterminal Interface_c with ast<(String, [String], [DefElement], [ParsedElement])>;
+closed nonterminal Interface_c
+   layout {Whitespace_t, BlockComment_t, OneLineComment_t}
+   with ast<(String, [String], [DefElement], [ParsedElement])>;
 
 
 concrete productions top::Interface_c
