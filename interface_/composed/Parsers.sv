@@ -25,7 +25,7 @@ parser grammar_decl_parse::GrammarDecl_c
 --Read a theorem interface file
 parser interface_parse::Interface_c
 {
-  interface_:thm_interface_file;
+  interface_:thmInterfaceFile;
   interface_:common:concreteSyntax;
 }
 

@@ -26,6 +26,11 @@ and translation of Abella's output in a REPL for an interactive
 theorem prover.
 
 
+## thmInterfaceFile
+This grammar reads theorem interface files, holding the theorems
+defined by grammars which the current grammar imports.
+
+
 ## docs
 This directory holds documentation about the interface.
 

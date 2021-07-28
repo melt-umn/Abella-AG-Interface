@@ -3,7 +3,7 @@ grammar interface_:composed;
 imports interface_:fromAbella;
 imports interface_:toAbella;
 imports interface_:common;
-imports interface_:thm_interface_file;
+imports interface_:thmInterfaceFile;
 
 imports silver:util:subprocess;
 
