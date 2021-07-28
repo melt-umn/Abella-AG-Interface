@@ -1,6 +1,6 @@
-grammar interface_:thm_interface_file;
+grammar interface_:thmInterfaceFile;
 
 
-exports interface_:thm_interface_file:concreteSyntax;
-exports interface_:thm_interface_file:abstractSyntax;
+exports interface_:thmInterfaceFile:concreteSyntax;
+exports interface_:thmInterfaceFile:abstractSyntax;
 

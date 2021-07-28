@@ -1,4 +1,4 @@
-grammar interface_:thm_interface_file:concreteSyntax;
+grammar interface_:thmInterfaceFile:concreteSyntax;
 
 
 --(current grammar, imports, defined relations, theorems)

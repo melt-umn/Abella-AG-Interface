@@ -231,6 +231,31 @@ top::Metaterm ::= tree::String attr::String
   top.gatheredTrees <- [tree];
 }
 
+{-
+  Thes represents equality of the underlying terms between two
+  decorated trees, or between a decorated tree and a tree structure.
+  We don't use "=" because a decorated tree is conceptually composed
+  of a structure and a node, and we only want to have the structures
+  be equal; the nodes can be different.
+-}
+abstract production treeEqMetaterm
+top::Metaterm ::= tree1::Term tree2::Term
+{
+  top.pp = tree1.pp ++ " ~ " ++ tree2.pp;
+  top.isAtomic = true;
+  top.shouldHide = false;
+
+  top.gatheredTrees <-
+      case tree1 of
+      | nameTerm(t1, _) -> [t1]
+      | _ -> []
+      end ++
+      case tree2 of
+      | nameTerm(t2, _) -> [t2]
+      | _ -> []
+      end;
+}
+
 
 
 --TERMS

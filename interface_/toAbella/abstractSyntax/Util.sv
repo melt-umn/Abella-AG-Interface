@@ -224,12 +224,12 @@ Maybe<(String, Term)> ::= treename::String hyps::[(String, Metaterm)]
      | [] -> nothing()
      | (hyp, mt)::tl ->
        case decorate mt with {silverContext = silverContext;} of
-       | eqMetaterm(nameTerm(str, _), structure)
+       | treeEqMetaterm(nameTerm(str, _), structure)
          when str == treename &&
               decorate structure with
               {silverContext = silverContext;}.isProdStructure ->
          just((hyp, new(structure)))
-       | eqMetaterm(structure, nameTerm(str, _))
+       | treeEqMetaterm(structure, nameTerm(str, _))
          when str == treename &&
               decorate structure with
               {silverContext = silverContext;}.isProdStructure ->
@@ -250,19 +250,19 @@ Maybe<(String, Term)> ::= treename::String hyps::[(String, Metaterm)]
      | [] -> nothing()
      | (hyp, mt)::tl ->
        case decorate mt with {silverContext = silverContext;} of
-       | eqMetaterm(nameTerm(prod, _), applicationTerm(f, args))
+       | treeEqMetaterm(nameTerm(prod, _), applicationTerm(f, args))
          when decorate args with {findParentOf = treename;
                                   silverContext = silverContext;}.isArgHere.isJust ->
          just((prod, applicationTerm(f, args)))
-       | eqMetaterm(applicationTerm(f, args), nameTerm(prod, _))
+       | treeEqMetaterm(applicationTerm(f, args), nameTerm(prod, _))
          when decorate args with {findParentOf = treename;
                                   silverContext = silverContext;}.isArgHere.isJust ->
          just((prod, applicationTerm(f, args)))
-       | eqMetaterm(nameTerm(tree, _), prodTerm(prodName, args))
+       | treeEqMetaterm(nameTerm(tree, _), prodTerm(prodName, args))
          when decorate args with {findParentOf = treename;
                                   silverContext = silverContext;}.isArgHere.isJust ->
          just((tree, prodTerm(prodName, args)))
-       | eqMetaterm(prodTerm(prodName, args), nameTerm(tree, _))
+       | treeEqMetaterm(prodTerm(prodName, args), nameTerm(tree, _))
          when decorate args with {findParentOf = treename;
                                   silverContext = silverContext;}.isArgHere.isJust ->
          just((tree, prodTerm(prodName, args)))

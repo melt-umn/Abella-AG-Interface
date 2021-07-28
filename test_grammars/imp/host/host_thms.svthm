@@ -21,7 +21,7 @@ induction on 1. intros. case H1.
 
 
 Extensible_Theorem value_unique_A : forall (T1 T2 : A) Env V,
-   T1 = T2 ->
+   T1 ~ T2 ->
    T1.env = Env -> T2.env = Env ->
    T1.value = V ->
    T2.value = V
@@ -48,7 +48,7 @@ on T1.
 
 
 Extensible_Theorem value_unique_B : forall (T1 T2 : B) Env V,
-   T1 = T2 ->
+   T1 ~ T2 ->
    T1.env = Env -> T2.env = Env ->
    T1.value = V ->
    T2.value = V
@@ -151,7 +151,7 @@ on T.
 
 
 Extensible_Theorem env_out__unique__C : forall (T1 T2 : C) Env V,
-   T1 = T2 ->
+   T1 ~ T2 ->
    T1.env = Env -> T2.env = Env ->
    T1.env_out = V ->
    T2.env_out = V

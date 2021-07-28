@@ -173,6 +173,19 @@ top::Metaterm ::= tree::String attr::String
 
 
 {-
+  TREE EQUALITY
+-}
+
+aspect production treeEqMetaterm
+top::Metaterm ::= tree1::Term tree2::Term
+{
+  top.translation = error("Should never be translating a treeEqMetaterm");
+}
+
+
+
+
+{-
   BOOLEAN CONSTANTS
 -}
 

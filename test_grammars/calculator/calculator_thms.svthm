@@ -86,25 +86,25 @@ Set subgoals off.
 Extensible_Theorem
   value_unique__no_env__no_value__Expr :
      forall T1 T2,
-       T1 = T2 ->
+       T1 ~ T2 ->
        T1.env = <no value> -> T2.env = <no value> ->
        T1.value = <no value> ->
        T2.value = <no value> on T1,
   value_unique__no_env__Expr :
      forall T1 T2 V,
-       T1 = T2 ->
+       T1 ~ T2 ->
        T1.env = <no value> -> T2.env = <no value> ->
        T1.value = V ->
        T2.value = V on T1,
   value_unique__no_value__Expr :
      forall T1 T2 Env,
-       T1 = T2 ->
+       T1 ~ T2 ->
        T1.env = Env -> T2.env = Env ->
        T1.value = <no value> ->
        T2.value = <no value> on T1,
   value_unique__Expr :
     forall T1 T2 Env V,
-       T1 = T2 ->
+       T1 ~ T2 ->
        T1.env = Env -> T2.env = Env ->
        T1.value = V ->
        T2.value = V on T1.
@@ -354,7 +354,7 @@ Extensible_Theorem
 
 Extensible_Theorem value_unique__Root :
   forall (R1 R2 : Root) V1 V2,
-    R1 = R2 ->
+    R1 ~ R2 ->
     R1.value = V1 -> R2.value = V2 ->
     V1 = V2
 on R1.
@@ -366,7 +366,7 @@ on R1.
 
 Extensible_Theorem value_unique__no_value__Root :
   forall (R1 R2 : Root),
-    R1 = R2 ->
+    R1 ~ R2 ->
     R1.value = <no value> ->
     R2.value = <no value>
 on R1.

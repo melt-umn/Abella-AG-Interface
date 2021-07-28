@@ -1,7 +1,7 @@
-grammar interface_:thm_interface_file:concreteSyntax;
+grammar interface_:thmInterfaceFile:concreteSyntax;
 
 
-imports interface_:thm_interface_file:abstractSyntax;
+imports interface_:thmInterfaceFile:abstractSyntax;
 imports interface_:common;
 
 

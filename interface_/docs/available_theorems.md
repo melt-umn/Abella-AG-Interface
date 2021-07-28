@@ -9,7 +9,8 @@ convenience, these are sorted by types.
 
 ## General
 - `symmetry` :  
-  `forall A B, A = B -> B = A`
+  `forall A B, A = B -> B = A` and  
+  `forall A B, A ~ B -> B ~ A`
 
 
 

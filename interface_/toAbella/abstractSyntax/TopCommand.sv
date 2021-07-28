@@ -45,7 +45,6 @@ top::TopCommand ::= depth::Integer thms::[(String, Metaterm, String)]
           end;
   top.pp = "Extensible_Theorem " ++ join(thms) ++ ".\n";
 
-
   top.errors <-
       foldr(\ p::(String, Metaterm, String) rest::[Error] ->
               if startsWith("$", p.1)
@@ -59,30 +58,9 @@ top::TopCommand ::= depth::Integer thms::[(String, Metaterm, String)]
               else rest,
             [], thms);
   top.errors <-
-      foldr(\ p::(String, Metaterm, String) rest::[Error] ->
-              case decorate p.2 with {
-                      findNameType = p.3;
-                      attrOccurrences =
-                         top.silverContext.knownAttrOccurrences;
-                      boundVars = [];
-                      knownTyParams = []; --we disallow parameterization currently
-                      silverContext = top.silverContext;
-                   }.foundNameType of
-              | left(msg) -> [errorMsg(msg)]
-              | right(ty) ->
-                if tyIsNonterminal(ty)
-                then
-                  case findWPDRelations(ty,
-                          top.silverContext.knownWPDRelations) of
-                  | h::t -> []
-                  | [] ->
-                    [errorMsg("Unknown nonterminal type " ++ ty.pp)]
-                  end
-                else [errorMsg("Cannot prove an extensible theorem based on " ++
-                               "variable " ++ p.3 ++ " of type " ++ ty.pp ++
-                               "; must be a tree")]
-              end,
-            [], thms);
+      gather_bodies_errors(
+         thms, top.silverContext.knownAttrOccurrences,
+         top.currentState, top.silverContext);
 
   local translated::[(String, Metaterm, String)] =
         translate_bodies(thms, top.silverContext.knownAttrOccurrences,
@@ -174,6 +152,48 @@ function translate_bodies
      | (name, _, tr)::tl -> 
        (name, body.translation, tr)::
        translate_bodies(tl, attrOccurs, currentState, silverContext)
+     end;
+}
+
+function gather_bodies_errors
+[Error] ::= thms::[(String, Metaterm, String)]
+            attrOccurs::[(String, [(Type, Type)])]
+            currentState::ProverState
+            silverContext::Decorated SilverContext
+{
+  local body::Metaterm = head(thms).2;
+  body.attrOccurrences = attrOccurs;
+  body.boundVars = [];
+  body.finalTys = [];
+  body.knownNames = [head(thms).3];
+  body.knownTrees = head(thms).3::body.gatheredTrees;
+  body.knownDecoratedTrees = body.gatheredDecoratedTrees;
+  body.knownTyParams = [];
+  body.silverContext = silverContext;
+  body.currentState = currentState;
+  body.findNameType = head(thms).3;
+  return
+     case thms of
+     | [] -> []
+     | (name, _, tr)::tl ->
+       ( if null(body.errors)
+         then case body.foundNameType of
+              | left(msg) -> [errorMsg(msg)]
+              | right(ty) ->
+                if tyIsNonterminal(ty)
+                then
+                  case findWPDRelations(ty,
+                          silverContext.knownWPDRelations) of
+                  | h::t -> []
+                  | [] ->
+                    [errorMsg("Unknown nonterminal type " ++ ty.pp)]
+                  end
+                else [errorMsg("Cannot prove an extensible theorem based on " ++
+                               "variable " ++ tr ++ " of type " ++ ty.pp ++
+                               "; must be a tree")]
+              end
+         else body.errors ) ++
+       gather_bodies_errors(tl, attrOccurs, currentState, silverContext)
      end;
 }
 
@@ -270,6 +290,8 @@ top::TopCommand ::= m::Metaterm
   m.boundVars = [];
   m.knownNames = [];
   m.knownTyParams = [];
+  m.finalTys = [];
+  m.knownTrees = m.gatheredTrees;
 
   top.translation = error("Translation not done in queryCommand yet");
 }
@@ -432,6 +454,8 @@ top::TopCommand ::= name::String params::[String] body::Metaterm prf::[ProofComm
   body.attrOccurrences = top.silverContext.knownAttrOccurrences;
   body.knownTyParams = params;
   body.boundVars = [];
+  body.finalTys = [];
+  body.knownTrees = body.gatheredTrees;
 
   top.newKnownTheorems =
       [(name, new(body))] ++ top.currentState.knownTheorems;

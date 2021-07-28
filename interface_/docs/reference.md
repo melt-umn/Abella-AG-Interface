@@ -25,6 +25,7 @@ as well as some others:
    | `true`               | logical truth                             |
    | `false`              | logical false                             |
    | `pred t1 t2 t3`      | meta-level predicate                      |
+   | `t1 ~ t2`            | structural equality of trees              |
    | `t1 = t2`            | equality of terms                         |
    | `t1 + t2 = t3`       | addition                                  |
    | `t1 - t2 = t3`       | subtraction                               |

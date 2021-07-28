@@ -190,7 +190,7 @@ top::Term ::= f::Term args::TermList
      --Structural Equality
      | nameTerm(str, _), consTermList(t1, singleTermList(t2))
        when isStructureEqName(str) ->
-       right(eqMetaterm(t1, t2))
+       right(treeEqMetaterm(t1, t2))
      --Function Application
      | nameTerm(str, _), args when isFun(str) ->
        right(funMetaterm(funToName(str),

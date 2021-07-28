@@ -96,6 +96,8 @@ concrete productions top::SubMetaterm_c
 --  { top.ast = falseMetaterm(); }
 | t1::Term_c '=' t2::Term_c
   { top.ast = disambiguateEqMetaterm(t1.ast, t2.ast); }
+| t1::Term_c '~' t2::Term_c
+  { top.ast = treeEqMetaterm(t1.ast, t2.ast); }
 | b::Binder_c bl::BindingList_c ',' m::Metaterm_c
   { top.ast = bindingMetaterm(b.ast, bl.ast, m.ast); }
 | m1::Metaterm_c '->' m2::Metaterm_c

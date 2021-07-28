@@ -1,4 +1,4 @@
-grammar interface_:thm_interface_file:abstractSyntax;
+grammar interface_:thmInterfaceFile:abstractSyntax;
 
 
 import interface_:common;

@@ -97,30 +97,33 @@ top::Metaterm ::=
 aspect production eqMetaterm
 top::Metaterm ::= t1::Term t2::Term
 {
-  top.translation =
-      case decorate t1.translation with {silverContext = top.silverContext;},
-           decorate t2.translation with {silverContext = top.silverContext;} of
-      | nameTerm(t1n, _), _ when contains(t1n, top.knownTrees) ->
-        case findAssociatedScopes(t1n, top.finalTys) of
-        | just(just(ty)) ->
-          termMetaterm(
-             buildApplication(nameTerm(typeToStructureEqName(ty), nothing()),
-                              [t1.translation, t2.translation]),
-             emptyRestriction())
-        | _ -> error("Could not find type for tree " ++ t1n)
-        end
-      | _, nameTerm(t2n, _) when contains(t2n, top.knownTrees) ->
-        case findAssociatedScopes(t2n, top.finalTys) of
-        | just(just(ty)) ->
-          termMetaterm(
-             buildApplication(nameTerm(typeToStructureEqName(ty), nothing()),
-                              [t1.translation, t2.translation]),
-             emptyRestriction())
-        | _ -> error("Could not find type for tree " ++ t2n)
-        end
-      | _, _ -> eqMetaterm(t1.translation, t2.translation)
-      end;
+  top.translation = eqMetaterm(t1.translation, t2.translation);
 
+  top.errors <-
+      if null(t1.errors) && null(t2.errors)
+      then case decorate t1.translation with {silverContext = top.silverContext;},
+                decorate t2.translation with {silverContext = top.silverContext;} of
+           --Named tree on one of the sides
+           | nameTerm(t1n, _), _ when contains(t1n, top.knownTrees) ->
+             [errorMsg("Cannot use normal equality for decorated trees")]
+           | _, nameTerm(t2n, _) when contains(t2n, top.knownTrees) ->
+             [errorMsg("Cannot use normal equality for decorated trees")]
+           --Production on (apparently both) sides
+           | nameTerm(prod, _), _
+             when findProd(prod, top.silverContext) matches just((fullName, ty)) ->
+             [errorMsg("Cannot use normal equality for trees")]
+           | _, nameTerm(prod, _)
+             when findProd(prod, top.silverContext) matches just((fullName, ty)) ->
+             [errorMsg("Cannot use normal equality for trees")]
+           | applicationTerm(nameTerm(prod, _), _), _
+             when findProd(prod, top.silverContext) matches just((fullName, ty)) ->
+             [errorMsg("Cannot use normal equality for trees")]
+           | _, applicationTerm(nameTerm(prod, _), _)
+             when findProd(prod, top.silverContext) matches just((fullName, ty)) ->
+             [errorMsg("Cannot use normal equality for trees")]
+           | _, _ -> []
+           end
+      else [];
 
   t1.boundVars = top.boundVars;
   t2.boundVars = t1.boundVarsOut;
@@ -474,6 +477,7 @@ top::Metaterm ::= tree::String attr::String val::Term
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 }
 
+
 aspect production localAttrAccessEmptyMetaterm
 top::Metaterm ::= tree::String attr::String
 {
@@ -482,6 +486,101 @@ top::Metaterm ::= tree::String attr::String
   top.removedWPD = top;
 
   top.boundVarsOut = top.boundVars;
+
+  top.foundNameType = left("Did not find name " ++ top.findNameType);
+}
+
+
+aspect production treeEqMetaterm
+top::Metaterm ::= tree1::Term tree2::Term
+{
+  top.translation =
+      case decorate tree1.translation with {silverContext = top.silverContext;},
+           decorate tree2.translation with {silverContext = top.silverContext;} of
+      --Named tree on one of the sides
+      | nameTerm(t1n, _), _ when contains(t1n, top.knownTrees) ->
+        case findAssociatedScopes(t1n, top.finalTys) of
+        | just(just(ty)) ->
+          termMetaterm(
+             buildApplication(nameTerm(typeToStructureEqName(ty), nothing()),
+                              [tree1.translation, tree2.translation]),
+             emptyRestriction())
+        | _ -> error("Could not find type for tree " ++ t1n)
+        end
+      | _, nameTerm(t2n, _) when contains(t2n, top.knownTrees) ->
+        case findAssociatedScopes(t2n, top.finalTys) of
+        | just(just(ty)) ->
+          termMetaterm(
+             buildApplication(nameTerm(typeToStructureEqName(ty), nothing()),
+                              [tree1.translation, tree2.translation]),
+             emptyRestriction())
+        | _ -> error("Could not find type for tree " ++ t2n)
+        end
+      --Production on (apparently both) sides
+      | nameTerm(prod, _), _
+        when findProd(prod, top.silverContext) matches just((fullName, ty)) ->
+        termMetaterm(
+           buildApplication(nameTerm(typeToStructureEqName(ty.resultType), nothing()),
+                               [tree1.translation, tree2.translation]),
+           emptyRestriction())
+      | _, nameTerm(prod, _)
+        when findProd(prod, top.silverContext) matches just((fullName, ty)) ->
+        termMetaterm(
+           buildApplication(nameTerm(typeToStructureEqName(ty.resultType), nothing()),
+                               [tree1.translation, tree2.translation]),
+           emptyRestriction())
+      | applicationTerm(nameTerm(prod, _), _), _
+        when findProd(prod, top.silverContext) matches just((fullName, ty)) ->
+        termMetaterm(
+           buildApplication(nameTerm(typeToStructureEqName(ty.resultType), nothing()),
+                               [tree1.translation, tree2.translation]),
+           emptyRestriction())
+      | _, applicationTerm(nameTerm(prod, _), _)
+        when findProd(prod, top.silverContext) matches just((fullName, ty)) ->
+        termMetaterm(
+           buildApplication(nameTerm(typeToStructureEqName(ty.resultType), nothing()),
+                               [tree1.translation, tree2.translation]),
+           emptyRestriction())
+      | _, _ -> error("Should not access translation in presence of errors")
+      end;
+
+  top.errors <-
+      if null(tree1.errors) && null(tree2.errors)
+      then case decorate tree1.translation with {silverContext = top.silverContext;},
+                decorate tree2.translation with {silverContext = top.silverContext;} of
+           --Named tree on one of the sides
+           | nameTerm(t1n, _), _ when contains(t1n, top.knownTrees) ->
+             case findAssociatedScopes(t1n, top.finalTys) of
+             | just(just(ty)) -> []
+             | _ -> [errorMsg("Could not find type for tree " ++ t1n)]
+             end
+           | _, nameTerm(t2n, _) when contains(t2n, top.knownTrees) ->
+             case findAssociatedScopes(t2n, top.finalTys) of
+             | just(just(ty)) -> []
+             | _ -> [errorMsg("Could not find type for tree " ++ t2n)]
+             end
+           --Production on (apparently both) sides
+           | nameTerm(prod, _), _
+             when findProd(prod, top.silverContext) matches just((fullName, ty)) ->
+             []
+           | _, nameTerm(prod, _)
+             when findProd(prod, top.silverContext) matches just((fullName, ty)) ->
+             []
+           | applicationTerm(nameTerm(prod, _), _), _
+             when findProd(prod, top.silverContext) matches just((fullName, ty)) ->
+             []
+           | _, applicationTerm(nameTerm(prod, _), _)
+             when findProd(prod, top.silverContext) matches just((fullName, ty)) ->
+             []
+           | _, _ -> [errorMsg("Could not determine types of trees in structural equality")]
+           end
+      else [];
+
+  top.removedWPD = top;
+
+  tree1.boundVars = top.boundVars;
+  tree2.boundVars = tree1.boundVarsOut;
+  top.boundVarsOut = tree2.boundVarsOut;
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 }

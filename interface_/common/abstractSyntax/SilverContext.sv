@@ -89,3 +89,15 @@ SilverContext ::=
   return silverContext("", [], [], [], [], [], [], []);
 }
 
+
+function findProd
+Maybe<(String, Type)> ::= prodName::String context::Decorated SilverContext
+{
+  return
+     case find(\ p::(String, Type) -> p.1 == prodName,
+               context.knownProductions) of
+     | just(p) -> just(p)
+     | nothing() -> nothing()
+     end;
+}
+

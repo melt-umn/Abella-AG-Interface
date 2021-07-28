@@ -61,6 +61,7 @@ terminal Append_t     '++'   lexer classes {TOKEN}, precedence=8, association=le
 terminal SilverOr_t   '||'   lexer classes {TOKEN}, precedence=3, association=left;
 terminal SilverAnd_t  '&&'   lexer classes {TOKEN}, precedence=4, association=left;
 terminal SilverNot_t  '!'    lexer classes {TOKEN}, precedence=5;
+terminal Tiled_t      '~'    lexer classes {TOKEN};
 --Attributes not having any value
 terminal No_t         'no'      lexer classes {TOKEN};
 terminal Value_t      'value'   lexer classes {TOKEN};

@@ -472,8 +472,8 @@ top::ProofCommand ::= h::HHint tree::String attr::String
         | just(mtm) ->
           case decorate mtm with
                {silverContext = top.silverContext;} of
-          | eqMetaterm(nameTerm(str, _), _) -> []
-          | eqMetaterm(_, nameTerm(str, _)) ->
+          | treeEqMetaterm(nameTerm(str, _), _) -> []
+          | treeEqMetaterm(_, nameTerm(str, _)) ->
             [ backchainTactic(nothing(),
                  clearable(false, typeToStructureEq_Symm(treeTy), []), []) ]
           | _ ->
@@ -694,8 +694,8 @@ top::ProofCommand ::= h::HHint tree::String attr::String
         | nothing() -> error("This hypothesis must exist")
         | just(mtm) ->
           case decorate mtm with {silverContext = top.silverContext;} of
-          | eqMetaterm(nameTerm(str, _), _) -> []
-          | eqMetaterm(_, nameTerm(str, _)) ->
+          | treeEqMetaterm(nameTerm(str, _), _) -> []
+          | treeEqMetaterm(_, nameTerm(str, _)) ->
             [ backchainTactic(nothing(),
                  clearable(false, typeToStructureEq_Symm(treeTy), []), []) ]
           | _ ->
@@ -751,11 +751,11 @@ top::ProofCommand ::=
                   {silverContext = top.silverContext;} of
              | mt when mt.shouldHide ->
                [errorMsg("Unknown hypothesis " ++ hyp)]
-             | eqMetaterm(nameTerm(tr1, _), nameTerm(tr2, _))
+             | treeEqMetaterm(nameTerm(tr1, _), nameTerm(tr2, _))
                when tr1 == tree || tr2 == tree -> []
-             | eqMetaterm(_, _) ->
-               [errorMsg("Hypothesis " ++ hyp ++ " is not an equality of " ++
-                         tree ++ " and another tree")]
+             | treeEqMetaterm(_, _) ->
+               [errorMsg("Hypothesis " ++ hyp ++ " is not a tree equality " ++
+                         "of " ++ tree ++ " and another tree")]
              | _ ->
                [errorMsg("Hypothesis " ++ hyp ++ " is not an equality")]
              end
@@ -765,7 +765,7 @@ top::ProofCommand ::=
         if hypBody.isJust
         then case decorate hypBody.fromJust with
                   {silverContext = top.silverContext;} of
-             | eqMetaterm(nameTerm(tr1, _), nameTerm(tr2, _)) ->
+             | treeEqMetaterm(nameTerm(tr1, _), nameTerm(tr2, _)) ->
                tr1 == tree || tr2 == tree
              | _ -> false
              end
@@ -779,21 +779,21 @@ top::ProofCommand ::=
              case decorate mt with {silverContext = top.silverContext;} of
              | mt when mt.shouldHide ->
                [errorMsg("Unknown hypothesis " ++ otherTreeHyp)]
-             | eqMetaterm(nameTerm(tr, _), trm)
+             | treeEqMetaterm(nameTerm(tr, _), trm)
                when hypOkay && otherTree == tr && trm.isProdStructure ->
                []
-             | eqMetaterm(trm, nameTerm(tr, _))
+             | treeEqMetaterm(trm, nameTerm(tr, _))
                when hypOkay && otherTree == tr && trm.isProdStructure ->
                []
-             | eqMetaterm(nameTerm(tr, _), trm)
+             | treeEqMetaterm(nameTerm(tr, _), trm)
                when hypOkay && otherTree == tr ->
                [errorMsg(otherTreeHyp ++ " does not equate " ++ otherTree ++ " to a structure")]
-             | eqMetaterm(trm, nameTerm(tr, _))
+             | treeEqMetaterm(trm, nameTerm(tr, _))
                when hypOkay && otherTree == tr ->
                [errorMsg(otherTreeHyp ++ " does not equate " ++ otherTree ++ " to a structure")]
-             | eqMetaterm(_, _) when hypOkay ->
-               [errorMsg("Hypothesis " ++ otherTreeHyp ++ " is not an equality of " ++
-                         tree ++ " another tree")]
+             | treeEqMetaterm(_, _) when hypOkay ->
+               [errorMsg("Hypothesis " ++ otherTreeHyp ++ " is not a tree " ++
+                         "equality of " ++ tree ++ " another tree")]
              | _ ->
                [errorMsg("Hypothesis " ++ otherTreeHyp ++ " is not an equality")]
              end
@@ -803,9 +803,9 @@ top::ProofCommand ::=
         if otherTreeHypBody.isJust
         then case decorate otherTreeHypBody.fromJust with
                   {silverContext = top.silverContext;} of
-             | eqMetaterm(nameTerm(tr, _), trm) when tree == tr ->
+             | treeEqMetaterm(nameTerm(tr, _), trm) when tree == tr ->
                trm.isProdStructure
-             | eqMetaterm(trm, nameTerm(tr, _)) when tree == tr ->
+             | treeEqMetaterm(trm, nameTerm(tr, _)) when tree == tr ->
                trm.isProdStructure
              | _ -> false
              end
@@ -826,7 +826,7 @@ top::ProofCommand ::=
   local otherTree::String =
         case decorate hypBody.fromJust with
              {silverContext = top.silverContext;} of
-        | eqMetaterm(nameTerm(tr1, _), nameTerm(tr2, _)) ->
+        | treeEqMetaterm(nameTerm(tr1, _), nameTerm(tr2, _)) ->
           if tr1 == tree
           then tr2
           else tr1
@@ -856,7 +856,7 @@ top::ProofCommand ::=
              _)
           when tr == otherTree ->
           struct
-        | other -> error("This must be eqMetaterm because of how it was found (just(" ++ other.pp ++ "))")
+        | other -> error("This must be treeEqMetaterm because of how it was found (just(" ++ other.pp ++ "))")
         end;
   structure.silverContext = top.silverContext;
   local wpdTreeHyp::Maybe<(String, Metaterm)> =
@@ -952,7 +952,7 @@ top::ProofCommand ::=
         ] ++
         ( case decorate hypBody.fromJust with
                {silverContext = top.silverContext;} of
-          | eqMetaterm(nameTerm(tr1, _), nameTerm(tr2, _)) ->
+          | treeEqMetaterm(nameTerm(tr1, _), nameTerm(tr2, _)) ->
             if tr1 == tree
             then [
                   assertTactic(
