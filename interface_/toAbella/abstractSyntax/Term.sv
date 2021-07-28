@@ -312,8 +312,8 @@ top::Metaterm ::= b::Binder bindings::[(String, Maybe<Type>)] body::Metaterm
      end;
   top.errors <-
       foldr(\ p::(String, Maybe<Type>) rest::[Error] ->
-              if startsWith("$", p.1)
-              then [errorMsg("Identifiers cannot start with \"$\"")] ++ rest
+              if indexOf("$", p.1) >= 0
+              then [errorMsg("Identifiers cannot contain \"$\"")] ++ rest
               else rest,
              [], bindings);
   top.errors <-
@@ -976,8 +976,8 @@ top::Term ::= name::String ty::Maybe<Type>
   top.boundVarsOut = top.boundVars;
 
   top.errors <-
-      if startsWith("$", name)
-      then [errorMsg("Identifiers cannot start with \"$\"")]
+      if indexOf("$", name) >= 0
+      then [errorMsg("Identifiers cannot contain \"$\"")]
       else [];
 
   {-

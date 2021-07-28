@@ -50,8 +50,8 @@ the equals sign (e.g. `t3 = t1 + t2` is equivalent to `t1 + t2 = t3`).
 
 Identifiers (variables, theorem names, etc.) may begin with a letter
 or one of ``-^=`'?`` followed by any letters, digits, symbols from the
-previous list, or `$_*@+#!~/`.  If an identifier starts with `=`,
-it must be followed by another character.
+previous list, or `_*@+#!~/`.  If an identifier starts with `=`, it
+must be followed by another character.
 
 Single-line comments start with `%` and may begin anywhere in a line.
 Multi-line comments are demarcated by `/*` and `*/`.

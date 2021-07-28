@@ -78,8 +78,8 @@ top::Type ::= name::String
            else nameType(name);
 
   top.errors <-
-      if startsWith("$", name)
-      then [errorMsg("Identifiers cannot start with \"$\"")]
+      if indexOf("$", name) >= 0
+      then [errorMsg("Identifiers cannot contain \"$\"")]
       else [];
 
   top.argumentTypes = [];

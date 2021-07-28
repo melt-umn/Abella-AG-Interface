@@ -47,14 +47,14 @@ top::TopCommand ::= depth::Integer thms::[(String, Metaterm, String)]
 
   top.errors <-
       foldr(\ p::(String, Metaterm, String) rest::[Error] ->
-              if startsWith("$", p.1)
-              then [errorMsg("Theorem names cannot start with \"$\"")] ++ rest
+              if indexOf("$", p.1) >= 0
+              then [errorMsg("Theorem names cannot contain \"$\"")] ++ rest
               else rest,
             [], thms);
   top.errors <-
       foldr(\ p::(String, Metaterm, String) rest::[Error] ->
-              if startsWith("$", p.3)
-              then [errorMsg("Identifiers cannot start with \"$\"")] ++ rest
+              if indexOf("$", p.3) >= 0
+              then [errorMsg("Identifiers cannot contain \"$\"")] ++ rest
               else rest,
             [], thms);
   top.errors <-
@@ -219,8 +219,8 @@ top::TopCommand ::= name::String params::[String] body::Metaterm
       " : " ++ body.pp ++ ".\n";
 
   top.errors <-
-      if startsWith("$", name)
-      then [errorMsg("Cannot start theorem names with \"$\"")]
+      if indexOf("$", name) >= 0
+      then [errorMsg("Theorem names cannot contain \"$\"")]
       else [];
 
   body.boundVars = [];
@@ -317,13 +317,13 @@ top::TopCommand ::= theoremName::String newTheoremNames::[String]
   top.translation = splitTheorem(theoremName, newTheoremNames);
 
   top.errors <-
-      if startsWith("$", theoremName)
-      then [errorMsg("Cannot start theorem names with \"$\"")]
+      if indexOf("$", theoremName) >= 0
+      then [errorMsg("Theorem names cannot contain \"$\"")]
       else [];
   top.errors <-
       foldr(\ s::String rest::[Error] ->
-              if startsWith("$", s)
-              then [errorMsg("Cannot start theorem names with \"$\"")] ++ rest
+              if indexOf("$", s) >= 0
+              then [errorMsg("Theorem names cannot contain \"$\"")] ++ rest
               else rest,
             [], newTheoremNames);
 

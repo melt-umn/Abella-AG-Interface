@@ -82,8 +82,8 @@ top::ProofCommand ::= names::[String]
       end;
   top.errors <-
       foldr(\ s::String rest::[Error] ->
-              if startsWith("$", s)
-              then [errorMsg("Identifiers cannot start with \"$\"")] ++ rest
+              if indexOf("$", s) >= 0
+              then [errorMsg("Identifiers cannot contain \"$\"")] ++ rest
               else rest,
             [], names);
 
@@ -165,13 +165,13 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> theorem::Clearable
             [], args);
   top.errors <-
       foldr(\ a::ApplyArg rest::[Error] ->
-              if startsWith("$", a.name)
-              then [errorMsg("Identifiers cannot start with \"$\"")] ++ rest
+              if indexOf("$", a.name) >= 0
+              then [errorMsg("Identifiers cannot contain \"$\"")] ++ rest
               else rest,
             [], args);
   top.errors <-
-      if startsWith("$", theorem.name)
-      then [errorMsg("Identifiers cannot start with \"$\"")]
+      if indexOf("$", theorem.name) >= 0
+      then [errorMsg("Identifiers cannot contain \"$\"")]
       else [];
 
   top.translation =
@@ -733,8 +733,8 @@ top::ProofCommand ::=
   top.pp = h.pp ++ "case_structure " ++ tree ++ " in " ++ hyp ++ ".  ";
 
   top.errors <-
-      if startsWith("$", tree)
-      then [errorMsg("Identifiers cannot start with \"$\"")]
+      if indexOf("$", tree) >= 0
+      then [errorMsg("Identifiers cannot contain \"$\"")]
       else [];
   top.errors <-
       if contains(tree, decorate top.currentState.state with
@@ -1567,12 +1567,12 @@ top::ProofCommand ::= original::String renamed::String
   top.pp = "rename " ++ original ++ " to " ++ renamed ++ ".  ";
 
   top.errors <-
-      if startsWith("$", original)
-      then [errorMsg("Identifiers cannot start with \"$\"")]
+      if indexOf("$", original) >= 0
+      then [errorMsg("Identifiers cannot contain \"$\"")]
       else [];
   top.errors <-
-      if startsWith("$", renamed)
-      then [errorMsg("Identifiers cannot start with \"$\"")]
+      if indexOf("$", renamed) >= 0
+      then [errorMsg("Identifiers cannot contain \"$\"")]
       else [];
 
   {-
@@ -1641,8 +1641,8 @@ top::ProofCommand ::= names::[String] hyp::Maybe<String>
 
   top.errors <-
       foldr(\ s::String rest::[Error] ->
-              if startsWith("$", s)
-              then errorMsg("Identifiers cannot start with \"$\"")::rest
+              if indexOf("$", s) >= 0
+              then errorMsg("Identifiers cannot contain \"$\"")::rest
               else rest,
             [], names);
 
@@ -1670,8 +1670,8 @@ top::ProofCommand ::= id::String all::Boolean
   top.translation = error("Translation not done in unfoldIdentifierTactic yet");
 
   top.errors <-
-      if startsWith("$", id)
-      then [errorMsg("Identifiers cannot start with \"$\"")]
+      if indexOf("$", id) >= 0
+      then [errorMsg("Identifiers cannot contain \"$\"")]
       else [];
 
   --no real change to proof state
@@ -1771,8 +1771,8 @@ top::EWitness ::= name::String t::Term
   top.translation = nameEWitness(name, t.translation);
 
   top.errors <-
-      if startsWith("$", name)
-      then [errorMsg("Identifiers cannot start with \"$\"")]
+      if indexOf("$", name) >= 0
+      then [errorMsg("Identifiers cannot contain \"$\"")]
       else [];
 }
 
@@ -1790,8 +1790,8 @@ top::HHint ::= name::String
   top.pp = name ++ ": ";
 
   top.errors <-
-      if startsWith("$", name)
-      then [errorMsg("Identifiers cannot start with \"$\"")]
+      if indexOf("$", name) >= 0
+      then [errorMsg("Identifiers cannot contain \"$\"")]
       else [];
 }
 

@@ -64,8 +64,8 @@ top::NoOpCommand ::= theoremName::String
   top.translation = showCommand(theoremName);
 
   top.errors <-
-      if startsWith("$", theoremName)
-      then [errorMsg("Cannot start theorem names with \"$\"")]
+      if indexOf("$", theoremName) >= 0
+      then [errorMsg("Theorem names cannot contain \"$\"")]
       else [];
 
   top.isQuit = false;
