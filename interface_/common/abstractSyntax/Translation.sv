@@ -345,3 +345,46 @@ String ::= s::String
   return "$fun__" ++ s;
 }
 
+
+--Qualified Names
+{-
+  We need to encode qualified names with something other than a colon,
+  since colons are not allowed in Abella names.  We do this by
+  replacing colons with $*$.  This works because we ban dollar signs
+  in names otherwise.
+-}
+function encodedToColons
+String ::= s::String
+{
+  return substitute("$*$", ":", s);
+}
+function colonsToEncoded
+String ::= s::String
+{
+  return substitute(":", "$*$", s);
+}
+--Get the grammar and the short name for something
+function splitQualifiedName
+(String, String) ::= s::String
+{
+  local ind::Integer = lastIndexOf(":", s);
+  return
+     if ind < 0
+     then error("Not a qualified name to split")
+     else (substring(0, ind, s), substring(ind + 1, length(s), s));
+}
+function splitEncodedName
+(String, String) ::= s::String
+{
+  local ind::Integer = lastIndexOf("$*$", s);
+  return
+     if ind < 0
+     then error("Not a qualified name to split")
+     else (substring(0, ind, s), substring(ind + 3, length(s), s));
+}
+function isFullyQualifiedName
+Boolean ::= s::String
+{
+  return indexOf(":", s) >= 0;
+}
+

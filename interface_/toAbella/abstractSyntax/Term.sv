@@ -3,7 +3,7 @@ grammar interface_:toAbella:abstractSyntax;
 
 attribute
    translation<Metaterm>, newPremises,
-   boundVars, boundVarsOut, attrOccurrences, finalTys,
+   boundVars, boundVarsOut, finalTys,
    findNameType, foundNameType,
    replaceName, replaceTerm, replaced,
    removeWPDTree, removedWPD,
@@ -110,16 +110,16 @@ top::Metaterm ::= t1::Term t2::Term
              [errorMsg("Cannot use normal equality for decorated trees")]
            --Production on (apparently both) sides
            | nameTerm(prod, _), _
-             when findProd(prod, top.silverContext) matches just((fullName, ty)) ->
+             when findProd(prod, top.silverContext) matches [(fullName, ty)] ->
              [errorMsg("Cannot use normal equality for trees")]
            | _, nameTerm(prod, _)
-             when findProd(prod, top.silverContext) matches just((fullName, ty)) ->
+             when findProd(prod, top.silverContext) matches [(fullName, ty)] ->
              [errorMsg("Cannot use normal equality for trees")]
            | applicationTerm(nameTerm(prod, _), _), _
-             when findProd(prod, top.silverContext) matches just((fullName, ty)) ->
+             when findProd(prod, top.silverContext) matches [(fullName, ty)] ->
              [errorMsg("Cannot use normal equality for trees")]
            | _, applicationTerm(nameTerm(prod, _), _)
-             when findProd(prod, top.silverContext) matches just((fullName, ty)) ->
+             when findProd(prod, top.silverContext) matches [(fullName, ty)] ->
              [errorMsg("Cannot use normal equality for trees")]
            | _, _ -> []
            end
@@ -360,9 +360,9 @@ top::Metaterm ::= tree::String attr::String val::Term
   top.newPremises := [wpdNewPremise(tree)] ++ val.newPremises;
 
   local occursOnTypes::[Type] =
-        case findAssociated(attr, top.attrOccurrences) of
-        | just(tys) -> map(fst, tys)
-        | nothing() -> [] --unknown attribute
+        case findAttrOccurrences(attr, top.silverContext) of
+        | [(fullattr, tys)] -> map(fst, tys)
+        | _ -> [] --unknown/undeteremined attribute
         end;
   local possibleTys::[Type] =
         case findAssociatedScopes(tree, top.boundVars) of
@@ -376,9 +376,12 @@ top::Metaterm ::= tree::String attr::String val::Term
 
   top.errors <-
       --check whether the attribute exists
-      case findAssociated(attr, top.attrOccurrences) of
-      | just(tys) -> []
-      | nothing() -> [errorMsg("Unknown attribute " ++ attr)]
+      case findAttrOccurrences(attr, top.silverContext) of
+      | [(fullattr, tys)] -> []
+      | [] -> [errorMsg("Unknown attribute " ++ attr)]
+      | lst -> [errorMsg("Undetermined attribute " ++ attr ++
+                         "; choices are" ++
+                         implode(", ", map(fst, lst)))]
       end ++
       --check whether the tree exists
       case findAssociatedScopes(tree, top.boundVars) of
@@ -386,9 +389,8 @@ top::Metaterm ::= tree::String attr::String val::Term
       | _ -> []
       end ++
       --check attribute occurrence of trees of type t
-      case findAssociated(attr, top.attrOccurrences),
-           possibleTys of
-      | just(atys), ttys ->
+      case findAttrOccurrences(attr, top.silverContext), possibleTys of
+      | [(fullname, atys)], ttys ->
         if null(ttys)
         then [errorMsg("Attribute " ++ attr ++ " does not occur on " ++ tree)]
         else if length(ttys) > 1
@@ -422,9 +424,9 @@ top::Metaterm ::= tree::String attr::String
   top.newPremises := [wpdNewPremise(tree)];
 
   local occursOnTypes::[Type] =
-        case findAssociated(attr, top.attrOccurrences) of
-        | just(tys) -> map(fst, tys)
-        | nothing() -> [] --unknown attribute
+        case findAttrOccurrences(attr, top.silverContext) of
+        | [(_, tys)] -> map(fst, tys)
+        | _ -> [] --unknown/undetermined attribute
         end;
   local possibleTys::[Type] =
         case findAssociatedScopes(tree, top.boundVars) of
@@ -437,9 +439,12 @@ top::Metaterm ::= tree::String attr::String
 
   top.errors <-
       --check whether the attribute exists
-      case findAssociated(attr, top.attrOccurrences) of
-      | just(tys) -> []
-      | nothing() -> [errorMsg("Unknown attribute " ++ attr)]
+      case findAttrOccurrences(attr, top.silverContext) of
+      | [(fullattr, tys)] -> []
+      | [] -> [errorMsg("Unknown attribute " ++ attr)]
+      | lst -> [errorMsg("Undetermined attribute " ++ attr ++
+                         "; choices are" ++
+                         implode(", ", map(fst, lst)))]
       end ++
       --check whether the tree exists
       case findAssociatedScopes(tree, top.boundVars) of
@@ -447,9 +452,8 @@ top::Metaterm ::= tree::String attr::String
       | _ -> []
       end ++
       --check attribute occurrence of trees of type t
-      case findAssociated(attr, top.attrOccurrences),
-           possibleTys of
-      | just(atys), ttys ->
+      case findAttrOccurrences(attr, top.silverContext), possibleTys of
+      | [(fullname, atys)], ttys ->
         if null(ttys)
         then [errorMsg("Attribute " ++ attr ++ " does not occur on " ++ tree)]
         else if length(ttys) > 1
@@ -518,25 +522,25 @@ top::Metaterm ::= tree1::Term tree2::Term
         end
       --Production on (apparently both) sides
       | nameTerm(prod, _), _
-        when findProd(prod, top.silverContext) matches just((fullName, ty)) ->
+        when findProd(prod, top.silverContext) matches [(fullName, ty)] ->
         termMetaterm(
            buildApplication(nameTerm(typeToStructureEqName(ty.resultType), nothing()),
                                [tree1.translation, tree2.translation]),
            emptyRestriction())
       | _, nameTerm(prod, _)
-        when findProd(prod, top.silverContext) matches just((fullName, ty)) ->
+        when findProd(prod, top.silverContext) matches [(fullName, ty)] ->
         termMetaterm(
            buildApplication(nameTerm(typeToStructureEqName(ty.resultType), nothing()),
                                [tree1.translation, tree2.translation]),
            emptyRestriction())
       | applicationTerm(nameTerm(prod, _), _), _
-        when findProd(prod, top.silverContext) matches just((fullName, ty)) ->
+        when findProd(prod, top.silverContext) matches [(fullName, ty)] ->
         termMetaterm(
            buildApplication(nameTerm(typeToStructureEqName(ty.resultType), nothing()),
                                [tree1.translation, tree2.translation]),
            emptyRestriction())
       | _, applicationTerm(nameTerm(prod, _), _)
-        when findProd(prod, top.silverContext) matches just((fullName, ty)) ->
+        when findProd(prod, top.silverContext) matches [(fullName, ty)] ->
         termMetaterm(
            buildApplication(nameTerm(typeToStructureEqName(ty.resultType), nothing()),
                                [tree1.translation, tree2.translation]),
@@ -561,16 +565,16 @@ top::Metaterm ::= tree1::Term tree2::Term
              end
            --Production on (apparently both) sides
            | nameTerm(prod, _), _
-             when findProd(prod, top.silverContext) matches just((fullName, ty)) ->
+             when findProd(prod, top.silverContext) matches [(fullName, ty)] ->
              []
            | _, nameTerm(prod, _)
-             when findProd(prod, top.silverContext) matches just((fullName, ty)) ->
+             when findProd(prod, top.silverContext) matches [(fullName, ty)] ->
              []
            | applicationTerm(nameTerm(prod, _), _), _
-             when findProd(prod, top.silverContext) matches just((fullName, ty)) ->
+             when findProd(prod, top.silverContext) matches [(fullName, ty)] ->
              []
            | _, applicationTerm(nameTerm(prod, _), _)
-             when findProd(prod, top.silverContext) matches just((fullName, ty)) ->
+             when findProd(prod, top.silverContext) matches [(fullName, ty)] ->
              []
            | _, _ -> [errorMsg("Could not determine types of trees in structural equality")]
            end
@@ -879,10 +883,12 @@ top::Metaterm ::= t::Term result::Term
 aspect production funMetaterm
 top::Metaterm ::= funName::String args::ParenthesizedArgs result::Term r::Restriction
 {
+  local foundFuns::[(String, Type)] = findFun(funName, top.silverContext);
+
   top.translation =
       termMetaterm(
          buildApplication(
-            nameTerm(nameToFun(funName), nothing()),
+            nameTerm(nameToFun(head(foundFuns).1), nothing()),
             case args.translation of
             | just(a) -> a.argList ++ [result.translation]
             | nothing() -> [result.translation]
@@ -890,8 +896,9 @@ top::Metaterm ::= funName::String args::ParenthesizedArgs result::Term r::Restri
          emptyRestriction());
 
   top.errors <-
-      case findAssociated(funName, top.silverContext.knownFunctions) of
-      | just(ty) ->
+      case foundFuns of
+      | [] -> [errorMsg("Unknown function " ++ funName)]
+      | [(fullname, ty)] ->
         --Subtract 1 because return type is included
         if length(ty.argumentTypes) - 1 == length(args.argList)
         then []
@@ -899,7 +906,9 @@ top::Metaterm ::= funName::String args::ParenthesizedArgs result::Term r::Restri
                        toString(length(ty.argumentTypes) - 1) ++
                        " arguments but got " ++
                        toString(length(args.argList)))]
-      | nothing() -> [errorMsg("Unknown function " ++ funName)]
+      | _ -> [errorMsg("Could not find a single name for function " ++
+                       funName ++ "; options are:  " ++
+                       implode(", ", map(fst, foundFuns)))]
       end;
 
   args.boundVars = top.boundVars;
@@ -917,7 +926,7 @@ top::Metaterm ::= funName::String args::ParenthesizedArgs result::Term r::Restri
 
 attribute
    translation<Term>, newPremises,
-   boundVars, boundVarsOut, attrOccurrences,
+   boundVars, boundVarsOut,
    replaceName, replaceTerm, replaced,
    errors,
    eqTest<Term>, isEq,
@@ -1240,7 +1249,7 @@ top::Term ::= contents::ListContents
 
 attribute
    translation<Term>, newPremises,
-   boundVars, boundVarsOut, attrOccurrences,
+   boundVars, boundVarsOut,
    replaceName, replaceTerm, replaced,
    errors,
    eqTest<ListContents>, isEq,
@@ -1288,7 +1297,7 @@ top::ListContents ::= hd::Term tl::ListContents
 
 attribute
    translation<Term>, newPremises,
-   boundVars, boundVarsOut, attrOccurrences,
+   boundVars, boundVarsOut,
    replaceName, replaceTerm, replaced,
    errors,
    eqTest<PairContents>, isEq,
@@ -1341,7 +1350,7 @@ top::PairContents ::= t::Term rest::PairContents
 
 attribute
    translation<Maybe<TermList>>, newPremises,
-   boundVars, boundVarsOut, attrOccurrences,
+   boundVars, boundVarsOut,
    replaceName, replaceTerm, replaced,
    errors,
    eqTest<ParenthesizedArgs>, isEq,
@@ -1411,7 +1420,7 @@ top::ParenthesizedArgs ::= hd::Term tl::ParenthesizedArgs
 
 attribute
    translation<TermList>, newPremises,
-   boundVars, boundVarsOut, attrOccurrences,
+   boundVars, boundVarsOut,
    replaceName, replaceTerm, replaced,
    errors,
    eqTest<TermList>, isEq,

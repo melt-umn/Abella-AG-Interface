@@ -59,12 +59,10 @@ top::TopCommand ::= depth::Integer thms::[(String, Metaterm, String)]
             [], thms);
   top.errors <-
       gather_bodies_errors(
-         thms, top.silverContext.knownAttrOccurrences,
-         top.currentState, top.silverContext);
+         thms, top.currentState, top.silverContext);
 
   local translated::[(String, Metaterm, String)] =
-        translate_bodies(thms, top.silverContext.knownAttrOccurrences,
-                         top.currentState, top.silverContext);
+        translate_bodies(thms, top.currentState, top.silverContext);
 
   --(translated theorem body, induction tree, induction type, prods, thm name)
   local groupings::[(Metaterm, String, Type, [String], String)] =
@@ -72,8 +70,6 @@ top::TopCommand ::= depth::Integer thms::[(String, Metaterm, String)]
               let ty::Type =
                   decorate p.2 with {
                      findNameType = p.3;
-                     attrOccurrences =
-                        top.silverContext.knownAttrOccurrences;
                      boundVars = [];
                      knownTyParams = []; --we disallow parameterization currently
                      silverContext = top.silverContext;
@@ -93,8 +89,6 @@ top::TopCommand ::= depth::Integer thms::[(String, Metaterm, String)]
         buildExtensibleTheoremBody(
            map(\ p::(Metaterm, String, Type, [String], String) ->
                  (p.1, p.2, p.3, p.4), groupings), allUsedNames,
-           top.silverContext.knownProductions,
-           top.silverContext.knownLocalAttrs,
            top.silverContext);
   --number of pieces in the generated theorem
   local numBodies::Integer =
@@ -132,12 +126,10 @@ top::TopCommand ::= depth::Integer thms::[(String, Metaterm, String)]
 --This is best done in a function where we can have each body be a local
 function translate_bodies
 [(String, Metaterm, String)] ::= thms::[(String, Metaterm, String)]
-          attrOccurs::[(String, [(Type, Type)])]
           currentState::ProverState
           silverContext::Decorated SilverContext
 {
   local body::Metaterm = head(thms).2;
-  body.attrOccurrences = attrOccurs;
   body.boundVars = [];
   body.finalTys = [];
   body.knownNames = [head(thms).3];
@@ -151,18 +143,16 @@ function translate_bodies
      | [] -> []
      | (name, _, tr)::tl -> 
        (name, body.translation, tr)::
-       translate_bodies(tl, attrOccurs, currentState, silverContext)
+       translate_bodies(tl, currentState, silverContext)
      end;
 }
 
 function gather_bodies_errors
 [Error] ::= thms::[(String, Metaterm, String)]
-            attrOccurs::[(String, [(Type, Type)])]
             currentState::ProverState
             silverContext::Decorated SilverContext
 {
   local body::Metaterm = head(thms).2;
-  body.attrOccurrences = attrOccurs;
   body.boundVars = [];
   body.finalTys = [];
   body.knownNames = [head(thms).3];
@@ -193,7 +183,7 @@ function gather_bodies_errors
                                "; must be a tree")]
               end
          else body.errors ) ++
-       gather_bodies_errors(tl, attrOccurs, currentState, silverContext)
+       gather_bodies_errors(tl, currentState, silverContext)
      end;
 }
 
@@ -226,7 +216,6 @@ top::TopCommand ::= name::String params::[String] body::Metaterm
   body.boundVars = [];
   body.finalTys = [];
   body.knownNames = [];
-  body.attrOccurrences = top.silverContext.knownAttrOccurrences;
   body.knownTrees = body.gatheredTrees;
   body.knownDecoratedTrees = body.gatheredDecoratedTrees;
   body.knownTyParams = params;
@@ -286,7 +275,6 @@ top::TopCommand ::= m::Metaterm
 {
   top.pp = "Query " ++ m.pp ++ ".\n";
 
-  m.attrOccurrences = top.silverContext.knownAttrOccurrences;
   m.boundVars = [];
   m.knownNames = [];
   m.knownTyParams = [];
@@ -451,7 +439,6 @@ top::TopCommand ::= name::String params::[String] body::Metaterm prf::[ProofComm
   top.translation = error("Should not be translating theoremAndProof");
   top.numCommandsSent = 1 + length(prf);
 
-  body.attrOccurrences = top.silverContext.knownAttrOccurrences;
   body.knownTyParams = params;
   body.boundVars = [];
   body.finalTys = [];

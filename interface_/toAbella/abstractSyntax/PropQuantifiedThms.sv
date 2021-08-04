@@ -270,8 +270,6 @@ Either<String [ProofCommand]> ::=
    h::HHint depth::Maybe<Integer> args::[ApplyArg] withs::[(String, Term)]
    --The hypotheses in the current context
    hyps::[(String, Metaterm)]
-   --Types of known productions
-   knownProds::[(String, Type)]
    silverContext::Decorated SilverContext
 {
   --Theorem symmetry[A] : forall (A B : A), A = B -> B = A
@@ -331,24 +329,24 @@ Either<String [ProofCommand]> ::=
         case decorate trms.1 with {silverContext = silverContext;},
              decorate trms.2 with {silverContext = silverContext;} of
         | nameTerm(str, _), _ when isProd(str) ->
-          case findAssociated(str, knownProds) of
-          | nothing() -> nothing()
-          | just(ty) -> just(ty.resultType)
+          case findProd(str, silverContext) of
+          | [(_, ty)] -> just(ty.resultType)
+          | _ -> nothing()
           end
         | _, nameTerm(str, _) when isProd(str) ->
-          case findAssociated(str, knownProds) of
-          | nothing() -> nothing()
-          | just(ty) -> just(ty.resultType)
+          case findProd(str, silverContext) of
+          | [(_, ty)] -> just(ty.resultType)
+          | _ -> nothing()
           end
         | applicationTerm(nameTerm(str, _), _), _ when isProd(str) ->
-          case findAssociated(str, knownProds) of
-          | nothing() -> nothing()
-          | just(ty) -> just(ty.resultType)
+          case findProd(str, silverContext) of
+          | [(_, ty)] -> just(ty.resultType)
+          | _ -> nothing()
           end
         | _, applicationTerm(nameTerm(str, _), _) when isProd(str) ->
-          case findAssociated(str, knownProds) of
-          | nothing() -> nothing()
-          | just(ty) -> just(ty.resultType)
+          case findProd(str, silverContext) of
+          | [(_, ty)] -> just(ty.resultType)
+          | _ -> nothing()
           end
         | nameTerm(tr1, _), nameTerm(tr2, _) -> --go search for WPD assumptions
           case find_WPD_nt_hyp(tr1, hyps, silverContext) of

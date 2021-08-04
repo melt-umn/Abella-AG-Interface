@@ -9,7 +9,7 @@ imports interface_:common:abstractSyntax;
   structured tree, then use pp to get the text to send to Abella.
 -}
 synthesized attribute translation<a>::a;
-flowtype translation {attrOccurrences, boundVars, finalTys,
+flowtype translation {silverContext, boundVars, finalTys,
                       knownTrees, knownDecoratedTrees, knownNames,
                       currentState, knownTyParams} on Metaterm;
 
@@ -91,11 +91,6 @@ propagate treeTys on
    Metaterm, ProofState, CurrentGoal, Context, Hypothesis
    excluding bindingMetaterm;
 
-
---Pairs of (attribute name, types it occurs on)
-autocopy attribute attrOccurrences::[(String, [(Type, Type)])];
---Tuples of (WPD relation name, nonterminal type it is for, productions in order)
-autocopy attribute wpdRelations::[(String, Type, [String])];
 
 --The current prover state and the translation of the proof state
 --We give both because it can be useful to have one or the other at different times

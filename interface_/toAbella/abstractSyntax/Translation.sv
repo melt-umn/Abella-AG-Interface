@@ -162,17 +162,12 @@ String ::= name::String
            production order for the type of tree on which we are doing induction)]
   usedNames:  Names which were used in the original theorem statement,
               which we can't use when generating children
-  allProds:  All the productions we know
-  localAttrs:  All the local attributes we know
 -}
 function buildExtensibleTheoremBody
 Metaterm ::= thms::[(Metaterm, String, Type, [String])]
-             usedNames::[String] allProds::[(String, Type)]
-             localAttrs::[(String, [(String, Type)])]
-             silverContext::Decorated SilverContext
+             usedNames::[String] silverContext::Decorated SilverContext
 {
-  return buildAllTheoremBodies(thms, thms, usedNames, allProds,
-                               localAttrs, silverContext);
+  return buildAllTheoremBodies(thms, thms, usedNames, silverContext);
 }
 
 --We need to know all the theorems to make IH's for the body, so we
@@ -180,9 +175,7 @@ Metaterm ::= thms::[(Metaterm, String, Type, [String])]
 function buildAllTheoremBodies
 Metaterm ::= walkThroughThms::[(Metaterm, String, Type, [String])]
              allThms::[(Metaterm, String, Type, [String])]
-             usedNames::[String] allProds::[(String, Type)]
-             localAttrs::[(String, [(String, Type)])]
-             silverContext::Decorated SilverContext
+             usedNames::[String] silverContext::Decorated SilverContext
 {
   local thm::(Metaterm, String, Type, [String]) = head(walkThroughThms);
   local body::Metaterm =
@@ -197,7 +190,7 @@ Metaterm ::= walkThroughThms::[(Metaterm, String, Type, [String])]
           case decorate tm with {silverContext = silverContext;} of
           | nameTerm(childList, _) ->
             buildProdBodies(thm.4, thm.1, thm.2, nodeName, childList, thm.3,
-                            allThms, usedNames, allProds, localAttrs, silverContext)
+                            allThms, usedNames, silverContext)
           | _ -> error("Tree must be bound at root")
           end
         | _ -> error("Tree must be bound at root")
@@ -209,8 +202,7 @@ Metaterm ::= walkThroughThms::[(Metaterm, String, Type, [String])]
      | [hd] -> thisThm
      | hd::tl ->
        andMetaterm(thisThm,
-          buildAllTheoremBodies(tl, allThms, usedNames,
-                                allProds, localAttrs, silverContext))
+          buildAllTheoremBodies(tl, allThms, usedNames, silverContext))
      end;
 }
 
@@ -222,14 +214,12 @@ function buildProdBodies
 Metaterm ::= prods::[String] original::Metaterm
              treeName::String treeNode::String treeCL::String treeTy::Type
              allThms::[(Metaterm, String, Type, [String])]
-             usedNames::[String] allProds::[(String, Type)]
-             localAttrs::[(String, [(String, Type)])]
-             silverContext::Decorated SilverContext
+             usedNames::[String] silverContext::Decorated SilverContext
 {
   original.silverContext = silverContext;
   local prodName::String = head(prods);
-  --The productions referenced in WPD relations had better exist
-  local prodTy::Type = findAssociated(prodName, allProds).fromJust;
+  --The productions referenced in WPD relations had better exist and be unique
+  local prodTy::Type = head(findProd(prodName, silverContext)).2;
   local children::[(Type, String, String, String)] =
         buildChildNames(prodTy.argumentTypes, usedNames);
   local newTree::Term =
@@ -329,7 +319,7 @@ Metaterm ::= prods::[String] original::Metaterm
                 [], children);
   --fake IHs remove WPD nonterminal relation, and replace original tree with child tree
   local prodLocalAttrs::[(String, Type)] =
-        findProdLocalAttrs(prodName, localAttrs);
+        findProdLocalAttrs(prodName, silverContext.knownLocalAttrs);
   local fakeIHs::[Metaterm] =
         buildFakeIHs(allThms, children, prodName, prodTy.resultType,
                      nameTerm(treeNode, nothing()),
@@ -350,7 +340,7 @@ Metaterm ::= prods::[String] original::Metaterm
      | _::t ->
        andMetaterm(currentStep,
           buildProdBodies(t, original, treeName, treeNode, treeCL, treeTy,
-                          allThms, usedNames, allProds, localAttrs, silverContext))
+                          allThms, usedNames, silverContext))
      end;
 }
 

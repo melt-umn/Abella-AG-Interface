@@ -72,8 +72,6 @@ IOVal<Integer> ::=
   local state::ProofState = currentProverState.state;
   state.silverContext = silverContext;
   local debug::Boolean = currentProverState.debug;
-  local attrs::[String] = silverContext.knownAttrs;
-  local prods::[(String, Type)] = silverContext.knownProductions;
 
   {-
     PROCESS COMMAND

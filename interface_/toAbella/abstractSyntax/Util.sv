@@ -96,18 +96,26 @@ function splitMetaterm
 
 
 
---Find the local attributes which occur on a given production
+--Find the local attributes which occur on a given (fully-qualified) production
 function findProdLocalAttrs
-[(String, Type)] ::= prod::String localAttrs::[(String, [(String, Type)])]
+[(String, Type)] ::= prod::String localAttrs::[(String, [(String, String, Type)])]
+{
+  local splitName::(String, String) = splitQualifiedName(prod);
+  return findProdLocalAttrs_help(splitName.2, splitName.1, localAttrs);
+}
+function findProdLocalAttrs_help
+[(String, Type)] ::= prodName::String prodGrammar::String
+                     localAttrs::[(String, [(String, String, Type)])]
 {
   return
      case localAttrs of
      | [] -> []
      | (attrName, lst)::tl ->
-       case findAssociated(prod, lst) of
+       case findAssociated(prodGrammar,
+               findAllAssociated(prodName, lst)) of
        | nothing() -> []
        | just(ty) -> [(attrName, ty)]
-       end ++ findProdLocalAttrs(prod, tl)
+       end ++ findProdLocalAttrs_help(prodName, prodGrammar, tl)
      end;
 }
 

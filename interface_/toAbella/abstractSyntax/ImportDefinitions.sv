@@ -36,13 +36,50 @@ SilverContext ::= currentGrammar::String comms::ListOfCommands
 
 
 
-monoid attribute newAttrs::[String] with [], ++;
+monoid attribute newAttrs::[(String, String)] with [], ++;
 propagate newAttrs on ListOfCommands, AnyCommand, TopCommand;
 
 
-monoid attribute newAttrOccurrences::[(String, [(Type, Type)])]
-       with [], combineAssociations(_, _);
+monoid attribute newAttrOccurrences::[(String, String, [(Type, Type)])]
+       with [], combineAssociations_splitGrammar(_, _);
 propagate newAttrOccurrences on ListOfCommands, AnyCommand, TopCommand;
+
+function combineAssociations_splitGrammar
+[(String, String, [a])] ::= l1::[(String, String, [a])] l2::[(String, String, [a])]
+{
+  return
+     case l1 of
+     | [] -> l2
+     | (sa, sb, lst)::t ->
+       case findAssociated(sb, findAllAssociated(sa, l2)) of
+       | nothing() ->
+         combineAssociations_splitGrammar(t, (sa, sb, lst)::l2)
+       | just(lst2) ->
+         combineAssociations_splitGrammar(t,
+            replaceDoubleAssociated((sa, sb), lst ++ lst2, l2))
+       end
+     end;
+}
+function replaceDoubleAssociated
+[(String, String, [a])] ::= key::(String, String) replace::[a]
+                            original::[(String, String, [a])]
+{
+  return
+     case original of
+     | [] -> []
+     | (sa, sb, current)::tl ->
+       if sa == key.1 && sb == key.2
+       then (sa, sb, replace)::tl
+       else (sa, sb, current)::replaceDoubleAssociated(key, replace, tl)
+     end;
+}
+
+monoid attribute newInheritedAttrs::[(String, String)] with [], ++;
+propagate newInheritedAttrs on ListOfCommands, AnyCommand, TopCommand;
+
+monoid attribute newLocalAttrs::[(String, [(String, String, Type)])]
+       with [], combineAssociations(_, _);
+propagate newLocalAttrs on ListOfCommands, AnyCommand, TopCommand;
 
 function combineAssociations
 [(String, [a])] ::= l1::[(String, [a])] l2::[(String, [a])]
@@ -60,14 +97,7 @@ function combineAssociations
      end;
 }
 
-monoid attribute newInheritedAttrs::[String] with [], ++;
-propagate newInheritedAttrs on ListOfCommands, AnyCommand, TopCommand;
-
-monoid attribute newLocalAttrs::[(String, [(String, Type)])]
-       with [], combineAssociations(_, _);
-propagate newLocalAttrs on ListOfCommands, AnyCommand, TopCommand;
-
-monoid attribute newProductions::[(String, Type)] with [], ++;
+monoid attribute newProductions::[(String, String, Type)] with [], ++;
 propagate newProductions on ListOfCommands, AnyCommand, TopCommand;
 
 
@@ -79,7 +109,7 @@ monoid attribute newTheorems::[(String, Metaterm)] with [], ++;
 propagate newTheorems on ListOfCommands, AnyCommand, TopCommand;
 
 
-monoid attribute newFunctions::[(String, Type)] with [], ++;
+monoid attribute newFunctions::[(String, String, Type)] with [], ++;
 propagate newFunctions on ListOfCommands, AnyCommand, TopCommand;
 
 
@@ -168,9 +198,13 @@ top::TopCommand ::= preds::[(String, Type)] defs::Defs
       end;
 
   top.newFunctions <-
-      foldr(\ p::(String, Type) rest::[(String, Type)] ->
+      foldr(\ p::(String, Type) rest::[(String, String, Type)] ->
               if isFun(p.1)
-              then (funToName(p.1), p.2)::rest
+              then let splitName::(String, String) =
+                       splitQualifiedName(funToName(p.1))
+                   in
+                     (splitName.1, splitName.2, p.2)::rest
+                   end
               else rest,
             [], preds);
 }
@@ -181,7 +215,13 @@ top::TopCommand ::= names::[String] ty::Type
 {
   top.newProductions <-
       if tyIsNonterminal(ty.resultType)
-      then map(\ s::String -> pair(prodToName(s), ty), names)
+      then map(\ s::String ->
+                 let splitName::(String, String) =
+                     splitQualifiedName(prodToName(s))
+                 in
+                   (splitName.1, splitName.2, new(ty))
+                 end,
+               names)
       else [];
 
   local attrTy::Type =
@@ -192,40 +232,61 @@ top::TopCommand ::= names::[String] ty::Type
         end;
 
   top.newAttrs <-
-      foldr(\ s::String rest::[String] ->
+      foldr(\ s::String rest::[(String, String)] ->
               if isAccessRelation(s)
-              then accessRelationToAttr(s)::rest
+              then let splitName::(String, String) =
+                       splitQualifiedName(accessRelationToAttr(s))
+                   in
+                     (splitName.2, splitName.1)::rest
+                   end
               else rest,
             [], names);
 
   top.newAttrOccurrences <-
       --combining occurrence information for same attr happens by monoid join function
-      foldr(\ s::String rest::[(String, [(Type, Type)])] ->
+      foldr(\ s::String rest::[(String, String, [(Type, Type)])] ->
               if isAccessRelation(s)
-              then (accessRelationToAttr(s),
-                    [(nameType(accessRelationToType(s)),
-                      new(attrTy))])::rest
+              then let splitName::(String, String) =
+                       splitQualifiedName(accessRelationToAttr(s))
+                   in
+                     (splitName.2, splitName.1,
+                      [(nameType(accessRelationToType(s)),
+                        new(attrTy))])::rest
+                   end
               else rest,
             [], names);
 
   top.newInheritedAttrs <-
-      foldr(\ s::String rest::[String] ->
+      foldr(\ s::String rest::[(String, String)] ->
               if endsWith("$_is_inherited", s)
-              then substring(1, lastIndexOf("$", s), s)::rest
+              then let name::String =
+                       substring(1, lastIndexOf("$", s), s)
+                   in
+                   let splitName::(String, String) =
+                       splitQualifiedName(name)
+                   in
+                     (splitName.2, splitName.1)::rest
+                   end end
               else rest,
             [], names);
 
   top.newLocalAttrs <-
-      foldr(\ s::String rest::[(String, [(String, Type)])] ->
+      foldr(\ s::String rest::[(String, [(String, String, Type)])] ->
               if isLocalAccessRelation(s)
-              then (localAccessToAttr(s),
-                    [(localAccessToProd(s),
-                     case attrTy of
-                     | functorType(functorType(nameType("$pair"), ntTy), _)
-                       when tyIsNonterminal(ntTy) ->
-                       ntTy
-                     | ty -> new(ty)
-                     end)])::rest
+              then let prod::String = localAccessToProd(s)
+                   in
+                   let splitName::(String, String) =
+                       splitQualifiedName(prod)
+                   in
+                     (localAccessToAttr(s),
+                      [(splitName.2, splitName.1,
+                       case attrTy of
+                       | functorType(functorType(nameType("$pair"), ntTy), _)
+                         when tyIsNonterminal(ntTy) ->
+                         ntTy
+                       | ty -> new(ty)
+                       end)])::rest
+                   end end
               else rest,
             [], names);
 }

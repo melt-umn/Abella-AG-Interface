@@ -239,7 +239,6 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> theorem::Clearable
                              silverContext = top.silverContext;}.translation),
                     withs),
                 top.currentState.state.hypList,
-                top.silverContext.knownProductions,
                 top.silverContext) of
         | right(prf) -> right(prf)
         | left(err) -> left(err)
@@ -512,14 +511,24 @@ top::ProofCommand ::= h::HHint tree::String attr::String
       else [errorMsg("Unknown attribute " ++ attr)];
   top.errors <-
       if treeExists && attrExists
-      then case findAssociated(attr, top.silverContext.knownAttrOccurrences) of
-           | nothing() -> [] --covered by checking if attr exists, so impossible here
-           | just(ntstys) ->
+      then case findAttrOccurrences(attr, top.silverContext) of
+           | [] -> [] --covered by checking if attr exists, so impossible here
+           | [(_, ntstys)] ->
              if  wpdNtHyp.isJust
              then if containsBy(tysEqual, errCheckTy, map(fst, ntstys))
                   then []
                   else [errorMsg("Attribute " ++ attr ++ " does not occur on " ++ tree)]
              else []
+           | lst ->
+             case filter(\ p::(String, [(Type, Type)]) ->
+                           containsBy(tysEqual, errCheckTy, map(fst, p.2)),
+                         lst) of
+             | [] -> [errorMsg("No attribute named " ++ attr ++ " occurs on " ++ tree)]
+             | [_] -> []
+             | lst ->
+               [errorMsg("Undetermined attribute " ++ attr ++ "; " ++
+                         "options are " ++ implode(", ", map(fst, lst)))]
+             end
            end
       else [];
   top.errors <-
@@ -566,15 +575,24 @@ top::ProofCommand ::= h::HHint tree::String attr::String
         contains(tree,
            decorate top.currentState.state with
            {silverContext = top.silverContext;}.gatheredTrees);
-  local attrExists::Boolean = contains(attr, top.silverContext.knownAttrs);
+  local attrExists::Boolean =
+        contains(attr, map(fst, top.silverContext.knownAttrs));
   --
   local newNum::String = toString(genInt());
   local eqHypName::String = "$Eq_" ++ newNum;
   local componentHypName::String = "$EqComp_" ++ newNum;
   local equalityName::String = "$Equality_" ++ newNum;
   --
+  local rightAttr::String =
+        case findAttrOccurrences(attr, top.silverContext) of
+        | [] -> error("Should not be accessing this with errors")
+        | lst ->
+          head(filter(\ p::(String, [(Type, Type)]) ->
+                        containsBy(tysEqual, errCheckTy, map(fst, p.2)),
+                      lst)).1
+        end;
   local isInherited::Boolean =
-        contains(attr, top.silverContext.knownInheritedAttrs);
+        isInheritedAttr(rightAttr, top.silverContext);
   local findParent::Maybe<(String, Term)> =
         find_parent_tree(tree, top.translatedState.hypList, top.silverContext);
   local associatedTree::String =
@@ -631,10 +649,9 @@ top::ProofCommand ::= h::HHint tree::String attr::String
                    silverContext = top.silverContext;}.foundParent of
              | nothing() -> error("We picked this term based on it being included")
              | just((prod, index)) ->
-                case findAssociated(prodToName(prod),
-                                    top.silverContext.knownProductions) of
-                | just(val) -> val.resultType
-                | nothing() -> error("Production " ++ prod ++ " must exist")
+                case findProd(prodToName(prod), top.silverContext) of
+                | [(_, val)] -> val.resultType
+                | _ -> error("Production " ++ prod ++ " must exist")
                 end
              end
         else case decorate wpdNtHyp.fromJust.2 with
@@ -654,10 +671,9 @@ top::ProofCommand ::= h::HHint tree::String attr::String
                      silverContext = top.silverContext;}.isArgHere of
                | nothing() -> error("Must exist because of where this came from")
                | just(ind) ->
-                 case findAssociated(prodToName(prod),
-                                     top.silverContext.knownProductions) of
-                 | nothing() -> error("Production must exist 1 (" ++ prod ++ ")")
-                 | just(prodTy) -> elemAtIndex(prodTy.argumentTypes, ind)
+                 case findProd(prodToName(prod), top.silverContext) of
+                 | [(_, prodTy)] -> elemAtIndex(prodTy.argumentTypes, ind)
+                 | _ -> error("Production must exist 1 (" ++ prod ++ ")")
                  end
                end
              | prodTerm(prod, args) ->
@@ -666,11 +682,10 @@ top::ProofCommand ::= h::HHint tree::String attr::String
                      silverContext = top.silverContext;}.isArgHere of
                | nothing() -> error("Must exist because of where this came from")
                | just(ind) ->
-                 case findAssociated(prod,
-                                     top.silverContext.knownProductions) of
-                 | nothing() ->
+                 case findProd(prod, top.silverContext) of
+                 | [(_, prodTy)] -> elemAtIndex(prodTy.argumentTypes, ind)
+                 | _ ->
                    error("Production must exist 2 (" ++ prod ++ ")")
-                 | just(prodTy) -> elemAtIndex(prodTy.argumentTypes, ind)
                  end
                end
              | _ -> error("Should not access errCheckTy with other errors")
@@ -813,8 +828,11 @@ top::ProofCommand ::=
   top.errors <-
       if hypsOkay
       then case prodTy of
-           | nothing() -> [errorMsg("Unknown production " ++ prod)]
-           | _ -> []
+           | [] -> [errorMsg("Unknown production " ++ prod)]
+           | [_] -> []
+           | lst -> [errorMsg("Undetermined production " ++ prod ++
+                              "; choices are " ++
+                              implode(", ", map(fst, lst)))]
            end
       else [];
 
@@ -874,8 +892,8 @@ top::ProofCommand ::=
         | nameTerm(str, _) -> str
         | _ -> error("This must be one of these because of error checking")
         end;
-  local prodTy::Maybe<Type> =
-        findAssociated(prodToName(prod), top.silverContext.knownProductions);
+  local prodTy::[(String, Type)] =
+        findProd(prodToName(prod), top.silverContext);
   local prodChildren::[Term] =
         case structure of
         | applicationTerm(_, args) -> args.argList
@@ -899,7 +917,7 @@ top::ProofCommand ::=
           end;
       --(New child, new child name, original child, type of child)
   local newChildren::[(Term, String, Term, Type)] =
-        buildNewChildren(prodChildren, prodTy.fromJust.argumentTypes,
+        buildNewChildren(prodChildren, head(prodTy).2.argumentTypes,
                          decorate top.translatedState with
                          {silverContext = top.silverContext;}.usedNames);
   --Generate commands to get the correct structures
@@ -920,7 +938,7 @@ top::ProofCommand ::=
                 else rest,
               termMetaterm(
                  buildApplication(
-                    nameTerm(typeToStructureEqName(prodTy.fromJust.resultType),
+                    nameTerm(typeToStructureEqName(head(prodTy).2.resultType),
                              nothing()),
                     [nameTerm(tree, nothing()),
                      buildApplication(nameTerm(prod, nothing()),
@@ -947,7 +965,7 @@ top::ProofCommand ::=
          applyTactic(
             noHint(), nothing(),
             clearable(false, structureEqEqualTheorem(
-                                prodTy.fromJust.resultType), []),
+                                head(prodTy).2.resultType), []),
             [hypApplyArg(otherTreeHyp, [])], [])
         ] ++
         ( case decorate hypBody.fromJust with
@@ -960,7 +978,7 @@ top::ProofCommand ::=
                      termMetaterm(
                         buildApplication(
                            nameTerm(typeToStructureEqName(
-                                       prodTy.fromJust.resultType), nothing()),
+                                       head(prodTy).2.resultType), nothing()),
                            [nameTerm(tr1, nothing()),
                             nameTerm(tr2, nothing())]),
                         emptyRestriction()))
@@ -969,7 +987,7 @@ top::ProofCommand ::=
                   applyTactic(
                      nameHint(correctDirectionName), nothing(),
                      clearable(false, typeToStructureEq_Symm(
-                                         prodTy.fromJust.resultType), []),
+                                         head(prodTy).2.resultType), []),
                      [hypApplyArg(hyp, [])], [])
                  ]
           | _ -> error("Should not access eqCommands with errors")
@@ -983,7 +1001,7 @@ top::ProofCommand ::=
           caseTactic(noHint(), componentName, true),
           applyTactic(
              noHint(), nothing(),
-             clearable(false, structureEqWPD(prodTy.fromJust.resultType), []),
+             clearable(false, structureEqWPD(head(prodTy).2.resultType), []),
              [hypApplyArg(wpdTreeHyp.fromJust.1, [])], []),
           searchTactic()
         ] ++
@@ -998,7 +1016,7 @@ top::ProofCommand ::=
          applyTactic(
             nameHint(wpdCompName), nothing(),
             clearable(false, wpdPrimaryComponent(prod,
-                                prodTy.fromJust.resultType), []),
+                                head(prodTy).2.resultType), []),
              --First argument comes from previous assertion---structure equality
             [hypApplyArg("_", []),
              hypApplyArg(wpdTreeHyp.fromJust.1, [])],
@@ -1222,10 +1240,9 @@ top::ProofCommand ::= h::HHint hyp1::String hyp2::String
         | _ -> error("Impossible (prod)")
         end;
   local treeTy::Type =
-        case findAssociated(prodToName(prod),
-                            top.silverContext.knownProductions) of
-        | nothing() -> error("Impossible (treeTy)")
-        | just(ty) -> ty.resultType
+        case findProd(prodToName(prod), top.silverContext) of
+        | [(_, ty)] -> ty.resultType
+        | _ -> error("Impossible (treeTy)")
         end;
   local prod2::String =
         case treeStructure2 of
@@ -1234,10 +1251,9 @@ top::ProofCommand ::= h::HHint hyp1::String hyp2::String
         | _ -> error("Impossible (prod2)")
         end;
   local treeTy2::Type =
-        case findAssociated(prodToName(prod2),
-                            top.silverContext.knownProductions) of
-        | nothing() -> error("Impossible (treeTy)")
-        | just(ty) -> ty.resultType
+        case findProd(prodToName(prod2), top.silverContext) of
+        | [(_, ty)] -> ty.resultType
+        | _ -> error("Impossible (treeTy)")
         end;
   local component::String =
         findProdComponent(prodToName(prod),
@@ -1300,10 +1316,9 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> m::Metaterm
      end;
   top.pp = h.pp ++ "assert " ++ depthString ++ m.pp ++ ".  ";
 
-  m.attrOccurrences = top.silverContext.knownAttrOccurrences;
-
   local decState::ProofState = top.currentState.state;
   decState.silverContext = top.silverContext;
+  m.silverContext = top.silverContext;
   m.boundVars = [];
   m.finalTys =
     [map(\ p::(String, Type) -> (p.1, just(p.2)),
