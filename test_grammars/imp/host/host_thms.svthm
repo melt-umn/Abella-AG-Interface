@@ -2,7 +2,7 @@ Grammar imp:host.
 
 
 Theorem lookup__unique : forall L N Ret Ret',
-  lookup(N, L) = Ret -> lookup(N, L) = Ret' -> Ret = Ret'.
+  imp:host:lookup(N, L) = Ret -> lookup(N, L) = Ret' -> Ret = Ret'.
 induction on 1. intros. case H1.
   %found here 1
    case H2.
@@ -19,10 +19,10 @@ induction on 1. intros. case H1.
      %found later 2
       apply tail_unique to H5 H9. apply IH to H6 H10. search.
 
-Set debug on.
-Extensible_Theorem value_unique_A : forall (T1 T2 : A) Env V,
+
+Extensible_Theorem value_unique_A : forall (T1 T2 : imp:host:A) Env V,
    T1 ~ T2 ->
-   T1.env = Env -> T2.env = Env ->
+   T1.imp:host:env = Env -> T2.env = Env ->
    T1.value = V ->
    T2.value = V
 on T1.

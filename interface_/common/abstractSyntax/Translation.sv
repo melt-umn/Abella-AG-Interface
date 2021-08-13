@@ -55,6 +55,12 @@ String ::= ntName::String
   return "nt_" ++ colonsToEncoded(ntName);
 }
 
+function nameToColonNonterminalName
+String ::= ntName::String
+{
+  return "nt_" ++ encodedToColons(ntName);
+}
+
 function nameIsNonterminal
 Boolean ::= name::String
 {

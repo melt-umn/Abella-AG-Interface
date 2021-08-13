@@ -12,6 +12,8 @@ closed nonterminal GrammarDecl_c
 concrete productions top::GrammarDecl_c
 | 'Grammar' q::Qname_t '.'
   { top.ast = q.lexeme; }
+| 'Grammar' q::Id_t '.' --Because Qname_t assumes at least one colon
+  { top.ast = q.lexeme; }
 
 
 

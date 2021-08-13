@@ -79,20 +79,27 @@ top::Type ::= name::String
       if name == "string"
       then functorType(nameType("list"), nameType("$char"))
       else if isCapitalized(name) && !contains(name, top.knownTyParams)
-           then --capitalized non-parameters must be nonterminals
-                case findNonterminal(name, top.silverContext) of
-                | [nt] -> nameType(nameToNonterminalName(nt))
-                | _ -> error("Should not access in presence of errors (nameType(" ++ name ++ "))")
-                end
-           else nameType(colonsToEncoded(name));
+      then --capitalized non-parameters must be nonterminals
+           case findNonterminal(name, top.silverContext) of
+           | [nt] -> nameType(nameToNonterminalName(nt))
+           | _ -> error("Should not access translation in presence of errors (nameType(" ++ name ++ "))")
+           end
+      else if isFullyQualifiedName(name) && isCapitalized(splitQualifiedName(name).2)
+      then case findNonterminal(name, top.silverContext) of
+           | [nt] -> nameType(nameToNonterminalName(nt))
+           | _ -> error("Should not access translation in presence of errors (nameType(" ++ name ++ "))")
+           end
+      else nameType(colonsToEncoded(name));
 
   top.fullType =
       if isCapitalized(name) && !contains(name, top.knownTyParams)
       then --capitalized non-parameters must be nonterminals
            case findNonterminal(name, top.silverContext) of
-           | [nt] -> nameType("nt_" ++ nt) --nt_ on front, but still with colons
+           | [nt] -> nameType(nameToColonNonterminalName(nt))
            | _ -> error("Should not access fullType in presence of errors (nameType(" ++ name ++ "))")
            end
+      else if isFullyQualifiedName(name) && isCapitalized(splitQualifiedName(name).2)
+      then nameType(nameToColonNonterminalName(name))
       else nameType(name);
 
   top.colonType = nameType(encodedToColons(name));
@@ -103,12 +110,21 @@ top::Type ::= name::String
       then [errorMsg("Identifiers cannot contain \"$\"")]
       else [];
   top.errors <-
-      case findNonterminal(name, top.silverContext) of
-      | [] -> [errorMsg("No nonterminal type " ++ name)]
-      | [_] -> []
-      | lst -> [errorMsg("Undetermined nonterminal type " ++ name ++
-                         "; choices are " ++ implode(", ", lst))]
-      end;
+      if isCapitalized(name) && !contains(name, top.knownTyParams)
+      then case findNonterminal(name, top.silverContext) of
+           | [] -> [errorMsg("No nonterminal type " ++ name)]
+           | [_] -> []
+           | lst -> [errorMsg("Undetermined nonterminal type " ++ name ++
+                              "; choices are " ++ implode(", ", lst))]
+           end
+      else [];
+  top.errors <-
+      if isFullyQualifiedName(name) && isCapitalized(splitQualifiedName(name).2)
+      then case findNonterminal(name, top.silverContext) of
+           | [nt] -> []
+           | _ -> [errorMsg("Unknown nonterminal " ++ name)]
+           end
+      else [];
 
   top.argumentTypes = [];
 

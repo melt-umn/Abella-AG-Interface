@@ -384,6 +384,8 @@ top::TopCommand ::= names::[String] ty::Type
      else buildNames(names);
   top.pp = "Type " ++ namesString ++ "   " ++ ty.pp ++ ".\n";
 
+  ty.knownTyParams = [];
+
   top.translation = error("Translation not done in typeDeclaration yet");
 }
 

@@ -39,11 +39,11 @@ terminal Id_t  /[-A-Za-z^=`'?$][-A-Za-z^=`'?$0-9_*@+#!~\/]*/;
 terminal Number_t  /[0-9]+/;
 --Qname_t is a qualified name as in Silver
 --The grammar part is a Silver name, so it only needs Silver-allowed characters
-terminal Qname_t  /([A-Za-z0-9_]+:)*[-A-Za-z^=`'?$][-A-Za-z^=`'?$0-9_*@+#!~\/]*/;
+terminal Qname_t  /([A-Za-z0-9_]+:)+[-A-Za-z^=`'?$][-A-Za-z^=`'?$0-9_*@+#!~\/]*/;
 
 
 --These are the things which we are adding to Abella for Silver
-terminal AttrAccess_t  /[a-zA-Z][A-Za-z0-9\_]*\.[a-zA-Z][A-Za-z0-9\_]*/;
+terminal AttrAccess_t  /[a-zA-Z][A-Za-z0-9\_]*\.([a-zA-Z][A-Za-z0-9\_]*:)*([a-zA-Z][A-Za-z0-9\_]*)/;
 terminal SilverString_t  /"([^"]|(\\"))*"/;
 terminal SilverNegativeInteger_t  /-[0-9]+/ dominates Id_t;
 

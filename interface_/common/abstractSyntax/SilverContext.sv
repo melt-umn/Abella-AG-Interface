@@ -149,6 +149,10 @@ function findFun
 function findNonterminal
 [String] ::= ntName::String context::Decorated SilverContext
 {
+  local name::String =
+        if nameIsNonterminal(ntName)
+        then nonterminalNameToName(ntName)
+        else ntName;
   local fullTys::[String] =
         nub(map(\ p::(String, Type, [String]) ->
                   wpdToTypeName(p.1),
@@ -157,11 +161,11 @@ function findNonterminal
         map(\ p::(String, String) -> (p.2, p.1),
             map(splitQualifiedName, fullTys));
   return
-     if isFullyQualifiedName(ntName)
-     then if contains(ntName, fullTys)
-          then [ntName]
+     if isFullyQualifiedName(name)
+     then if contains(name, fullTys)
+          then [name]
           else []
-     else map(\ s::String -> s ++ ":" ++ ntName,
+     else map(\ s::String -> s ++ ":" ++ name,
               findAllAssociated(ntName, tys));
 }
 

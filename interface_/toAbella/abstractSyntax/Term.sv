@@ -323,6 +323,7 @@ top::Metaterm ::= b::Binder bindings::[(String, Maybe<Type>)] body::Metaterm
               case p.2 of
               | just(ty) -> decorate ty with {
                                silverContext = top.silverContext;
+                               knownTyParams = top.knownTyParams;
                             }.errors ++ rest
               | nothing() -> rest
               end,

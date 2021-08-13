@@ -68,7 +68,7 @@ Either<String String> ::=
               case decorate tm1 with {silverContext = silverContext;},
                    decorate tm2 with {silverContext = silverContext;} of
               | nameTerm(attr, _), nameTerm(ty, _)
-                when startsWith("nt_", ty)->
+                when nameIsNonterminal(ty)->
                 right(accessUniqueThm(attr, ty))
               | _, _ ->
                 left("Could not find type of tree")
@@ -122,7 +122,7 @@ Either<String ProofCommand> ::=
               case decorate tm1 with {silverContext = silverContext;},
                    decorate tm2 with {silverContext = silverContext;} of
               | nameTerm(attr, _), nameTerm(ty, _)
-                when startsWith("nt_", ty)->
+                when nameIsNonterminal(ty)->
                 right(applyTactic(h, depth,
                        clearable(false, accessIsThm(attr, ty), []),
                        hypApplyArg("_", [])::args, cleanedWiths))

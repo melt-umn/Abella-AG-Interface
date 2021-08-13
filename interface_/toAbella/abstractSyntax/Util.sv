@@ -28,7 +28,7 @@ Boolean ::= ty::Type
 {
   return
      case ty of
-     | nameType(s) -> startsWith("nt_", s)
+     | nameType(s) -> nameIsNonterminal(s)
      | _ -> false
      end;
 }
