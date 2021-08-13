@@ -49,7 +49,10 @@ top::SilverContext ::=
       "Attrs:  [" ++ implode(", ", map(\ p::(String, String) -> "(" ++ p.1 ++ ", " ++ p.2 ++ ")", attrs)) ++ "]\n" ++
       "Occurrences:  [" ++ implode(";  ", map(\ p::(String, String, [(Type, Type)]) -> "{ " ++ p.1 ++ ", " ++ p.2 ++ ", [" ++ implode("; ", map(\ p::(Type, Type) -> "<" ++ p.1.pp ++ ", " ++ p.2.pp ++ ">", p.3)) ++ "] }", attrOccurrences)) ++ "]\n" ++
       "Prods:  [" ++ implode(";  ", map(\ p::(String, String, Type) -> "(" ++ p.1 ++ ", " ++ p.2 ++ ", " ++ p.3.pp ++ ")", prods)) ++ "]\n" ++
-      "Funs:  [" ++ implode(";  ", map(\ p::(String, String, Type) -> "(" ++ p.1 ++ ", " ++ p.2 ++ ", " ++ p.3.pp ++ ")", funs)) ++ "]\n";
+      "Funs:  [" ++ implode(";  ", map(\ p::(String, String, Type) -> "(" ++ p.1 ++ ", " ++ p.2 ++ ", " ++ p.3.pp ++ ")", funs)) ++ "]\n" ++
+      "Nonterminals:  [" ++ implode(",  ", map(\ p::(String, Type, [String]) -> "(" ++ wpdToTypeName(p.1) ++ ", " ++ p.2.pp ++ ")", wpdRelations)) ++ "]\n" ++
+      "Inherited:  [" ++ implode(",  ", map(\ p::(String, String) -> p.2 ++ ":" ++ p.1, inheritedAttrs)) ++ "]\n" ++
+      "Locals:  [" ++ implode(",  ",  map(\ p::(String, [(String, String, Type)]) -> "(" ++ p.1 ++ ", " ++ "[" ++ implode(", ", map(\ p::(String, String, Type) -> "{" ++ p.1 ++ ", " ++ p.2 ++ ", " ++ p.3.pp ++ "}", p.2)) ++ ")", localAttrs)) ++ "]\n";
 
   top.currentGrammar = currentGrammar;
   top.knownAttrs = attrs;
@@ -110,7 +113,7 @@ function findProd
          let found::[(String, Type)] =
              findAllAssociated(splitName.2, context.knownProductions)
          in
-           case findAssociated(splitName.2, found) of
+           case findAssociated(splitName.1, found) of
            | nothing() -> []
            | just(ty) -> [(prodName, ty)]
            end
@@ -132,13 +135,34 @@ function findFun
          let found::[(String, Type)] =
              findAllAssociated(splitName.2, context.knownFunctions)
          in
-           case findAssociated(splitName.2, found) of
+           case findAssociated(splitName.1, found) of
            | nothing() -> []
            | just(ty) -> [(funName, ty)]
            end
          end end
     else map(\ p::(String, Type) -> (p.1 ++ ":" ++ funName, p.2),
              findAllAssociated(funName, context.knownFunctions));
+}
+
+
+--find all full names of nonterminals with the given name
+function findNonterminal
+[String] ::= ntName::String context::Decorated SilverContext
+{
+  local fullTys::[String] =
+        nub(map(\ p::(String, Type, [String]) ->
+                  wpdToTypeName(p.1),
+                context.knownWPDRelations));
+  local tys::[(String, String)] =
+        map(\ p::(String, String) -> (p.2, p.1),
+            map(splitQualifiedName, fullTys));
+  return
+     if isFullyQualifiedName(ntName)
+     then if contains(ntName, fullTys)
+          then [ntName]
+          else []
+     else map(\ s::String -> s ++ ":" ++ ntName,
+              findAllAssociated(ntName, tys));
 }
 
 
@@ -154,7 +178,7 @@ function findAttrOccurrences
          let found::[(String, [(Type, Type)])] =
              findAllAssociated(splitName.2, context.knownAttrOccurrences)
          in
-           case findAssociated(splitName.2, found) of
+           case findAssociated(splitName.1, found) of
            | nothing() -> []
            | just(ty) -> [(attrName, ty)]
            end
@@ -178,6 +202,26 @@ Boolean ::= attrName::String context::Decorated SilverContext
                       context.knownInheritedAttrs)
          end
     else contains(attrName, map(fst, context.knownInheritedAttrs));
+}
+
+
+--Find the attribute type of a local on a (fully-qualified) production
+--Returns nothing() if no such local occurs on the given production
+function localAttrOccurrenceType
+Maybe<Type> ::= localName::String prod::String context::Decorated SilverContext
+{
+  local splitName::(String, String) = splitQualifiedName(prod);
+  local foundAttr::Maybe<[(String, String, Type)]> =
+        findAssociated(localName, context.knownLocalAttrs);
+  --all occurrences on a production with this short name
+  local byShortName::[(String, Type)] =
+        findAllAssociated(splitName.2, foundAttr.fromJust);
+  return
+     case foundAttr of
+     | nothing() -> nothing()
+     | just(lst) ->
+       findAssociated(splitName.1, byShortName)
+     end;
 }
 
 

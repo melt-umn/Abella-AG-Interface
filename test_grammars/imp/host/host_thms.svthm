@@ -19,7 +19,7 @@ induction on 1. intros. case H1.
      %found later 2
       apply tail_unique to H5 H9. apply IH to H6 H10. search.
 
-
+Set debug on.
 Extensible_Theorem value_unique_A : forall (T1 T2 : A) Env V,
    T1 ~ T2 ->
    T1.env = Env -> T2.env = Env ->

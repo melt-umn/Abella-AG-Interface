@@ -188,6 +188,14 @@ synthesized attribute resultType::Type;
 --Generate the is relation for a type or an error for why we can't
 synthesized attribute isRelation::Either<String Term>;
 
+--Replace short names with fully-qualified names in a type
+synthesized attribute fullType::Type;
+
+--Turn all names with encoded qualification into colon qualification
+synthesized attribute colonType::Type;
+--and vice versa
+synthesized attribute encodedType::Type;
+
 
 --Type parameters for determining correct type translation
 autocopy attribute knownTyParams::[String];

@@ -400,8 +400,8 @@ top::ProofCommand ::= h::HHint tree::String attr::String
              end
         else false;
   local attrOccursOn::Boolean =
-        findAssociated(associatedProd,
-           findAssociated(attr, top.silverContext.knownLocalAttrs).fromJust).isJust;
+        localAttrOccurrenceType(attr, associatedProd,
+                                top.silverContext).isJust;
   --
   local newNum::String = toString(genInt());
   local eqHypName::String = "$Eq_" ++ newNum;
@@ -449,7 +449,7 @@ top::ProofCommand ::= h::HHint tree::String attr::String
              {silverContext = top.silverContext;} of
         | termMetaterm(applicationTerm(nameTerm(rel, _), _), _) ->
           wpdNt_type(rel)
-        | _ -> error("Should not get here (caseAttrAccess)")
+        | _ -> error("Should not get here (caseLocalAttrAccess)")
         end;
   local makeEqHypThm::Clearable =
         clearable(false, wpdNt_to_LocalAttrEq(associatedProd, attr, treeTy), []);
@@ -506,9 +506,21 @@ top::ProofCommand ::= h::HHint tree::String attr::String
       then []
       else [errorMsg("Unknown tree " ++ tree)];
   top.errors <-
-      if attrExists
-      then []
-      else [errorMsg("Unknown attribute " ++ attr)];
+      case possibleAttrs of
+      | [] -> [errorMsg("Unknown attribute " ++ attr)]
+      | lst ->
+        if length(filteredAttrs) == 1
+        then []
+        else if length(filteredAttrs) == 0
+        then [errorMsg("Attribute " ++ attr ++
+                        " does not occur on " ++ tree)]
+        else 
+             [errorMsg("Undetermined attribute " ++ attr ++
+                 "; options are " ++
+                 implode(", ",
+                    map(\ p::(String, [(Type, Type)]) -> p.1,
+                        filteredAttrs)))]
+      end;
   top.errors <-
       if treeExists && attrExists
       then case findAttrOccurrences(attr, top.silverContext) of
@@ -576,21 +588,20 @@ top::ProofCommand ::= h::HHint tree::String attr::String
            decorate top.currentState.state with
            {silverContext = top.silverContext;}.gatheredTrees);
   local attrExists::Boolean =
-        contains(attr, map(fst, top.silverContext.knownAttrs));
+        length(findAttrOccurrences(attr, top.silverContext)) == 1;
   --
   local newNum::String = toString(genInt());
   local eqHypName::String = "$Eq_" ++ newNum;
   local componentHypName::String = "$EqComp_" ++ newNum;
   local equalityName::String = "$Equality_" ++ newNum;
   --
-  local rightAttr::String =
-        case findAttrOccurrences(attr, top.silverContext) of
-        | [] -> error("Should not be accessing this with errors")
-        | lst ->
-          head(filter(\ p::(String, [(Type, Type)]) ->
-                        containsBy(tysEqual, errCheckTy, map(fst, p.2)),
-                      lst)).1
-        end;
+  local possibleAttrs::[(String, [(Type, Type)])] =
+        findAttrOccurrences(attr, top.silverContext);
+  local filteredAttrs::[(String, [(Type, Type)])] =
+        filter(\ p::(String, [(Type, Type)]) ->
+                 containsBy(tysEqual, errCheckTy, map(fst, p.2)),
+               possibleAttrs);
+  local rightAttr::String = head(filteredAttrs).1;
   local isInherited::Boolean =
         isInheritedAttr(rightAttr, top.silverContext);
   local findParent::Maybe<(String, Term)> =
@@ -639,60 +650,68 @@ top::ProofCommand ::= h::HHint tree::String attr::String
         | tm -> error("It should be a production (associatedProd):  " ++ tm.pp)
         end;
   local makeEqHypThm::Clearable =
-        clearable(false, wpdNt_to_AttrEq(attr, treeTy), []);
+        clearable(false, wpdNt_to_AttrEq(rightAttr, treeTy), []);
   local wpdNtHyp::Maybe<(String, Metaterm)> =
         find_WPD_nt_hyp(associatedTree, top.translatedState.hypList, top.silverContext);
   local treeTy::Type =
-        if isInherited
-        then case decorate findParent.fromJust.snd with
-                  {findParentOf = tree;
-                   silverContext = top.silverContext;}.foundParent of
-             | nothing() -> error("We picked this term based on it being included")
-             | just((prod, index)) ->
-                case findProd(prodToName(prod), top.silverContext) of
-                | [(_, val)] -> val.resultType
-                | _ -> error("Production " ++ prod ++ " must exist")
-                end
-             end
-        else case decorate wpdNtHyp.fromJust.2 with
-                  {silverContext = top.silverContext;} of
-             | termMetaterm(applicationTerm(nameTerm(rel, _), _), _) ->
-               wpdNt_type(rel)
-             | _ -> error("Should not get here (caseAttrAccess)")
-             end;
+        let synCase::Type =
+            case decorate find_WPD_nt_hyp(tree, top.translatedState.hypList,
+                                          top.silverContext).fromJust.2 with
+                 {silverContext = top.silverContext;} of
+            | termMetaterm(applicationTerm(nameTerm(rel, _), _), _) ->
+              wpdNt_type(rel)
+            | _ -> error("Should not get here (caseAttrAccess)")
+            end
+        in
+          case findParent of
+          | just(fp) ->
+            case decorate fp.snd with
+                 {findParentOf = tree;
+                  silverContext = top.silverContext;}.foundParent of
+            | just((prod, index)) ->
+              case findProd(prodToName(prod), top.silverContext) of
+              | [(_, val)] -> val.resultType
+              | _ -> error("Production " ++ prod ++ " must exist")
+              end
+            | _ -> synCase
+            end
+          | _ -> synCase
+          end
+        end;
   --We need this to check that the attribute occurs on the tree we said, not the associated tree
   local errCheckTy::Type =
-        if isInherited
-        then case decorate findParent.fromJust.2 with
-                  {silverContext = top.silverContext;} of
-             | applicationTerm(nameTerm(prod, _), args) ->
-               case decorate args with
-                    {findParentOf = tree;
-                     silverContext = top.silverContext;}.isArgHere of
-               | nothing() -> error("Must exist because of where this came from")
-               | just(ind) ->
-                 case findProd(prodToName(prod), top.silverContext) of
-                 | [(_, prodTy)] -> elemAtIndex(prodTy.argumentTypes, ind)
-                 | _ -> error("Production must exist 1 (" ++ prod ++ ")")
-                 end
-               end
-             | prodTerm(prod, args) ->
-               case decorate args with
-                    {findParentOf = tree;
-                     silverContext = top.silverContext;}.isArgHere of
-               | nothing() -> error("Must exist because of where this came from")
-               | just(ind) ->
-                 case findProd(prod, top.silverContext) of
-                 | [(_, prodTy)] -> elemAtIndex(prodTy.argumentTypes, ind)
-                 | _ ->
-                   error("Production must exist 2 (" ++ prod ++ ")")
-                 end
-               end
-             | _ -> error("Should not access errCheckTy with other errors")
-             end
-        else treeTy;
+        case findParent of
+        | just(fp) ->
+          case decorate fp.2 with
+               {silverContext = top.silverContext;} of
+          | applicationTerm(nameTerm(prod, _), args) ->
+            case decorate args with
+                 {findParentOf = tree;
+                  silverContext = top.silverContext;}.isArgHere of
+            | nothing() -> treeTy
+            | just(ind) ->
+              case findProd(prodToName(prod), top.silverContext) of
+              | [(_, prodTy)] -> elemAtIndex(prodTy.argumentTypes, ind)
+              | _ -> error("Production must exist 1 (" ++ prod ++ ")")
+              end
+            end
+          | prodTerm(prod, args) ->
+            case decorate args with
+                 {findParentOf = tree;
+                  silverContext = top.silverContext;}.isArgHere of
+            | nothing() -> treeTy
+            | just(ind) ->
+              case findProd(prod, top.silverContext) of
+              | [(_, prodTy)] -> elemAtIndex(prodTy.argumentTypes, ind)
+              | _ -> error("Production must exist 2 (" ++ prod ++ ")")
+              end
+            end
+          | _ -> error("Should not access errCheckTy with other errors")
+          end
+        | _ -> treeTy
+        end;
   local pcTheorem::Clearable =
-        clearable(false, primaryComponent(attr, treeTy, associatedProd), []);
+        clearable(false, primaryComponent(rightAttr, treeTy, associatedProd), []);
   top.translation =
       [
        --Get structure assumption of correct form (treename = prod_<name> <children>)

@@ -1,7 +1,7 @@
 grammar interface_:common:abstractSyntax;
 
 
-nonterminal Type with pp, isAtomic;
+nonterminal Type with pp, isAtomic, silverContext;
 
 abstract production arrowType
 top::Type ::= ty1::Type ty2::Type

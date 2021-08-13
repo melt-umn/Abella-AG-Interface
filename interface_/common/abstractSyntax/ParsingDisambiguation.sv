@@ -27,8 +27,7 @@ top::Metaterm ::= leftSide::Term rightSide::Term
         --multiple arguments
         | applicationTerm(nameTerm(fun, _),
              singleTermList(pairTerm(contents)))
-          when findAssociated(fun,
-                  top.silverContext.knownFunctions).isJust ->
+          when !null(findFun(fun, top.silverContext)) ->
           just((fun,
                 foldr(addParenthesizedArgs(_, _),
                       emptyParenthesizedArgs(),
@@ -36,8 +35,7 @@ top::Metaterm ::= leftSide::Term rightSide::Term
         --single argument
         | applicationTerm(nameTerm(fun, _),
              singleTermList(contents))
-          when findAssociated(fun,
-                  top.silverContext.knownFunctions).isJust ->
+          when !null(findFun(fun, top.silverContext)) ->
           just((fun, addParenthesizedArgs(contents,
                         emptyParenthesizedArgs())))
         | _ -> nothing()
@@ -47,8 +45,7 @@ top::Metaterm ::= leftSide::Term rightSide::Term
         --multiple arguments
         | applicationTerm(nameTerm(fun, _),
              singleTermList(pairTerm(contents)))
-          when findAssociated(fun,
-                  top.silverContext.knownFunctions).isJust ->
+          when !null(findFun(fun, top.silverContext)) ->
           just((fun,
                 foldr(addParenthesizedArgs(_, _),
                       emptyParenthesizedArgs(),
@@ -56,8 +53,7 @@ top::Metaterm ::= leftSide::Term rightSide::Term
         --single argument
         | applicationTerm(nameTerm(fun, _),
              singleTermList(contents))
-          when findAssociated(fun,
-                  top.silverContext.knownFunctions).isJust ->
+          when !null(findFun(fun, top.silverContext)) ->
           just((fun, addParenthesizedArgs(contents,
                         emptyParenthesizedArgs())))
         | _ -> nothing()
@@ -68,16 +64,14 @@ top::Metaterm ::= leftSide::Term rightSide::Term
         --multiple arguments
         | applicationTerm(nameTerm(prod, _),
              singleTermList(pairTerm(contents)))
-          when findAssociated(prod,
-                  top.silverContext.knownProductions).isJust ->
+          when !null(findProd(prod, top.silverContext)) ->
           just(prodTerm(prod,
                   foldr(addParenthesizedArgs(_, _),
                         emptyParenthesizedArgs(), contents.argList)))
         --single argument
         | applicationTerm(nameTerm(prod, _),
              singleTermList(contents))
-          when findAssociated(prod,
-                  top.silverContext.knownProductions).isJust ->
+          when !null(findProd(prod, top.silverContext)) ->
           just(prodTerm(prod,
                   addParenthesizedArgs(contents,
                      emptyParenthesizedArgs())))
@@ -88,16 +82,14 @@ top::Metaterm ::= leftSide::Term rightSide::Term
         case rightSide of
         | applicationTerm(nameTerm(prod, _),
              singleTermList(pairTerm(contents)))
-          when findAssociated(prod,
-                  top.silverContext.knownProductions).isJust ->
+          when !null(findProd(prod, top.silverContext)) ->
           just(prodTerm(prod,
                   foldr(addParenthesizedArgs(_, _),
                         emptyParenthesizedArgs(), contents.argList)))
         --single argument
         | applicationTerm(nameTerm(prod, _),
              singleTermList(contents))
-          when findAssociated(prod,
-                  top.silverContext.knownProductions).isJust ->
+          when !null(findProd(prod, top.silverContext)) ->
           just(prodTerm(prod,
                   addParenthesizedArgs(contents,
                      emptyParenthesizedArgs())))

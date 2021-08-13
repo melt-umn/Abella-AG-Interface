@@ -226,8 +226,9 @@ top::Metaterm ::= b::Binder bindings::[(String, Maybe<Type>)] body::Metaterm
         map(\ p::Pair<String Maybe<Type>> ->
               (fst(p), case snd(p) of
                        | just(ty) ->
-                         just(decorate ty with
-                              {knownTyParams=top.knownTyParams;}.translation)
+                         just(decorate ty with {
+                                 knownTyParams=top.knownTyParams;
+                                 silverContext=top.silverContext;}.translation)
                        | nothing() -> nothing()
                        end),
             cleanedNames);
@@ -242,7 +243,8 @@ top::Metaterm ::= b::Binder bindings::[(String, Maybe<Type>)] body::Metaterm
   body.boundVars =
      map(\ p::Pair<String Maybe<Type>> ->
            case p of
-           | pair(a, just(b)) -> pair(a, just([decorate b with {knownTyParams=top.knownTyParams;}.translation]))
+           | pair(a, just(b)) -> pair(a, just([decorate b with {knownTyParams=top.knownTyParams;
+                                                                silverContext=top.silverContext;}.fullType]))
            | pair(a, nothing()) -> pair(a, nothing())
            end, bindings)::top.boundVars;
   top.boundVarsOut =
@@ -319,7 +321,9 @@ top::Metaterm ::= b::Binder bindings::[(String, Maybe<Type>)] body::Metaterm
   top.errors <-
       foldr(\ p::(String, Maybe<Type>) rest::[Error] ->
               case p.2 of
-              | just(ty) -> ty.errors ++ rest
+              | just(ty) -> decorate ty with {
+                               silverContext = top.silverContext;
+                            }.errors ++ rest
               | nothing() -> rest
               end,
              [], bindings);
@@ -344,11 +348,11 @@ aspect production attrAccessMetaterm
 top::Metaterm ::= tree::String attr::String val::Term
 {
   top.translation =
-      case possibleTys, findAssociated(tree, top.knownDecoratedTrees) of
-      | [ty], just((nodeName, _)) ->
+      case finalTreeTy, findAssociated(tree, top.knownDecoratedTrees) of
+      | just(ty), just((nodeName, _)) ->
         termMetaterm(
            buildApplication(
-              nameTerm(accessRelationName(ty, attr), nothing()),
+              nameTerm(accessRelationName(ty, finalAttr), nothing()),
               [nameTerm(tree, nothing()),
                nameTerm(nodeName, nothing()),
                buildApplication(nameTerm(attributeExistsName, nothing()),
@@ -359,16 +363,29 @@ top::Metaterm ::= tree::String attr::String val::Term
       end;
   top.newPremises := [wpdNewPremise(tree)] ++ val.newPremises;
 
+  local possibleAttrs::[(String, [(Type, Type)])] =
+        findAttrOccurrences(attr, top.silverContext);
   local occursOnTypes::[Type] =
-        case findAttrOccurrences(attr, top.silverContext) of
-        | [(fullattr, tys)] -> map(fst, tys)
-        | _ -> [] --unknown/undeteremined attribute
-        end;
+        flatMap(\ p::(String, [(Type, Type)]) -> map(fst, p.2),
+                possibleAttrs);
   local possibleTys::[Type] =
         case findAssociatedScopes(tree, top.boundVars) of
         | just(just(l)) -> intersectBy(tysEqual, occursOnTypes, l)
         | just(nothing()) -> occursOnTypes
         | nothing() -> []
+        end;
+  local finalTreeTy::Maybe<Type> =
+        case findAssociatedScopes(tree, top.finalTys) of
+        | nothing() -> nothing()
+        | just(x) -> x
+        end;
+  local finalAttr::String =
+        case filter(\ p::(String, [(Type, Type)]) ->
+                      containsBy(tysEqual, finalTreeTy.fromJust,
+                                 map(fst, p.2)),
+                    possibleAttrs) of
+        | [(fullattr, _)] -> fullattr
+        | _ -> error("Should not access finalAttr in presence of errors")
         end;
 
   val.boundVars = replaceAssociatedScopes(tree, just(possibleTys), top.boundVars);
@@ -376,27 +393,33 @@ top::Metaterm ::= tree::String attr::String val::Term
 
   top.errors <-
       --check whether the attribute exists
-      case findAttrOccurrences(attr, top.silverContext) of
-      | [(fullattr, tys)] -> []
+      case possibleAttrs of
       | [] -> [errorMsg("Unknown attribute " ++ attr)]
-      | lst -> [errorMsg("Undetermined attribute " ++ attr ++
-                         "; choices are" ++
-                         implode(", ", map(fst, lst)))]
-      end ++
+      | _ -> []
+      end;
+  top.errors <-
       --check whether the tree exists
       case findAssociatedScopes(tree, top.boundVars) of
       | nothing() -> [errorMsg("Unbound name " ++ tree)]
       | _ -> []
-      end ++
-      --check attribute occurrence of trees of type t
-      case findAttrOccurrences(attr, top.silverContext), possibleTys of
-      | [(fullname, atys)], ttys ->
-        if null(ttys)
-        then [errorMsg("Attribute " ++ attr ++ " does not occur on " ++ tree)]
-        else if length(ttys) > 1
-             then [errorMsg("Could not determine type of tree " ++ tree)]
-             else []
-      | _, _ -> []
+      end;
+  top.errors <-
+      --check whether we can find the exact attribute and whether the
+      --   tree is guaranteed typable
+      case possibleAttrs, finalTreeTy of
+      | _, nothing() ->
+        [errorMsg("Could not determine type of tree " ++ tree)]
+      | [], _ -> []
+      | lst, just(ty) ->
+        case filter(\ p::(String, [(Type, Type)]) ->
+                      containsBy(tysEqual, ty, map(fst, p.2)), lst) of
+        | [] -> [errorMsg("Attribute " ++ attr ++ " does not occur " ++
+                          "on tree " ++ tree)]
+        | [_] -> []
+        | lst -> [errorMsg("Undetermined attribute " ++ attr ++
+                           "; choices are " ++
+                           implode(", ", map(fst, lst)))]
+        end
       end;
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
@@ -409,11 +432,11 @@ aspect production attrAccessEmptyMetaterm
 top::Metaterm ::= tree::String attr::String
 {
   top.translation =
-      case possibleTys, findAssociated(tree, top.knownDecoratedTrees) of
-      | [ty], just((nodeName, _)) ->
+      case finalTreeTy, findAssociated(tree, top.knownDecoratedTrees) of
+      | just(ty), just((nodeName, _)) ->
         termMetaterm(
            buildApplication(
-              nameTerm(accessRelationName(ty, attr), nothing()),
+              nameTerm(accessRelationName(ty, finalAttr), nothing()),
               [nameTerm(tree, nothing()),
                nameTerm(nodeName, nothing()),
                nameTerm(attributeNotExistsName, nothing())]),
@@ -423,43 +446,62 @@ top::Metaterm ::= tree::String attr::String
       end;
   top.newPremises := [wpdNewPremise(tree)];
 
+  local possibleAttrs::[(String, [(Type, Type)])] =
+        findAttrOccurrences(attr, top.silverContext);
   local occursOnTypes::[Type] =
-        case findAttrOccurrences(attr, top.silverContext) of
-        | [(_, tys)] -> map(fst, tys)
-        | _ -> [] --unknown/undetermined attribute
-        end;
+        flatMap(\ p::(String, [(Type, Type)]) -> map(fst, p.2),
+                possibleAttrs);
   local possibleTys::[Type] =
         case findAssociatedScopes(tree, top.boundVars) of
         | just(just(l)) -> intersectBy(tysEqual, occursOnTypes, l)
         | just(nothing()) -> occursOnTypes
         | nothing() -> []
         end;
+  local finalTreeTy::Maybe<Type> =
+        case findAssociatedScopes(tree, top.finalTys) of
+        | nothing() -> nothing()
+        | just(x) -> x
+        end;
+  local finalAttr::String =
+        case filter(\ p::(String, [(Type, Type)]) ->
+                      containsBy(tysEqual, finalTreeTy.fromJust,
+                                 map(fst, p.2)),
+                    possibleAttrs) of
+        | [(fullattr, _)] -> fullattr
+        | _ -> error("Should not access finalAttr in presence of errors")
+        end;
 
   top.boundVarsOut = replaceAssociatedScopes(tree, just(possibleTys), top.boundVars);
 
   top.errors <-
       --check whether the attribute exists
-      case findAttrOccurrences(attr, top.silverContext) of
-      | [(fullattr, tys)] -> []
+      case possibleAttrs of
       | [] -> [errorMsg("Unknown attribute " ++ attr)]
-      | lst -> [errorMsg("Undetermined attribute " ++ attr ++
-                         "; choices are" ++
-                         implode(", ", map(fst, lst)))]
-      end ++
+      | _ -> []
+      end;
+  top.errors <-
       --check whether the tree exists
       case findAssociatedScopes(tree, top.boundVars) of
       | nothing() -> [errorMsg("Unbound name " ++ tree)]
       | _ -> []
-      end ++
-      --check attribute occurrence of trees of type t
-      case findAttrOccurrences(attr, top.silverContext), possibleTys of
-      | [(fullname, atys)], ttys ->
-        if null(ttys)
-        then [errorMsg("Attribute " ++ attr ++ " does not occur on " ++ tree)]
-        else if length(ttys) > 1
-             then [errorMsg("Could not determine type of tree " ++ tree)]
-             else []
-      | _, _ -> []
+      end;
+  top.errors <-
+      --check whether we can find the exact attribute and whether the
+      --   tree is guaranteed typable
+      case possibleAttrs, finalTreeTy of
+      | _, nothing() ->
+        [errorMsg("Could not determine type of tree " ++ tree)]
+      | [], _ -> []
+      | lst, just(ty) ->
+        case filter(\ p::(String, [(Type, Type)]) ->
+                      containsBy(tysEqual, ty, map(fst, p.2)), lst) of
+        | [] -> [errorMsg("Attribute " ++ attr ++ " does not occur " ++
+                          "on tree " ++ tree)]
+        | [_] -> []
+        | lst -> [errorMsg("Undetermined attribute " ++ attr ++
+                           "; choices are " ++
+                           implode(", ", map(fst, lst)))]
+        end
       end;
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);

@@ -21,7 +21,8 @@ top::Kind ::= k::Kind
 
 
 attribute
-   translation<Type>, errors, knownTyParams,
+   translation<Type>, errors, knownTyParams, fullType,
+   colonType, encodedType,
    eqTest<Type>, isEq,
    argumentTypes, headTypeName, resultType,
    isRelation
@@ -49,6 +50,11 @@ top::Type ::= ty1::Type ty2::Type
 
   top.translation = arrowType(ty1.translation, ty2.translation);
 
+  top.fullType = arrowType(ty1.fullType, ty2.fullType);
+
+  top.colonType = arrowType(ty1.colonType, ty2.colonType);
+  top.encodedType = arrowType(ty1.encodedType, ty2.encodedType);
+
   top.argumentTypes = ty1::ty2.argumentTypes;
 
   top.headTypeName = nothing();
@@ -74,13 +80,35 @@ top::Type ::= name::String
       then functorType(nameType("list"), nameType("$char"))
       else if isCapitalized(name) && !contains(name, top.knownTyParams)
            then --capitalized non-parameters must be nonterminals
-                nameType(nameToNonterminalName(name))
-           else nameType(name);
+                case findNonterminal(name, top.silverContext) of
+                | [nt] -> nameType(nameToNonterminalName(nt))
+                | _ -> error("Should not access in presence of errors (nameType(" ++ name ++ "))")
+                end
+           else nameType(colonsToEncoded(name));
+
+  top.fullType =
+      if isCapitalized(name) && !contains(name, top.knownTyParams)
+      then --capitalized non-parameters must be nonterminals
+           case findNonterminal(name, top.silverContext) of
+           | [nt] -> nameType("nt_" ++ nt) --nt_ on front, but still with colons
+           | _ -> error("Should not access fullType in presence of errors (nameType(" ++ name ++ "))")
+           end
+      else nameType(name);
+
+  top.colonType = nameType(encodedToColons(name));
+  top.encodedType = nameType(colonsToEncoded(name));
 
   top.errors <-
       if indexOf("$", name) >= 0
       then [errorMsg("Identifiers cannot contain \"$\"")]
       else [];
+  top.errors <-
+      case findNonterminal(name, top.silverContext) of
+      | [] -> [errorMsg("No nonterminal type " ++ name)]
+      | [_] -> []
+      | lst -> [errorMsg("Undetermined nonterminal type " ++ name ++
+                         "; choices are " ++ implode(", ", lst))]
+      end;
 
   top.argumentTypes = [];
 
@@ -122,6 +150,11 @@ top::Type ::= functorTy::Type argTy::Type
 
   top.translation = functorType(functorTy.translation, argTy.translation);
 
+  top.fullType = functorType(functorTy.fullType, argTy.fullType);
+
+  top.colonType = functorType(functorTy.colonType, argTy.colonType);
+  top.encodedType = functorType(functorTy.encodedType, argTy.encodedType);
+
   top.argumentTypes = [];
 
   top.headTypeName = functorTy.headTypeName;
@@ -149,6 +182,11 @@ top::Type ::=
   top.isEq = true;
 
   top.translation = underscoreType();
+
+  top.fullType = underscoreType();
+
+  top.colonType = underscoreType();
+  top.encodedType = underscoreType();
 
   top.argumentTypes = [];
 

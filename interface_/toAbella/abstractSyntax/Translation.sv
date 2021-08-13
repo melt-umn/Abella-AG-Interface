@@ -252,7 +252,7 @@ Metaterm ::= prods::[String] original::Metaterm
   local newBindings::[(String, Maybe<Type>)] =
         flatMap(\ p::(Type, String, String, String) ->
                   if tyIsNonterminal(p.1)
-                  then [(p.2, just(p.1)),
+                  then [(p.2, just(p.1.encodedType)),
                         (p.3, nothing()),
                         (p.4, nothing())]
                   else [(p.2, just(p.1))], children) ++
@@ -511,12 +511,11 @@ function buildFakeIHs
 function buildChildNames
 [(Type, String, String, String)] ::= tys::[Type] usedNames::[String]
 {
-  local uniqueName::String = makeUniqueNameFromTy(head(tys), usedNames);
   return
      case tys of
      | [] -> []
      | h::t ->
-       let name::String = makeUniqueNameFromTy(head(tys), usedNames) in
+       let name::String = makeUniqueNameFromTy(h, usedNames) in
        let nodeName::String =
            makeUniqueNameFromBase(treeToNodeName(name), usedNames) in
        let childListName::String =
@@ -534,7 +533,14 @@ String ::= ty::Type usedNames::[String]
 {
   local base::String =
         if tyIsNonterminal(ty)
-        then substring(3, 4, ty.headTypeName.fromJust)
+        then let qualName::String =
+                 substring(3, length(ty.headTypeName.fromJust),
+                           ty.headTypeName.fromJust)
+             in
+               if isFullyQualifiedName(qualName)
+               then substring(0, 1, splitQualifiedName(qualName).2)
+               else substring(0, 1, qualName)
+             end
         else case ty.headTypeName of
              | nothing() -> "A"
              | just("integer") -> "N"

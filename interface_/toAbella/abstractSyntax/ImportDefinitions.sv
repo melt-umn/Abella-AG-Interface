@@ -191,8 +191,8 @@ top::TopCommand ::= preds::[(String, Type)] defs::Defs
       case preds of
       | [] -> [] --probably shouldn't get this
       --Catches the components because of how isWpdTypeName checks
-      | [(name, arrowType(ty, _))] when isWpdTypeName(name) ->
-        [(name, ty, defs.wpdProdNames)]
+      | [(name, arrowType(nameType(nt), _))] when isWpdTypeName(name) ->
+        [(name, nameType(encodedToColons(nt)), defs.wpdProdNames)]
         --aren't mutual in components, so can't be in longer list
       | _ -> []
       end;
@@ -203,7 +203,7 @@ top::TopCommand ::= preds::[(String, Type)] defs::Defs
               then let splitName::(String, String) =
                        splitQualifiedName(funToName(p.1))
                    in
-                     (splitName.1, splitName.2, p.2)::rest
+                     (splitName.2, splitName.1, p.2)::rest
                    end
               else rest,
             [], preds);
@@ -219,7 +219,7 @@ top::TopCommand ::= names::[String] ty::Type
                  let splitName::(String, String) =
                      splitQualifiedName(prodToName(s))
                  in
-                   (splitName.1, splitName.2, new(ty))
+                   (splitName.2, splitName.1, ty.colonType)
                  end,
                names)
       else [];
@@ -263,7 +263,7 @@ top::TopCommand ::= names::[String] ty::Type
                        substring(1, lastIndexOf("$", s), s)
                    in
                    let splitName::(String, String) =
-                       splitQualifiedName(name)
+                       splitQualifiedName(encodedToColons(name))
                    in
                      (splitName.2, splitName.1)::rest
                    end end
@@ -283,8 +283,8 @@ top::TopCommand ::= names::[String] ty::Type
                        case attrTy of
                        | functorType(functorType(nameType("$pair"), ntTy), _)
                          when tyIsNonterminal(ntTy) ->
-                         ntTy
-                       | ty -> new(ty)
+                         ntTy.colonType
+                       | ty -> ty.colonType
                        end)])::rest
                    end end
               else rest,

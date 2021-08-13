@@ -75,9 +75,13 @@ top::TopCommand ::= depth::Integer thms::[(String, Metaterm, String)]
                      silverContext = top.silverContext;
                   }.foundNameType.fromRight
               in
-                (p.2, p.3, ty,
-                 head(findWPDRelations(ty,
-                         top.silverContext.knownWPDRelations)).3, p.1)
+                case ty of
+                | nameType(nt) ->
+                  (p.2, p.3, nameType(encodedToColons(nt)),
+                   head(findWPDRelations(nameType(encodedToColons(nt)),
+                           top.silverContext.knownWPDRelations)).3, p.1)
+                | _ -> error("WPD relations only exist for nonterminal types")
+                end
               end, translated);
 
   local allUsedNames::[String] =
@@ -152,16 +156,21 @@ function gather_bodies_errors
             currentState::ProverState
             silverContext::Decorated SilverContext
 {
-  local body::Metaterm = head(thms).2;
+  local fst_thm::(String, Metaterm, String) =
+        case thms of
+        | h::_ -> h
+        | _ -> error("Should not access fst_thm if empty")
+        end;
+  local body::Metaterm = fst_thm.2;
   body.boundVars = [];
   body.finalTys = [];
-  body.knownNames = [head(thms).3];
-  body.knownTrees = head(thms).3::body.gatheredTrees;
+  body.knownNames = [fst_thm.3];
+  body.knownTrees = fst_thm.3::body.gatheredTrees;
   body.knownDecoratedTrees = body.gatheredDecoratedTrees;
   body.knownTyParams = [];
   body.silverContext = silverContext;
   body.currentState = currentState;
-  body.findNameType = head(thms).3;
+  body.findNameType = fst_thm.3;
   return
      case thms of
      | [] -> []

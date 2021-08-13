@@ -52,7 +52,7 @@ global falseName::String = "$bfalse";
 function nameToNonterminalName
 String ::= ntName::String
 {
-  return "nt_" ++ ntName;
+  return "nt_" ++ colonsToEncoded(ntName);
 }
 
 function nameIsNonterminal
@@ -64,7 +64,7 @@ Boolean ::= name::String
 function nonterminalNameToName
 String ::= ntName::String
 {
-  return substring(3, length(ntName), ntName);
+  return encodedToColons(substring(3, length(ntName), ntName));
 }
 
 
@@ -90,7 +90,7 @@ String ::= treeName::String
 function nodeTreeConstructorName
 String ::= treeTy::Type
 {
-  return "$ntr_" ++ treeTy.pp;
+  return "$ntr_" ++ colonsToEncoded(treeTy.pp);
 }
 function isNodeTreeConstructorName
 Boolean ::= s::String
@@ -103,12 +103,12 @@ Boolean ::= s::String
 function accessToAccessName
 String ::= treeName::String attrName::String
 {
-  return "$" ++ treeName ++ "_DOT_" ++ attrName;
+  return "$" ++ treeName ++ "_DOT_" ++ colonsToEncoded(attrName);
 }
 function accessRelationName
 String ::= treeTy::Type attrName::String
 {
-  return "$access_$_" ++ attrName ++ "_$_" ++ treeTy.pp;
+  return "$access_$_" ++ colonsToEncoded(attrName) ++ "_$_" ++ colonsToEncoded(treeTy.pp);
 }
 function isAccessRelation
 Boolean ::= str::String
@@ -120,13 +120,13 @@ String ::= str::String
 {
   local firstSplit::Integer = indexOf("_$_", str);
   local lastSplit::Integer = lastIndexOf("_$_", str);
-  return substring(firstSplit + 3, lastSplit, str);
+  return encodedToColons(substring(firstSplit + 3, lastSplit, str));
 }
 function accessRelationToType
 String ::= str::String
 {
   local lastSplit::Integer = lastIndexOf("_$_", str);
-  return substring(lastSplit + 3, length(str), str);
+  return encodedToColons(substring(lastSplit + 3, length(str), str));
 }
 
 
@@ -134,12 +134,12 @@ String ::= str::String
 function accessUniqueThm
 String ::= attr::String ty::String
 {
-  return "$access_$_" ++ attr ++ "_$_" ++ ty ++ "__unique";
+  return "$access_$_" ++ colonsToEncoded(attr) ++ "_$_" ++ colonsToEncoded(ty) ++ "__unique";
 }
 function accessIsThm
 String ::= attr::String ty::String
 {
-  return "$access_$_" ++ attr ++ "_$_" ++ ty ++ "__is";
+  return "$access_$_" ++ colonsToEncoded(attr) ++ "_$_" ++ colonsToEncoded(ty) ++ "__is";
 }
 
 
@@ -154,7 +154,7 @@ String ::= treeTy::Type attrName::String prodName::String
 {
   --$local_access_$_<prod>_$_<name>_$_<type>
   return "$local_access_$_" ++ nameToProd(prodName) ++ "_$_" ++
-         attrName ++ "_$_" ++ treeTy.pp;
+         attrName ++ "_$_" ++ colonsToEncoded(treeTy.pp);
 }
 function localAccessToProd
 String ::= s::String
@@ -175,19 +175,19 @@ function localAccessToType
 Type ::= s::String
 {
   --$local_access_$_<prod>_$_<name>_$_<type>
-  return nameType(substring(lastIndexOf("_$_", s) + 3, length(s), s));
+  return nameType(encodedToColons(substring(lastIndexOf("_$_", s) + 3, length(s), s)));
 }
 function wpdNt_to_LocalAttrEq
 String ::= prod::String attr::String ty::Type
 {
   --$wpd__to__<prod>_local_<attr>__<ty>
-  return "$wpd__to__" ++ prod ++ "_local_" ++ attr ++ "__" ++ ty.pp;
+  return "$wpd__to__" ++ colonsToEncoded(prod) ++ "_local_" ++ attr ++ "__" ++ colonsToEncoded(ty.pp);
 }
 function localAccessUniqueThm
 String ::= prod::String attr::String ty::String
 {
   --$local_access_$_<$prod_prod>_$_<attr>_$_<ty>__unique
-  return "$local_access_$_$prod_" ++ prod ++ "_$_" ++ attr ++ "_$_" ++ ty ++ "__unique";
+  return "$local_access_$_$prod_" ++ colonsToEncoded(prod) ++ "_$_" ++ attr ++ "_$_" ++ colonsToEncoded(ty) ++ "__unique";
 }
 
 
@@ -195,36 +195,45 @@ String ::= prod::String attr::String ty::String
 function wpdTypeName
 String ::= treeTy::Type
 {
-  return "$wpd_" ++ treeTy.pp;
+  return "$wpd_" ++ colonsToEncoded(treeTy.pp);
 }
 function isWpdTypeName
 Boolean ::= rel::String
 {
   return startsWith("$wpd_", rel) && !startsWith("$wpd_node_", rel);
 }
+function wpdToTypeName
+String ::= wpd::String
+{
+  local component::Integer = lastIndexOf("__", wpd);
+  return
+     if component < 0
+     then nonterminalNameToName(substring(5, length(wpd), wpd))
+     else nonterminalNameToName(substring(5, component, wpd));
+}
 function wpdNt_type
 Type ::= rel::String
 {
   --$wpd_<type name>
-  return nameType(substring(5, length(rel), rel));
+  return nameType(encodedToColons(substring(5, length(rel), rel)));
 }
 function wpdPrimaryComponent
 String ::= prod::String builtTy::Type
 {
-  return "$wpd_" ++ builtTy.pp ++ "__" ++ prod;
+  return "$wpd_" ++ colonsToEncoded(builtTy.pp) ++ "__" ++ colonsToEncoded(prod);
 }
 function wpdComponentRelToComponentName
 String ::= rel::String
 {
   --$wpd_<type name>__<component>
   local index::Integer = lastIndexOf("__", rel);
-  return substring(index + 2, length(rel), rel);
+  return encodedToColons(substring(index + 2, length(rel), rel));
 }
 
 function wpdNodeTreeForm
 String ::= ty::Type
 {
-  return "$wpd_" ++ ty.pp ++ "__ntr_" ++ ty.pp;
+  return "$wpd_" ++ colonsToEncoded(ty.pp) ++ "__ntr_" ++ colonsToEncoded(ty.pp);
 }
 
 
@@ -232,7 +241,7 @@ String ::= ty::Type
 function wpdNodeTypeName
 String ::= treeTy::Type
 {
-  return "$wpd_node_" ++ treeTy.pp;
+  return "$wpd_node_" ++ colonsToEncoded(treeTy.pp);
 }
 function isWPD_NodeRelName
 Boolean ::= str::String
@@ -243,7 +252,7 @@ function wpdNode_type
 Type ::= str::String
 {
   --$wpd_node_<type name>
-  return nameType(substring(10, length(str), str));
+  return nameType(encodedToColons(substring(10, length(str), str)));
 }
 
 
@@ -251,17 +260,17 @@ Type ::= str::String
 function wpdNode_to_AttrEq
 String ::= attr::String ty::Type
 {
-  return "$wpd_node__to__" ++ attr ++ "__" ++ ty.pp;
+  return "$wpd_node__to__" ++ colonsToEncoded(attr) ++ "__" ++ colonsToEncoded(ty.pp);
 }
 function wpdNt_to_AttrEq
 String ::= attr::String ty::Type
 {
-  return "$wpd__to__" ++ attr ++ "__" ++ ty.pp;
+  return "$wpd__to__" ++ colonsToEncoded(attr) ++ "__" ++ colonsToEncoded(ty.pp);
 }
 function primaryComponent
 String ::= attr::String ty::Type prod::String
 {
-  return "$" ++ attr ++ "__" ++ ty.pp ++ "__" ++ prod;
+  return "$" ++ colonsToEncoded(attr) ++ "__" ++ colonsToEncoded(ty.pp) ++ "__" ++ colonsToEncoded(prod);
 }
 
 
@@ -269,7 +278,7 @@ String ::= attr::String ty::Type prod::String
 function typeToStructureEqName
 String ::= ty::Type
 {
-  return "$structure_eq__" ++ ty.pp;
+  return "$structure_eq__" ++ colonsToEncoded(ty.pp);
 }
 function isStructureEqName
 Boolean ::= rel::String
@@ -279,32 +288,32 @@ Boolean ::= rel::String
 function structureEqToType
 Type ::= s::String
 {
-  return nameType(substring(15, length(s), s));
+  return nameType(encodedToColons(substring(15, length(s), s)));
 }
 function structureEqWPD
 String ::= ty::Type
 {
-  return "$structure_eq__" ++ ty.pp ++ "__wpd";
+  return "$structure_eq__" ++ colonsToEncoded(ty.pp) ++ "__wpd";
 }
 function structureEqEqualTheorem
 String ::= ty::Type
 {
-  return "$structure_eq__" ++ ty.pp ++ "__equal";
+  return "$structure_eq__" ++ colonsToEncoded(ty.pp) ++ "__equal";
 }
 function typeToStructureEq_Symm
 String ::= ty::Type
 {
-  return "$structure_eq__" ++ ty.pp ++ "__symm";
+  return "$structure_eq__" ++ colonsToEncoded(ty.pp) ++ "__symm";
 }
 function structureEqProdComponent
 String ::= prod::String
 {
-  return "$structure_eq__" ++ prod;
+  return "$structure_eq__" ++ colonsToEncoded(prod);
 }
 function structureEqExpansionTheorem
 String ::= ty::Type component::String
 {
-  return "$structure_eq__" ++ ty.pp ++ "__" ++ component ++ "__expand";
+  return "$structure_eq__" ++ colonsToEncoded(ty.pp) ++ "__" ++ colonsToEncoded(component) ++ "__expand";
 }
 
 
@@ -318,12 +327,12 @@ function prodToName
 String ::= prod::String
 {
   --$prod_<name>
-  return substring(6, length(prod), prod);
+  return encodedToColons(substring(6, length(prod), prod));
 }
 function nameToProd
 String ::= s::String
 {
-  return "$prod_" ++ s;
+  return "$prod_" ++ colonsToEncoded(s);
 }
 
 
@@ -337,12 +346,12 @@ function funToName
 String ::= fun::String
 {
   --$fun__<name>
-  return substring(6, length(fun), fun);
+  return encodedToColons(substring(6, length(fun), fun));
 }
 function nameToFun
 String ::= s::String
 {
-  return "$fun__" ++ s;
+  return "$fun__" ++ colonsToEncoded(s);
 }
 
 
@@ -370,7 +379,7 @@ function splitQualifiedName
   local ind::Integer = lastIndexOf(":", s);
   return
      if ind < 0
-     then error("Not a qualified name to split")
+     then error("Not a qualified name to split (" ++ s ++ ")")
      else (substring(0, ind, s), substring(ind + 1, length(s), s));
 }
 function splitEncodedName
@@ -379,7 +388,7 @@ function splitEncodedName
   local ind::Integer = lastIndexOf("$*$", s);
   return
      if ind < 0
-     then error("Not a qualified name to split")
+     then error("Not an encoded name to split (" ++ s ++ ")")
      else (substring(0, ind, s), substring(ind + 3, length(s), s));
 }
 function isFullyQualifiedName
