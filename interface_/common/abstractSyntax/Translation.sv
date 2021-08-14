@@ -52,25 +52,25 @@ global falseName::String = "$bfalse";
 function nameToNonterminalName
 String ::= ntName::String
 {
-  return "nt_" ++ colonsToEncoded(ntName);
+  return "$nt_" ++ colonsToEncoded(ntName);
 }
 
 function nameToColonNonterminalName
 String ::= ntName::String
 {
-  return "nt_" ++ encodedToColons(ntName);
+  return "$nt_" ++ encodedToColons(ntName);
 }
 
 function nameIsNonterminal
 Boolean ::= name::String
 {
-  return startsWith("nt_", name);
+  return startsWith("$nt_", name);
 }
 
 function nonterminalNameToName
 String ::= ntName::String
 {
-  return encodedToColons(substring(3, length(ntName), ntName));
+  return encodedToColons(substring(4, length(ntName), ntName));
 }
 
 
