@@ -188,7 +188,7 @@ top::ProcessingErrorMessage ::= name::String
 {
   top.pp = "Could not find theorem named \"" ++ name ++ "\"";
 
-  top.translation = unknownTheorem(name);
+  top.translation = unknownTheorem(encodedToColons(name));
 }
 
 
@@ -261,7 +261,7 @@ top::ProcessingErrorMessage ::= name::String
 {
   top.pp = "\"" ++ name ++ "\" already refers to a lemma";
 
-  top.translation = nameExistingLemma(name);
+  top.translation = nameExistingLemma(encodedToColons(name));
 }
 
 

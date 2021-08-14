@@ -156,13 +156,33 @@ top::Term ::= f::Term args::TermList
                     singleTermList(applicationTerm(nameTerm("$attr_ex", _),
                                                    singleTermList(val)))))
        when isAccessRelation(str) ->
-       right(attrAccessMetaterm(treeName, accessRelationToAttr(str), val))
+       let attr::String = accessRelationToAttr(str)
+       in
+       let short::String = splitQualifiedName(attr).2
+       in
+       let useName::String =
+           if !null(findAttrOccurrences(short, top.silverContext))
+           then short
+           else attr
+       in
+         right(attrAccessMetaterm(treeName, useName, val))
+       end end end
      | nameTerm(str, _),
        consTermList(nameTerm(treeName, _),
        consTermList(nameTerm(treeNodeName, _),
                     singleTermList(nameTerm("$attr_no", _))))
        when isAccessRelation(str) ->
-       right(attrAccessEmptyMetaterm(treeName, accessRelationToAttr(str)))
+       let attr::String = accessRelationToAttr(str)
+       in
+       let short::String = splitQualifiedName(attr).2
+       in
+       let useName::String =
+           if !null(findAttrOccurrences(short, top.silverContext))
+           then short
+           else attr
+       in
+         right(attrAccessEmptyMetaterm(treeName, useName))
+       end end end
      --Local Attribute Access
      | nameTerm(str, _),
        consTermList(nameTerm(treeName, _),
@@ -193,16 +213,36 @@ top::Term ::= f::Term args::TermList
        right(treeEqMetaterm(t1, t2))
      --Function Application
      | nameTerm(str, _), args when isFun(str) ->
-       right(funMetaterm(funToName(str),
-                foldr(addParenthesizedArgs(_, _),
-                      emptyParenthesizedArgs(),
-                      take(length(args.argList) - 1, args.argList)),
-                last(args.argList), emptyRestriction()))
+       let funName::String = funToName(str)
+       in
+       let short::String = splitQualifiedName(funName).2
+       in
+       let useName::String =
+           if length(findFun(short, top.silverContext)) == 1
+           then short
+           else funName
+       in
+         right(funMetaterm(useName,
+                  foldr(addParenthesizedArgs(_, _),
+                        emptyParenthesizedArgs(),
+                        take(length(args.argList) - 1, args.argList)),
+                  last(args.argList), emptyRestriction()))
+       end end end
      --Production Application
      | nameTerm(str, _), args when isProd(str) ->
-       left(prodTerm(prodToName(str),
-               foldr(addParenthesizedArgs(_, _),
-                     emptyParenthesizedArgs(), args.argList)))
+       let prodName::String = prodToName(str)
+       in
+       let short::String = splitQualifiedName(prodName).2
+       in
+       let useName::String =
+           if length(findProd(short, top.silverContext)) == 1
+           then short
+           else prodName
+       in
+         left(prodTerm(useName,
+                 foldr(addParenthesizedArgs(_, _),
+                       emptyParenthesizedArgs(), args.argList)))
+       end end end
      --Integer Constants
      | nameTerm("$posInt", _), singleTermList(intTerm(i)) ->
        left(intTerm(i))
@@ -231,7 +271,17 @@ top::Term ::= name::String ty::Maybe<Type>
           | "$zero" -> intTerm(0)
           --Productions
           | str when isProd(str) ->
-            prodTerm(prodToName(str), emptyParenthesizedArgs())
+            let prodName::String = prodToName(str)
+            in
+            let short::String = splitQualifiedName(prodName).2
+            in
+            let useName::String =
+                if length(findProd(short, top.silverContext)) == 1
+                then short
+                else str
+            in
+              prodTerm(useName, emptyParenthesizedArgs())
+            end end end
           --Characters
           | str when startsWith("$c_", str) ->
             charTerm(charsToString([toInteger(
