@@ -1,6 +1,22 @@
 grammar interface_:composed;
 
 
+--Run through a list of files, checking them for validity
+function run_files
+IOVal<Integer> ::= ioin::IO filenames::[String]
+{
+  local ran::IOVal<Integer> = run_file(ioin, head(filenames));
+  return
+     case filenames of
+     | [] -> ioval(ioin, 0)
+     | hd::tl ->
+       if ran.iovalue != 0
+       then ran --error in that file, so quit
+       else run_files(ran.io, tl)
+     end;
+}
+
+
 --Run through a file to check that all the proofs are done correctly
 function run_file
 IOVal<Integer> ::= ioin::IO filename::String
@@ -26,7 +42,7 @@ IOVal<Integer> ::= ioin::IO filename::String
 
   return
      if !fileExists.iovalue
-     then ioval(print("Given file " ++ filename ++ " does not exist",
+     then ioval(print("Given file " ++ filename ++ " does not exist\n",
                       fileExists.io), 1)
      else if !fileParsed.parseSuccess
      then ioval(print("Syntax error:\n" ++ fileParsed.parseErrors ++
@@ -38,6 +54,7 @@ IOVal<Integer> ::= ioin::IO filename::String
      then ioval(print("Error:  " ++ started.iovalue.fromLeft ++
                       "\n", started.io), 1)
      else run_step_file(fileAST.2.commandList,
+                        filename,
                         ourSilverContext.iovalue,
                         [(-1, defaultProverState())],
                         started.iovalue.fromRight,
@@ -58,6 +75,7 @@ IOVal<Integer> ::= ioin::IO filename::String
 function run_step_file
 IOVal<Integer> ::=
    inputCommands::[AnyCommand]
+   filename::String
    silverContext::Decorated SilverContext
    stateList::[(Integer, ProverState)]
    abella::ProcessHandle ioin::IO
@@ -143,7 +161,7 @@ IOVal<Integer> ::=
     RUN REPL AGAIN
   -}
   local again::IOVal<Integer> =
-        run_step_file(tail(inputCommands), silverContext,
+        run_step_file(tail(inputCommands), filename, silverContext,
                       newStateList, abella, back_from_abella.io);
 
 
@@ -151,18 +169,21 @@ IOVal<Integer> ::=
      case inputCommands of
      | [] ->
        if state.inProof
-       then ioval(print("Proof in progress at end of file\n", ioin), 1)
-       else ioval(print("Successfully processed file\n", ioin), 0)
+       then ioval(print("Proof in progress at end of file " ++
+                        filename ++ "\n", ioin), 1)
+       else ioval(print("Successfully processed file " ++
+                        filename ++ "\n", ioin), 0)
      | _::tl ->
        if any_a.isQuit
        then ioval(exit_message.io, 0)
        else if any_a.isError
-       then ioval(print("Could not process full file:\n" ++
-                        any_a.ownOutput ++ "\n", back_from_abella.io),
+       then ioval(print("Could not process full file " ++ filename ++
+                        ":\n" ++ any_a.ownOutput ++ "\n",
+                        back_from_abella.io),
                   1)
        else if full_a.isError
-       then ioval(print("Could not process full file:\n" ++ full_a.pp,
-                        back_from_abella.io), 1)
+       then ioval(print("Could not process full file " ++ filename ++
+                        ":\n" ++ full_a.pp, back_from_abella.io), 1)
        else again
      end;
 }

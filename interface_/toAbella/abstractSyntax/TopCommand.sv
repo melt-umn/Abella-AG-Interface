@@ -62,7 +62,7 @@ top::TopCommand ::= depth::Integer thms::[(String, Metaterm, String)]
          thms, top.currentState, top.silverContext);
 
   local translated::[(String, Metaterm, String)] =
-        translate_bodies(thms, top.currentState, top.silverContext);
+        translate_bodies(thms, top.silverContext);
 
   --(translated theorem body, induction tree, induction type, prods, thm name)
   local groupings::[(Metaterm, String, Type, [String], String)] =
@@ -130,7 +130,6 @@ top::TopCommand ::= depth::Integer thms::[(String, Metaterm, String)]
 --This is best done in a function where we can have each body be a local
 function translate_bodies
 [(String, Metaterm, String)] ::= thms::[(String, Metaterm, String)]
-          currentState::ProverState
           silverContext::Decorated SilverContext
 {
   local body::Metaterm = head(thms).2;
@@ -141,13 +140,12 @@ function translate_bodies
   body.knownDecoratedTrees = body.gatheredDecoratedTrees;
   body.knownTyParams = [];
   body.silverContext = silverContext;
-  body.currentState = currentState;
   return
      case thms of
      | [] -> []
      | (name, _, tr)::tl -> 
        (name, body.translation, tr)::
-       translate_bodies(tl, currentState, silverContext)
+       translate_bodies(tl, silverContext)
      end;
 }
 

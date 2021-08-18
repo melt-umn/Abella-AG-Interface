@@ -11,7 +11,7 @@ imports interface_:common:abstractSyntax;
 synthesized attribute translation<a>::a;
 flowtype translation {silverContext, boundVars, finalTys,
                       knownTrees, knownDecoratedTrees, knownNames,
-                      currentState, knownTyParams} on Metaterm;
+                      knownTyParams} on Metaterm;
 
 --new premises we are adding to the current theorem being defined
 monoid attribute newPremises::[NewPremise] with [], ++;

@@ -82,12 +82,12 @@ top::Type ::= name::String
       then --capitalized non-parameters must be nonterminals
            case findNonterminal(name, top.silverContext) of
            | [nt] -> nameType(nameToNonterminalName(nt))
-           | _ -> error("Should not access translation in presence of errors (nameType(" ++ name ++ "))")
+           | _ -> error("Should not access translation in presence of errors 1 (nameType(" ++ name ++ "))")
            end
       else if isFullyQualifiedName(name) && isCapitalized(splitQualifiedName(name).2)
       then case findNonterminal(name, top.silverContext) of
            | [nt] -> nameType(nameToNonterminalName(nt))
-           | _ -> error("Should not access translation in presence of errors (nameType(" ++ name ++ "))")
+           | _ -> error("Should not access translation in presence of errors 2 (nameType(" ++ name ++ "))\n\n" ++ top.silverContext.pp)
            end
       else nameType(colonsToEncoded(name));
 
@@ -242,6 +242,17 @@ abstract production factDef
 top::Def ::= clausehead::Metaterm
 {
   top.pp = clausehead.pp;
+
+  clausehead.knownTrees = [];
+  clausehead.boundVars = [];
+  clausehead.finalTys =
+             map(\ l::[(String, Maybe<[Type]>)] ->
+                   map(\ p::(String, Maybe<[Type]>) ->
+                         (p.1, bind(p.2, \ l::[Type] -> just(head(l)))), l),
+                 clausehead.boundVarsOut);
+  clausehead.knownDecoratedTrees = [];
+  clausehead.knownNames = [];
+  clausehead.knownTyParams = [];
 }
 
 
@@ -249,5 +260,27 @@ abstract production ruleDef
 top::Def ::= clausehead::Metaterm body::Metaterm
 {
   top.pp = clausehead.pp ++ " := " ++ body.pp;
+
+  clausehead.knownTrees = [];
+  clausehead.boundVars = [];
+  clausehead.finalTys =
+             map(\ l::[(String, Maybe<[Type]>)] ->
+                   map(\ p::(String, Maybe<[Type]>) ->
+                         (p.1, bind(p.2, \ l::[Type] -> just(head(l)))), l),
+                 clausehead.boundVarsOut);
+  clausehead.knownDecoratedTrees = [];
+  clausehead.knownNames = [];
+  clausehead.knownTyParams = [];
+
+  body.knownTrees = [];
+  body.boundVars = [];
+  body.finalTys =
+       map(\ l::[(String, Maybe<[Type]>)] ->
+             map(\ p::(String, Maybe<[Type]>) ->
+                   (p.1, bind(p.2, \ l::[Type] -> just(head(l)))), l),
+           body.boundVarsOut ++ clausehead.boundVarsOut);
+  body.knownDecoratedTrees = [];
+  body.knownNames = [];
+  body.knownTyParams = [];
 }
 
