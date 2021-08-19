@@ -40,6 +40,16 @@ synthesized attribute newKnownTheorems::[(String, Metaterm)];
 
 
 
+--Translate names into full names with colons
+functor attribute colonFullNames;
+propagate colonFullNames on
+   Metaterm, Term, ListContents, PairContents,
+   ParenthesizedArgs, TermList
+excluding bindingMetaterm, underscoreTerm, prodTerm,
+   attrAccessMetaterm, attrAccessEmptyMetaterm, funMetaterm;
+
+
+
 --State list before the command
 inherited attribute stateListIn::[(Integer, ProverState)];
 --State list after the command

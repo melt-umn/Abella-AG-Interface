@@ -1794,6 +1794,8 @@ top::EWitness ::= t::Term
   top.pp = t.pp;
 
   top.translation = termEWitness(t.translation);
+
+  t.knownTyParams = [];
 }
 
 
@@ -1808,6 +1810,8 @@ top::EWitness ::= name::String t::Term
       if indexOf("$", name) >= 0
       then [errorMsg("Identifiers cannot contain \"$\"")]
       else [];
+
+  t.knownTyParams = [];
 }
 
 

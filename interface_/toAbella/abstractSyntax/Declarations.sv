@@ -22,6 +22,8 @@ top::Kind ::= k::Kind
 
 attribute
    translation<Type>, errors, knownTyParams, fullType,
+   --colonFullNames here is fullType without $nt_ on nonterminals
+   colonFullNames,
    colonType, encodedType,
    eqTest<Type>, isEq,
    argumentTypes, headTypeName, resultType,
@@ -51,6 +53,8 @@ top::Type ::= ty1::Type ty2::Type
   top.translation = arrowType(ty1.translation, ty2.translation);
 
   top.fullType = arrowType(ty1.fullType, ty2.fullType);
+
+  top.colonFullNames = arrowType(ty1.colonFullNames, ty2.colonFullNames);
 
   top.colonType = arrowType(ty1.colonType, ty2.colonType);
   top.encodedType = arrowType(ty1.encodedType, ty2.encodedType);
@@ -101,6 +105,13 @@ top::Type ::= name::String
       else if isFullyQualifiedName(name) && isCapitalized(splitQualifiedName(name).2)
       then nameType(nameToColonNonterminalName(name))
       else nameType(name);
+
+  top.colonFullNames =
+      case top.fullType of
+      | nameType(n) when nameIsNonterminal(n) ->
+        nameType(nonterminalNameToName(n)) --remove $nt_
+      | _ -> top.fullType
+      end;
 
   top.colonType = nameType(encodedToColons(name));
   top.encodedType = nameType(colonsToEncoded(name));
@@ -168,6 +179,8 @@ top::Type ::= functorTy::Type argTy::Type
 
   top.fullType = functorType(functorTy.fullType, argTy.fullType);
 
+  top.colonFullNames = functorType(functorTy.colonFullNames, argTy.colonFullNames);
+
   top.colonType = functorType(functorTy.colonType, argTy.colonType);
   top.encodedType = functorType(functorTy.encodedType, argTy.encodedType);
 
@@ -200,6 +213,8 @@ top::Type ::=
   top.translation = underscoreType();
 
   top.fullType = underscoreType();
+
+  top.colonFullNames = underscoreType();
 
   top.colonType = underscoreType();
   top.encodedType = underscoreType();

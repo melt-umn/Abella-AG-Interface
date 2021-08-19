@@ -12,7 +12,8 @@ attribute
    knownTyParams,
    treeTys,
    knownDecoratedTrees, knownNames,
-   currentState
+   currentState,
+   colonFullNames
 occurs on Metaterm;
 
 
@@ -27,17 +28,7 @@ top::Metaterm ::=
 aspect production termMetaterm
 top::Metaterm ::= t::Term r::Restriction
 {
-  {-
-    We use the bare term `t.a` as a metaterm even though it doesn't
-    have type `prop` as a way to say that the attribute has a value.
-    However, since this isn't a `prop`, we need to get rid of it in
-    the translation.  We do this by translating it to `true`.
-  -}
-  top.translation =
-      case t of
-      --| attrAccessTerm(_, _) -> trueMetaterm()
-      | _ -> termMetaterm(t.translation, r)
-      end;
+  top.translation = termMetaterm(t.translation, r);
 
   t.boundVars = top.boundVars;
   top.boundVarsOut = t.boundVarsOut;
@@ -342,6 +333,29 @@ top::Metaterm ::= b::Binder bindings::[(String, Maybe<Type>)] body::Metaterm
       filter(\ p::(String, Type) ->
                !containsAssociated(p.1, bindings),
              body.treeTys);
+
+  local colonFullNamesBindings::[(String, Maybe<Type>)] =
+        let scope::[(String, Maybe<[Type]>)] = head(body.boundVarsOut)
+        in
+          map(\ p::(String, Maybe<Type>) ->
+                case p.2 of
+                | just(t) ->
+                  (p.1, just(decorate t with {
+                                knownTyParams = top.knownTyParams;
+                                silverContext = top.silverContext;
+                             }.colonFullNames))
+                | nothing() ->
+                  case findAssociated(p.1, scope) of
+                  | just(just(tys)) -> (p.1, just(head(tys)))
+                  | _ -> (p.1, nothing())
+                  end
+                end,
+              bindings)
+        end;
+  top.colonFullNames =
+      bindingMetaterm(b,
+         colonFullNamesBindings,
+         body.colonFullNames);
 }
 
 
@@ -426,6 +440,9 @@ top::Metaterm ::= tree::String attr::String val::Term
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
   top.removedWPD = top;
+
+  top.colonFullNames =
+      attrAccessMetaterm(tree, finalAttr, val.colonFullNames);
 }
 
 
@@ -508,6 +525,9 @@ top::Metaterm ::= tree::String attr::String
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
   top.removedWPD = top;
+
+  top.colonFullNames =
+      attrAccessEmptyMetaterm(tree, finalAttr);
 }
 
 
@@ -961,6 +981,10 @@ top::Metaterm ::= funName::String args::ParenthesizedArgs result::Term r::Restri
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
   top.removedWPD = top;
+
+  top.colonFullNames =
+      funMetaterm(head(foundFuns).1, args.colonFullNames,
+                  result.colonFullNames, r);
 }
 
 
@@ -976,7 +1000,8 @@ attribute
    findParentOf, foundParent,
    isProdStructure,
    knownDecoratedTrees, knownNames,
-   currentState
+   currentState, knownTyParams,
+   colonFullNames
 occurs on Term;
 
 aspect production applicationTerm
@@ -1031,6 +1056,15 @@ top::Term ::= name::String ty::Maybe<Type>
       if indexOf("$", name) >= 0
       then [errorMsg("Identifiers cannot contain \"$\"")]
       else [];
+  top.errors <-
+      case ty of
+      | nothing() -> []
+      | just(t) ->
+        decorate t with {
+           silverContext = top.silverContext;
+           knownTyParams = top.knownTyParams;
+        }.errors
+      end;
 
   {-
     I don't think we need to check if this name exists because we
@@ -1111,6 +1145,14 @@ top::Term ::= ty::Maybe<Type>
   top.foundParent = nothing();
 
   top.isProdStructure = false;
+
+  top.colonFullNames =
+      underscoreTerm(bind(new(ty),
+         \ t::Type ->
+           just(decorate t with {
+                   knownTyParams = top.knownTyParams;
+                   silverContext = top.silverContext;
+                }.colonFullNames)));
 }
 
 
@@ -1240,6 +1282,8 @@ top::Term ::= prodName::String args::ParenthesizedArgs
       else args.foundParent;
 
   top.isProdStructure = true;
+
+  top.colonFullNames = prodTerm(prodName, args.colonFullNames);
 }
 
 
@@ -1296,7 +1340,8 @@ attribute
    replaceName, replaceTerm, replaced,
    errors,
    eqTest<ListContents>, isEq,
-   knownDecoratedTrees, knownNames
+   knownDecoratedTrees, knownNames, knownTyParams,
+   colonFullNames
 occurs on ListContents;
 
 aspect production emptyListContents
@@ -1344,7 +1389,8 @@ attribute
    replaceName, replaceTerm, replaced,
    errors,
    eqTest<PairContents>, isEq,
-   knownDecoratedTrees, knownNames
+   knownDecoratedTrees, knownNames, knownTyParams,
+   colonFullNames
 occurs on PairContents;
 
 aspect production singlePairContents
@@ -1398,7 +1444,8 @@ attribute
    errors,
    eqTest<ParenthesizedArgs>, isEq,
    findParentOf, foundParent, isArgHere,
-   knownDecoratedTrees, knownNames
+   knownDecoratedTrees, knownNames, knownTyParams,
+   colonFullNames
 occurs on ParenthesizedArgs;
 
 aspect production emptyParenthesizedArgs
@@ -1468,7 +1515,8 @@ attribute
    errors,
    eqTest<TermList>, isEq,
    findParentOf, foundParent, isArgHere,
-   knownDecoratedTrees
+   knownDecoratedTrees, knownTyParams,
+   colonFullNames
 occurs on TermList;
 
 aspect production singleTermList
