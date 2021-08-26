@@ -185,7 +185,10 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> theorem::Clearable
         case findAssociated(theorem.name, top.currentState.state.hypList) of
         | just(mt) -> just(mt)
         | nothing() ->
-          findAssociated(theorem.name, top.currentState.knownTheorems)
+          case findTheorem(theorem.name, top.currentState) of
+          | [(name, mt)] -> just(mt)
+          | _ -> nothing()
+          end
         end;
   --Add an extra arg for each WPD assumption
   --Only hidden premises should be WPD NT, but include WPD node to be safe
@@ -264,7 +267,7 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> theorem::Clearable
                           silverContext = top.silverContext;
                          }.translation), withs))])
       | _ ->
-        right([applyTactic(h, depth, theorem, expandedArgs,
+        right([applyTactic(h, depth, theorem.translation, args,
                  map(\ p::Pair<String Term> ->
                        pair(p.fst, decorate p.snd with
                          {knownTrees = top.currentState.state.gatheredTrees;
@@ -297,8 +300,8 @@ top::ProofCommand ::= depth::Maybe<Integer> theorem::Clearable withs::[Pair<Stri
      else "with " ++ buildWiths(withs);
   top.pp = "backchain " ++ depthString ++ theorem.pp ++ withsString ++ ".  ";
 
-  top.translation = --error("Translation not done in backchainTactic yet");
-      [backchainTactic(depth, theorem,
+  top.translation =
+      [backchainTactic(depth, theorem.translation,
           map(\ p::Pair<String Term> ->
                 pair(p.fst,
                      decorate p.snd with
@@ -1730,6 +1733,7 @@ top::ProofCommand ::= all::Boolean
 
 nonterminal Clearable with
    pp,
+   translation<Clearable>, errors, currentState, translatedState,
    name;
 
 --I don't know what the star is, but some have it
@@ -1744,6 +1748,28 @@ top::Clearable ::= star::Boolean hyp::String instantiation::[Type]
   top.pp = (if star then "*" else "") ++ hyp ++ instString;
 
   top.name = hyp;
+
+  local findName::[String] =
+        case findAssociated(hyp, top.currentState.state.hypList) of
+        | just(_) -> [hyp]
+        | nothing() ->
+          map(fst, findTheorem(hyp, top.currentState))
+        end;
+
+  top.translation = clearable(star, head(findName), instantiation);
+
+  top.errors <-
+      if indexOf("$", hyp) >= 0
+      then [errorMsg("Names cannot include \"$\"")]
+      else [];
+  top.errors <-
+      case findName of
+      | [] -> [errorMsg("Could not find hypothesis or lemma " ++ hyp)]
+      | [_] -> []
+      | lst ->
+        [errorMsg("Multiple choices for lemma " ++ hyp ++
+                  "; options are " ++ implode(", ", lst))]
+      end;
 }
 
 

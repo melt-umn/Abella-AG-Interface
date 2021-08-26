@@ -25,7 +25,7 @@ Define $less_integer : integer -> integer -> bool -> prop by
      $less_integer ($negSuccInt N1) ($negSuccInt N2) B.
 
 %unique
-Theorem less_integer_unique : forall N1 N2 B B',
+Theorem silver$*$core$*$less_integer_unique : forall N1 N2 B B',
   $less_integer N1 N2 B -> $less_integer N1 N2 B' -> B = B'.
 induction on 1. intros. case H1.
   %Subgoal 1
@@ -50,7 +50,7 @@ induction on 1. intros. case H1.
    case H2. apply IH to H3 H4. search.
 
 %total
-Theorem less_integer_total : forall N1 N2,
+Theorem silver$*$core$*$less_integer_total : forall N1 N2,
   is_integer N1 -> is_integer N2 ->
   exists B, $less_integer N1 N2 B.
 induction on 1. intros. case H1.
@@ -96,7 +96,7 @@ induction on 1. intros. case H1.
       apply IH to H3 H4. exists B. search.
 
 %creates $is_bool
-Theorem less_integer_is_bool : forall N1 N2 B,
+Theorem silver$*$core$*$less_integer_is_bool : forall N1 N2 B,
   $less_integer N1 N2 B -> is_bool B.
 induction on 1. intros. case H1.
   %Subgoal 1
@@ -182,7 +182,7 @@ Define $lesseq_integer : integer -> integer -> bool -> prop by
      $lesseq_integer ($negSuccInt N1) ($negSuccInt N2) B.
 
 %unique
-Theorem lesseq_integer_unique : forall N1 N2 B B',
+Theorem silver$*$core$*$lesseq_integer_unique : forall N1 N2 B B',
   $lesseq_integer N1 N2 B -> $lesseq_integer N1 N2 B' -> B = B'.
 induction on 1. intros. case H1.
   %Subgoal 1
@@ -207,7 +207,7 @@ induction on 1. intros. case H1.
    case H2. apply IH to H3 H4. search.
 
 %total
-Theorem lesseq_integer_total : forall N1 N2,
+Theorem silver$*$core$*$lesseq_integer_total : forall N1 N2,
   is_integer N1 -> is_integer N2 ->
   exists B, $lesseq_integer N1 N2 B.
 induction on 1. intros. case H1.
@@ -253,7 +253,7 @@ induction on 1. intros. case H1.
       apply IH to H3 H4. search.
 
 %creates $is_bool
-Theorem lesseq_integer_is_bool : forall N1 N2 B,
+Theorem silver$*$core$*$lesseq_integer_is_bool : forall N1 N2 B,
   $lesseq_integer N1 N2 B -> is_bool B.
 induction on 1. intros. case H1.
   %Subgoal 1
@@ -279,7 +279,7 @@ induction on 1. intros. case H1.
 
 %other things?
 
-Theorem eq_to_lesseq_integer : forall N,
+Theorem silver$*$core$*$eq_to_lesseq_integer : forall N,
   is_integer N -> $lesseq_integer N N $btrue.
 induction on 1. intros. case H1.
   %Subgoal 1
@@ -291,7 +291,7 @@ induction on 1. intros. case H1.
   %Subgoal 4
    apply IH to H2. search.
 
-Theorem less_to_lesseq_integer : forall N1 N2,
+Theorem silver$*$core$*$less_to_lesseq_integer : forall N1 N2,
   $less_integer N1 N2 $btrue -> $lesseq_integer N1 N2 $btrue.
 induction on 1. intros. case H1.
   %Subgoal 1
@@ -315,20 +315,20 @@ Define $greater_integer : integer -> integer -> bool -> prop by
   $greater_integer N1 N2 B := $less_integer N2 N1 B.
 
 %unique
-Theorem greater_integer_unique : forall N1 N2 B B',
+Theorem silver$*$core$*$greater_integer_unique : forall N1 N2 B B',
   $greater_integer N1 N2 B -> $greater_integer N1 N2 B' -> B = B'.
-intros. case H1. case H2. backchain less_integer_unique.
+intros. case H1. case H2. backchain silver$*$core$*$less_integer_unique.
 
 %total
-Theorem greater_integer_total : forall N1 N2,
+Theorem silver$*$core$*$greater_integer_total : forall N1 N2,
   is_integer N1 -> is_integer N2 ->
   exists B, $greater_integer N1 N2 B.
-intros. apply less_integer_total to H2 H1. search.
+intros. apply silver$*$core$*$less_integer_total to H2 H1. search.
 
 %creates $is_bool
-Theorem greater_integer_is_bool : forall N1 N2 B,
+Theorem silver$*$core$*$greater_integer_is_bool : forall N1 N2 B,
   $greater_integer N1 N2 B -> is_bool B.
-intros. case H1. apply less_integer_is_bool to H2. search.
+intros. case H1. apply silver$*$core$*$less_integer_is_bool to H2. search.
 
 %other things?
 
@@ -360,30 +360,30 @@ Define $greatereq_integer : integer -> integer -> bool -> prop by
   $greatereq_integer N1 N2 B := $lesseq_integer N2 N1 B.
 
 %unique
-Theorem greatereq_integer_unique : forall N1 N2 B B',
+Theorem silver$*$core$*$greatereq_integer_unique : forall N1 N2 B B',
   $greatereq_integer N1 N2 B -> $greatereq_integer N1 N2 B' -> B = B'.
-intros. case H1. case H2. backchain lesseq_integer_unique.
+intros. case H1. case H2. backchain silver$*$core$*$lesseq_integer_unique.
 
 %total
-Theorem greatereq_integer_total : forall N1 N2,
+Theorem silver$*$core$*$greatereq_integer_total : forall N1 N2,
   is_integer N1 -> is_integer N2 ->
   exists B, $greatereq_integer N1 N2 B.
-intros. apply lesseq_integer_total to H2 H1. search.
+intros. apply silver$*$core$*$lesseq_integer_total to H2 H1. search.
 
 %creates $is_bool
-Theorem greatereq_integer_is_bool : forall N1 N2 B,
+Theorem silver$*$core$*$greatereq_integer_is_bool : forall N1 N2 B,
   $greatereq_integer N1 N2 B -> is_bool B.
-intros. case H1. apply lesseq_integer_is_bool to H2. search.
+intros. case H1. apply silver$*$core$*$lesseq_integer_is_bool to H2. search.
 
 %other things?
 
-Theorem eq_to_greatereq_integer : forall N,
+Theorem silver$*$core$*$eq_to_greatereq_integer : forall N,
   is_integer N -> $greatereq_integer N N $btrue.
-intros. apply eq_to_lesseq_integer to H1. search.
+intros. apply silver$*$core$*$eq_to_lesseq_integer to H1. search.
 
-Theorem greater_to_greatereq_integer : forall N1 N2,
+Theorem silver$*$core$*$greater_to_greatereq_integer : forall N1 N2,
   $greater_integer N1 N2 $btrue -> $greatereq_integer N1 N2 $btrue.
-intros. case H1. apply less_to_lesseq_integer to H2. search.
+intros. case H1. apply silver$*$core$*$less_to_lesseq_integer to H2. search.
 
 
 %combinations of <, <=, >, >= and addition, subtraction, multiplication, division, whatever

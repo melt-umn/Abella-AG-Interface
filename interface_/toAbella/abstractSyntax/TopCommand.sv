@@ -122,7 +122,7 @@ top::TopCommand ::= depth::Integer thms::[(String, Metaterm, String)]
             (p.5, length(p.5)), groupings);
 
   top.newKnownTheorems =
-      map(\ p::(String, Metaterm, String) -> (p.1, p.2), translated) ++
+      map(\ p::(String, Metaterm, String) -> (p.1, top.silverContext.currentGrammar, p.2), translated) ++
       top.currentState.knownTheorems;
 }
 
@@ -226,10 +226,14 @@ top::TopCommand ::= name::String params::[String] body::Metaterm
   body.knownTrees = body.gatheredTrees;
   body.knownDecoratedTrees = body.gatheredDecoratedTrees;
   body.knownTyParams = params;
-  top.translation = theoremDeclaration(name, params, body.translation);
+  top.translation =
+      theoremDeclaration(
+         colonsToEncoded(top.silverContext.currentGrammar ++ ":" ++ name),
+         params, body.translation);
 
   top.newKnownTheorems =
-      [(name, body.translation)] ++ top.currentState.knownTheorems;
+      [(name, top.silverContext.currentGrammar, body.translation)] ++
+      top.currentState.knownTheorems;
 }
 
 
@@ -309,7 +313,11 @@ top::TopCommand ::= theoremName::String newTheoremNames::[String]
      else " as " ++ buildNames(newTheoremNames);
   top.pp = "Split " ++ theoremName ++ namesString ++ ".\n";
 
-  top.translation = splitTheorem(theoremName, newTheoremNames);
+  top.translation =
+      splitTheorem(head(foundThm).1,
+                   map(\ p::(String, String) ->
+                         colonsToEncoded(p.2 ++ ":" ++ p.1),
+                       expandedNewNames));
 
   top.errors <-
       if indexOf("$", theoremName) >= 0
@@ -321,24 +329,36 @@ top::TopCommand ::= theoremName::String newTheoremNames::[String]
               then [errorMsg("Theorem names cannot contain \"$\"")] ++ rest
               else rest,
             [], newTheoremNames);
+  top.errors <-
+      case foundThm of
+      | [] -> [errorMsg("Unknown theorem " ++ theoremName)]
+      | [_] -> []
+      | lst ->
+        [errorMsg("Uncertain theorem " ++ theoremName ++
+                  "; options are " ++ implode(", ", map(fst, lst)))]
+      end;
 
-  local buildnames::([(String, Metaterm)] ::= [Metaterm] [String] Integer) =
-        \ splits::[Metaterm] givenNames::[String] i::Integer ->
-          case splits, givenNames of
-          | [], _ -> []
-          | mt::mttl, [] ->
-            (theoremName ++ toString(i), mt)::buildnames(mttl, [], i + 1)
-          | mt::mttl, n::ntl ->
-            (n, mt)::buildnames(mttl, ntl, i + 1)
-          end;  
+  local foundThm::[(String, Metaterm)] =
+        findTheorem(theoremName, top.currentState);
+  local splitThm::[Metaterm] =
+        decorate head(foundThm).2 with {
+           silverContext = top.silverContext;
+        }.conjunctionSplit;
+  --To fit the grammar naming scheme, we need to name everything
+  local expandedNewNames::[(String, String)] =
+        map(\ s::String ->
+              (s, top.silverContext.currentGrammar),
+            newTheoremNames) ++
+        foldr(\ m::Metaterm rest::[(String, String)] ->
+                (splitQualifiedName(head(foundThm).1).2 ++ "_" ++
+                   toString(genInt()),
+                 top.silverContext.currentGrammar)::rest,
+              [], drop(length(newTheoremNames), splitThm));
+
   top.newKnownTheorems =
-      case findAssociated(theoremName, top.currentState.knownTheorems) of
-      | nothing() -> []
-      | just(mt) ->
-        buildnames(decorate mt with
-                   {silverContext = top.silverContext;}.conjunctionSplit,
-                   newTheoremNames, 1)
-      end ++ top.currentState.knownTheorems;
+      zipWith(\ a::(String, String) b::Metaterm -> (a.1, a.2, b),
+              expandedNewNames, splitThm) ++
+      top.currentState.knownTheorems;
 }
 
 
@@ -454,6 +474,7 @@ top::TopCommand ::= name::String params::[String] body::Metaterm prf::[ProofComm
   body.knownTrees = body.gatheredTrees;
 
   top.newKnownTheorems =
-      [(name, new(body))] ++ top.currentState.knownTheorems;
+      [(name, top.silverContext.currentGrammar, new(body))] ++
+      top.currentState.knownTheorems;
 }
 

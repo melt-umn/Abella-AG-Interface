@@ -22,7 +22,7 @@ propagate newPremises on
 
 monoid attribute errors::[Error] with [], ++;
 propagate errors on
-   Metaterm, Term, TermList, ListContents, PairContents, HHint,
+   Metaterm, Term, TermList, ListContents, PairContents, HHint, Clearable,
    ProofCommand, TopCommand, NoOpCommand, Type, EWitness, ParenthesizedArgs;
 
 --Whether a command is something to be sent to Abella, or handled internally
@@ -36,7 +36,7 @@ synthesized attribute numCommandsSent::Integer;
 
 
 --Gather new theorems for the prover state
-synthesized attribute newKnownTheorems::[(String, Metaterm)];
+synthesized attribute newKnownTheorems::[(String, String, Metaterm)];
 
 
 

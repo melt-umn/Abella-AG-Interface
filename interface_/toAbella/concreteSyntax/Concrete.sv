@@ -169,6 +169,10 @@ concrete productions top::PureTopCommand_c
   { top.ast = anyTopCommand(splitTheorem(name.lexeme, [])); }
 | 'Split' name::Id_t 'as' il::IdList_c '.'
   { top.ast = anyTopCommand(splitTheorem(name.lexeme, il.ast)); }
+| 'Split' name::Qname_t '.'
+  { top.ast = anyTopCommand(splitTheorem(name.lexeme, [])); }
+| 'Split' name::Qname_t 'as' il::IdList_c '.'
+  { top.ast = anyTopCommand(splitTheorem(name.lexeme, il.ast)); }
 --New for Silver
 | 'Extensible_Theorem' thms::TheoremStmts_c '.'
   { top.ast =
@@ -489,6 +493,10 @@ concrete productions top::Clearable_c
   { top.ast = clearable(false, h.ast, m.ast); }
 | '*' h::Hyp_c m::MaybeInst_c
   { top.ast = clearable(true, h.ast, m.ast); }
+| name::Qname_t m::MaybeInst_c
+  { top.ast = clearable(false, name.lexeme, m.ast); }
+| '*' name::Qname_t m::MaybeInst_c
+  { top.ast = clearable(true, name.lexeme, m.ast); }
 
 
 concrete productions top::Withs_c

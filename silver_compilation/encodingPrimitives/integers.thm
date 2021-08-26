@@ -94,7 +94,7 @@ intros. case H1.
   %Subgoal 4
    search.
 
-Theorem is_integer_eq_or_not : forall I1 I2,
+Theorem silver$*$core$*$is_integer_eq_or_not : forall I1 I2,
   is_integer I1 -> is_integer I2 ->
   I1 = I2 \/ (I1 = I2 -> false).
 induction on 1. intros. case H1.

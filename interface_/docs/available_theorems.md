@@ -74,8 +74,6 @@ convenience, these are sorted by types.
   `forall N1 N2 N N', N1 * N2 = N -> N1 * N2 = N' -> N = N'`
 - `multiply_integer_is_integer` :  
   `forall N1 N2 N, is_integer N1 -> is_integer N2 -> N1 * N2 = N -> is_integer N`
-- `multiply_integer_is_unique` :  
-  `forall N1 N2 N3, is_integer N1 -> is_integer N2 -> N1 * N2 = N3 -> is_integer N3`
 - `multiply_integer_total` :  
   `forall N1 N2, is_integer N1 -> is_integer N2 -> exists N, N1 * N2 = N`
 - `multiply_integer_0_right` :  

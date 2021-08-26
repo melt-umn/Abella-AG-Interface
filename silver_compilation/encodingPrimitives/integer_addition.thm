@@ -216,7 +216,7 @@ induction on 1. intros. case H1.
 /*
   The theorems we are actually going for:
 */
-Theorem plus_integer_unique : forall N1 N2 N3 N4,
+Theorem silver$*$core$*$plus_integer_unique : forall N1 N2 N3 N4,
   $plus_integer N1 N2 N3 -> $plus_integer N1 N2 N4 -> N3 = N4.
 induction on 1. intros. case H1.
   %Subgoal 1
@@ -238,7 +238,7 @@ induction on 1. intros. case H1.
   %Subgoal 9
    case H2. apply IH to H3 H4. search.
 
-Theorem plus_integer_is_integer : forall N1 N2 N3,
+Theorem silver$*$core$*$plus_integer_is_integer : forall N1 N2 N3,
   is_integer N1 -> is_integer N2 -> $plus_integer N1 N2 N3 ->
   is_integer N3.
 induction on 3. intros. case H3.
@@ -261,7 +261,7 @@ induction on 3. intros. case H3.
   %Subgoal 9
    case H1. apply IH to _ _ H4. search.
 
-Theorem plus_integer_total : forall N1 N2,
+Theorem silver$*$core$*$plus_integer_total : forall N1 N2,
   is_integer N1 -> is_integer N2 ->
   exists N3, $plus_integer N1 N2 N3.
 induction on 1. intros. case H1.
@@ -284,7 +284,7 @@ induction on 1. intros. case H1.
      %Subgoal 2.3
       search.
      %Subgoal 2.4
-      case H2. case H3. apply plus_integer_is_integer to H7 H6 H5.
+      case H2. case H3. apply silver$*$core$*$plus_integer_is_integer to H7 H6 H5.
       case H8.
         %Subgoal 2.4.1
          apply $plus_integer_posInts_succ to H5. search.
@@ -325,7 +325,7 @@ induction on 1. intros. case H1.
      %Subgoal 4.5
       search.
 
-Theorem plus_integer_comm : forall N1 N2 N3,
+Theorem silver$*$core$*$plus_integer_comm : forall N1 N2 N3,
   is_integer N1 -> is_integer N2 -> $plus_integer N1 N2 N3 ->
   $plus_integer N2 N1 N3.
 induction on 3. intros. case H3.
@@ -351,28 +351,28 @@ induction on 3. intros. case H3.
    case H1. apply IH to _ _ H4.
    backchain $plus_integer_succ_negSuccInt_left_to_right.
 
-Theorem plus_integer_assoc : forall N1 N2 N3 Subtotal Total,
+Theorem silver$*$core$*$plus_integer_assoc : forall N1 N2 N3 Subtotal Total,
   is_integer N1 -> is_integer N2 -> is_integer N3 ->
   $plus_integer N1 N2 Subtotal -> $plus_integer N3 Subtotal Total ->
   exists Subtotal', $plus_integer N2 N3 Subtotal' /\
                     $plus_integer N1 Subtotal' Total.
 induction on 4. intros.
 SubIsInt: assert (is_integer Subtotal).
-   backchain plus_integer_is_integer with N1 = N1, N2 = N2.
+   backchain silver$*$core$*$plus_integer_is_integer with N1 = N1, N2 = N2.
 TotalIsInt: assert (is_integer Total).
-   backchain plus_integer_is_integer with N1 = N3, N2 = Subtotal.
+   backchain silver$*$core$*$plus_integer_is_integer with N1 = N3, N2 = Subtotal.
 case H4.
   %Subgoal 3
    exists Total. split.
      %Subgoal 3.1
-      backchain plus_integer_comm.
+      backchain silver$*$core$*$plus_integer_comm.
      %Subgoal 3.2
       search.
   %Subgoal 4
-   case H1. apply plus_integer_comm to _ _ H5. case H8.
+   case H1. apply silver$*$core$*$plus_integer_comm to _ _ H5. case H8.
      %Subgoal 4.1
-      case SubIsInt. apply plus_integer_is_integer to _ _ H9.
-      apply plus_integer_comm to _ _ H9. apply IH to _ _ _ H6 H12.
+      case SubIsInt. apply silver$*$core$*$plus_integer_is_integer to _ _ H9.
+      apply silver$*$core$*$plus_integer_comm to _ _ H9. apply IH to _ _ _ H6 H12.
       exists Subtotal'. split.
         %Subgoal 4.1.2
          search.
@@ -393,7 +393,7 @@ case H4.
            %Subgoal 4.2.1.1
             search.
            %Subgoal 4.2.1.2
-            apply plus_integer_comm to _ _ H6. case H9. search.
+            apply silver$*$core$*$plus_integer_comm to _ _ H6. case H9. search.
         %Subgoal 4.2.2
          exists ($posInt N). split.
            %Subgoal 4.2.2.1
@@ -401,7 +401,7 @@ case H4.
            %Subgoal 4.2.2.2
             backchain $plus_integer_succ_right_to_left.
      %Subgoal 4.3
-      case H3. case SubIsInt. apply plus_integer_comm to _ _ H9.
+      case H3. case SubIsInt. apply silver$*$core$*$plus_integer_comm to _ _ H9.
       apply IH to _ _ _ H6 H12. case H13.
         %Subgoal 4.3.1
          exists ($negSuccInt ($succ N8)). search.
@@ -412,7 +412,7 @@ case H4.
               %Subgoal 4.3.2.1.1
                search.
               %Subgoal 4.3.2.1.2
-               apply plus_integer_comm to _ _ H14. case H16.
+               apply silver$*$core$*$plus_integer_comm to _ _ H14. case H16.
                search.
            %Subgoal 4.3.2.2
             exists ($posInt N). split.
@@ -421,39 +421,39 @@ case H4.
               %Subgoal 4.3.2.2.2
                backchain $plus_integer_succ_right_to_left.
         %Subgoal 4.3.3
-         case H2. case H10. apply plus_integer_is_integer to _ _ H15.
+         case H2. case H10. apply silver$*$core$*$plus_integer_is_integer to _ _ H15.
          case H18.
            %Subgoal 4.3.3.1
             exists ($negSuccInt $zero). split.
               %Subgoal 4.3.3.1.1
-               backchain plus_integer_comm.
+               backchain silver$*$core$*$plus_integer_comm.
                backchain $plus_integer_negSuccInt_0_succ.
-               backchain plus_integer_comm.
+               backchain silver$*$core$*$plus_integer_comm.
               %Subgoal 4.3.3.1.2
-               apply plus_integer_comm to _ _ H14. case H19.
+               apply silver$*$core$*$plus_integer_comm to _ _ H14. case H19.
                search.
            %Subgoal 4.3.3.2
             exists ($posInt N). split.
               %Subgoal 4.3.3.2.1
-               backchain plus_integer_comm.
+               backchain silver$*$core$*$plus_integer_comm.
                backchain $plus_integer_negSuccInt_posInt_succ.
-               backchain plus_integer_comm.
+               backchain silver$*$core$*$plus_integer_comm.
               %Subgoal 4.3.3.2.2
                backchain $plus_integer_succ_right_to_left.
            %Subgoal 4.3.3.3
             exists ($negSuccInt ($succ $zero)). split.
               %Subgoal 4.3.3.3.1
-               backchain plus_integer_comm.
+               backchain silver$*$core$*$plus_integer_comm.
                backchain $plus_integer_negSuccInts_succ.
-               backchain plus_integer_comm.
+               backchain silver$*$core$*$plus_integer_comm.
               %Subgoal 4.3.3.3.2
                search.
            %Subgoal 4.3.3.4
             exists ($negSuccInt ($succ ($succ N))). split.
               %Subgoal 4.3.3.3.1
-               backchain plus_integer_comm.
+               backchain silver$*$core$*$plus_integer_comm.
                backchain $plus_integer_negSuccInts_succ.
-               backchain plus_integer_comm.
+               backchain silver$*$core$*$plus_integer_comm.
               %Subgoal 4.3.3.3.2
                search.
   %Subgoal 5
@@ -466,7 +466,7 @@ case H4.
          search.
         %Subgoal 5.2.2
          case H1. case H3. case TotalIsInt.
-         apply plus_integer_comm to _ _ H6. search.
+         apply silver$*$core$*$plus_integer_comm to _ _ H6. search.
      %Subgoal 5.3
       exists ($negSuccInt ($succ N)). search.
      %Subgoal 5.4
@@ -477,7 +477,7 @@ case H4.
          search.
         %Subgoal 5.5.2
          case H1. case H3. case H7.
-         apply plus_integer_comm to _ _ H6. search.
+         apply silver$*$core$*$plus_integer_comm to _ _ H6. search.
   %Subgoal 6
    case H1. case H2. apply IH to _ _ _ H6 H5. case H9.
      %Subgoal 6.1
@@ -489,7 +489,7 @@ case H4.
            %Subgoal 6.2.1.1
             search.
            %Subgoal 6.2.1.2
-            apply plus_integer_comm to _ _ H10. case H12. search.
+            apply silver$*$core$*$plus_integer_comm to _ _ H10. case H12. search.
         %Subgoal 6.2.2
          exists ($posInt N). split.
            %Subgoal 6.2.2.1
@@ -497,14 +497,14 @@ case H4.
            %Subgoal 6.2.2.2
             backchain $plus_integer_succ_right_to_left.
      %Subgoal 6.3
-      case H3. case H8. apply plus_integer_is_integer to _ _ H11.
+      case H3. case H8. apply silver$*$core$*$plus_integer_is_integer to _ _ H11.
       case H14.
         %Subgoal 6.3.1
          exists ($negSuccInt $zero). split.
            %Subgoal 6.3.1.1
             backchain $plus_integer_negSuccInt_0_succ.
            %Subgoal 6.3.1.2
-            apply plus_integer_comm to _ _ H10. case H15. search.
+            apply silver$*$core$*$plus_integer_comm to _ _ H10. case H15. search.
         %Subgoal 6.3.2
          exists ($posInt N). split.
            %Subgoal 6.3.2.1
@@ -532,20 +532,20 @@ case H4.
      %Subgoal 7.1
       search.
      %Subgoal 7.2
-      backchain plus_integer_comm.
+      backchain silver$*$core$*$plus_integer_comm.
   %Subgoal 8
    case H3.
      %Subgoal 8.1
       exists ($posInt ($succ N4)). split.
         %Subgoal 8.1.1
-         backchain plus_integer_comm.
+         backchain silver$*$core$*$plus_integer_comm.
         %Subgoal 8.1.2
          case H5. search.
      %Subgoal 8.2
       case H5. exists ($posInt ($succ ($succ N7))). split.
         %Subgoal 8.2.1
          backchain $plus_integer_succ_left_to_right. case TotalIsInt.
-         apply plus_integer_comm to _ _ H7. search.
+         apply silver$*$core$*$plus_integer_comm to _ _ H7. search.
         %Subgoal 8.2.2
          search.
      %Subgoal 8.3
@@ -556,51 +556,51 @@ case H4.
          exists ($posInt ($succ $zero)). split.
            %Subgoal 8.4.1.1
             backchain $plus_integer_posInts_succ.
-            backchain plus_integer_comm.
+            backchain silver$*$core$*$plus_integer_comm.
            %Subgoal 8.4.1.2
             search.
         %Subgoal 8.4.2
          exists ($posInt ($succ ($succ N5))). split.
            %Subgoal 8.4.2.1
             backchain $plus_integer_posInts_succ.
-            backchain plus_integer_comm.
+            backchain silver$*$core$*$plus_integer_comm.
            %Subgoal 8.4.2.2
             search.
         %Subgoal 8.4.3
          exists ($posInt $zero). split.
            %Subgoal 8.4.3.1
             backchain $plus_integer_posInt_-1_succ.
-            backchain plus_integer_comm.
+            backchain silver$*$core$*$plus_integer_comm.
            %Subgoal 8.4.3.2
             search.
         %Subgoal 8.4.4
          exists ($negSuccInt N5). split.
            %Subgoal 8.4.4.1
             backchain $plus_integer_posInt_negSuccInt_succ.
-            backchain plus_integer_comm.
+            backchain silver$*$core$*$plus_integer_comm.
            %Subgoal 8.4.4.2
             search.
   %Subgoal 9
    case H1. case H2. apply IH to _ _ _ H6 H5.
-   apply plus_integer_is_integer to _ _ H9. case H11.
+   apply silver$*$core$*$plus_integer_is_integer to _ _ H9. case H11.
      %Subgoal 9.1
       exists ($posInt ($succ $zero)). split.
         %Subgoal 9.1.1
          backchain $plus_integer_posInts_succ.
         %Subgoal 9.1.2
-         apply plus_integer_comm to _ _ H10. case H12. search.
+         apply silver$*$core$*$plus_integer_comm to _ _ H10. case H12. search.
      %Subgoal 9.2
       exists ($posInt ($succ ($succ N))). split.
         %Subgoal 9.2.1
          backchain $plus_integer_posInts_succ.
         %Subgoal 9.2.2
-         apply plus_integer_comm to _ _ H10. search.
+         apply silver$*$core$*$plus_integer_comm to _ _ H10. search.
      %Subgoal 9.3
       exists ($posInt $zero). split.
         %Subgoal 9.3.1
          backchain $plus_integer_posInt_-1_succ.
         %Subgoal 9.3.2
-         apply plus_integer_comm to _ _ H10. case H12. search.
+         apply silver$*$core$*$plus_integer_comm to _ _ H10. case H12. search.
      %Subgoal 9.4
       exists ($negSuccInt N). split.
         %Subgoal 9.3.1
@@ -613,73 +613,73 @@ case H4.
       exists ($posInt ($succ $zero)). split.
         %Subgoal 10.1.1
          backchain $plus_integer_negSuccInt_posInt_drop_succ.
-         backchain plus_integer_comm.
+         backchain silver$*$core$*$plus_integer_comm.
         %Subgoal 10.1.2
          search.
      %Subgoal 10.2
       exists ($posInt ($succ ($succ N4))). split.
         %Subgoal 10.1.1
          backchain $plus_integer_negSuccInt_posInt_drop_succ.
-         backchain plus_integer_comm.
+         backchain silver$*$core$*$plus_integer_comm.
         %Subgoal 10.1.2
          search.
      %Subgoal 10.3
       exists ($posInt $zero). split.
         %Subgoal 10.3.1
          backchain $plus_integer_negSuccInt_-1_drop_succ.
-         backchain plus_integer_comm.
+         backchain silver$*$core$*$plus_integer_comm.
         %Subgoal 10.3.2
          search.
      %Subgoal 10.4
       exists ($negSuccInt N4). split.
         %Subgoal 10.3.1
          backchain $plus_integer_negSuccInts_drop_succ.
-         backchain plus_integer_comm.
+         backchain silver$*$core$*$plus_integer_comm.
         %Subgoal 10.3.2
          search.
   %Subgoal 11
-   apply plus_integer_comm to _ _ H5. case H7.
+   apply silver$*$core$*$plus_integer_comm to _ _ H5. case H7.
      %Subgoal 11.1
       exists ($negSuccInt N5). search.
      %Subgoal 11.2
-      case H3. case SubIsInt. apply plus_integer_comm to _ _ H8.
+      case H3. case SubIsInt. apply silver$*$core$*$plus_integer_comm to _ _ H8.
       case H1. apply IH to _ _ _ H6 H11.
-      apply plus_integer_is_integer to _ _ H13. case H15.
+      apply silver$*$core$*$plus_integer_is_integer to _ _ H13. case H15.
         %Subgoal 11.2.1
          exists ($posInt ($succ $zero)). split.
            %Subgoal 11.2.1.1
-            backchain plus_integer_comm.
+            backchain silver$*$core$*$plus_integer_comm.
             backchain $plus_integer_posInts_succ.
-            backchain plus_integer_comm.
+            backchain silver$*$core$*$plus_integer_comm.
            %Subgoal 11.2.1.2
             search.
         %Subgoal 11.2.2
          exists ($posInt ($succ ($succ N))). split.
            %Subgoal 11.2.2.1
-            backchain plus_integer_comm.
+            backchain silver$*$core$*$plus_integer_comm.
             backchain $plus_integer_posInts_succ.
-            backchain plus_integer_comm.
+            backchain silver$*$core$*$plus_integer_comm.
            %Subgoal 11.2.2.2
             search.
         %Subgoal 11.2.3
          exists ($posInt $zero). split.
            %Subgoal 11.2.3.1
-            backchain plus_integer_comm.
+            backchain silver$*$core$*$plus_integer_comm.
             backchain $plus_integer_posInt_-1_succ.
-            backchain plus_integer_comm.
+            backchain silver$*$core$*$plus_integer_comm.
            %Subgoal 11.2.3.2
-            apply plus_integer_comm to _ _ H14. case H16. search.
+            apply silver$*$core$*$plus_integer_comm to _ _ H14. case H16. search.
         %Subgoal 11.2.4
          exists ($negSuccInt N). split.
            %Subgoal 11.2.4.1
-            backchain plus_integer_comm.
+            backchain silver$*$core$*$plus_integer_comm.
             backchain $plus_integer_posInt_negSuccInt_succ.
-            backchain plus_integer_comm.
+            backchain silver$*$core$*$plus_integer_comm.
            %Subgoal 11.2.4.2
             backchain $plus_integer_succ_negSuccInt_right_to_left.
      %Subgoal 11.3
       case H1. case SubIsInt. case TotalIsInt.
-      apply plus_integer_comm to _ _ H8. apply IH to _ _ _ H6 H12.
+      apply silver$*$core$*$plus_integer_comm to _ _ H8. apply IH to _ _ _ H6 H12.
       exists Subtotal'. split.
         %Subgoal 11.3.1
          search.
@@ -708,17 +708,17 @@ Define $minus_integer : integer -> integer -> integer -> prop by
   $minus_integer N1 ($negSuccInt N2) N3 :=
      $plus_integer N1 ($posInt ($succ N2)) N3.
 
-Theorem minus_integer_unique : forall N1 N2 N N',
+Theorem silver$*$core$*$minus_integer_unique : forall N1 N2 N N',
   $minus_integer N1 N2 N -> $minus_integer N1 N2 N' -> N = N'.
 intros. case H1.
   %Subgoal 1
    case H2. search.
   %Subgoal 2
-   case H2. backchain plus_integer_unique.
+   case H2. backchain silver$*$core$*$plus_integer_unique.
   %Subgoal 3
-   case H2. backchain plus_integer_unique.
+   case H2. backchain silver$*$core$*$plus_integer_unique.
 
-Theorem minus_integer_total : forall N1 N2,
+Theorem silver$*$core$*$minus_integer_total : forall N1 N2,
   is_integer N1 -> is_integer N2 ->
   exists N3, $minus_integer N1 N2 N3.
 intros. case H2.
@@ -727,34 +727,34 @@ intros. case H2.
   %Subgoal 2
    apply $is_integer_posInt__to__is_nat to H3.
    apply $is_nat__to__is_integer_negSuccInt to H4.
-   apply plus_integer_total to H1 H5. exists N3. search.
+   apply silver$*$core$*$plus_integer_total to H1 H5. exists N3. search.
   %Subgoal 3
    assert (is_integer ($posInt ($succ $zero))).
-   apply plus_integer_total to H1 H3. exists N3. search.
+   apply silver$*$core$*$plus_integer_total to H1 H3. exists N3. search.
   %Subgoal 4
    apply $is_integer_negSuccInt__to__is_nat to H3.
    apply $is_nat__to__is_integer_posInt to H4.
    assert (is_integer ($posInt ($succ ($succ N)))).
-   apply plus_integer_total to H1 H6. exists N3. search.
+   apply silver$*$core$*$plus_integer_total to H1 H6. exists N3. search.
 
-Theorem minus_integer_is_integer : forall N1 N2 N3,
+Theorem silver$*$core$*$minus_integer_is_integer : forall N1 N2 N3,
   is_integer N1 -> is_integer N2 -> $minus_integer N1 N2 N3 ->
   is_integer N3.
 intros. case H3.
   %Subgoal 1
    search.
   %Subgoal 2
-   backchain plus_integer_is_integer with
+   backchain silver$*$core$*$plus_integer_is_integer with
              N1 = N1, N2 = ($negSuccInt N5).
    backchain $is_nat__to__is_integer_negSuccInt.
    backchain $is_integer_posInt__to__is_nat. case H2. search.
   %Subgoal 3
-   backchain plus_integer_is_integer with
+   backchain silver$*$core$*$plus_integer_is_integer with
              N1 = N1, N2 = ($posInt ($succ N5)).
    backchain $is_nat__to__is_integer_posInt.
    backchain $is_integer_negSuccInt__to__is_nat.
 
-Theorem minus_integer_same : forall N,
+Theorem silver$*$core$*$minus_integer_same : forall N,
   is_integer N -> $minus_integer N N ($posInt $zero).
 intros. case H1.
   %Subgoal 1
@@ -782,9 +782,9 @@ intros. case H1.
          apply IH to H4. search.
    apply $is_integer_negSuccInt__to__is_nat to H2.
    apply $is_nat__to__is_integer_posInt to H4.
-   apply H3 to H5. apply plus_integer_comm to _ _ H6. search.
+   apply H3 to H5. apply silver$*$core$*$plus_integer_comm to _ _ H6. search.
 
-Theorem minus_integer_0 : forall N,
+Theorem silver$*$core$*$minus_integer_0 : forall N,
   $minus_integer N ($posInt $zero) N.
 intros. search.
 
@@ -793,7 +793,7 @@ Theorem $plus_minus_same_integer : forall N1 N2 N3,
   $minus_integer N3 N2 N1.
 induction on 3. intros. case H3.
   %Subgoal 1
-   backchain minus_integer_same.
+   backchain silver$*$core$*$minus_integer_same.
   %Subgoal 2
    case H1. apply IH to _ _ H4.
    assert (forall X1 X2 X3,
@@ -811,14 +811,14 @@ induction on 3. intros. case H3.
   %Subgoal 3
    assert ($plus_integer ($posInt ($succ $zero)) ($posInt N4)
                          ($posInt ($succ N4))).
-   case H1. apply plus_integer_comm to _ _ H4. search.
+   case H1. apply silver$*$core$*$plus_integer_comm to _ _ H4. search.
   %Subgoal 4
    case H1. case H2. apply IH to _ _ H4.
    case H7. apply $is_integer_negSuccInt__to__posInt to H6.
-   apply plus_integer_is_integer to _ _ H4.
-   apply plus_integer_comm to _ _ H8.
+   apply silver$*$core$*$plus_integer_is_integer to _ _ H4.
+   apply silver$*$core$*$plus_integer_comm to _ _ H8.
    apply $plus_integer_posInts_succ to H11.
-   apply plus_integer_comm to _ _ H12. search.
+   apply silver$*$core$*$plus_integer_comm to _ _ H12. search.
   %Subgoal 5
    search.
   %Subgoal 6
@@ -836,17 +836,17 @@ induction on 3. intros. case H3.
      %Subgoal 7.1
       assert ($plus_integer ($negSuccInt $zero) ($negSuccInt N4)
                             ($negSuccInt ($succ N4))).
-      apply plus_integer_comm to _ _ H8. search.
+      apply silver$*$core$*$plus_integer_comm to _ _ H8. search.
      %Subgoal 7.2
       case H6. apply $is_integer_posInt__to__negSuccInt to H9.
-      apply plus_integer_is_integer to _ _ H4.
-      apply plus_integer_comm to _ _ H8.
+      apply silver$*$core$*$plus_integer_is_integer to _ _ H4.
+      apply silver$*$core$*$plus_integer_comm to _ _ H8.
       apply $plus_integer_negSuccInts_succ to H12.
-      apply plus_integer_comm to _ _ H13. search.
+      apply silver$*$core$*$plus_integer_comm to _ _ H13. search.
   %Subgoal 8
    apply $is_integer_negSuccInt__to__posInt to H2.
    apply $plus_integer_negation to H4.
-   apply plus_integer_comm to _ _ H5.
+   apply silver$*$core$*$plus_integer_comm to _ _ H5.
    assert (forall X1 X2,
            $plus_integer ($negSuccInt X1) X2 ($posInt $zero) ->
            $plus_integer ($negSuccInt ($succ X1)) X2
@@ -866,7 +866,7 @@ Theorem $minus_plus_same_integer : forall N1 N2 N3,
   $plus_integer N3 N2 N1.
 intros. case H3.
   %Subgoal 1
-   backchain plus_integer_comm.
+   backchain silver$*$core$*$plus_integer_comm.
   %Subgoal 2
    assert (forall X1 X2 X3,
            is_integer X1 -> is_integer ($posInt X2) ->
@@ -875,16 +875,16 @@ intros. case H3.
       induction on 3. intros. case H7.
         %Sub 1
          apply $is_integer_posInt__to__negSuccInt to H6.
-         backchain plus_integer_comm.
+         backchain silver$*$core$*$plus_integer_comm.
          backchain $plus_integer_negation.
         %Sub 2
-         case H5. backchain plus_integer_comm.
+         case H5. backchain silver$*$core$*$plus_integer_comm.
         %Sub 3
          case H5. case H6. apply IH to _ _ H8.
          apply $is_integer_posInt__to__negSuccInt to H10.
-         apply plus_integer_is_integer to _ _ H8.
-         apply plus_integer_comm to _ _ H11.
-         backchain plus_integer_comm.
+         apply silver$*$core$*$plus_integer_is_integer to _ _ H8.
+         apply silver$*$core$*$plus_integer_comm to _ _ H11.
+         backchain silver$*$core$*$plus_integer_comm.
          backchain $plus_integer_posInts_succ.
         %Sub 4
          assert (forall Y1 Y2,
@@ -897,7 +897,7 @@ intros. case H3.
               %Sub 2
                apply IH1 to H9. search.
          backchain H8. apply $is_integer_posInt__to__negSuccInt to H6.
-         backchain plus_integer_comm.
+         backchain silver$*$core$*$plus_integer_comm.
          backchain $plus_integer_negation.
         %Sub 5
          case H5. apply IH to _ _ H8.
@@ -927,16 +927,16 @@ intros. case H3.
        %Sub 4
         case H6.
           %Sub 4.1
-           case H5. apply plus_integer_is_integer to _ _ H8.
-           apply plus_integer_comm to _ _ H8. case H11.
-           backchain plus_integer_comm.
+           case H5. apply silver$*$core$*$plus_integer_is_integer to _ _ H8.
+           apply silver$*$core$*$plus_integer_comm to _ _ H8. case H11.
+           backchain silver$*$core$*$plus_integer_comm.
           %Sub 4.2
            case H5. apply IH to _ _ H8.
-           apply plus_integer_is_integer to _ _ H8.
+           apply silver$*$core$*$plus_integer_is_integer to _ _ H8.
            apply $is_integer_posInt__to__negSuccInt to H9.
-           backchain plus_integer_comm.
+           backchain silver$*$core$*$plus_integer_comm.
            backchain $plus_integer_negSuccInts_succ.
-           backchain plus_integer_comm.
+           backchain silver$*$core$*$plus_integer_comm.
    backchain H5. backchain $is_integer_negSuccInt__to__posInt.
 
 
@@ -950,7 +950,7 @@ Define $negate_integer : integer -> integer -> prop by
   $negate_integer ($posInt ($succ N)) ($negSuccInt N);
   $negate_integer ($negSuccInt N) ($posInt ($succ N)).
 
-Theorem negate_integer_unique : forall N A B,
+Theorem silver$*$core$*$negate_integer_unique : forall N A B,
   $negate_integer N A -> $negate_integer N B -> A = B.
 intros. case H1.
   %Subgoal 1
@@ -960,7 +960,7 @@ intros. case H1.
   %Subgoal 3
    case H2. search.
 
-Theorem negate_integer_total : forall N,
+Theorem silver$*$core$*$negate_integer_total : forall N,
   is_integer N -> exists N', $negate_integer N N'.
 intros. case H1.
   %Subgoal 1
@@ -972,7 +972,7 @@ intros. case H1.
   %Subgoal 4
    search.
 
-Theorem negate_integer_is_integer : forall N -N,
+Theorem silver$*$core$*$negate_integer_is_integer : forall N -N,
   is_integer N -> $negate_integer N -N -> is_integer -N.
 intros. case H2.
   %Subgoal 1
@@ -982,7 +982,7 @@ intros. case H2.
   %Subgoal 3
    backchain $is_integer_negSuccInt__to__posInt.
 
-Theorem negate_integer_double : forall N -N,
+Theorem silver$*$core$*$negate_integer_double : forall N -N,
   $negate_integer N -N -> $negate_integer -N N.
 intros. case H1.
   %Subgoal 1
@@ -1002,7 +1002,7 @@ Theorem $negate_integer_step__negSuccInt : forall A B,
   $negate_integer ($negSuccInt ($succ A)) ($posInt ($succ B)).
 intros. case H1. search.
 
-Theorem plus_integer_0_result : forall A B,
+Theorem silver$*$core$*$plus_integer_0_result : forall A B,
   $plus_integer A B ($posInt $zero) ->
   $negate_integer A B.
 induction on 1. intros. case H1.
@@ -1017,19 +1017,19 @@ induction on 1. intros. case H1.
   %Subgoal 5
    apply IH to H2. backchain $negate_integer_step__negSuccInt.
 
-Theorem plus_integer_negatives : forall A -A B -B C -C,
+Theorem silver$*$core$*$plus_integer_negatives : forall A -A B -B C -C,
   is_integer A -> is_integer B -> is_integer C ->
   $negate_integer A -A -> $negate_integer B -B ->
   $negate_integer C -C -> $plus_integer A B C ->
   $plus_integer -A -B -C.
 induction on 1. intros. case H1.
   %Subgoal 1
-   case H4. case H7. apply negate_integer_unique to H5 H6. search.
+   case H4. case H7. apply silver$*$core$*$negate_integer_unique to H5 H6. search.
   %Subgoal 2
    case H4. case H7.
      %Subgoal 2.1
-      case H3. apply negate_integer_total to H10.
-      apply negate_integer_total to H8.
+      case H3. apply silver$*$core$*$negate_integer_total to H10.
+      apply silver$*$core$*$negate_integer_total to H8.
       apply IH to H8 H2 H10 H12 H5 H11 H9. case H12.
         %Subgoal 2.1.1
          case H13. case H6. case H11.
@@ -1040,16 +1040,16 @@ induction on 1. intros. case H1.
         %Subgoal 2.1.2
          case H11.
            %Subgoal 2.1.2.1
-            apply plus_integer_0_result to H13. case H14. case H6.
+            apply silver$*$core$*$plus_integer_0_result to H13. case H14. case H6.
             case H8. apply $plus_integer_negation to H15.
             apply $is_integer_posInt__to__negSuccInt to H15.
-            apply plus_integer_comm to _ _ H16.
+            apply silver$*$core$*$plus_integer_comm to _ _ H16.
             assert ($plus_integer ($negSuccInt $zero) ($posInt $zero)
                                   ($negSuccInt $zero)).
-            apply plus_integer_comm to _ _ H18.
-            apply plus_integer_assoc to _ _ _ H20 H19.
-            apply plus_integer_comm to _ _ H21. case H23.
-            backchain plus_integer_comm.
+            apply silver$*$core$*$plus_integer_comm to _ _ H18.
+            apply silver$*$core$*$plus_integer_assoc to _ _ _ H20 H19.
+            apply silver$*$core$*$plus_integer_comm to _ _ H21. case H23.
+            backchain silver$*$core$*$plus_integer_comm.
            %Subgoal 2.1.2.2
             case H6. backchain $plus_integer_negSuccInts_succ.
      %Subgoal 2.2
@@ -1058,7 +1058,7 @@ induction on 1. intros. case H1.
          search.
         %Subgoal 2.2.2
          apply $is_integer_posInt__to__negSuccInt to H3.
-         backchain plus_integer_comm.
+         backchain silver$*$core$*$plus_integer_comm.
      %Subgoal 2.3
       case H8 (keep).
         %Subgoal 2.3.1
@@ -1080,7 +1080,7 @@ induction on 1. intros. case H1.
   %Subgoal 4
    case H4. case H7.
      %Subgoal 4.1
-      case H5. case H6. backchain plus_integer_comm.
+      case H5. case H6. backchain silver$*$core$*$plus_integer_comm.
       backchain $is_integer_negSuccInt__to__posInt.
      %Subgoal 4.2
       case H5. case H2. case H10.
