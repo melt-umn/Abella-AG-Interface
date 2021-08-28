@@ -1,6 +1,6 @@
 Grammar imp:host.
 
-
+Set debug on.
 Theorem lookup__unique : forall L N Ret Ret',
   imp:host:lookup(N, L) = Ret -> lookup(N, L) = Ret' -> Ret = Ret'.
 induction on 1. intros. case H1.

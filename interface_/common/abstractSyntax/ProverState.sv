@@ -55,7 +55,7 @@ ProverState ::=
   --  or, for those which aren't exactly core-related, we can figure
   --  out another way to handle them.
   --The metaterms won't be needed, so we can just leave them out
-  local knownThms::[(String, String, Metaterm)] =
+  local knownThms1::[(String, String, Metaterm)] =
         [
          --strings.thm
          ("is_string_append", "silver:core", trueMetaterm()),
@@ -99,7 +99,10 @@ ProverState ::=
          ("DeMorgan__not_bool__and_bool", "silver:core", trueMetaterm()),
          ("DeMorgan__or_bool__not_bool", "silver:core", trueMetaterm()),
          ("DeMorgan__not_bool__or_bool", "silver:core", trueMetaterm()),
-         ("DeMorgan__and_bool__not_bool", "silver:core", trueMetaterm()),
+         ("DeMorgan__and_bool__not_bool", "silver:core", trueMetaterm())
+        ];
+  local knownThms2::[(String, String, Metaterm)] =
+        [
          --integers.thm
          ("is_integer_eq_or_not", "silver:core", trueMetaterm()),
          --integer_addition.thm
@@ -159,6 +162,8 @@ ProverState ::=
          ("length_unique", "silver:core", trueMetaterm()),
          ("null_unique", "silver:core", trueMetaterm())
         ];
+  production attribute knownThms::[(String, String, Metaterm)] with ++;
+  knownThms := knownThms1 ++ knownThms2;
   return proverState(noProof(), false, true, knownThms);
 }
 

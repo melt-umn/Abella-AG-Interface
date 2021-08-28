@@ -146,9 +146,9 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> theorem::Clearable
   top.pp = h.pp ++ "apply " ++ depthString ++ theorem.pp ++ argsString ++ withsString ++ ".  ";
 
   top.errors <-
-      case err_trans of
-      | left(err) -> [errorMsg(err)]
-      | right(_) -> []
+      case theorem.errors, err_trans of
+      | [], left(err) -> [errorMsg(err)]
+      | _, _ -> []
       end;
   top.errors <-
       foldr(\ a::ApplyArg rest::[Error]->
@@ -181,12 +181,12 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> theorem::Clearable
       | right(prf) -> prf
       end;
 
-  local foundTheorem::Maybe<Metaterm> =
+  local foundTheorem::Maybe<(String, Metaterm)> =
         case findAssociated(theorem.name, top.currentState.state.hypList) of
-        | just(mt) -> just(mt)
+        | just(mt) -> just((theorem.name, mt))
         | nothing() ->
           case findTheorem(theorem.name, top.currentState) of
-          | [(name, mt)] -> just(mt)
+          | [(name, mt)] -> just((name, mt))
           | _ -> nothing()
           end
         end;
@@ -213,27 +213,27 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> theorem::Clearable
         case foundTheorem of
         | nothing() ->
           error("Should not access expandedArgs without known theorem/hyp")
-        | just(mt) ->
+        | just((_, mt)) ->
           buildExpandedArgs(
              decorate mt with
              {silverContext = top.silverContext;}.implicationPremises,
              args)
         end;
   local err_trans::Either<String [ProofCommand]> =
-      case theorem of
-      | clearable(_, "is_list_member", _) ->
+      case foundTheorem of
+      | just(("silver:core:is_list_member", _)) ->
         case theorem__is_list_member(h, depth, args, withs,
                 top.translatedState.hypList, top.silverContext) of
         | right(prf) -> right(prf)
         | left(err) -> left(err)
         end
-      | clearable(_, "is_list_append", _) ->
+      | just(("silver:core:is_list_append", _)) ->
         case theorem__is_list_append(h, depth, args, withs,
                 top.translatedState.hypList, top.silverContext) of
         | right(prf) -> right(prf)
         | left(err) -> left(err)
         end
-      | clearable(x, "symmetry", y) ->
+      | just(("silver:core:symmetry", _)) ->
         case theorem__symmetry(h, depth, args,
                 map(\ p::(String, Term) ->
                       (p.1, decorate p.2 with
@@ -246,33 +246,27 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> theorem::Clearable
         | right(prf) -> right(prf)
         | left(err) -> left(err)
         end
-      | clearable(x, "attr_unique", y) ->
+      | just(("silver:core:attr_unique", _)) ->
         case theorem__attr_unique(args, withs,
                 top.currentState.state.hypList, top.silverContext) of
         | right(thm) ->
-          right([applyTactic(h, depth, clearable(x, thm, y), args, [])])
+          right([applyTactic(h, depth, clearable(false, thm, []), args, [])])
         | left(err) -> left(err)
         end
-      | clearable(x, "attr_is", y) ->
+      | just(("silver:core:attr_is", _)) ->
         case theorem__attr_is(h, depth, args, withs,
                 top.currentState.state.hypList, top.silverContext) of
         | right(thm) -> right([thm])
         | left(err) -> left(err)
         end
-      | _ when foundTheorem matches nothing()->
-        right([applyTactic(h, depth, theorem, args,
+      | just((_, _)) ->
+        right([applyTactic(h, depth, theorem.translation, expandedArgs,
                  map(\ p::Pair<String Term> ->
                        pair(p.fst, decorate p.snd with
                          {knownTrees = top.currentState.state.gatheredTrees;
                           silverContext = top.silverContext;
                          }.translation), withs))])
-      | _ ->
-        right([applyTactic(h, depth, theorem.translation, args,
-                 map(\ p::Pair<String Term> ->
-                       pair(p.fst, decorate p.snd with
-                         {knownTrees = top.currentState.state.gatheredTrees;
-                          silverContext = top.silverContext;
-                         }.translation), withs))])
+      | nothing() -> left("Unknown lemma or hypothesis in application")
       end;
 
   top.shouldClean = true;
@@ -1756,7 +1750,8 @@ top::Clearable ::= star::Boolean hyp::String instantiation::[Type]
           map(fst, findTheorem(hyp, top.currentState))
         end;
 
-  top.translation = clearable(star, head(findName), instantiation);
+  top.translation =
+      clearable(star, colonsToEncoded(head(findName)), instantiation);
 
   top.errors <-
       if indexOf("$", hyp) >= 0
