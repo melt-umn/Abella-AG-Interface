@@ -7,7 +7,7 @@ induction on 1. intros. case H1.
   %found here 1
    case H2.
      %found here 2
-      apply head_unique to H4 H6. search.
+      apply silver:core:head_unique to H4 H6. search.
      %found later 2
       assert false. backchain H6. apply head_unique to H3 H5. search.
       case H9.
@@ -44,7 +44,7 @@ on T1.
     %lookup doesn't return
      assert exists Ret, lookup(L, Env2) = Ret. apply H12 to H13.
     %lookup returns
-     apply lookup__unique to H9 H12. search.
+     apply imp:host:lookup__unique to H9 H12. search.
 
 
 Extensible_Theorem value_unique_B : forall (T1 T2 : B) Env V,
@@ -58,7 +58,7 @@ on T1.
   case_structure T2 in Eq with Structure. case A.env. case A2.env.
   Eq1: apply symmetry to H7. Eq2: apply symmetry to H8. clear H7 H8.
   case T1.value. apply value_unique_A to Eq1 H14 H17 H19.
-  apply value_unique_A to Eq2 H12 H15 H20. case T2.value.
+  apply imp:host:value_unique_A to Eq2 H12 H15 H20. case T2.value.
   apply greater_integer_unique to H21 H27. search.
  %equal
   intros Structure Eq T1Env T2Env T1Val.

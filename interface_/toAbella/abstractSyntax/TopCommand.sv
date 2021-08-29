@@ -436,15 +436,6 @@ top::TopCommand ::= tys::[Type]
 
 
 
---This is to handle imports for reasons described there
-abstract production textCommand
-top::TopCommand ::= text::String
-{
-  top.pp = text;
-  top.translation = textCommand(text);
-}
-
-
 {-
   The purpose of this production is to allow us to declare a theorem
   *AND* do some number of steps of the proof as well.  I don't know

@@ -51,6 +51,7 @@ IOVal<Integer> ::= ioin::IO filename::String
   local processed::IOVal<Either<String (ListOfCommands, [DefElement],
                                         [ParsedElement])>> =
         processGrammarDecl(fileAST.1, fileContents.io);
+  local fileErrors::[Error] = fileAST.2.fileErrors;
   --
   local ourSilverContext::Decorated SilverContext =
         decorate buildSilverContext(fileAST.1, processed.iovalue.fromRight.1) with {};
@@ -75,6 +76,10 @@ IOVal<Integer> ::= ioin::IO filename::String
      else if !processed.iovalue.isRight
      then ioval(print("Error:  " ++ processed.iovalue.fromLeft ++
                       "\n", processed.io), 1)
+     else if !null(fileErrors)
+     then ioval(print("Processing errors:\n" ++
+                      implode("\n", map((.pp), fileErrors)) ++ "\n",
+                      processed.io), 1)
      else if silverGen.iovalue == ""
      then ioval(print("Silver generated location not set\n",
                       silverGen.io), 1)

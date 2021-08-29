@@ -44,8 +44,10 @@ attribute thms, defs occurs on TopCommand;
 aspect production theoremDeclaration
 top::TopCommand ::= name::String params::[String] body::Metaterm
 {
-  top.thms <- [nonextensibleTheorem(name,
-                  body.colonFullNames)];
+  top.thms <-
+      [nonextensibleTheorem(
+          top.silverContext.currentGrammar ++ ":" ++ name,
+          body.colonFullNames)];
 }
 
 
@@ -54,12 +56,13 @@ top::TopCommand ::= depth::Integer thms::[(String, Metaterm, String)]
 {
   local full_thms::[(String, Metaterm, String)] =
         map(\ p::(String, Metaterm, String) ->
-              (p.1, decorate p.2 with {
-                       knownTyParams = [];
-                       finalTys = [];
-                       boundVars = [];
-                       silverContext = top.silverContext;
-                    }.colonFullNames, p.3), thms);
+              (top.silverContext.currentGrammar ++ ":" ++ p.1,
+               decorate p.2 with {
+                  knownTyParams = [];
+                  finalTys = [];
+                  boundVars = [];
+                  silverContext = top.silverContext;
+               }.colonFullNames, p.3), thms);
   top.thms <- [extensibleMutualTheoremGroup(full_thms)];
 }
 

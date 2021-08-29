@@ -145,7 +145,7 @@ Extensible_Theorem
   intros IH1_NE_NV IH2_NE_NV IH1_NE_V IH2_NE_V IH1_NV IH2_NV
          IH1_V IH2_V Structure L_Is Eq T1Env T2Env T1Val.
   case_structure T2 in Eq with Structure.
-  Eq2 : apply symmetry to H8. clear H8.
+  Eq2 : apply silver:core:symmetry to H8. clear H8.
   case E1.env.
     %
      case E3.env.
@@ -418,7 +418,7 @@ on T.
     search.
 %name
  intros Structure. case T.valExists.
- apply contains__to__member to H10. apply H6 to H11.
+ apply calculator:contains__to__member to H10. apply H6 to H11.
  apply attr_is to H5. apply lookup__member to H13 H12.
  case T.value.
    %T.value = <no value> because lookup does not return
@@ -433,7 +433,7 @@ Extensible_Theorem valExists__implies__value__Root :
 on R.
 %root
  intros Structure. case R.valExists. case E.knownNames. case E.env.
- apply valExists__implies__value__Expr to H7 H8 _ H6.
+ apply calculator:valExists__implies__value__Expr to H7 H8 _ H6.
    %member assumption for Expr theorem
     intros Mem. case Mem.
  case R.value. search.
