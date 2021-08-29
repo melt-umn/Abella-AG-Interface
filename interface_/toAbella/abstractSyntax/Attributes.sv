@@ -38,6 +38,9 @@ synthesized attribute numCommandsSent::Integer;
 --Gather new theorems for the prover state
 synthesized attribute newKnownTheorems::[(String, String, Metaterm)];
 
+--New theorems to be proven now
+synthesized attribute provingTheorems::[(String, String, Metaterm)];
+
 
 
 --Translate names into full names with colons

@@ -7,7 +7,7 @@ nonterminal TopCommand with
    --pp should always end with a newline
    pp,
    translation<TopCommand>, numCommandsSent, currentState, silverContext,
-   newKnownTheorems,
+   newKnownTheorems, provingTheorems,
    errors, sendCommand, ownOutput,
    translatedTheorems, numRelevantProds;
 
@@ -27,6 +27,9 @@ top::TopCommand ::=
 
   --Most commands aren't adding anything new
   top.newKnownTheorems = top.currentState.knownTheorems;
+
+  --Most commands aren't declaring anything to prove
+  top.provingTheorems = [];
 }
 
 
@@ -114,16 +117,20 @@ top::TopCommand ::= depth::Integer thms::[(String, Metaterm, String)]
       else 1;
 
   top.translatedTheorems =
-      map(\ p::(String, Metaterm, String) -> (p.1, p.2), translated);
+      map(\ p::(String, Metaterm, String) ->
+            (colonsToEncoded(top.silverContext.currentGrammar ++
+                             ":" ++ p.1), p.2),
+          translated);
 
   --The number of splits to do when the theorem is done
   top.numRelevantProds =
       map(\ p::(Metaterm, String, Type, [String], String) ->
             (p.5, length(p.5)), groupings);
 
-  top.newKnownTheorems =
-      map(\ p::(String, Metaterm, String) -> (p.1, top.silverContext.currentGrammar, p.2), translated) ++
-      top.currentState.knownTheorems;
+  top.provingTheorems =
+      map(\ p::(String, Metaterm, String) ->
+            (p.1, top.silverContext.currentGrammar, p.2),
+          translated);
 }
 
 --Simply translate the metaterms in the thms argument
@@ -231,9 +238,8 @@ top::TopCommand ::= name::String params::[String] body::Metaterm
          colonsToEncoded(top.silverContext.currentGrammar ++ ":" ++ name),
          params, body.translation);
 
-  top.newKnownTheorems =
-      [(name, top.silverContext.currentGrammar, body.translation)] ++
-      top.currentState.knownTheorems;
+  top.provingTheorems =
+      [(name, top.silverContext.currentGrammar, body.translation)];
 }
 
 
@@ -473,8 +479,7 @@ top::TopCommand ::= name::String params::[String] body::Metaterm prf::[ProofComm
   body.finalTys = [];
   body.knownTrees = body.gatheredTrees;
 
-  top.newKnownTheorems =
-      [(name, top.silverContext.currentGrammar, new(body))] ++
-      top.currentState.knownTheorems;
+  top.provingTheorems =
+      error("Should never be access provingTheorems on theoremAndProof");
 }
 

@@ -9,17 +9,16 @@ grammar interface_:common:abstractSyntax;
 -}
 
 nonterminal ProverState with
-   state, debug, clean, knownTheorems,
+   state, provingThms, debug, clean, knownTheorems,
    replaceState, replacedState<ProverState>;
 
 
 synthesized attribute state::ProofState;
+synthesized attribute provingThms::[(String, String, Metaterm)];
 synthesized attribute debug::Boolean;
 synthesized attribute clean::Boolean;
 
 --Theorems we have proven and available
---Not all theorems are included, but anything with trees visible to user is
---Also, not everything in here is guaranteed to be available
 --(short name, grammar name, statement)
 synthesized attribute knownTheorems::[(String, String, Metaterm)];
 
@@ -31,17 +30,28 @@ synthesized attribute replacedState<a>::a;
 
 abstract production proverState
 top::ProverState ::=
-   state::ProofState debugMode::Boolean cleanMode::Boolean
+   state::ProofState provingThms::[(String, String, Metaterm)]
+   debugMode::Boolean cleanMode::Boolean
    thms::[(String, String, Metaterm)]
 {
   top.state = state;
+  top.provingThms = provingThms;
   top.debug = debugMode;
   top.clean = cleanMode;
 
   top.knownTheorems = thms;
 
   top.replacedState =
-      proverState(top.replaceState, debugMode, cleanMode, thms);
+      case top.replaceState of
+      | proofCompleted() ->
+        proverState(top.replaceState, [], debugMode, cleanMode,
+                    provingThms ++ thms)
+      | proofAborted() ->
+        proverState(top.replaceState, [], debugMode, cleanMode, thms)
+      | _ ->
+        proverState(top.replaceState, provingThms, debugMode,
+                    cleanMode, thms)
+      end;
 }
 
 
@@ -164,7 +174,7 @@ ProverState ::=
         ];
   production attribute knownThms::[(String, String, Metaterm)] with ++;
   knownThms := knownThms1 ++ knownThms2;
-  return proverState(noProof(), false, true, knownThms);
+  return proverState(noProof(), [], false, true, knownThms);
 }
 
 

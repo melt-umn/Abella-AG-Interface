@@ -59,6 +59,7 @@ top::AnyCommand ::= c::TopCommand
       else (top.numCommandsSent,
             proverState(
                newProofState,
+               c.provingTheorems,
                currentState.debug,
                currentState.clean,
                c.newKnownTheorems)
@@ -76,11 +77,9 @@ top::AnyCommand ::= c::ProofCommand
   top.shouldClean = c.shouldClean;
   top.mustClean =
       --extensible proof completed, so need to clean to assert it
-      case top.currentState.state, top.newProofState of
-      | extensible_proofInProgress(_, _, _),
-        proofCompleted() ->
-        true
-      | _, _ -> false
+      case top.newProofState of
+      | proofCompleted() -> true
+      | _ -> false
       end;
 
   top.translation =
@@ -106,6 +105,7 @@ top::AnyCommand ::= c::ProofCommand
   c.stateListIn = top.stateListIn;
   c.currentState = top.currentState;
   local currentState::ProverState = head(top.stateListIn).snd;
+  currentState.replaceState = newProofState;
   local newProofState::ProofState =
         case top.currentState.state of
         | extensible_proofInProgress(_, oMt, numProds) ->
@@ -118,12 +118,7 @@ top::AnyCommand ::= c::ProofCommand
       else if c.isUndo
            then c.stateListOut
            else (top.numCommandsSent,
-                 proverState(
-                    newProofState,
-                    currentState.debug,
-                    currentState.clean,
-                    currentState.knownTheorems)
-                )::top.stateListIn;
+                 currentState.replacedState)::top.stateListIn;
 }
 
 

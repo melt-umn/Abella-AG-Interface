@@ -45,6 +45,7 @@ top::NoOpCommand ::= opt::String val::String
   top.stateListOut =
       (top.numCommandsSent,
        proverState(currentState.state,
+                   currentState.provingThms,
                    if opt == "debug"
                    then val == "on"
                    else currentState.debug,
