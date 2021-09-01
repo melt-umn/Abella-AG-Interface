@@ -1,4 +1,6 @@
 
+Kind $pair   type -> type -> type.
+Import "pairs".
 
 /*The $attrVal type should be defined in a library.*/
 Kind $attrVal   type -> type.
@@ -9,6 +11,18 @@ Type $attr_no   $attrVal A.
 Define $is_attrVal : (A -> prop) -> $attrVal A -> prop by
   $is_attrVal SubRel ($attr_ex A) := SubRel A;
   $is_attrVal SubRel $attr_no.
+
+
+/*
+  We want to have this constant type somewhere imported, rather than
+  defined in grammar specifications, so we only define it once.
+*/
+Kind $node_tree   type.
+/*
+  Same for this relation.
+*/
+Define $split : (A -> B -> prop) -> ($pair A B) -> prop by
+  $split SubRel ($pair_c A B) := SubRel A B.
 
 
 

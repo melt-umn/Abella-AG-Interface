@@ -1,0 +1,9 @@
+Grammar imp:security.
+
+
+Theorem max_is_arg : forall A B C,
+  max(A, B) = C -> C = A \/ C = B.
+intros. case H1.
+  left. search.
+  right. search.
+
