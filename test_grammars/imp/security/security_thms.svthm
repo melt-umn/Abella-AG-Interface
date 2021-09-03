@@ -7,3 +7,15 @@ intros. case H1.
   left. search.
   right. search.
 
+
+Prove imp:host:value_unique_A.
+
+
+Prove imp:host:value_unique_B.
+
+
+Prove imp:host:no_env__no_env_out.
+
+
+Prove imp:host:env_out__unique__C.
+

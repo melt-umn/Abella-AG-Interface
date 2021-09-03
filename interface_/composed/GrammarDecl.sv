@@ -34,7 +34,7 @@ IOVal<Either<String
      else if !interface_is_file.iovalue
      then ioval(interface_is_file.io,
                 left("Could not find interface file for grammar " ++
-                     grammarName))
+                     grammarName ++ "; must compile grammar first"))
      else if !parsed_interface.parseSuccess
      then ioval(interface_file_contents.io,
                 left("Could not parse interface file for grammar " ++

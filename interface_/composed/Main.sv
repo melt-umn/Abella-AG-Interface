@@ -14,17 +14,25 @@ IOVal<Integer> ::= largs::[String] ioin::IO
 {
   local parsedArgs::Either<String Decorated CmdArgs> =
         parseArgs(largs);
+  local generate::IOVal<Boolean> =
+        generateSkeletonFiles(parsedArgs.fromRight.generateFiles,
+                              ioin);
   return
      case parsedArgs of
      | left(errs) -> ioval(print(errs, ioin), 1)
      | right(args) ->
-       if args.compileFile && args.checkFile
-       then check_compile_files(ioin, args.filenames)
+       if !generate.iovalue
+       then ioval(generate.io, 1)
+       else if args.compileFile && args.checkFile
+       then check_compile_files(generate.io, args.filenames)
        else if args.compileFile
-       then compile_files(ioin, args.filenames)
+       then compile_files(generate.io, args.filenames)
        else if args.checkFile
-       then run_files(ioin, args.filenames)
-       else run_interactive(ioin)
+       then run_files(generate.io, args.filenames)
+       else if null(args.generateFiles)
+       then run_interactive(ioin)
+       else --don't run interactive if generating for some grammar(s)
+            ioval(generate.io, 0)
      end;
 }
 
@@ -34,6 +42,8 @@ IOVal<Integer> ::= largs::[String] ioin::IO
 synthesized attribute checkFile::Boolean occurs on CmdArgs;
 synthesized attribute compileFile::Boolean occurs on CmdArgs;
 synthesized attribute filenames::[String] occurs on CmdArgs;
+--grammar and filename to generate skeletons for and into
+synthesized attribute generateFiles::[(String, String)] occurs on CmdArgs;
 
 
 aspect production endCmdArgs
@@ -42,6 +52,7 @@ top::CmdArgs ::= l::[String]
   top.checkFile = false;
   top.compileFile = false;
   top.filenames = l;
+  top.generateFiles = [];
 }
 
 
@@ -51,6 +62,7 @@ top::CmdArgs ::= rest::CmdArgs
   top.checkFile = true;
   top.compileFile = rest.compileFile;
   top.filenames = rest.filenames;
+  top.generateFiles = rest.generateFiles;
   forwards to rest;
 }
 
@@ -61,6 +73,24 @@ top::CmdArgs ::= rest::CmdArgs
   top.checkFile = rest.checkFile;
   top.compileFile = true;
   top.filenames = rest.filenames;
+  top.generateFiles = rest.generateFiles;
+  forwards to rest;
+}
+
+
+abstract production generateFlag
+top::CmdArgs ::= grammarInfo::[String] rest::CmdArgs
+{
+  top.checkFile = rest.checkFile;
+  top.compileFile = rest.compileFile;
+  top.filenames = rest.filenames;
+  top.generateFiles =
+      case grammarInfo of
+      | [grmmr, filename] ->
+        (grmmr, filename)::rest.generateFiles
+      | _ -> --should be checked by silver:util:cmdargs
+        rest.generateFiles
+      end;
   forwards to rest;
 }
 
@@ -76,11 +106,13 @@ Either<String  Decorated CmdArgs> ::= args::[String]
 
   flags <-
     [pair("--check",   flag(checkFlag)),
-     pair("--compile", flag(compileFlag))
+     pair("--compile", flag(compileFlag)),
+     pair("--generate", nOptions(2, generateFlag))
     ];
   flagdescs <- 
     ["   --check : check file for correctness and completion",
-     "   --compile : compile file for importing into other grammars"
+     "   --compile : compile file for importing into other grammars",
+     "   --generate <grammar> <filename> : generate a basic theorem file for the given grammar"
     ];
 
   local usage::String = 
