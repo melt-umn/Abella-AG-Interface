@@ -8,7 +8,7 @@ IOVal<Integer> ::= ioin::IO
 {
   local grammarName::IOVal<String> = get_grammar_interactive(ioin);
   local processed::IOVal<Either<String (ListOfCommands, [DefElement],
-                                        [ParsedElement])>> =
+                                        [ThmElement])>> =
         processGrammarDecl(grammarName.iovalue, grammarName.io);
   --
   local started::IOVal<Either<String ProcessHandle>> =
@@ -18,7 +18,13 @@ IOVal<Integer> ::= ioin::IO
         set_up_abella_silver(grammarName.iovalue,
            processed.iovalue.fromRight.1,
            processed.iovalue.fromRight.2,
-           started.iovalue.fromRight.1, started.io);
+           started.iovalue.fromRight, started.io);
+  --
+  local handleIncoming::IOVal<(Integer, ProverState)> =
+        handleIncomingThms(
+           (0, defaultProverState(processed.iovalue.fromRight.3)),
+           build_context.iovalue, started.iovalue.fromRight,
+           build_context.io);
 
   return
      if !processed.iovalue.isRight
@@ -27,9 +33,10 @@ IOVal<Integer> ::= ioin::IO
      else if !started.iovalue.isRight
      then ioval(print("Error:  " ++ started.iovalue.fromLeft ++
                       "\n", started.io), 1)
-     else run_step_interactive([(-1, defaultProverState())],
+     else run_step_interactive(
+             [(-1, handleIncoming.iovalue.2)],
              build_context.iovalue, started.iovalue.fromRight,
-             build_context.io);
+             handleIncoming.io);
 }
 
 

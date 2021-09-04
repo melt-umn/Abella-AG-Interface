@@ -52,7 +52,8 @@ top::NoOpCommand ::= opt::String val::String
                    if opt == "clean"
                    then val == "on"
                    else currentState.clean,
-                   currentState.knownTheorems)
+                   currentState.knownTheorems,
+                   currentState.remainingObligations)
       )::top.stateListIn;
 }
 

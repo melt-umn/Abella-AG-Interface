@@ -49,7 +49,7 @@ IOVal<Integer> ::= ioin::IO filename::String
         file_parse(fileContents.iovalue, filename);
   local fileAST::(String, ListOfCommands) = fileParsed.parseTree.ast;
   local processed::IOVal<Either<String (ListOfCommands, [DefElement],
-                                        [ParsedElement])>> =
+                                        [ThmElement])>> =
         processGrammarDecl(fileAST.1, fileContents.io);
   local fileErrors::[Error] = fileAST.2.fileErrors;
   --

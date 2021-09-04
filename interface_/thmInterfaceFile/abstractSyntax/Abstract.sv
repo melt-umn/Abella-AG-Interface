@@ -1,17 +1,18 @@
 grammar interface_:thmInterfaceFile:abstractSyntax;
 
 
-import interface_:common;
+import interface_:common:abstractSyntax;
 import interface_:toAbella:abstractSyntax;
 
 
-nonterminal ParsedElement with pp, encode;
+nonterminal ThmElement with pp, encode, is_nonextensible;
 
-synthesized attribute encode::String;
+synthesized attribute encode::TopCommand;
+synthesized attribute is_nonextensible::Boolean;
 
 
 abstract production extensibleMutualTheoremGroup
-top::ParsedElement ::=
+top::ThmElement ::=
    --[(thm name, thm statement, induction tree)]
    thms::[(String, Metaterm, String)]
 {
@@ -22,26 +23,29 @@ top::ParsedElement ::=
                   thms)) ++ ". ";
 
   top.encode = error("Not done yet");
+  top.is_nonextensible = false;
 }
 
 
 --Non-extensible mutuals are written all in one
 abstract production nonextensibleTheorem
-top::ParsedElement ::= name::String stmt::Metaterm
+top::ThmElement ::= name::String stmt::Metaterm
 {
   top.pp = name ++ "&" ++ stmt.pp ++ ". ";
 
-  top.encode = theoremAndProof(name, [], stmt, [skipTactic()]).pp;
+  top.encode = theoremAndProof(name, [], stmt, [skipTactic()]);
+  top.is_nonextensible = true;
 }
 
 
 abstract production splitElement
-top::ParsedElement ::= toSplit::String newNames::[String]
+top::ThmElement ::= toSplit::String newNames::[String]
 {
   top.pp =
       "$Spl " ++ toSplit ++ " " ++ implode(",", newNames) ++ ". ";
 
-  top.encode = splitTheorem(toSplit, newNames).pp;
+  top.encode = splitTheorem(toSplit, newNames);
+  top.is_nonextensible = true;
 }
 
 
@@ -77,6 +81,6 @@ top::DefElement ::= defines::[(String, Type)]
                  | (m, just(b)) -> ruleDef(m, b)
                  end,
                clauses));
-  top.encode = definitionDeclaration(defines, defs).pp;
+  top.encode = definitionDeclaration(defines, defs);
 }
 

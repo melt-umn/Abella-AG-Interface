@@ -4,7 +4,7 @@ grammar interface_:thmInterfaceFile:concreteSyntax;
 --(current grammar, imports, defined relations, theorems)
 closed nonterminal Interface_c
    layout {Whitespace_t, BlockComment_t, OneLineComment_t}
-   with ast<(String, [String], [DefElement], [ParsedElement])>;
+   with ast<(String, [String], [DefElement], [ThmElement])>;
 
 
 concrete productions top::Interface_c
@@ -70,9 +70,9 @@ concrete productions top::Clauses_c
 
 
 
-closed nonterminal InterfaceContents_c with ast<[ParsedElement]>;
-closed nonterminal InterfaceContents_List_c with ast<[ParsedElement]>;
-closed nonterminal InterfaceElement_c with ast<ParsedElement>;
+closed nonterminal InterfaceContents_c with ast<[ThmElement]>;
+closed nonterminal InterfaceContents_List_c with ast<[ThmElement]>;
+closed nonterminal InterfaceElement_c with ast<ThmElement>;
 
 concrete productions top::InterfaceContents_c
 |

@@ -55,3 +55,8 @@ propagate usedNames on
 --   since we only really have one SilverContext object while running
 autocopy attribute silverContext::Decorated SilverContext;
 
+
+--We often only want to replace the state and leave everything else
+inherited attribute replaceState::ProofState;
+synthesized attribute replacedState<a>::a;
+

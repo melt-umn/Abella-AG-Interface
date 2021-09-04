@@ -27,7 +27,7 @@ String ::= currentGrammar::String comms::ListOfCommands
 
 
 
-monoid attribute thms::[ParsedElement] with [], ++;
+monoid attribute thms::[ThmElement] with [], ++;
 propagate thms on ListOfCommands, AnyCommand, TopCommand;
 
 monoid attribute defs::[DefElement] with [], ++;

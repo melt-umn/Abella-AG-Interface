@@ -136,6 +136,23 @@ function findWPDRelations
      end;
 }
 
+function findSpecificWPDRelation
+Maybe<(String, Type, [String])> ::=
+   ty::Type relations::[(String, Type, [String])] grmmr::String
+{
+  local possibilities::[(String, Type, [String])] =
+        findWPDRelations(ty, relations);
+  local justThisGrammar::[(String, Type, [String])] =
+        filter(\ p::(String, Type, [String]) ->
+                 wpdGrammarName(p.1) == grmmr,
+               possibilities);
+  return
+     case justThisGrammar of
+     | x::_ -> just(x)
+     | [] -> nothing()
+     end;
+}
+
 
 
 

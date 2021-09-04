@@ -62,7 +62,8 @@ top::AnyCommand ::= c::TopCommand
                c.provingTheorems,
                currentState.debug,
                currentState.clean,
-               c.newKnownTheorems)
+               c.newKnownTheorems,
+               currentState.remainingObligations)
            )::top.stateListIn;
 }
 

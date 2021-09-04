@@ -1,0 +1,248 @@
+grammar toAbella;
+
+{-
+  This saves all the Lambda Prolog things.  I don't think the
+  interface will need this, but I would like to keep it around in case
+  I change my mind.
+-}
+
+
+terminal Specification_t  'Specification'  lexer classes {COMMAND};
+
+terminal AccumSig_t 'accum_sig'       lexer classes {LATER};
+terminal Accumulate_t  'accumulate'       lexer classes {LATER};
+terminal Cut_t  'cut'       lexer classes {LATER};
+terminal End_t  'end'       lexer classes {LATER};
+terminal From_t  'from'       lexer classes {LATER};
+terminal Inst_t  'inst'       lexer classes {LATER};
+terminal Kind_t  'kind'       lexer classes {LATER};
+terminal Module_t  'module'       lexer classes {LATER};
+terminal Monotone_t  'monotone'       lexer classes {LATER};
+terminal Sig_t  'sig'       lexer classes {LATER};
+
+terminal Imp_t  '=>'  lexer classes {TOKEN}, precedence=9;
+terminal If_t  '<='  lexer classes {TOKEN}, precedence=8;
+terminal Amp_t  '&'  lexer classes {TOKEN}, association=left,  precedence=10;
+terminal ClauseEq_t  ':-'  lexer classes {TOKEN};
+terminal Turnstyle_t  '|-'  lexer classes {TOKEN};
+terminal LBrace_t  '{'  lexer classes {TOKEN};
+terminal RBrace_t  '}'  lexer classes {TOKEN};
+
+terminal PercentColon_t  '%:'  lexer classes {TOKEN};
+
+
+
+
+
+nonterminal AId_c; --Annotated ID
+nonterminal LPSig_c;
+nonterminal SigHeader_c;
+nonterminal SigPreamble_c;
+nonterminal SigBody_c;
+nonterminal LPMod_c;
+nonterminal ModHeader_c;
+nonterminal ModPreamble_c;
+nonterminal ModBody_c;
+nonterminal LPEnd_c;
+nonterminal ClauseName_c;
+nonterminal Clause_c;
+nonterminal ClauseHead_c;
+nonterminal ClauseBody_c;
+nonterminal Objseq_c;
+nonterminal ContextedTerm_c;
+nonterminal FocusedTerm_c;
+nonterminal Context_c;
+
+
+concrete productions top::AId_c
+| l::Id_t
+{ }
+| l::Id_t ':' t::Ty_c
+{ }
+
+
+concrete productions top::LPSig_c
+| h::SigHeader_c p::SigPreamble_c b::SigBody_c e::LPEnd_c
+{ }
+
+
+concrete productions top::SigHeader_c
+| 'sig' x::Id_t '.'
+{ }
+
+
+concrete productions top::SigPreamble_c
+| 'accum_sig' il::IdList_c '.' s::SigPreamble_c
+{ }
+|
+{ }
+
+
+concrete productions top::SigBody_c
+| 'kind' il::IdList_c k::Knd_c '.' rest::SigBody_c
+{ }
+| 'type' il::IdList_c t::Ty_c '.' rest::SigBody_c
+{ }
+|
+{ }
+
+
+concrete productions top::LPMod_c
+| h::ModHeader_c p::ModPreamble_c b::ModBody_c e::LPEnd_c
+{ }
+
+
+concrete productions top::ModHeader_c
+| 'module' name::Id_t '.'
+{ }
+
+
+concrete productions top::ModPreamble_c
+| 'accumulate' il::IdList_c '.' rest::ModPreamble_c
+{ }
+|
+{ }
+
+
+concrete productions top::ModBody_c
+| cn::ClauseName_c c::Clause_c rest::ModBody_c
+{ }
+|
+{ }
+
+
+concrete productions top::LPEnd_c
+| 'end'
+{ }
+|
+{ }
+
+
+concrete productions top::ClauseName_c
+| '%:' i::Id_t ':' n::Id_t --I really have no idea what this is
+{ }
+|
+{ }
+
+
+concrete productions top::Clause_c
+| h::ClauseHead_c '.'
+{ }
+| h::ClauseHead_c ':-' b::ClauseBody_c '.'
+{ }
+| h::ClauseHead_c '<=' b::ClauseBody_c '.'
+{ }
+
+
+concrete productions top::ClauseHead_c
+| '(' c::ClauseHead_c ')'
+{ }
+| p::PAId_c el::ExpList_c
+{ }
+| p::PAId_c
+{ }
+
+
+concrete productions top::ClauseBody_c
+| t::Term_c ',' rest::ClauseBody_c
+{ }
+| '(' t::Term_c ',' rest::ClauseBody_c ')'
+{ }
+| t::Term_c
+{ }
+
+
+
+--Things that have to do with Lambda Prolog
+concrete productions top::PureTopCommand_c
+| 'Specification' q::QString_t '.'
+{ }
+
+
+concrete productions top::PureCommand_c
+| h::HHint_c 'cut' '(' t::Term_c ')' 'from' c1::Clearable_c 'with' c2::Clearable_c '.'
+{ }
+| h::HHint_c 'cut' c1::Clearable_c 'with' c2::Clearable_c '.'
+{ }
+| h::HHint_c 'cut' c::Clearable_c '.'
+{ }
+| h::HHint_c 'inst' c::Clearable_c 'with' w::Withs_c '.'
+{ }
+| h::HHint_c 'monotone' c::Clearable_c 'with' t::Term_c '.'
+{ }
+
+
+concrete productions top::Term_c
+| t1::Term_c '=>' t2::Term_c
+{ }
+| t1::Term_c '<=' t2::Term_c
+{ }
+| t1::Term_c '&' t2::Term_c
+{ }
+| a::AId_c '\' t::Term_c
+{ }
+
+
+concrete productions top::ExpList_c
+| a::AId_c '\' t::Term_c
+{ }
+
+
+concrete productions top::ContextedTerm_c
+| c::Context_c '|-' t::Term_c
+{ }
+| t::Term_c
+{ }
+
+
+concrete productions top::FocusedTerm_c
+| c::Context_c ',' '[' t::Term_c ']' '|-' body::Term_c
+{ }
+| '[' t::Term_c ']' '|-' body::Term_c
+{ }
+
+
+concrete productions top::Context_c
+| c::Context_c ',' t::Term_c
+{ }
+| t::Term_c
+{ }
+
+
+concrete productions top::Objseq_c
+| '{' c::ContextedTerm_c '}' r::Restriction_c
+{ }
+| '{' ft::FocusedTerm_c '}' r::Restriction_c
+{ }
+
+
+concrete productions top::SubMetaterm_c
+| o::Objseq_c
+{ }
+
+
+
+
+
+
+{-This is actually apparently completely unused.
+
+nonterminal DepthSpec;
+nonterminal DepthSpecOne;
+
+
+concrete productions top::DepthSpec
+| d::DepthSpecOne
+{ }
+| d::DepthSpecOne ';' rest::DepthSpec
+{ }
+
+
+concrete productions top::DepthSpecOne
+| n1::Number_t '[' n2::Number_t ']'
+{ }
+| n::Number_t
+{ }
+-}
+
+

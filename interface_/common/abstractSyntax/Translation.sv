@@ -223,6 +223,12 @@ Type ::= rel::String
   --$wpd_<type name>
   return nameType(encodedToColons(substring(5, length(rel), rel)));
 }
+function wpdGrammarName --assumes wpd is a component relation
+String ::= wpd::String
+{
+  local component::Integer = lastIndexOf("__", wpd);
+  return encodedToColons(substring(component + 2, length(wpd), wpd));
+}
 function wpdPrimaryComponent
 String ::= prod::String builtTy::Type
 {

@@ -9,10 +9,10 @@ IOVal<Boolean> ::= gen::[(String, String)] ioin::IO
   --
   local processGrammar::IOVal<Either<String
                              (ListOfCommands, [DefElement],
-                              [ParsedElement])>> =
+                              [ThmElement])>> =
         processGrammarDecl(grmmr, ioin);
-  local outputThms::[ParsedElement] =
-        filter(\ p::ParsedElement ->
+  local outputThms::[ThmElement] =
+        filter(\ p::ThmElement ->
                  case p of
                  | extensibleMutualTheoremGroup(_) -> true
                  | _ -> false
@@ -21,7 +21,7 @@ IOVal<Boolean> ::= gen::[(String, String)] ioin::IO
   local outputString::String =
         "Grammar " ++ grmmr ++ ".\n\n\n" ++
         implode("\n\n\n",
-           map(\ p::ParsedElement ->
+           map(\ p::ThmElement ->
                  case p of
                  | extensibleMutualTheoremGroup(thms) ->
                    "Prove " ++ implode("\n      ",

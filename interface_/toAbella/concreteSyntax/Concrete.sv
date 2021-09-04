@@ -188,7 +188,7 @@ concrete productions top::PureTopCommand_c
           anyTopCommand(extensibleTheoremDeclaration(toInteger(depth.lexeme), lst))
         end; }
 | 'Prove' thms::QnameList_c '.'
-  { top.ast = error("Not done yet"); }
+  { top.ast = anyTopCommand(proveObligations(thms.ast)); }
 | 'Extensible_Theorem' newthms::TheoremStmts_c 'with' oldthms::QnameList_c '.'
   { top.ast =
         case newthms.ast of

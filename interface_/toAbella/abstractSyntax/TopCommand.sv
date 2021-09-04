@@ -1,5 +1,6 @@
 grammar interface_:toAbella:abstractSyntax;
 
+import interface_:thmInterfaceFile:abstractSyntax;
 
 --things you can do outside of proofs
 
@@ -104,7 +105,9 @@ top::TopCommand ::= depth::Integer thms::[(String, Metaterm, String)]
               0, groupings);
   local combinedName::String =
         case thms of
-        | (name, _, _)::_ -> extensible_theorem_name(name)
+        | (name, _, _)::_ ->
+          extensible_theorem_name(name,
+             top.silverContext.currentGrammar)
         | [] -> error("Cannot have no theorems in Extensible_Theorem declaration")
         end;
   top.translation =
@@ -185,7 +188,7 @@ function gather_bodies_errors
               | left(msg) -> [errorMsg(msg)]
               | right(ty) ->
                 if tyIsNonterminal(ty)
-                then
+                then --NT type exists if a WPD relation exists
                   case findWPDRelations(ty,
                           silverContext.knownWPDRelations) of
                   | h::t -> []
@@ -199,6 +202,116 @@ function gather_bodies_errors
          else body.errors ) ++
        gather_bodies_errors(tl, currentState, silverContext)
      end;
+}
+
+
+abstract production proveObligations
+top::TopCommand ::= names::[String]
+{
+  top.pp = "Prove " ++ implode(", ", names) ++ ".\n";
+
+  top.errors <-
+      flatMap(\ s::String ->
+                if indexOf("$", s) >= 0
+                then [errorMsg("Theorem names cannot contain \"$\"")]
+                else [],
+              names);
+  top.errors <-
+      case top.currentState.remainingObligations of
+      | [] -> [errorMsg("No obligations remaining to prove")]
+      | extensibleMutualTheoremGroup(thms)::_ ->
+        if map(fst, thms) == names
+        then []
+        else [errorMsg("Next obligation is " ++ implode(", ", map(fst, thms)))]
+      | _::_ -> error("Should not have anything else to start")
+      end;
+
+  local thms::[(String, Metaterm, String)] =
+        case top.currentState.remainingObligations of
+        | extensibleMutualTheoremGroup(thms)::_ -> thms
+        | _ -> error("Should not access local thms with errors")
+        end;
+  local translated::[(String, Metaterm, String)] =
+        translate_bodies(thms, top.silverContext);
+
+  --(translated theorem body, induction tree, induction type, prods, thm name)
+  local groupings::[(Metaterm, String, Type, [String], String)] =
+        map(\ p::(String, Metaterm, String) ->
+              let ty::Type =
+                  decorate p.2 with {
+                     findNameType = p.3;
+                     boundVars = [];
+                     knownTyParams = []; --we disallow parameterization currently
+                     silverContext = top.silverContext;
+                  }.foundNameType.fromRight
+              in
+                case ty of
+                | nameType(nt) ->
+                  (p.2, p.3, nameType(encodedToColons(nt)),
+                   case findSpecificWPDRelation(
+                           nameType(encodedToColons(nt)),
+                           top.silverContext.knownWPDRelations,
+                           top.silverContext.currentGrammar) of
+                   | just((_, _, prods)) -> prods
+                   | nothing() -> [] --Can legitimately not have any prods for a known NT
+                   end, p.1)
+                | _ -> error("WPD relations only exist for nonterminal types")
+                end
+              end, translated);
+
+  local allUsedNames::[String] =
+        nub(flatMap(\ p::(String, Metaterm, String) ->
+                      decorate p.2 with
+                      {silverContext = top.silverContext;}.usedNames,
+                    thms));
+  local expandedBody::Metaterm =
+        buildExtensibleTheoremBody(
+           map(\ p::(Metaterm, String, Type, [String], String) ->
+                 (p.1, p.2, p.3, p.4), groupings), allUsedNames,
+           top.silverContext);
+  --number of pieces in the generated theorem
+  local numBodies::Integer =
+        foldr(\ p::(Metaterm, String, Type, [String], String) rest::Integer ->
+                rest + length(p.4),
+              0, groupings);
+  local combinedName::String =
+        case thms of
+        | (name, _, _)::_ ->
+          extensible_theorem_name(encodedToColons(name),
+             top.silverContext.currentGrammar)
+        | [] -> error("Cannot have no theorems in Extensible_Theorem declaration")
+        end;
+
+  top.translation =
+      if numBodies > 1
+      then theoremAndProof(combinedName, [], expandedBody, [splitTactic()])
+      else if numBodies == 0
+      then --if no new prods, nothing to prove---just make it enter the thms
+           theoremAndProof(combinedName, [], trueMetaterm(), [skipTactic()])
+      else theoremDeclaration(combinedName, [], expandedBody); --one production
+  top.numCommandsSent =
+      if numBodies == 1
+      then 1
+      else 2;
+
+  top.translatedTheorems =
+      map(\ p::(String, Metaterm, String) ->
+            (colonsToEncoded(top.silverContext.currentGrammar ++
+                             ":" ++ p.1), p.2),
+          translated);
+
+  --The number of splits to do when the theorem is done
+  top.numRelevantProds =
+      map(\ p::(Metaterm, String, Type, [String], String) ->
+            (p.5, length(p.5)), groupings);
+
+  top.provingTheorems =
+      map(\ p::(String, Metaterm, String) ->
+            let split::(String, String) = splitQualifiedName(p.1)
+            in
+              (split.2, split.1, p.2)
+            end,
+          translated);
 }
 
 
@@ -462,13 +575,18 @@ top::TopCommand ::= name::String params::[String] body::Metaterm prf::[ProofComm
       "Theorem " ++ name ++ " " ++ paramsString ++
       " : " ++ body.pp ++ ".\n" ++
       implode("", map((.pp), prf));
-  top.translation = error("Should not be translating theoremAndProof");
+  --Assume the proof is fine
+  top.translation =
+      theoremAndProof(colonsToEncoded(name), params,
+                      body.translation, prf);
   top.numCommandsSent = 1 + length(prf);
 
   body.knownTyParams = params;
   body.boundVars = [];
   body.finalTys = [];
   body.knownTrees = body.gatheredTrees;
+  body.knownNames = [];
+  body.knownDecoratedTrees = [];
 
   top.provingTheorems =
       error("Should never be access provingTheorems on theoremAndProof");

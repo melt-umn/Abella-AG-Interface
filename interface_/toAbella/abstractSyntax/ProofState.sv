@@ -217,7 +217,8 @@ top::ProofState ::=
       if isDone && shouldDeclare
       then --split, declare, and skip.
            splitTheorem(
-              extensible_theorem_name(head(originalTheorems).1),
+              extensible_theorem_name(head(originalTheorems).1,
+                 top.silverContext.currentGrammar),
               newThmNames).pp ++
            foldr(\ p::(String, Metaterm) rest::String ->
                    theoremDeclaration(p.1, [], p.2).pp ++ "  " ++ skipTactic().pp ++ "\n" ++ rest,

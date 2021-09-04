@@ -28,7 +28,7 @@ IOVal<Integer> ::= ioin::IO filename::String
         file_parse(fileContents.iovalue, filename);
   local fileAST::(String, ListOfCommands) = fileParsed.parseTree.ast;
   local processed::IOVal<Either<String (ListOfCommands, [DefElement],
-                                        [ParsedElement])>> =
+                                        [ThmElement])>> =
         processGrammarDecl(fileAST.1, fileContents.io);
   --
   local started::IOVal<Either<String ProcessHandle>> =
@@ -53,12 +53,13 @@ IOVal<Integer> ::= ioin::IO filename::String
      else if !started.iovalue.isRight
      then ioval(print("Error:  " ++ started.iovalue.fromLeft ++
                       "\n", started.io), 1)
-     else run_step_file(fileAST.2.commandList,
-                        filename,
-                        ourSilverContext.iovalue,
-                        [(-1, defaultProverState())],
-                        started.iovalue.fromRight,
-                        ourSilverContext.io);
+     else run_step_file(
+             fileAST.2.commandList,
+             filename,
+             ourSilverContext.iovalue,
+             [(-1, defaultProverState(processed.iovalue.fromRight.3))],
+             started.iovalue.fromRight,
+             ourSilverContext.io);
 }
 
 

@@ -5,7 +5,7 @@ grammar interface_:composed;
 --   specifications
 function processGrammarDecl
 IOVal<Either<String
-             (ListOfCommands, [DefElement], [ParsedElement])>> ::=
+             (ListOfCommands, [DefElement], [ThmElement])>> ::=
    grammarName::String ioin::IO
 {
   local silver_gen::IOVal<String> = envVar("SILVER_GEN", ioin);
@@ -19,7 +19,7 @@ IOVal<Either<String
   local parsed_interface::ParseResult<Interface_c> =
         interface_parse(interface_file_contents.iovalue,
                         interface_file);
-  local interface_info::(String, [String], [DefElement], [ParsedElement]) =
+  local interface_info::(String, [String], [DefElement], [ThmElement]) =
         parsed_interface.parseTree.ast;
 
   local modules_read::IOVal<Either<String ListOfCommands>> =

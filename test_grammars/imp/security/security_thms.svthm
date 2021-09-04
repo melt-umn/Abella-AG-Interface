@@ -1,5 +1,8 @@
 Grammar imp:security.
 
+Theorem x : forall a b c d,
+   lookup(a, b) = c -> lookup(a, b) = d -> c = d.
+intros. backchain lookup__unique.
 
 Theorem max_is_arg : forall A B C,
   max(A, B) = C -> C = A \/ C = B.

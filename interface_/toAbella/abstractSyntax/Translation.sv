@@ -145,9 +145,10 @@ top::NewPremise ::= tree::String
 
 
 function extensible_theorem_name
-String ::= name::String
+String ::= name::String grmmr::String
 {
-  return "$Extensible_Theorem_" ++ name;
+  return "$Extensible_Theorem_" ++ colonsToEncoded(name) ++
+         "__" ++ colonsToEncoded(grmmr);
 }
 
 
