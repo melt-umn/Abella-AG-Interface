@@ -252,21 +252,24 @@ IOVal<String> ::= ioin::IO
 function read_full_input_comments
 IOVal<String> ::= ioin::IO openComments::Integer
 {
-  local read::IOVal<String> = readLineStdin(ioin);
+  local read::IOVal<Maybe<String>> = readLineStdin(ioin);
   local newOpenComments::Integer =
-        count_comments(read.iovalue, openComments);
+        count_comments(read.iovalue.fromJust, openComments);
   local readRest::IOVal<String> =
         read_full_input_comments(read.io, newOpenComments);
-  local noWhiteSpace::String = stripExternalWhiteSpace(read.iovalue);
+  local noWhiteSpace::String =
+        stripExternalWhiteSpace(read.iovalue.fromJust);
   local shouldEnd::Boolean = endsWith(".", noWhiteSpace);
   return
      if openComments < 0
-     then read --syntax error
+     then ioval(read.io, read.iovalue.fromJust) --syntax error
      else if openComments > 0
-     then ioval(readRest.io, read.iovalue ++ "\n" ++ readRest.iovalue)
+     then ioval(readRest.io,
+                read.iovalue.fromJust ++ "\n" ++ readRest.iovalue)
      else if shouldEnd
-     then ioval(read.io, read.iovalue)
-     else ioval(readRest.io, read.iovalue ++ "\n" ++ readRest.iovalue);
+     then ioval(read.io, read.iovalue.fromJust)
+     else ioval(readRest.io,
+                read.iovalue.fromJust ++ "\n" ++ readRest.iovalue);
 }
 --Return number of open comments after line
 function count_comments

@@ -34,9 +34,13 @@ IOVal<Boolean> ::= gen::[(String, String)] ioin::IO
         isFile(filename, processGrammar.io);
   local askReplace::IOVal<String> =
         if fileExists.iovalue
-        then readLineStdin(
-                print("File " ++ filename ++ " exists; replace? (Y/n) ",
-                      fileExists.io))
+        then let replace::IOVal<Maybe<String>> =
+                 readLineStdin(
+                    print("File " ++ filename ++ " exists; replace? (Y/n) ",
+                          fileExists.io))
+             in
+               ioval(replace.io, replace.iovalue.fromJust)
+             end
         else ioval(fileExists.io, "");
   local doOutput::Boolean =
         !fileExists.iovalue ||
