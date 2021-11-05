@@ -1,0 +1,3 @@
+#!/bin/bash
+
+../../../interface_/silverabella --compile host_thms.svthm
