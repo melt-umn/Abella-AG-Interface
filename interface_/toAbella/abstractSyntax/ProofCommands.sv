@@ -523,7 +523,7 @@ top::ProofCommand ::= h::HHint tree::String attr::String
       then case findAttrOccurrences(attr, top.silverContext) of
            | [] -> [] --covered by checking if attr exists, so impossible here
            | [(_, ntstys)] ->
-             if  wpdNtHyp.isJust
+             if ((isInherited && findParent.isJust) || !isInherited) && wpdNtHyp.isJust
              then if containsBy(tysEqual, errCheckTy, map(fst, ntstys))
                   then []
                   else [errorMsg("Attribute " ++ attr ++ " does not occur on " ++ tree)]
@@ -562,7 +562,8 @@ top::ProofCommand ::= h::HHint tree::String attr::String
            else []
       else [];
   top.errors <-
-      if treeExists && attrExists
+      if treeExists && attrExists &&
+         ((isInherited && findParent.isJust) || !isInherited)
       then case structure of
            | just((hyp, tm)) ->
              case decorate tm with
@@ -586,12 +587,12 @@ top::ProofCommand ::= h::HHint tree::String attr::String
            {silverContext = top.silverContext;}.gatheredTrees);
   local attrExists::Boolean =
         length(findAttrOccurrences(attr, top.silverContext)) == 1;
-  --
+  --Names for things we are doing
   local newNum::String = toString(genInt());
   local eqHypName::String = "$Eq_" ++ newNum;
   local componentHypName::String = "$EqComp_" ++ newNum;
   local equalityName::String = "$Equality_" ++ newNum;
-  --
+  --Find the actual attribute (full name) being cased on here
   local possibleAttrs::[(String, [(Type, Type)])] =
         findAttrOccurrences(attr, top.silverContext);
   local filteredAttrs::[(String, [(Type, Type)])] =
@@ -599,6 +600,8 @@ top::ProofCommand ::= h::HHint tree::String attr::String
                  containsBy(tysEqual, errCheckTy, map(fst, p.2)),
                possibleAttrs);
   local rightAttr::String = head(filteredAttrs).1;
+  --Figure out the tree to actual do the case on, the stated tree or
+  --   its parent, and what the structure is
   local isInherited::Boolean =
         isInheritedAttr(rightAttr, top.silverContext);
   local findParent::Maybe<(String, Term)> =
@@ -646,6 +649,7 @@ top::ProofCommand ::= h::HHint tree::String attr::String
         | nameTerm(prod, _) -> prod
         | tm -> error("It should be a production (associatedProd):  " ++ tm.pp)
         end;
+  --Translate to Abella commands
   local makeEqHypThm::Clearable =
         clearable(false, wpdNt_to_AttrEq(rightAttr, treeTy), []);
   local wpdNtHyp::Maybe<(String, Metaterm)> =
@@ -670,9 +674,9 @@ top::ProofCommand ::= h::HHint tree::String attr::String
               | [(_, val)] -> val.resultType
               | _ -> error("Production " ++ prod ++ " must exist")
               end
-            | _ -> synCase
+            | nothing() -> synCase
             end
-          | _ -> synCase
+          | nothing() -> synCase
           end
         end;
   --We need this to check that the attribute occurs on the tree we said, not the associated tree
@@ -705,7 +709,7 @@ top::ProofCommand ::= h::HHint tree::String attr::String
             end
           | _ -> error("Should not access errCheckTy with other errors")
           end
-        | _ -> treeTy
+        | nothing() -> treeTy
         end;
   local pcTheorem::Clearable =
         clearable(false, primaryComponent(rightAttr, treeTy, associatedProd), []);
