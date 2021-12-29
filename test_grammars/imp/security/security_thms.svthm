@@ -18,7 +18,13 @@ Prove imp:host:value_unique_B.
 
 
 Prove imp:host:no_env__no_env_out.
+%assignLevel
+intros Structure N_Is L_Is TEnv. case T.env_out. search.
 
 
 Prove imp:host:env_out__unique__C.
+%assignLevel
+intros Structure N_Is L_Is Eq T1Env T2Env T1EnvOut.
+case_structure T2 in Eq with Structure.
+case T1.env_out. case T2.env_out. search.
 
