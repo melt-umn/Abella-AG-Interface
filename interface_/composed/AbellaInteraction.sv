@@ -48,7 +48,7 @@ IOVal<String> ::= n::Integer abella::ProcessHandle ioin::IO
   local read::IOVal<String> = readUntilFromProcess(abella, "< ", ioin);
   return
      case n of
-     | x when x <= 0 -> error("Should not call read_n_abella_outputs with n <= 0 (n = " ++ toString(x) ++ ")")
+     | x when x <= 0 -> error("Should not call read_abella_outputs with n <= 0 (n = " ++ toString(x) ++ ")")
      | 1 -> ioval(read.io, removeLastWord(read.iovalue))
      | x -> read_abella_outputs(x - 1, abella, read.io)
      end;

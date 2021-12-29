@@ -48,6 +48,11 @@ the implementation details as described above.
 
 # Todo
 
+- Processing on the commandline doesn't seem to be getting the
+  theorems from the imported grammars (`lookup__unique` is known when
+  checking the theorem file for `imp:security` interactively, but gets
+  an error when run on the terminal with `--check`)
+
 
 
 

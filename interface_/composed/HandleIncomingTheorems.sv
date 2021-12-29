@@ -35,10 +35,14 @@ IOVal<(Integer, ProverState)> ::=
               0, doThms);
   --
   local send::IO =
-        sendToProcess(abella, implode(", ", map((.pp), translated)),
-                      ioin);
+        if numCommands > 0
+        then sendToProcess(abella, implode(", ", map((.pp), translated)),
+                          ioin)
+        else ioin;
   local readBack::IOVal<String> =
-        read_abella_outputs(numCommands, abella, send);
+        if numCommands > 0
+        then read_abella_outputs(numCommands, abella, send)
+        else ioval(send, "");
   --
   local outObligations::[ThmElement] =
         dropWhile((.is_nonextensible), obligations);

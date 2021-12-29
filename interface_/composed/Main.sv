@@ -56,6 +56,7 @@ top::CmdArgs ::= l::[String]
 }
 
 
+--Check the file for correctness
 abstract production checkFlag
 top::CmdArgs ::= rest::CmdArgs
 {
@@ -67,6 +68,8 @@ top::CmdArgs ::= rest::CmdArgs
 }
 
 
+--Compile the file to allow its theorems to be discovered for grammars
+--   importing it
 abstract production compileFlag
 top::CmdArgs ::= rest::CmdArgs
 {
@@ -78,6 +81,7 @@ top::CmdArgs ::= rest::CmdArgs
 }
 
 
+--Generate a file with the required imported theorems for proving
 abstract production generateFlag
 top::CmdArgs ::= grammarInfo::[String] rest::CmdArgs
 {

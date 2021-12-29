@@ -34,5 +34,5 @@ if [ ! -f "$SILVERABELLA_JAR" ]; then
     exit 2
 fi
 #Run the interface
-java -jar "$SILVERABELLA_JAR" $@
+java -Xmx4G -Xss16M -jar "$SILVERABELLA_JAR" $@
 
