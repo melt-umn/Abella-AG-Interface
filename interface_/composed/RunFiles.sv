@@ -39,6 +39,12 @@ IOVal<Integer> ::= ioin::IO filename::String
            fileAST.1, processed.iovalue.fromRight.1,
            processed.iovalue.fromRight.2, started.iovalue.fromRight,
            started.io);
+  --
+  local handleIncoming::IOVal<(Integer, ProverState)> =
+        handleIncomingThms(
+           (0, defaultProverState(processed.iovalue.fromRight.3)),
+           ourSilverContext.iovalue, started.iovalue.fromRight,
+           ourSilverContext.io);
 
   return
      if !fileExists.iovalue
@@ -57,9 +63,9 @@ IOVal<Integer> ::= ioin::IO filename::String
              fileAST.2.commandList,
              filename,
              ourSilverContext.iovalue,
-             [(-1, defaultProverState(processed.iovalue.fromRight.3))],
+             [(-1, handleIncoming.iovalue.2)],
              started.iovalue.fromRight,
-             ourSilverContext.io);
+             handleIncoming.io);
 }
 
 
