@@ -9,11 +9,11 @@ Define is_pair : (A -> prop) -> (B -> prop) -> ($pair A B) -> prop by
      SubRelA A /\ SubRelB B.
 
 
-Define $fun__silver$*$core$*$fst : $pair A B -> A -> prop by
-  $fun__silver$*$core$*$fst ($pair_c A B) A.
+Define $fun_$$$$$_silver$*$core$*$fst : $pair A B -> A -> prop by
+  $fun_$$$$$_silver$*$core$*$fst ($pair_c A B) A.
 
-Define $fun__silver$*$core$*$snd : $pair A B -> B -> prop by
-  $fun__silver$*$core$*$snd ($pair_c A B) B.
+Define $fun_$$$$$_silver$*$core$*$snd : $pair A B -> B -> prop by
+  $fun_$$$$$_silver$*$core$*$snd ($pair_c A B) B.
 
 
 

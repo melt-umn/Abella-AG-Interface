@@ -129,7 +129,7 @@ induction on 1. intros. case H1.
    apply IH to H2.
    assert ($plus_integer ($posInt ($succ $zero)) ($posInt ($succ N1))
                          ($posInt ($succ ($succ N1)))).
-   apply $is_integer_negSuccInt__to__posInt to H2.
+   apply $is_integer_negSuccInt_$$$$$_to_$$$$$_posInt to H2.
    apply silver$*$core$*$plus_integer_comm to _ _ H4. search.
 
 
@@ -171,20 +171,20 @@ induction on 1. intros. case H1.
      %Subgoal 3.1
       search.
      %Subgoal 3.2
-      case H2. backchain $is_integer_posInt__to__negSuccInt.
+      case H2. backchain $is_integer_posInt_$$$$$_to_$$$$$_negSuccInt.
      %Subgoal 3.3
-      apply $is_integer_negSuccInt__to__posInt to H2. search.
+      apply $is_integer_negSuccInt_$$$$$_to_$$$$$_posInt to H2. search.
   %Subgoal 4
    case H3.
      %Subgoal 4.1
       search.
      %Subgoal 4.2
       apply IH to H4 _ H5. case H2.
-      apply $is_integer_posInt__to__negSuccInt to H8.
+      apply $is_integer_posInt_$$$$$_to_$$$$$_negSuccInt to H8.
       apply silver$*$core$*$plus_integer_is_integer to _ _ H6. search.
      %Subgoal 4.3
       apply IH to H4 _ H5.
-      apply $is_integer_negSuccInt__to__posInt to H2.
+      apply $is_integer_negSuccInt_$$$$$_to_$$$$$_posInt to H2.
       apply silver$*$core$*$plus_integer_is_integer to _ _ H6. search.
 
 Theorem silver$*$core$*$multiply_integer_total : forall N1 N2,
@@ -212,7 +212,7 @@ induction on 1. intros. case H1.
       search.
      %Subgoal 4.2
       apply IH to H3 H2. apply silver$*$core$*$multiply_integer_is_integer to _ _ H5.
-      apply $is_integer_posInt__to__negSuccInt to H4.
+      apply $is_integer_posInt_$$$$$_to_$$$$$_negSuccInt to H4.
       apply silver$*$core$*$plus_integer_total to H6 H7. search.
      %Subgoal 4.3
       apply IH to H3 H2. apply silver$*$core$*$multiply_integer_is_integer to _ _ H4.
@@ -220,7 +220,7 @@ induction on 1. intros. case H1.
       apply silver$*$core$*$plus_integer_total to H5 H6. search.
      %Subgoal 4.4
       apply IH to H3 H2. apply silver$*$core$*$multiply_integer_is_integer to _ _ H5.
-      apply $is_integer_negSuccInt__to__posInt to H4.
+      apply $is_integer_negSuccInt_$$$$$_to_$$$$$_posInt to H4.
       assert (is_integer ($posInt ($succ ($succ N3)))).
       apply silver$*$core$*$plus_integer_total to H6 H8. search.
 
@@ -326,18 +326,18 @@ case H1.
          case H15.
            %Subgoal 2.2.1.1
             case H16. case H7.
-            apply $is_integer_posInt__to__negSuccInt to H17.
+            apply $is_integer_posInt_$$$$$_to_$$$$$_negSuccInt to H17.
             apply silver$*$core$*$multiply_integer_0_right to H18.
             apply silver$*$core$*$multiply_integer_unique to H13 H19.
             backchain silver$*$core$*$multiply_integer_0_right.
            %Subgoal 2.2.1.2
             apply silver$*$core$*$negate_integer_is_integer to _ H12.
-            apply $is_integer_posInt__to__negSuccInt to H2. case H18.
+            apply $is_integer_posInt_$$$$$_to_$$$$$_negSuccInt to H2. case H18.
             apply silver$*$core$*$plus_integer_comm to _ _ H16. search.
         %Subgoal 2.2.2
          apply silver$*$core$*$plus_integer_negatives to _ _ _ _ _ _ H9.
          apply silver$*$core$*$negate_integer_is_integer to _ H12.
-         apply $is_integer_negSuccInt__to__posInt to H2.
+         apply $is_integer_negSuccInt_$$$$$_to_$$$$$_posInt to H2.
          apply silver$*$core$*$plus_integer_comm to _ _ H15. search.
   %Subgoal 3
    case H3. apply silver$*$core$*$multiply_integer_-1_negate to H4.
@@ -348,12 +348,12 @@ case H1.
    case H3. case H4.
      %Subgoal 4.1
       case H5. backchain silver$*$core$*$multiply_integer_0_right.
-      apply $is_integer_negSuccInt__to__posInt to H7. search.
+      apply $is_integer_negSuccInt_$$$$$_to_$$$$$_posInt to H7. search.
      %Subgoal 4.2
       apply silver$*$core$*$multiply_integer_is_integer to _ _ H8.
       apply silver$*$core$*$negate_integer_total to H10. rename N'1 to -N'.
       apply IH to H7 _ _ H8 H11.
-      apply $is_integer_posInt__to__negSuccInt to H2. case H13.
+      apply $is_integer_posInt_$$$$$_to_$$$$$_negSuccInt to H2. case H13.
       apply silver$*$core$*$plus_integer_negatives to _ _ _ _ _ _ H9.
       apply silver$*$core$*$negate_integer_is_integer to _ H11.
       apply silver$*$core$*$plus_integer_comm to _ _ H15. search.
@@ -361,7 +361,7 @@ case H1.
       apply silver$*$core$*$multiply_integer_is_integer to _ _ H8.
       apply silver$*$core$*$negate_integer_total to H10. rename N'1 to -N'.
       apply IH to H7 _ _ H8 H11.
-      apply $is_integer_negSuccInt__to__posInt to H2.
+      apply $is_integer_negSuccInt_$$$$$_to_$$$$$_posInt to H2.
       apply silver$*$core$*$plus_integer_negatives to _ _ _ _ _ _ H9.
       apply silver$*$core$*$negate_integer_is_integer to _ H11.
       apply silver$*$core$*$plus_integer_comm to _ _ H14. search.
@@ -369,7 +369,7 @@ case H1.
 
 %%%%% Lemmas which rely on previous theorems
 %%%%%%%%%%%%%%%%%%%%
-Theorem $multiply_integer_pos_succ_right__to_multiply :
+Theorem $multiply_integer_pos_succ_right_$$$$$_to_multiply :
   forall A B C Sub,
     is_integer A -> is_integer ($posInt B) ->
     $multiply_integer A ($posInt B) Sub ->
@@ -398,7 +398,7 @@ induction on 1. intros. case H1.
      %Subgoal 4.1
       case H4. backchain silver$*$core$*$multiply_integer_1_right.
      %Subgoal 4.2
-      case H2. apply $is_integer_posInt__to__negSuccInt to H8.
+      case H2. apply $is_integer_posInt_$$$$$_to_$$$$$_negSuccInt to H8.
       apply silver$*$core$*$multiply_integer_is_integer to _ _ H6.
       apply silver$*$core$*$plus_integer_total to H5 H10.
       apply IH to H5 _ H6 H11.
@@ -409,7 +409,7 @@ induction on 1. intros. case H1.
       apply silver$*$core$*$plus_integer_is_integer to _ _ H16.
       apply silver$*$core$*$plus_integer_comm to _ _ H17. search.
 
-Theorem $multiply_integer_negSuccInt_succ_right_pos__to_multiply :
+Theorem $multiply_integer_negSuccInt_succ_right_pos_$$$$$_to_multiply :
   forall A B C Sub,
     is_integer ($posInt A) -> is_integer ($negSuccInt B) ->
     $multiply_integer ($posInt ($succ A)) ($negSuccInt B) Sub ->
@@ -421,7 +421,7 @@ induction on 1. intros. case H1.
    apply silver$*$core$*$plus_integer_comm to _ _ H4. case H8. search.
   %Subgoal 2
    case H3. apply silver$*$core$*$multiply_integer_is_integer to _ _ H6.
-   apply $is_integer_posInt__to__negSuccInt to H5.
+   apply $is_integer_posInt_$$$$$_to_$$$$$_negSuccInt to H5.
    apply silver$*$core$*$plus_integer_total to H8 H9.
    apply IH to H5 H2 H6 H10.
    apply silver$*$core$*$plus_integer_is_integer to _ _ H7.
@@ -433,7 +433,7 @@ induction on 1. intros. case H1.
    apply silver$*$core$*$plus_integer_comm to _ _ H18.
    apply silver$*$core$*$plus_integer_unique to H20 H10. search.
 
-Theorem $multiply_integer_negSuccInt_succ_right_neg__to_multiply :
+Theorem $multiply_integer_negSuccInt_succ_right_neg_$$$$$_to_multiply :
   forall A B C Sub,
     is_integer ($negSuccInt A) -> is_integer ($negSuccInt B) ->
     $multiply_integer ($negSuccInt A) ($negSuccInt B) Sub ->
@@ -441,14 +441,14 @@ Theorem $multiply_integer_negSuccInt_succ_right_neg__to_multiply :
     $multiply_integer ($negSuccInt A) ($negSuccInt ($succ B)) C.
 induction on 1. intros. case H1.
   %Subgoal 1
-   case H3. apply $is_integer_negSuccInt__to__posInt to H2.
+   case H3. apply $is_integer_negSuccInt_$$$$$_to_$$$$$_posInt to H2.
    apply silver$*$core$*$plus_integer_comm to _ _ H4. case H6. case H7. search.
   %Subgoal 2
    case H3. apply silver$*$core$*$multiply_integer_is_integer to _ _ H6.
-   apply $is_integer_negSuccInt__to__posInt to H5.
+   apply $is_integer_negSuccInt_$$$$$_to_$$$$$_posInt to H5.
    apply silver$*$core$*$plus_integer_total to H8 _ with N2 = ($posInt ($succ N)).
    apply IH to H5 H2 H6 H10.
-   apply $is_integer_negSuccInt__to__posInt to H2.
+   apply $is_integer_negSuccInt_$$$$$_to_$$$$$_posInt to H2.
    apply silver$*$core$*$plus_integer_is_integer to _ _ H7.
    apply silver$*$core$*$plus_integer_comm to _ _ H4.
    apply silver$*$core$*$plus_integer_assoc to _ _ _ H7 H14.
@@ -470,7 +470,7 @@ induction on 1. intros. case H1.
    case H3. backchain silver$*$core$*$multiply_integer_0_right.
   %Subgoal 2
    case H3. apply IH to H4 _ H5.
-   backchain $multiply_integer_pos_succ_right__to_multiply.
+   backchain $multiply_integer_pos_succ_right_$$$$$_to_multiply.
   %Subgoal 3
    case H3.
      %Subgoal 3.1
@@ -485,10 +485,10 @@ induction on 1. intros. case H1.
       search.
      %Subgoal 4.2
       apply IH to H4 H2 H5. case H2.
-      backchain $multiply_integer_negSuccInt_succ_right_pos__to_multiply.
+      backchain $multiply_integer_negSuccInt_succ_right_pos_$$$$$_to_multiply.
      %Subgoal 4.3
       apply IH to H4 H2 H5.
-      backchain $multiply_integer_negSuccInt_succ_right_neg__to_multiply.
+      backchain $multiply_integer_negSuccInt_succ_right_neg_$$$$$_to_multiply.
 
 % (N1 + N2) * N3  ==>  (N1 * N3) + (N2 * N3)
 Theorem silver$*$core$*$multiply_integer_distribute_over_plus :
@@ -538,7 +538,7 @@ induction on 1. intros. case H1.
            %Subgoal 2.2.2.3
             apply silver$*$core$*$plus_integer_comm to _ _ H9.
             assert ($minus_integer Result ($negSuccInt N4) N5).
-            apply $is_integer_posInt__to__negSuccInt to H7.
+            apply $is_integer_posInt_$$$$$_to_$$$$$_negSuccInt to H7.
             apply $minus_plus_same_integer to _ _ H11. search.
         %Subgoal 2.2.3
          exists $negSuccInt N, $posInt ($succ $zero). split.
@@ -547,7 +547,7 @@ induction on 1. intros. case H1.
            %Subgoal 2.2.3.2
             search.
            %Subgoal 2.2.3.3
-            apply $is_integer_posInt__to__negSuccInt to H6.
+            apply $is_integer_posInt_$$$$$_to_$$$$$_negSuccInt to H6.
             backchain silver$*$core$*$plus_integer_comm. case H6.
               %Subgoal 2.2.3.3.1
                case H5. search.
@@ -571,7 +571,7 @@ induction on 1. intros. case H1.
             assert ($minus_integer Result
                                    ($posInt ($succ ($succ N4))) N5).
             backchain $minus_plus_same_integer.
-            apply $is_integer_negSuccInt__to__posInt to H13. search.
+            apply $is_integer_negSuccInt_$$$$$_to_$$$$$_posInt to H13. search.
      %Subgoal 2.3
       case H2. apply IH to H6 _ _ H7 H5.
       apply silver$*$core$*$multiply_integer_is_integer to _ _ H9.
@@ -588,7 +588,7 @@ induction on 1. intros. case H1.
             apply silver$*$core$*$multiply_integer_unique to H15 H5. search.
         %Subgoal 2.3.2
          apply silver$*$core$*$multiply_integer_is_integer to _ _ H10.
-         apply $is_integer_posInt__to__negSuccInt to H14.
+         apply $is_integer_posInt_$$$$$_to_$$$$$_negSuccInt to H14.
          apply silver$*$core$*$plus_integer_total to H15 H16.
          exists N4, N7. split.
            %Subgoal 2.3.2.1
@@ -628,7 +628,7 @@ induction on 1. intros. case H1.
          assert (is_integer ($negSuccInt ($succ N6))).
          apply silver$*$core$*$multiply_integer_is_integer to _ _ H10.
          apply silver$*$core$*$plus_integer_total to H15 H12.
-         apply $is_integer_negSuccInt__to__posInt to H15.
+         apply $is_integer_negSuccInt_$$$$$_to_$$$$$_posInt to H15.
          assert (is_integer ($posInt ($succ ($succ N6)))).
          apply silver$*$core$*$plus_integer_total to H16 H19. exists N7, N8. split.
            %Subgoal 2.3.4.1
@@ -679,7 +679,7 @@ induction on 1. intros. case H1.
             apply silver$*$core$*$plus_integer_comm to _ _ H10.
             assert ($minus_integer Result ($negSuccInt N) N5).
             apply silver$*$core$*$plus_integer_is_integer to _ _ H11.
-            apply $is_integer_posInt__to__negSuccInt to H6.
+            apply $is_integer_posInt_$$$$$_to_$$$$$_negSuccInt to H6.
             backchain silver$*$core$*$plus_integer_comm.
             backchain $minus_plus_same_integer.
         %Subgoal 3.2.3
@@ -691,7 +691,7 @@ induction on 1. intros. case H1.
            %Subgoal 3.2.3.3
             case H2. apply $multiply_integer_posInt_-1_right to H6.
             case H7. apply silver$*$core$*$multiply_integer_unique to H5 H8.
-            apply $is_integer_posInt__to__negSuccInt to H6.
+            apply $is_integer_posInt_$$$$$_to_$$$$$_negSuccInt to H6.
             apply silver$*$core$*$multiply_integer_is_integer to _ _ H8.
             apply silver$*$core$*$plus_integer_comm to _ _ H9.
             assert ($minus_integer N' ($posInt ($succ $zero))
@@ -699,7 +699,7 @@ induction on 1. intros. case H1.
             backchain silver$*$core$*$plus_integer_comm.
             backchain $minus_plus_same_integer.
         %Subgoal 3.2.4
-         apply $is_integer_posInt__to__negSuccInt to H2. case H2.
+         apply $is_integer_posInt_$$$$$_to_$$$$$_negSuccInt to H2. case H2.
          apply silver$*$core$*$multiply_integer_is_integer to _ _ H5.
          assert (is_integer ($negSuccInt ($succ N))).
          apply silver$*$core$*$plus_integer_total to H10 H9.
@@ -711,7 +711,7 @@ induction on 1. intros. case H1.
            %Subgoal 3.2.4.3
             apply silver$*$core$*$plus_integer_comm to _ _ H11.
             apply silver$*$core$*$plus_integer_is_integer to _ _ H11.
-            apply $is_integer_negSuccInt__to__posInt to H6.
+            apply $is_integer_negSuccInt_$$$$$_to_$$$$$_posInt to H6.
             assert ($minus_integer Result
                                    ($posInt ($succ ($succ N))) N5).
             backchain silver$*$core$*$plus_integer_comm.
@@ -728,11 +728,11 @@ induction on 1. intros. case H1.
             search.
            %Subgoal 3.3.2.3
             apply silver$*$core$*$multiply_integer_is_integer to _ _ H6.
-            case H3. apply $is_integer_posInt__to__negSuccInt to H9.
+            case H3. apply $is_integer_posInt_$$$$$_to_$$$$$_negSuccInt to H9.
             backchain silver$*$core$*$plus_integer_comm.
         %Subgoal 3.3.3
          apply silver$*$core$*$multiply_integer_is_integer to _ _ H6.
-         apply $is_integer_negSuccInt__to__posInt to H3.
+         apply $is_integer_negSuccInt_$$$$$_to_$$$$$_posInt to H3.
          apply silver$*$core$*$plus_integer_comm to _ _ H7.
          exists $posInt ($succ N5), N'. search.
   %Subgoal 4
@@ -756,7 +756,7 @@ induction on 1. intros. case H1.
             apply silver$*$core$*$multiply_integer_unique to H10 H13.
             case H11. search.
         %Subgoal 4.2.2
-         apply $is_integer_posInt__to__negSuccInt to H12.
+         apply $is_integer_posInt_$$$$$_to_$$$$$_negSuccInt to H12.
          apply silver$*$core$*$multiply_integer_is_integer to _ _ H9.
          apply silver$*$core$*$multiply_integer_is_integer to _ _ H10.
          assert (is_integer ($posInt ($succ N4))).
@@ -791,7 +791,7 @@ induction on 1. intros. case H1.
                apply $multiply_integer_posInt_-1_right to H13.
                apply silver$*$core$*$multiply_integer_unique to H10 H14. search.
         %Subgoal 4.2.4
-         apply $is_integer_negSuccInt__to__posInt to H12.
+         apply $is_integer_negSuccInt_$$$$$_to_$$$$$_posInt to H12.
          apply silver$*$core$*$multiply_integer_is_integer to _ _ H9.
          apply silver$*$core$*$multiply_integer_is_integer to _ _ H10.
          assert (is_integer ($negSuccInt ($succ N4))).
@@ -818,7 +818,7 @@ induction on 1. intros. case H1.
          apply IH to H6 _ _ H7 H8.
          apply silver$*$core$*$multiply_integer_is_integer to _ _ H10.
          apply silver$*$core$*$multiply_integer_is_integer to _ _ H11. case H3.
-         apply $is_integer_posInt__to__negSuccInt to H15.
+         apply $is_integer_posInt_$$$$$_to_$$$$$_negSuccInt to H15.
          apply silver$*$core$*$plus_integer_total to H13 H16.
          exists N4, MulN2N3. split.
            %Subgoal 4.3.2.1
@@ -846,7 +846,7 @@ induction on 1. intros. case H1.
                apply silver$*$core$*$plus_integer_is_integer to _ _ H4. case H13.
                apply $multiply_integer_negSuccInt_-1_right to H14.
                apply silver$*$core$*$multiply_integer_unique to H8 H15.
-               apply $is_integer_negSuccInt__to__posInt to H14.
+               apply $is_integer_negSuccInt_$$$$$_to_$$$$$_posInt to H14.
                apply silver$*$core$*$plus_integer_comm to _ _ H9. case H17. case H18.
                apply $multiply_integer_negSuccInt_-1_right to H6.
                apply silver$*$core$*$multiply_integer_unique to H10 H19.
@@ -855,7 +855,7 @@ induction on 1. intros. case H1.
            %Subgoal 4.3.3.2
             apply silver$*$core$*$multiply_integer_is_integer to _ _ H10.
             apply silver$*$core$*$multiply_integer_is_integer to _ _ H11.
-            apply $is_integer_negSuccInt__to__posInt to H13.
+            apply $is_integer_negSuccInt_$$$$$_to_$$$$$_posInt to H13.
             assert (is_integer ($posInt ($succ ($succ N4)))).
             apply silver$*$core$*$plus_integer_total to H14 H17.
             exists N8, MulN2N3. split.
@@ -920,7 +920,7 @@ induction on 1. intros. case H1.
         %Subgoal 4.2.1
          search.
         %Subgoal 4.2.2
-         case H2. apply $is_integer_posInt__to__negSuccInt to H13.
+         case H2. apply $is_integer_posInt_$$$$$_to_$$$$$_negSuccInt to H13.
          apply silver$*$core$*$multiply_integer_distribute_over_plus to _ _ _ H8 H5.
          apply silver$*$core$*$multiply_integer_unique to H10 H15.
          apply silver$*$core$*$multiply_integer_is_integer to _ _ H11.
@@ -954,20 +954,20 @@ induction on 1. intros. case H1.
                apply silver$*$core$*$multiply_integer_0_right to H6.
                apply silver$*$core$*$multiply_integer_unique to H12 H15.
                apply silver$*$core$*$multiply_integer_0_result to _ _ H11. case H16.
-               apply $is_integer_negSuccInt__to__posInt to H2.
+               apply $is_integer_negSuccInt_$$$$$_to_$$$$$_posInt to H2.
                apply silver$*$core$*$plus_integer_is_integer to _ _ H8.
                apply silver$*$core$*$multiply_integer_comm to _ _ H5. case H19.
                backchain silver$*$core$*$multiply_integer_comm.
               %Subgoal 4.3.2.1.2
-               apply $is_integer_posInt__to__negSuccInt to H15.
+               apply $is_integer_posInt_$$$$$_to_$$$$$_negSuccInt to H15.
                apply silver$*$core$*$multiply_integer_negation to _ _ _ H11 _.
-               apply $is_integer_negSuccInt__to__posInt to H2.
+               apply $is_integer_negSuccInt_$$$$$_to_$$$$$_posInt to H2.
                apply silver$*$core$*$multiply_integer_distribute_over_plus to _ _ _ H8 H5.
                apply silver$*$core$*$multiply_integer_unique to H19 H10.
                apply silver$*$core$*$multiply_integer_unique to H17 H20. search.
            %Subgoal 4.3.2.2
             apply silver$*$core$*$multiply_integer_negation to _ _ _ H11 _.
-            apply $is_integer_negSuccInt__to__posInt to H2.
+            apply $is_integer_negSuccInt_$$$$$_to_$$$$$_posInt to H2.
             apply silver$*$core$*$multiply_integer_distribute_over_plus to _ _ _ H8 H5.
             apply silver$*$core$*$multiply_integer_unique to H15 H18.
             apply silver$*$core$*$multiply_integer_unique to H10 H17. search.

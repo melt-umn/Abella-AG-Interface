@@ -13,14 +13,14 @@ Define is_list : (A -> prop) -> list A -> prop by
   is_list IsA (H::T) := IsA H /\ is_list IsA T.
 
 
-Define $fun__silver$*$core$*$append : list A -> list A -> list A -> prop by
-  $fun__silver$*$core$*$append nil L L;
-  $fun__silver$*$core$*$append (H::T) L2 (H::L3) :=
-     $fun__silver$*$core$*$append T L2 L3.
+Define $fun_$$$$$_silver$*$core$*$append : list A -> list A -> list A -> prop by
+  $fun_$$$$$_silver$*$core$*$append nil L L;
+  $fun_$$$$$_silver$*$core$*$append (H::T) L2 (H::L3) :=
+     $fun_$$$$$_silver$*$core$*$append T L2 L3.
 
 
 Theorem silver$*$core$*$append_nil_right[A] : forall (L L' : list A),
-  $fun__silver$*$core$*$append L nil L' -> L = L'.
+  $fun_$$$$$_silver$*$core$*$append L nil L' -> L = L'.
 induction on 1. intros. case H1.
   %Subgoal 1
    search.
@@ -28,12 +28,12 @@ induction on 1. intros. case H1.
    apply IH to H2. search.
 
 Theorem silver$*$core$*$append_nil_left[A] : forall (L L' : list A),
-  $fun__silver$*$core$*$append nil L L' -> L = L'.
+  $fun_$$$$$_silver$*$core$*$append nil L L' -> L = L'.
 intros. case H1. search.
 
 Theorem silver$*$core$*$append_unique[A] : forall (L1 L2 L3 L3' : list A),
-  $fun__silver$*$core$*$append L1 L2 L3 ->
-  $fun__silver$*$core$*$append L1 L2 L3' -> L3 = L3'.
+  $fun_$$$$$_silver$*$core$*$append L1 L2 L3 ->
+  $fun_$$$$$_silver$*$core$*$append L1 L2 L3' -> L3 = L3'.
 induction on 1. intros. case H1.
   %Subgoal 1
    case H2. search.
@@ -41,37 +41,37 @@ induction on 1. intros. case H1.
    case H2. apply IH to H3 H4. search.
 
 
-Define $fun__silver$*$core$*$head : list A -> A -> prop by
-  $fun__silver$*$core$*$head (H::T) H.
+Define $fun_$$$$$_silver$*$core$*$head : list A -> A -> prop by
+  $fun_$$$$$_silver$*$core$*$head (H::T) H.
 
-Define $fun__silver$*$core$*$tail : list A -> list A -> prop by
-  $fun__silver$*$core$*$tail (H::T) T.
+Define $fun_$$$$$_silver$*$core$*$tail : list A -> list A -> prop by
+  $fun_$$$$$_silver$*$core$*$tail (H::T) T.
 
-Define $fun__silver$*$core$*$length : list A -> integer -> prop by
-  $fun__silver$*$core$*$length nil ($posInt $zero);
-  $fun__silver$*$core$*$length (H::T) Length :=
+Define $fun_$$$$$_silver$*$core$*$length : list A -> integer -> prop by
+  $fun_$$$$$_silver$*$core$*$length nil ($posInt $zero);
+  $fun_$$$$$_silver$*$core$*$length (H::T) Length :=
      exists TailLength,
-        $fun__silver$*$core$*$length T TailLength /\
+        $fun_$$$$$_silver$*$core$*$length T TailLength /\
         $plus_integer ($posInt ($succ $zero)) TailLength Length.
 
-Define $fun__silver$*$core$*$null : list A -> bool -> prop by
-  $fun__silver$*$core$*$null nil $btrue;
-  $fun__silver$*$core$*$null (H::T) $bfalse.
+Define $fun_$$$$$_silver$*$core$*$null : list A -> bool -> prop by
+  $fun_$$$$$_silver$*$core$*$null nil $btrue;
+  $fun_$$$$$_silver$*$core$*$null (H::T) $bfalse.
 
 
 Theorem silver$*$core$*$head_unique[A] : forall L (H1 H2 : A),
-   $fun__silver$*$core$*$head L H1 ->
-   $fun__silver$*$core$*$head L H2 -> H1 = H2.
+   $fun_$$$$$_silver$*$core$*$head L H1 ->
+   $fun_$$$$$_silver$*$core$*$head L H2 -> H1 = H2.
 intros. case H1. case H2. search.
 
 Theorem silver$*$core$*$tail_unique[A] : forall (L T1 T2 : list A),
-   $fun__silver$*$core$*$tail L T1 ->
-   $fun__silver$*$core$*$tail L T2 -> T1 = T2.
+   $fun_$$$$$_silver$*$core$*$tail L T1 ->
+   $fun_$$$$$_silver$*$core$*$tail L T2 -> T1 = T2.
 intros. case H1. case H2. search.
 
 Theorem silver$*$core$*$length_unique[A] : forall (L : list A) Len1 Len2,
-   $fun__silver$*$core$*$length L Len1 ->
-   $fun__silver$*$core$*$length L Len2 -> Len1 = Len2.
+   $fun_$$$$$_silver$*$core$*$length L Len1 ->
+   $fun_$$$$$_silver$*$core$*$length L Len2 -> Len1 = Len2.
 induction on 1. intros. case H1.
   %Subgoal 1:  null
    case H2. search.
@@ -80,8 +80,8 @@ induction on 1. intros. case H1.
    search.
 
 Theorem silver$*$core$*$null_unique[A] : forall (L : list A) B1 B2,
-   $fun__silver$*$core$*$null L B1 ->
-   $fun__silver$*$core$*$null L B2 -> B1 = B2.
+   $fun_$$$$$_silver$*$core$*$null L B1 ->
+   $fun_$$$$$_silver$*$core$*$null L B2 -> B1 = B2.
 intros. case H1.
   %Subgoal 1:  null
    case H2. search.

@@ -367,7 +367,7 @@ intros. case H1.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % A && (B || C)  ==>  (A && B) || (A && C)
-Theorem silver$*$core$*$and_bool__distribute_over__or : forall A B C OrBC Result,
+Theorem silver$*$core$*$and_bool_$$$$$_distribute_over_$$$$$_or : forall A B C OrBC Result,
   is_bool A -> is_bool B -> is_bool C ->
   $or_bool B C OrBC -> $and_bool A OrBC Result ->
   exists AndAB AndAC, $and_bool A B AndAB /\
@@ -403,7 +403,7 @@ intros. case H4.
     exists $bfalse, $bfalse. search.
 
 % A && (B || C)  <==  (A && B) || (A && C)
-Theorem silver$*$core$*$and_bool__undistribute_over__or :
+Theorem silver$*$core$*$and_bool_$$$$$_undistribute_over_$$$$$_or :
   forall A B C AndAB AndAC Result,
     is_bool A -> is_bool B -> is_bool C ->
     $and_bool A B AndAB -> $and_bool A C AndAC ->
@@ -425,7 +425,7 @@ intros. case H4.
       apply silver$*$core$*$or_bool_false_left_eq to H6. search.
 
 % A || (B && C)  ==>  (A || B) && (A || C)
-Theorem silver$*$core$*$or_bool__distribute_over__and : forall A B C AndBC Result,
+Theorem silver$*$core$*$or_bool_$$$$$_distribute_over_$$$$$_and : forall A B C AndBC Result,
   is_bool A -> is_bool B -> is_bool C ->
   $and_bool B C AndBC -> $or_bool A AndBC Result ->
   exists OrAB OrAC, $or_bool A B OrAB /\
@@ -461,7 +461,7 @@ intros. case H4.
          search.
 
 % A || (B && C)  <==  (A || B) && (A || C)
-Theorem silver$*$core$*$or_bool__undistribute_over__and :
+Theorem silver$*$core$*$or_bool_$$$$$_undistribute_over_$$$$$_and :
   forall A B C OrAB OrAC Result,
     is_bool A -> is_bool B -> is_bool C ->
     $or_bool A B OrAB -> $or_bool A C OrAC ->
@@ -495,7 +495,7 @@ intros. case H4.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % ! (A && B)  ==>  !A || !B
-Theorem silver$*$core$*$DeMorgan__not_bool__and_bool : forall A B AndAB Result,
+Theorem silver$*$core$*$DeMorgan_$$$$$_not_bool_$$$$$_and_bool : forall A B AndAB Result,
   is_bool A -> is_bool B ->
   $and_bool A B AndAB -> $not_bool AndAB Result ->
   exists NotA NotB, $not_bool A NotA /\ $not_bool B NotB /\
@@ -509,7 +509,7 @@ intros. case H3.
    case H4. apply silver$*$core$*$not_bool_total to H1. exists B', $btrue. search.
 
 % ! (A && B)  <==  !A || !B
-Theorem silver$*$core$*$DeMorgan__or_bool__not_bool : forall A B NotA NotB Result,
+Theorem silver$*$core$*$DeMorgan_$$$$$_or_bool_$$$$$_not_bool : forall A B NotA NotB Result,
   is_bool A -> is_bool B ->
   $not_bool A NotA -> $not_bool B NotB ->
   $or_bool NotA NotB Result ->
@@ -523,7 +523,7 @@ intros. case H5.
    case H3. case H4. search.
 
 % ! (A || B)  ==>  !A && !B
-Theorem silver$*$core$*$DeMorgan__not_bool__or_bool : forall A B OrAB Result,
+Theorem silver$*$core$*$DeMorgan_$$$$$_not_bool_$$$$$_or_bool : forall A B OrAB Result,
   is_bool A -> is_bool B ->
   $or_bool A B OrAB -> $not_bool OrAB Result ->
   exists NotA NotB, $not_bool A NotA /\ $not_bool B NotB /\
@@ -537,7 +537,7 @@ intros. case H3.
    case H4. exists $btrue, $btrue. search.
 
 % ! (A || B)  <==  !A && !B
-Theorem silver$*$core$*$DeMorgan__and_bool__not_bool : forall A B NotA NotB Result,
+Theorem silver$*$core$*$DeMorgan_$$$$$_and_bool_$$$$$_not_bool : forall A B NotA NotB Result,
   is_bool A -> is_bool B ->
   $not_bool A NotA -> $not_bool B NotB ->
   $and_bool NotA NotB Result ->

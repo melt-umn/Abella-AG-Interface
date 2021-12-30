@@ -234,11 +234,11 @@ induction on 1 1. split.
         %Subgoal 1.2.1
          assert ($posInt $zero = $posInt $zero). apply H3 to H5.
         %Subgoal 1.2.2
-         apply $is_integer_posInt__to__is_nat to H4.
-         apply $is_integer_posInt__to__is_nat to H5.
+         apply $is_integer_posInt_$$$$$_to_$$$$$_is_nat to H4.
+         apply $is_integer_posInt_$$$$$_to_$$$$$_is_nat to H5.
          apply $lesseq_nat_yes_or_no to H7 H6. case H8.
            %Subgoal 1.2.2.1
-            apply $is_integer_posInt__to__is_nat to H5.
+            apply $is_integer_posInt_$$$$$_to_$$$$$_is_nat to H5.
             apply IH1 to H4 H6 H2 H3.
             apply $divR_help_minus_is_integer to _ _ H11.
             assert ($is_integer ($posInt $zero)).

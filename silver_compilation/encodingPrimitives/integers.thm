@@ -40,7 +40,7 @@ Define is_integer : integer -> prop by
 %                            IS RELATIONS                            %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Theorem $is_nat__to__is_integer_posInt : forall N,
+Theorem $is_nat_$$$$$_to_$$$$$_is_integer_posInt : forall N,
   $is_nat N -> is_integer ($posInt N).
 induction on 1. intros. case H1.
   %Subgoal 1
@@ -48,7 +48,7 @@ induction on 1. intros. case H1.
   %Subgoal 2
    apply IH to H2. search.
 
-Theorem $is_nat__to__is_integer_negSuccInt : forall N,
+Theorem $is_nat_$$$$$_to_$$$$$_is_integer_negSuccInt : forall N,
   $is_nat N -> is_integer ($negSuccInt N).
 induction on 1. intros. case H1.
   %Subgoal 1
@@ -56,7 +56,7 @@ induction on 1. intros. case H1.
   %Subgoal 2
    apply IH to H2. search.
 
-Theorem $is_integer_posInt__to__is_nat : forall N,
+Theorem $is_integer_posInt_$$$$$_to_$$$$$_is_nat : forall N,
   is_integer ($posInt N) -> $is_nat N.
 induction on 1. intros. case H1.
   %Subgoal 1
@@ -64,7 +64,7 @@ induction on 1. intros. case H1.
   %Subgoal 2
    apply IH to H2. search.
 
-Theorem $is_integer_negSuccInt__to__is_nat : forall N,
+Theorem $is_integer_negSuccInt_$$$$$_to_$$$$$_is_nat : forall N,
   is_integer ($negSuccInt N) -> $is_nat N.
 induction on 1. intros. case H1.
   %Subgoal 1
@@ -72,15 +72,15 @@ induction on 1. intros. case H1.
   %Subgoal 2
    apply IH to H2. search.
 
-Theorem $is_integer_posInt__to__negSuccInt : forall N,
+Theorem $is_integer_posInt_$$$$$_to_$$$$$_negSuccInt : forall N,
   is_integer ($posInt N) -> is_integer ($negSuccInt N).
-intros. apply $is_integer_posInt__to__is_nat to H1.
-backchain $is_nat__to__is_integer_negSuccInt.
+intros. apply $is_integer_posInt_$$$$$_to_$$$$$_is_nat to H1.
+backchain $is_nat_$$$$$_to_$$$$$_is_integer_negSuccInt.
 
-Theorem $is_integer_negSuccInt__to__posInt : forall N,
+Theorem $is_integer_negSuccInt_$$$$$_to_$$$$$_posInt : forall N,
   is_integer ($negSuccInt N) -> is_integer ($posInt N).
-intros. apply $is_integer_negSuccInt__to__is_nat to H1.
-backchain $is_nat__to__is_integer_posInt.
+intros. apply $is_integer_negSuccInt_$$$$$_to_$$$$$_is_nat to H1.
+backchain $is_nat_$$$$$_to_$$$$$_is_integer_posInt.
 
 Theorem $is_integer_posInt_or_negSuccInt : forall N,
   is_integer N -> exists A, N = $posInt A \/ N = $negSuccInt A.

@@ -78,9 +78,9 @@ Define is_string : list $char -> prop by
 
 Theorem silver$*$core$*$is_string_append : forall S1 S2 S3,
   is_string S1 -> is_string S2 ->
-  $fun__silver$*$core$*$append S1 S2 S3 -> is_string S3.
+  $fun_$$$$$_silver$*$core$*$append S1 S2 S3 -> is_string S3.
 assert (forall S1 S2 S3, is_list $is_char S1 -> is_list $is_char S2 ->
-         $fun__silver$*$core$*$append S1 S2 S3 -> is_list $is_char S3).
+         $fun_$$$$$_silver$*$core$*$append S1 S2 S3 -> is_list $is_char S3).
    induction on 1. intros. case H1.
       case H3. search.
       case H3. apply IH to H5 H2 H6. search.

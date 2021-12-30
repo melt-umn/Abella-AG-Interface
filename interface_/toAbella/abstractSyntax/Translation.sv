@@ -148,7 +148,7 @@ function extensible_theorem_name
 String ::= name::String grmmr::String
 {
   return "$Extensible_Theorem_" ++ colonsToEncoded(name) ++
-         "__" ++ colonsToEncoded(grmmr);
+         name_sep ++ colonsToEncoded(grmmr);
 }
 
 

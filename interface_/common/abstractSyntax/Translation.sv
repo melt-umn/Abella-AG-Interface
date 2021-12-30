@@ -7,6 +7,10 @@ grammar interface_:common:abstractSyntax;
 -}
 
 
+--To make a consistent separator for names, I'm going to set it here
+global name_sep::String = "_$$$$$_";
+
+
 {-
   When we're translating things, we're going to end up needing the
   names of some constants that will be defined in Abella.  We will
@@ -140,12 +144,12 @@ String ::= str::String
 function accessUniqueThm
 String ::= attr::String ty::String
 {
-  return "$access_$_" ++ colonsToEncoded(attr) ++ "_$_" ++ colonsToEncoded(ty) ++ "__unique";
+  return "$access_$_" ++ colonsToEncoded(attr) ++ "_$_" ++ colonsToEncoded(ty) ++ name_sep ++ "unique";
 }
 function accessIsThm
 String ::= attr::String ty::String
 {
-  return "$access_$_" ++ colonsToEncoded(attr) ++ "_$_" ++ colonsToEncoded(ty) ++ "__is";
+  return "$access_$_" ++ colonsToEncoded(attr) ++ "_$_" ++ colonsToEncoded(ty) ++ name_sep ++ "is";
 }
 
 
@@ -186,14 +190,16 @@ Type ::= s::String
 function wpdNt_to_LocalAttrEq
 String ::= prod::String attr::String ty::Type
 {
-  --$wpd__to__<prod>_local_<attr>__<ty>
-  return "$wpd__to__" ++ colonsToEncoded(prod) ++ "_local_" ++ attr ++ "__" ++ colonsToEncoded(ty.pp);
+  --$wpd to <prod>_local_<attr> <ty>
+  return "$wpd" ++ name_sep ++ "to" ++ name_sep ++ colonsToEncoded(prod) ++
+         "_local_" ++ attr ++ name_sep ++ colonsToEncoded(ty.pp);
 }
 function localAccessUniqueThm
 String ::= prod::String attr::String ty::String
 {
-  --$local_access_$_<$prod_prod>_$_<attr>_$_<ty>__unique
-  return "$local_access_$_$prod_" ++ colonsToEncoded(prod) ++ "_$_" ++ attr ++ "_$_" ++ colonsToEncoded(ty) ++ "__unique";
+  --$local_access_$_<$prod_prod>_$_<attr>_$_<ty> unique
+  return "$local_access_$_$prod_" ++ colonsToEncoded(prod) ++ "_$_" ++
+         attr ++ "_$_" ++ colonsToEncoded(ty) ++ name_sep ++ "unique";
 }
 
 
@@ -211,7 +217,7 @@ Boolean ::= rel::String
 function wpdToTypeName
 String ::= wpd::String
 {
-  local component::Integer = lastIndexOf("__", wpd);
+  local component::Integer = lastIndexOf(name_sep, wpd);
   return
      if component < 0
      then nonterminalNameToName(substring(5, length(wpd), wpd))
@@ -226,26 +232,26 @@ Type ::= rel::String
 function wpdGrammarName --assumes wpd is a component relation
 String ::= wpd::String
 {
-  local component::Integer = lastIndexOf("__", wpd);
-  return encodedToColons(substring(component + 2, length(wpd), wpd));
+  local component::Integer = lastIndexOf(name_sep, wpd);
+  return encodedToColons(substring(component + length(name_sep), length(wpd), wpd));
 }
 function wpdPrimaryComponent
 String ::= prod::String builtTy::Type
 {
-  return "$wpd_" ++ colonsToEncoded(builtTy.pp) ++ "__" ++ colonsToEncoded(prod);
+  return "$wpd_" ++ colonsToEncoded(builtTy.pp) ++ name_sep ++ colonsToEncoded(prod);
 }
 function wpdComponentRelToComponentName
 String ::= rel::String
 {
-  --$wpd_<type name>__<component>
-  local index::Integer = lastIndexOf("__", rel);
-  return encodedToColons(substring(index + 2, length(rel), rel));
+  --$wpd_<type name> <component>
+  local index::Integer = lastIndexOf(name_sep, rel);
+  return encodedToColons(substring(index + length(name_sep), length(rel), rel));
 }
 
 function wpdNodeTreeForm
 String ::= ty::Type
 {
-  return "$wpd_" ++ colonsToEncoded(ty.pp) ++ "__ntr_" ++ colonsToEncoded(ty.pp);
+  return "$wpd_" ++ colonsToEncoded(ty.pp) ++ name_sep ++ "ntr_" ++ colonsToEncoded(ty.pp);
 }
 
 
@@ -272,17 +278,19 @@ Type ::= str::String
 function wpdNode_to_AttrEq
 String ::= attr::String ty::Type
 {
-  return "$wpd_node__to__" ++ colonsToEncoded(attr) ++ "__" ++ colonsToEncoded(ty.pp);
+  return "$wpd_node" ++ name_sep ++ "to" ++ name_sep ++
+         colonsToEncoded(attr) ++ name_sep ++ colonsToEncoded(ty.pp);
 }
 function wpdNt_to_AttrEq
 String ::= attr::String ty::Type
 {
-  return "$wpd__to__" ++ colonsToEncoded(attr) ++ "__" ++ colonsToEncoded(ty.pp);
+  return "$wpd" ++ name_sep ++ "to" ++ name_sep ++ colonsToEncoded(attr) ++
+         name_sep ++ colonsToEncoded(ty.pp);
 }
 function primaryComponent
 String ::= attr::String ty::Type prod::String
 {
-  return "$" ++ colonsToEncoded(attr) ++ "__" ++ colonsToEncoded(ty.pp) ++ "__" ++ colonsToEncoded(prod);
+  return "$" ++ colonsToEncoded(attr) ++ name_sep ++ colonsToEncoded(ty.pp) ++ name_sep ++ colonsToEncoded(prod);
 }
 
 
@@ -290,42 +298,43 @@ String ::= attr::String ty::Type prod::String
 function typeToStructureEqName
 String ::= ty::Type
 {
-  return "$structure_eq__" ++ colonsToEncoded(ty.pp);
+  return "$structure_eq" ++ name_sep ++ colonsToEncoded(ty.pp);
 }
 function isStructureEqName
 Boolean ::= rel::String
 {
-  return startsWith("$structure_eq__", rel);
+  return startsWith("$structure_eq" ++ name_sep, rel);
 }
 function structureEqToType
 Type ::= s::String
 {
-  return nameType(encodedToColons(substring(15, length(s), s)));
+  --$structure_eq $nt_<type>
+  return nameType(encodedToColons(substring(length("$structure_eq") + length(name_sep), length(s), s)));
 }
 function structureEqWPD
 String ::= ty::Type
 {
-  return "$structure_eq__" ++ colonsToEncoded(ty.pp) ++ "__wpd";
+  return "$structure_eq" ++ name_sep ++ colonsToEncoded(ty.pp) ++ name_sep ++ "wpd";
 }
 function structureEqEqualTheorem
 String ::= ty::Type
 {
-  return "$structure_eq__" ++ colonsToEncoded(ty.pp) ++ "__equal";
+  return "$structure_eq" ++ name_sep ++ colonsToEncoded(ty.pp) ++ name_sep ++ "equal";
 }
 function typeToStructureEq_Symm
 String ::= ty::Type
 {
-  return "$structure_eq__" ++ colonsToEncoded(ty.pp) ++ "__symm";
+  return "$structure_eq" ++ name_sep ++ colonsToEncoded(ty.pp) ++ name_sep ++ "symm";
 }
 function structureEqProdComponent
 String ::= prod::String
 {
-  return "$structure_eq__" ++ colonsToEncoded(prod);
+  return "$structure_eq" ++ name_sep ++ colonsToEncoded(prod);
 }
 function structureEqExpansionTheorem
 String ::= ty::Type component::String
 {
-  return "$structure_eq__" ++ colonsToEncoded(ty.pp) ++ "__" ++ colonsToEncoded(component) ++ "__expand";
+  return "$structure_eq" ++ name_sep ++ colonsToEncoded(ty.pp) ++ name_sep ++ colonsToEncoded(component) ++ name_sep ++ "expand";
 }
 
 
@@ -352,18 +361,18 @@ String ::= s::String
 function isFun
 Boolean ::= name::String
 {
-  return startsWith("$fun__", name);
+  return startsWith("$fun" ++ name_sep, name);
 }
 function funToName
 String ::= fun::String
 {
-  --$fun__<name>
-  return encodedToColons(substring(6, length(fun), fun));
+  --$fun <name>
+  return encodedToColons(substring(4 + length(name_sep), length(fun), fun));
 }
 function nameToFun
 String ::= s::String
 {
-  return "$fun__" ++ colonsToEncoded(s);
+  return "$fun" ++ name_sep ++ colonsToEncoded(s);
 }
 
 

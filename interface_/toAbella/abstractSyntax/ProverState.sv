@@ -117,14 +117,14 @@ ProverState ::= obligations::[ThmElement]
          ("not_bool_double_negation", "silver:core", trueMetaterm()),
          ("and_bool_complementation", "silver:core", trueMetaterm()),
          ("or_bool_complementation", "silver:core", trueMetaterm()),
-         ("and_bool__distribute_over__or", "silver:core", trueMetaterm()),
-         ("and_bool__undistribute_over__or", "silver:core", trueMetaterm()),
-         ("or_bool__distribute_over__and", "silver:core", trueMetaterm()),
-         ("or_bool__undistribute_over__and", "silver:core", trueMetaterm()),
-         ("DeMorgan__not_bool__and_bool", "silver:core", trueMetaterm()),
-         ("DeMorgan__or_bool__not_bool", "silver:core", trueMetaterm()),
-         ("DeMorgan__not_bool__or_bool", "silver:core", trueMetaterm()),
-         ("DeMorgan__and_bool__not_bool", "silver:core", trueMetaterm())
+         ("and_bool" ++ name_sep ++ "distribute_over" ++ name_sep ++ "or", "silver:core", trueMetaterm()),
+         ("and_bool" ++ name_sep ++ "undistribute_over" ++ name_sep ++ "or", "silver:core", trueMetaterm()),
+         ("or_bool" ++ name_sep ++ "distribute_over" ++ name_sep ++ "and", "silver:core", trueMetaterm()),
+         ("or_bool" ++ name_sep ++ "undistribute_over" ++ name_sep ++ "and", "silver:core", trueMetaterm()),
+         ("DeMorgan" ++ name_sep ++ "not_bool" ++ name_sep ++ "and_bool", "silver:core", trueMetaterm()),
+         ("DeMorgan" ++ name_sep ++ "or_bool" ++ name_sep ++ "not_bool", "silver:core", trueMetaterm()),
+         ("DeMorgan" ++ name_sep ++ "not_bool" ++ name_sep ++ "or_bool", "silver:core", trueMetaterm()),
+         ("DeMorgan" ++ name_sep ++ "and_bool" ++ name_sep ++ "not_bool", "silver:core", trueMetaterm())
         ];
   local knownThms2::[(String, String, Metaterm)] =
         [
