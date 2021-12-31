@@ -188,6 +188,9 @@ IOVal<Integer> ::=
        if state.inProof
        then ioval(print("Proof in progress at end of file " ++
                         filename ++ "\n", ioin), 1)
+       else if !null(head(stateList).2.remainingObligations)
+       then ioval(print("Not all proof obligations fulfilled in file " ++
+                        filename ++ "\n", ioin), 1)
        else ioval(print("Successfully processed file " ++
                         filename ++ "\n", ioin), 0)
      | _::tl ->
