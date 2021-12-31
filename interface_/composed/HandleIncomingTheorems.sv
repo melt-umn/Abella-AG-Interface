@@ -2,7 +2,7 @@ grammar interface_:composed;
 
 
 function handleIncomingThms
-IOVal<(Integer, ProverState)> ::=
+IOVal<(Integer, ProverState, String)> ::=
    incomingState::(Integer, ProverState)
    silverContext::Decorated SilverContext
    abella::ProcessHandle ioin::IO
@@ -26,6 +26,8 @@ IOVal<(Integer, ProverState)> ::=
                  currentState = initialState;
               }.translation,
             doThms);
+  local translatedString::String =
+        implode(", ", map((.pp), translated));
   local numCommands::Integer =
         foldr(\ t::ThmElement rest::Integer ->
                 decorate t.encode with {
@@ -36,8 +38,7 @@ IOVal<(Integer, ProverState)> ::=
   --
   local send::IO =
         if numCommands > 0
-        then sendToProcess(abella, implode(", ", map((.pp), translated)),
-                          ioin)
+        then sendToProcess(abella, translatedString, ioin)
         else ioin;
   local readBack::IOVal<String> =
         if numCommands > 0
@@ -85,7 +86,8 @@ IOVal<(Integer, ProverState)> ::=
           case initialState of
           | proverState(a, b, c, d, _, _) ->
             proverState(a, b, c, d, outThms, outObligations)
-          end ));
+          end,
+          translatedString ));
 }
 
 
@@ -95,6 +97,11 @@ Metaterm ::= name::String grmmr::String
 {
   local findShort::[(String, Metaterm)] =
         findAllAssociated(name, thms);
-  return findAssociated(grmmr, findShort).fromJust;
+  return
+     case findAssociated(grmmr, findShort) of
+     | just(m) -> m
+     | nothing() ->
+       error("Did not find theorem " ++ name ++ " from " ++ grmmr)
+     end;
 }
 

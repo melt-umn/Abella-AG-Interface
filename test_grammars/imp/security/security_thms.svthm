@@ -1,5 +1,6 @@
 Grammar imp:security.
 
+
 Theorem x : forall a b c d,
    lookup(a, b) = c -> lookup(a, b) = d -> c = d.
 intros. backchain lookup__unique.
@@ -13,6 +14,14 @@ intros. case H1.
 
 Prove imp:host:value_unique_A.
 
+%Should be able to use value_unique_A to prove this, since it is exactly the same thing
+Theorem value_unique_A_should_exist : forall (T1 T2 : A) Env V,
+   T1 ~ T2 ->
+   T1.env = Env -> T2.env = Env ->
+   T1.value = V ->
+   T2.value = V.
+intros. apply value_unique_A to H3 H4 H5 H6. search.
+
 
 Prove imp:host:value_unique_B.
 
@@ -21,6 +30,10 @@ Prove imp:host:no_env__no_env_out.
 %assignLevel
 intros Structure N_Is L_Is TEnv. case T.env_out. search.
 
+Theorem no_env__no_env_out__should_exist : forall (T : C),
+  T.env = <no value> -> T.env_out = <no value>.
+intros A. apply imp:host:no_env__no_env_out to A. search.
+
 
 Prove imp:host:env_out__unique__C.
 %assignLevel
@@ -28,3 +41,6 @@ intros Structure N_Is L_Is Eq T1Env T2Env T1EnvOut.
 case_structure T2 in Eq with Structure.
 case T1.env_out. case T2.env_out. search.
 
+
+Theorem test_is_it_there : true.
+apply test_if_this_is_defined.

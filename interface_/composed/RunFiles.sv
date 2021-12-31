@@ -40,7 +40,7 @@ IOVal<Integer> ::= ioin::IO filename::String
            processed.iovalue.fromRight.2, started.iovalue.fromRight,
            started.io);
   --
-  local handleIncoming::IOVal<(Integer, ProverState)> =
+  local handleIncoming::IOVal<(Integer, ProverState, String)> =
         handleIncomingThms(
            (0, defaultProverState(processed.iovalue.fromRight.3)),
            ourSilverContext.iovalue, started.iovalue.fromRight,

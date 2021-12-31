@@ -154,13 +154,12 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> theorem::Clearable
       foldr(\ a::ApplyArg rest::[Error]->
               if a.name == "_"
               then []
-              else case decorate findAssociated(a.name,
-                                    top.translatedState.hypList).fromJust with
-                        {silverContext = top.silverContext;} of
-                   --Hidden hypotheses cannot be what the user meant
-                   | mt when !mt.shouldHide -> rest
-                   | _ ->
-                     errorMsg("Unknown hypothesis " ++ a.name)::rest
+              else case findAssociated(a.name, top.translatedState.hypList) of
+                   | nothing() -> errorMsg("Unknown hypothesis " ++ a.name)::rest
+                   | just(mt) ->
+                     if !decorate mt with {silverContext = top.silverContext;}.shouldHide
+                     then rest
+                     else errorMsg("Unknown hypothesis " ++ a.name)::rest
                    end,
             [], args);
   top.errors <-

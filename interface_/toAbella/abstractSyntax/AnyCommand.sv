@@ -24,8 +24,10 @@ top::AnyCommand ::= c::TopCommand
 
   top.isQuit = false;
   top.isUndo = false;
-  top.shouldClean = false;
-  top.mustClean = false;
+  --must clean if proving obligations without any actual proof needed
+  --   (no new prods for imported extensible theorem)
+  top.shouldClean = true;
+  top.mustClean = true;
 
   top.sendCommand =
       if top.inProof
@@ -44,10 +46,16 @@ top::AnyCommand ::= c::TopCommand
       else 0;
 
   local currentState::ProverState = head(top.stateListIn).snd;
+  --might be a good idea to put this logic into an attribute on TopCommand
   local newProofState::ProofState =
         case c of
         | extensibleTheoremDeclaration(depth, thms) ->
           extensible_proofInProgress(
+             top.newProofState,
+             c.translatedTheorems,
+             c.numRelevantProds)
+        | proveObligations(names) ->
+          obligation_proofInProgress(
              top.newProofState,
              c.translatedTheorems,
              c.numRelevantProds)

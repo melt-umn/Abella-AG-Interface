@@ -20,7 +20,7 @@ IOVal<Integer> ::= ioin::IO
            processed.iovalue.fromRight.2,
            started.iovalue.fromRight, started.io);
   --
-  local handleIncoming::IOVal<(Integer, ProverState)> =
+  local handleIncoming::IOVal<(Integer, ProverState, String)> =
         handleIncomingThms(
            (0, defaultProverState(processed.iovalue.fromRight.3)),
            build_context.iovalue, started.iovalue.fromRight,
@@ -167,6 +167,21 @@ IOVal<Integer> ::=
          --just replace the proof state in the ProverState
          decorate head(any_a.stateListOut).snd with
            {replaceState = cleaned.3.proof;}.replacedState)::tail(any_a.stateListOut);
+  --Process any imported theorems we can now add
+  ----------------------------
+  local handleIncoming::IOVal<(Integer, ProverState, String)> =
+        if head(newStateList).2.state.inProof
+        then ioval(outputCleanCommands,
+                   (head(newStateList).1, head(newStateList).2, ""))
+        else handleIncomingThms(head(newStateList), silverContext,
+                                abella, outputCleanCommands);
+  local completeStateList::[(Integer, ProverState)] =
+        (handleIncoming.iovalue.1, handleIncoming.iovalue.2)::tail(newStateList);
+  local outputIncomingThms::IO =
+        if debug
+        then print(handleIncoming.iovalue.3 ++
+                   "\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n", handleIncoming.io)
+        else handleIncoming.io;
   --Show to user
   ----------------------------
   local debug_back_output::IO =
@@ -176,8 +191,8 @@ IOVal<Integer> ::=
                    then cleaned.3.pp
                    else back_from_abella.iovalue ) ++
                   "\n\n*****   End Abella output    *****\n\n\n",
-                 outputCleanCommands)
-        else outputCleanCommands;
+                 outputIncomingThms)
+        else outputIncomingThms;
   local subgoalCompletedNow::Boolean =
         subgoalCompleted(state.currentSubgoal,
                          head(any_a.stateListOut).snd.state.currentSubgoal) &&
@@ -207,7 +222,7 @@ IOVal<Integer> ::=
   {-
     EXIT
   -}
-  local wait_on_exit::IO = waitForProcess(abella, out_to_abella);
+  local wait_on_exit::IO = waitForProcess(abella, printed_output);
   --We can't use our normal read function because that looks for a new prompt
   --Guaranteed to get all the output because we waited for the process to exit first
   local any_last_words::IOVal<String> = readAllFromProcess(abella, wait_on_exit);
@@ -219,8 +234,8 @@ IOVal<Integer> ::=
     RUN REPL AGAIN
   -}
   local again::IOVal<Integer> =
-        run_step_interactive(newStateList, silverContext, abella,
-                             printed_output);
+        run_step_interactive(completeStateList, silverContext,
+                             abella, printed_output);
 
 
   return if any_a.isQuit

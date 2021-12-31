@@ -296,8 +296,7 @@ top::TopCommand ::= names::[String]
 
   top.translatedTheorems =
       map(\ p::(String, Metaterm, String) ->
-            (colonsToEncoded(top.silverContext.currentGrammar ++
-                             ":" ++ p.1), p.2),
+            (colonsToEncoded(p.1), p.2),
           translated);
 
   --The number of splits to do when the theorem is done

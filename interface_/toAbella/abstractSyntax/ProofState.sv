@@ -194,7 +194,7 @@ top::ProofState ::=
   --names for the split theorems
   local newThmNames::[String] =
         flatMap(\ p::(String, Integer) ->
-           map(\ i::Integer -> "$" ++ p.1 ++ "_$_" ++ toString(i),
+           map(\ i::Integer -> "$" ++ colonsToEncoded(p.1) ++ "_$_" ++ toString(i),
                range(1, p.2 + 1)),
            numProds);
   local isDone::Boolean =
@@ -217,11 +217,12 @@ top::ProofState ::=
       if isDone && shouldDeclare
       then --split, declare, and skip.
            splitTheorem(
-              extensible_theorem_name(head(originalTheorems).1,
+              extensible_theorem_name(colonsToEncoded(head(originalTheorems).1),
                  top.silverContext.currentGrammar),
               newThmNames).pp ++
            foldr(\ p::(String, Metaterm) rest::String ->
-                   theoremDeclaration(p.1, [], p.2).pp ++ "  " ++ skipTactic().pp ++ "\n" ++ rest,
+                   theoremDeclaration(colonsToEncoded(p.1), [], p.2).pp ++ "  " ++
+                   skipTactic().pp ++ "\n" ++ rest,
                  "", originalTheorems)
       else currentProofState.cleanUpCommands;
   top.numCleanUpCommands =
@@ -233,7 +234,39 @@ top::ProofState ::=
       if isDone
       then top.nextStateIn
       else extensible_proofInProgress(
+              top.nextStateIn, originalTheorems, numProds);}
+
+
+abstract production obligation_proofInProgress
+top::ProofState ::=
+     currentProofState::ProofState
+     originalTheorems::[(String, Metaterm)]
+     numProds::[(String, Integer)]
+{
+  local isDone::Boolean =
+        case currentProofState of
+        | proofInProgress(_, _, _) -> false
+        | proofCompleted() -> true
+        | proofAborted() -> true
+        | noProof() ->
+          error("Should not have obligation_proofInProgress of noProof")
+        end;
+  local shouldDeclare::Boolean =
+        case currentProofState of
+        | proofInProgress(_, _, _) -> false
+        | proofCompleted() -> true
+        | proofAborted() -> false
+        | noProof() ->
+          error("Should not have obligation_proofInProgress of noProof")
+        end;
+  top.nextStateOut =
+      if isDone
+      then top.nextStateIn
+      else obligation_proofInProgress(
               top.nextStateIn, originalTheorems, numProds);
+
+  forwards to extensible_proofInProgress(currentProofState,
+                 originalTheorems, numProds);
 }
 
 
