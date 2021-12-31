@@ -152,6 +152,16 @@ IOVal<Integer> ::=
            {replaceState = cleaned.3.proof;}.replacedState)::tail(any_a.stateListOut);
   --Show to user
   ----------------------------
+  --Process any imported theorems we can now add
+  ----------------------------
+  local handleIncoming::IOVal<(Integer, ProverState, String)> =
+        if head(newStateList).2.state.inProof
+        then ioval(back_from_abella.io,
+                   (head(newStateList).1, head(newStateList).2, ""))
+        else handleIncomingThms(head(newStateList), silverContext,
+                                abella, back_from_abella.io);
+  local completeStateList::[(Integer, ProverState)] =
+        (handleIncoming.iovalue.1, handleIncoming.iovalue.2)::tail(newStateList);
 
 
   {-
@@ -169,7 +179,7 @@ IOVal<Integer> ::=
   -}
   local again::IOVal<Integer> =
         run_step_file(tail(inputCommands), filename, silverContext,
-                      newStateList, abella, back_from_abella.io);
+                      completeStateList, abella, handleIncoming.io);
 
 
   return
