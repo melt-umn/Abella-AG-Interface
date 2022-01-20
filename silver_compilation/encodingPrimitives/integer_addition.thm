@@ -1017,6 +1017,25 @@ induction on 1. intros. case H1.
   %Subgoal 5
    apply IH to H2. backchain $negate_integer_step_$$$$$_negSuccInt.
 
+Theorem silver$*$core$*$plus_integer_negation : forall A -A,
+  is_integer A -> $negate_integer A -A ->
+  $plus_integer A -A ($posInt $zero).
+induction on 1. intros AIsInt NegA. case AIsInt.
+  %Subgoal 1
+   case NegA. search.
+  %Subgoal 2
+   case NegA. apply silver$*$core$*$negate_integer_total to H1.
+   apply IH to H1 H2. case H2.
+     %Subgoal 2.1
+      search.
+     %Subgoal 2.2
+      search.
+  %Subgoal 3
+   case NegA. search.
+  %Subgoal 4
+   case NegA. apply silver$*$core$*$negate_integer_total to H1.
+   apply IH to H1 H2. case H2. search.
+
 Theorem silver$*$core$*$plus_integer_negatives : forall A -A B -B C -C,
   is_integer A -> is_integer B -> is_integer C ->
   $negate_integer A -A -> $negate_integer B -B ->

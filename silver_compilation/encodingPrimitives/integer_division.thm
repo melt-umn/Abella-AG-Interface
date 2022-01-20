@@ -1,14 +1,7 @@
 
 Kind $bool   type.
-Kind $nat   type.
+Kind nat   type.
 Import "integer_multiplication".
-
-
-/*
-  This is really incomplete.  The best definition for working in
-  Abella is probably $divR_help, since that steps down the dividend
-  step-by-step just as $is_integer does.
-*/
 
 
 
@@ -17,31 +10,26 @@ Import "integer_multiplication".
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %used for $less_abs_integer
-Define $abs_integer : $integer -> $integer -> prop by
+Define $abs_integer : integer -> integer -> prop by
   $abs_integer ($posInt N) ($posInt N);
   $abs_integer ($negSuccInt N) ($posInt ($succ N)).
 
 %used for divR_integer
-Define $less_abs_integer : $integer -> $integer -> prop by
+Define $less_abs_integer : integer -> integer -> prop by
   $less_abs_integer N1 N2 :=
      exists N1' N2',
         $abs_integer N1 ($posInt N1') /\ $abs_integer N2 ($posInt N2') /\
         $less_nat N1' N2'.
 
-Define $divR_integer :
-        $integer -> $integer -> $integer -> $integer -> prop by
-  $divR_integer N1 N2 Q R :=
-    exists N1',
-      $multiply_integer N2 Q N1' /\
-      $plus_integer N1' R N1 /\
-      $less_abs_integer R N2.
+Define $lesseq_abs_integer : integer -> integer -> prop by
+  $lesseq_abs_integer N1 N2 :=
+     exists N1' N2',
+        $abs_integer N1 ($posInt N1') /\ $abs_integer N2 ($posInt N2') /\
+        $lesseq_nat N1' N2'.
 
-/*
-  This section is essentially lemmas for division and modulus.
-*/
-
-Define $divR_integer' : $integer -> $integer ->
-                        $integer -> $integer -> prop by
+%Multiplication-related definition
+Define $divR_integer' : integer -> integer ->
+                        integer -> integer -> prop by
   $divR_integer' A B ($posInt $zero) A :=
     $less_abs_integer A B /\ (B = $posInt $zero -> false);
   $divR_integer' ($posInt A) ($posInt B) Q R :=
@@ -49,31 +37,30 @@ Define $divR_integer' : $integer -> $integer ->
       $lesseq_nat B A /\
       $minus_integer ($posInt A) ($posInt B) A' /\
       $divR_integer' A' ($posInt B) Q' R /\
-      $plus_integer Q' ($posInt ($succ $zero)) Q /\
-      (B = $zero -> false);
+      $plus_integer ($posInt ($succ $zero)) Q' Q;
   $divR_integer' ($posInt A) ($negSuccInt B) Q R :=
     exists A' Q',
       $lesseq_nat ($succ B) A /\
       $plus_integer ($posInt A) ($negSuccInt B) A' /\
       $divR_integer' A' ($negSuccInt B) Q' R /\
-      $plus_integer Q' ($negSuccInt $zero) Q;
+      $plus_integer ($negSuccInt $zero) Q' Q;
   $divR_integer' ($negSuccInt A) ($posInt B) Q R :=
     exists A' Q',
       $lesseq_nat B ($succ A) /\
       $plus_integer ($negSuccInt A) ($posInt B) A' /\
       $divR_integer' A' ($posInt B) Q' R /\
-      $plus_integer Q' ($negSuccInt $zero) Q /\
-      (B = $zero -> false);
+      $plus_integer ($negSuccInt $zero) Q' Q;
   $divR_integer' ($negSuccInt A) ($negSuccInt B) Q R :=
     exists A' Q',
       $lesseq_nat B A /\
       $minus_integer ($negSuccInt A) ($negSuccInt B) A' /\
       $divR_integer' A' ($negSuccInt B) Q' R /\
-      $plus_integer Q' ($posInt ($succ $zero)) Q.
+      $plus_integer ($posInt ($succ $zero)) Q' Q.
 
+%Definition useful for induction
 Define
-  $divR_help : $integer -> $integer -> $integer -> $integer -> prop,
-  $divR_help_minus : $integer -> $nat -> $integer -> $integer -> $integer -> prop by
+  $divR_help : integer -> integer -> integer -> integer -> prop,
+  $divR_help_minus : integer -> nat -> integer -> integer -> integer -> prop by
   % $divR_help Dividend Divisor Quotient Remainder
   $divR_help A B ($posInt $zero) A :=
     $less_abs_integer A B /\ (B = $posInt $zero -> false);
@@ -109,8 +96,10 @@ Define
   $divR_help_minus ($negSuccInt ($succ A)) ($succ B) D Q R :=
     $divR_help_minus ($negSuccInt A) B D Q R.
 
+
+
 Theorem $abs_integer_total : forall N,
-  $is_integer N -> exists N', $abs_integer N N'.
+  is_integer N -> exists N', $abs_integer N N'.
 intros. case H1.
   %Subgoal 1
    search.
@@ -121,29 +110,123 @@ intros. case H1.
   %Subgoal 4
    search.
 
+Theorem $abs_integer_posInt_result : forall A B,
+  $abs_integer A B -> exists B', B = $posInt B'.
+induction on 1. intros. case H1.
+  search.
+  search.
+
+Theorem $abs_integer_is_integer : forall A B,
+  is_integer A -> $abs_integer A B -> is_integer B.
+intros. case H2.
+  %Subgoal 1
+   search.
+  %Subgoal 2
+   apply $is_integer_negSuccInt_$$$$$_to_$$$$$_posInt to H1. search.
+
+Theorem $less_abs_integer_step_posInt : forall A B,
+  $less_abs_integer ($posInt A) ($posInt B) ->
+  $less_abs_integer ($posInt ($succ A)) ($posInt ($succ B)).
+intros. case H1. case H2. case H3. search.
+
+Theorem $lesseq_false_less_abs_posInt : forall A B,
+  $is_nat A -> $is_nat B -> ($lesseq_nat A B -> false) ->
+  $less_abs_integer ($posInt B) ($posInt A).
+induction on 1. intros. case H1.
+  %Subgoal 1:  A = 0
+   F: assert false. backchain H3. case H2. search. search.
+   case F.
+  %Subgoal 2:  A > 0
+   case H2.
+     %Subgoal 2.1:  B = 0
+      search.
+     %Subgoal 2.2:  B > 0
+      assert $lesseq_nat N N1 -> false.
+        intros Leq. backchain H3. backchain $lesseq_nat_step.
+        apply IH to H4 H5 H6. backchain $less_abs_integer_step_posInt.
+
+Theorem $lesseq_false_less_abs_negSuccInt : forall A B,
+  $is_nat A -> $is_nat B -> ($lesseq_nat ($succ B) A -> false) ->
+  $less_abs_integer ($posInt A) ($negSuccInt B).
+induction on 1. intros. case H1.
+  %Subgoal 1:  A = 0
+   case H2.
+     %Subgoal 1.1:  B = 0
+      search.
+     %Subgoal 1.2:  B > 0
+      search.
+  %Subgoal 2:  A > 0  (A = $succ N)
+   case H2.
+     %Subgoal 2.1:  B = 0
+      F: assert false. backchain H3. case H4. search. search.
+      case F.
+     %Subgoal 2.2:  B > 0
+      apply IH to H4 H5 _. intros. backchain H3. case H6. search. search.
+      case H6. case H7. case H8. search.
+
+Theorem $lesseq_false_less_abs_negSuccInt_left : forall A B,
+  $is_nat A -> $is_nat B -> ($lesseq_nat B ($succ A) -> false) ->
+  $less_abs_integer ($negSuccInt A) ($posInt B).
+induction on 1. intros. case H1.
+  %Subgoal 1:  A = 0
+   case H2.
+     %Subgoal 1.1:  B = 0
+      F: assert false. backchain H3. case F.
+     %Subgoal 1.2:  B > 0
+      case H4.
+        %Subgoal 1.2.1:  B = 1
+         F: assert false. backchain H3. case F.
+        %Subgoal 1.2.2:  B > 1
+         search.
+  %Subgoal 2:  A > 0
+   case H2.
+     %Subgoal 2.1:  B = 0
+      F: assert false. backchain H3. case F.
+     %Subgoal 2.2:  B > 0
+      apply IH to H4 H5 _. intros. backchain H3. case H6. search. search.
+      case H6. case H7. case H8. search.
+
+Theorem $lesseq_false_less_abs_negSuccInt_both : forall A B,
+  $is_nat A -> $is_nat B -> ($lesseq_nat ($succ B) ($succ A) -> false) ->
+  $less_abs_integer ($negSuccInt A) ($negSuccInt B).
+induction on 1. intros. case H1.
+  %Subgoal 1:  A = 0
+   case H2.
+     %Subgoal 1.1:  B = 0
+      F: assert false. backchain H3. case F.
+     %Subgoal 1.2:  B > 0
+      search.
+  %Subgoal 2:  A > 1
+   case H2.
+     %Subgoal 2.1:  B = 0
+      F: assert false. backchain H3. case F.
+     %Subgoal 2.2:  B > 0
+      apply IH to H4 H5 _. intros. backchain H3. case H6. search. search.
+      case H6. case H7. case H8. search.
+
 Theorem $divR_help_is_integer_combined :
   (forall A B Q R,
-     $is_integer A -> $is_integer B -> $divR_help A B Q R ->
-     $is_integer Q /\ $is_integer R) /\
+     is_integer A -> is_integer B -> $divR_help A B Q R ->
+     is_integer Q /\ is_integer R) /\
   (forall A N B Q R,
-     $is_integer A -> $is_integer B -> $divR_help_minus A N B Q R ->
-     $is_integer Q /\ $is_integer R).
+     is_integer A -> is_integer B -> $divR_help_minus A N B Q R ->
+     is_integer Q /\ is_integer R).
 induction on 3 3. split.
   %Subgoal 1
    intros. case H3.
      %Subgoal 1.1
       search.
      %Subgoal 1.2
-      apply IH1 to _ _ H6. apply $plus_integer_is_integer to _ _ H7.
+      apply IH1 to _ _ H6. apply silver$*$core$*$plus_integer_is_integer to _ _ H7.
       search.
      %Subgoal 1.3
-      apply IH1 to _ _ H5. apply $plus_integer_is_integer to _ _ H6.
+      apply IH1 to _ _ H5. apply silver$*$core$*$plus_integer_is_integer to _ _ H6.
       search.
      %Subgoal 1.4
-      apply IH1 to _ _ H6. apply $plus_integer_is_integer to _ _ H7.
+      apply IH1 to _ _ H6. apply silver$*$core$*$plus_integer_is_integer to _ _ H7.
       search.
      %Subgoal 1.5
-      apply IH1 to _ _ H5. apply $plus_integer_is_integer to _ _ H6.
+      apply IH1 to _ _ H5. apply silver$*$core$*$plus_integer_is_integer to _ _ H6.
       search.
   %Subgoal 2
    intros. case H3.
@@ -187,36 +270,63 @@ induction on 1. intros. case H1.
            %Subgoal 2.2.2.2
             case H8. search.
 
-Theorem $less_nat_not_lesseq : forall A B,
-  $is_nat A -> $is_nat B -> ($lesseq_nat A B -> false) -> $less_nat B A.
+Theorem $divR_help_divide_by_one : forall A,
+  is_integer A -> $divR_help A ($posInt ($succ $zero)) A ($posInt $zero).
 induction on 1. intros. case H1.
-  %Subgoal 1
-   case H2.
-     %Subgoal 1.1
-      assert ($lesseq_nat $zero $zero). apply H3 to H4.
-     %Subgoal 1.2
-      assert ($lesseq_nat $zero ($succ N)). apply H3 to H5.
-  %Subgoal 2
-   case H2.
-     %Subgoal 2.1
-      search.
-     %Subgoal 2.2
-      assert ($lesseq_nat N N1 -> false).
-        intros. backchain H3. case H6. search. search.
-      apply IH to H4 H5 H6. search.
+  %Subgoal 1:  A = 0
+   search.
+  %Subgoal 2:  A > 0
+   apply IH to H2.
+   assert $divR_help_minus ($posInt N) $zero ($posInt ($succ $zero))
+          ($posInt N) ($posInt $zero).
+   assert $divR_help_minus ($posInt ($succ N)) ($succ $zero)
+          ($posInt ($succ $zero)) ($posInt N) ($posInt $zero).
+   assert $lesseq_nat ($succ $zero) ($succ N).
+      apply $is_integer_posInt_$$$$$_to_$$$$$_is_nat to H2.
+      apply $lesseq_nat_zero to H6. case H7. search. search.
+   assert ($succ $zero) = $zero -> false.
+   assert $plus_integer ($posInt ($succ $zero)) ($posInt N)
+                        ($posInt ($succ N)).
+   search.
+  %Subgoal 3:  A = -1
+   search 6.
+  %Subgoal 4:  A < -1
+   apply IH to H2. search.
+
+Theorem $divR_help_divide_by_-1_posInt : forall A,
+  $is_nat A -> $divR_help ($posInt ($succ A)) ($negSuccInt $zero)
+                          ($negSuccInt A) ($posInt $zero).
+induction on 1. intros. case H1.
+  %Subgoal 1:  A = 0
+   search 6.
+  %Subgoal 2:  A > 0
+   apply IH to H2. search.
+
+Theorem $divR_help_divide_by_-1_negSuccInt : forall A,
+  $is_nat A -> $divR_help ($negSuccInt A) ($negSuccInt $zero)
+                          ($posInt ($succ A)) ($posInt $zero).
+induction on 1. intros. case H1.
+  %Subgoal 1:  A = 0
+   search 6.
+  %Subgoal 2:  A > 0
+   apply IH to H2. search.
 
 Theorem $divR_help_near_total_combined :
   (forall A B,
-     $is_integer A -> $is_integer B -> (B = $posInt $zero -> false) ->
+     is_integer A -> is_integer B -> (B = $posInt $zero -> false) ->
      exists Q R, $divR_help A B Q R) /\
   (forall A N B,
-     $is_integer A -> $is_nat N -> $is_integer B ->
+     is_integer A -> $is_nat N -> is_integer B ->
      (B = $posInt $zero -> false) ->
+     $lesseq_abs_integer ($posInt N) A ->
+     %This premise was going to be (N = $zero -> false), but Abella has
+     %   a bug that makes that not work.  This is equivalent.
+     $less_nat $zero N ->
      exists Q R, $divR_help_minus A N B Q R).
-induction on 1 1. split.
+induction on 1 1. rename IH to IH_div. rename IH1 to IH_sub. split.
   %Subgoal 1
    intros. case H1.
-     %Subgoal 1.1
+     %Subgoal 1.1:  A = 0
       exists $posInt $zero, $posInt $zero.
       assert ($abs_integer ($posInt $zero) ($posInt $zero)).
       apply $abs_integer_total to H2. case H5.
@@ -228,197 +338,573 @@ induction on 1 1. split.
             search.
         %Subgoal 1.1.2
          search.
-     %Subgoal 1.2
+     %Subgoal 1.2:  A > 0
       % We need to do the first step of $divR_help_minus ourselves
-      case H2 (keep).
-        %Subgoal 1.2.1
+      rename N to T. case H2 (keep).
+        %Subgoal 1.2.1:  Divisor = 0
          assert ($posInt $zero = $posInt $zero). apply H3 to H5.
-        %Subgoal 1.2.2
+        %Subgoal 1.2.2:  Divisor = other positive number
+         rename N to D.
          apply $is_integer_posInt_$$$$$_to_$$$$$_is_nat to H4.
          apply $is_integer_posInt_$$$$$_to_$$$$$_is_nat to H5.
          apply $lesseq_nat_yes_or_no to H7 H6. case H8.
-           %Subgoal 1.2.2.1
-            apply $is_integer_posInt_$$$$$_to_$$$$$_is_nat to H5.
-            apply IH1 to H4 H6 H2 H3.
-            apply $divR_help_minus_is_integer to _ _ H11.
-            assert ($is_integer ($posInt $zero)).
-            apply $plus_integer_total to H14 H12. exists N3, R.
-            skip.
-           %Subgoal 1.2.2.2
-            
-        %Subgoal 1.2.3
-         
-        %Subgoal 1.2.4
-         
-     %Subgoal 1.3
-      
-     %Subgoal 1.4
-      
+           %Subgoal 1.2.2.1:  Divisor is smaller/equal
+            case H7 (keep).
+              %Subgoal 1.2.2.1.1:  Divisor = 1
+               TIsInt: assert is_integer ($posInt ($succ T)).
+               apply $divR_help_divide_by_one to TIsInt. search.
+              %Subgoal 1.2.2.1.2:  Divisor > 1
+               apply $is_integer_posInt_$$$$$_to_$$$$$_is_nat to H5.
+               ZeroLessD: assert $less_nat $zero ($succ N).
+               apply IH_sub to H4 H7 H2 H3 _ ZeroLessD.
+               assert $divR_help_minus ($posInt ($succ T)) ($succ D)
+                                       ($posInt ($succ D)) Q R.
+               apply $divR_help_minus_is_integer to _ _ H12.
+               IsOne: assert (is_integer ($posInt ($succ $zero))).
+               apply silver$*$core$*$plus_integer_total to IsOne H14.
+               rename N3 to Q'. exists Q', R.
+               DivisorNotZero: assert (($succ ($succ N)) = $zero) -> false.
+               DivisorLessEq: assert $lesseq_nat ($succ ($succ N)) ($succ T).
+                  backchain $lesseq_nat_step.
+               search.
+           %Subgoal 1.2.2.2:  Divisor is not smaller
+            apply $lesseq_false_less_abs_posInt to _ _ H9.
+            apply $less_abs_integer_step_posInt to H10.
+            search.
+        %Subgoal 1.2.3:  Divisor = -1
+         TIsNat: apply $is_integer_posInt_$$$$$_to_$$$$$_is_nat to H4.
+         apply $divR_help_divide_by_-1_posInt to TIsNat. search.
+        %Subgoal 1.2.4:  Divisor = other negative number
+         TIsNat: apply $is_integer_posInt_$$$$$_to_$$$$$_is_nat to H4.
+         T+1IsNat: assert $is_nat ($succ T).
+         N+1IsNat: apply $is_integer_negSuccInt_$$$$$_to_$$$$$_is_nat to H2.
+         N+2IsNat:  assert $is_nat ($succ ($succ N)).
+         LE_or_not: apply $lesseq_nat_yes_or_no to N+2IsNat T+1IsNat.
+         case LE_or_not.
+           %Subgoal 1.2.3.1:  1 <= T
+            LE_abs: assert $lesseq_abs_integer ($posInt ($succ N)) ($posInt T).
+                       case H6. search. case H7. search.
+            apply IH_sub to H4 N+1IsNat H2 _ LE_abs _.
+            assert $divR_help_minus ($posInt ($succ T)) ($succ ($succ N))
+                                    ($negSuccInt ($succ N)) Q R.
+            apply $divR_help_minus_is_integer to _ _ H7.
+            apply silver$*$core$*$plus_integer_total to _ H9 with
+                  N1 = ($negSuccInt $zero).
+            rename N3 to Q'. exists Q', R. search.
+           %Subgoal 1.2.3.2:  1 !<= T
+            exists ($posInt $zero), ($posInt ($succ T)).
+            apply $lesseq_false_less_abs_negSuccInt to _ _ H6. search.
+     %Subgoal 1.3:  A = -1
+      apply $is_integer_posInt_or_negSuccInt to H2. case H4.
+        %Subgoal 1.3.1:  B = $posInt B'
+         rename A1 to B'. case H2.
+           %Subgoal 1.3.1.1:  B' = 0
+            F: assert false. backchain H3.
+            case F.
+           %Subgoal 1.3.1.2:  B' = $succ D  (B = $posInt ($succ D))
+            rename N to D.
+            DIsNat:  apply $is_integer_posInt_$$$$$_to_$$$$$_is_nat to H5.
+            D+1IsNat:  assert $is_nat ($succ D).
+            LE_or_not: apply $lesseq_nat_yes_or_no to D+1IsNat _ with
+                             B = $succ $zero. case LE_or_not.
+              %Subgoal 1.3.1.2.1:  Divisor <= 1
+               case H6 (keep).
+                 %Subgoal 1.3.1.2.1.1:  D = 0  (B = 1)
+                  exists $negSuccInt $zero, $posInt $zero. search 6.
+                 %Subgoal 1.3.1.2.1.2:  D + 1 < 1
+                  case H7. case H8.
+              %Subgoal 1.3.1.2.2:  Divisor !<= 1
+               exists $posInt $zero, $negSuccInt $zero.
+               apply $lesseq_false_less_abs_negSuccInt_left to _ _ H6.
+               search.
+        %Subgoal 1.3.2:  B = $negSuccInt B'
+         rename A1 to B'.
+         B'IsNat: apply $is_integer_negSuccInt_$$$$$_to_$$$$$_is_nat to H2.
+         B'+1IsNat: assert $is_nat ($succ B').
+         LE_or_not: apply $lesseq_nat_yes_or_no to B'+1IsNat _ with
+                          B = $succ $zero. case LE_or_not.
+           %Subgoal 1.3.2.1:  Divisor <= 1
+            case H5.
+              %Subgoal 1.3.2.1.1:  B' = 0  (B = -1)
+               search 6.
+              %Subgoal 1.3.2.1.2:  B' < 0
+               case H6. case H7.
+           %Subgoal 1.3.2.2:  Divisor !<= 1
+            apply $lesseq_false_less_abs_negSuccInt_both to _ _ H5. search.
+     %Subgoal 1.4:  A < -1
+      apply $is_integer_posInt_or_negSuccInt to H2. case H5.
+        %Subgoal 1.4.1:  B >= 0
+         rename A1 to B'.
+         B'IsNat: apply $is_integer_posInt_$$$$$_to_$$$$$_is_nat to H2.
+         NIsNat: apply $is_integer_negSuccInt_$$$$$_to_$$$$$_is_nat to H4.
+         N+2IsNat: assert $is_nat ($succ ($succ N)).
+         LE_or_not: apply $lesseq_nat_yes_or_no to B'IsNat N+2IsNat.
+         case LE_or_not.
+           %Subgoal 1.4.1.1:  B' <= N + 1
+            case B'IsNat.
+              %Subgoal 1.4.1.1.1:  B' = 0
+               F: assert false. backchain H3. case F.
+              %Subgoal 1.4.1.1.2:  B' > 0
+               case H7 (keep).
+                 %Subgoal 1.4.1.1.2.1:  B' = 1
+                  apply $divR_help_divide_by_one to H4. search.
+                 %Subgoal 1.4.1.1.2.1:  B' > 1
+                  LE_abs: assert $lesseq_abs_integer ($posInt ($succ N2))
+                                    ($negSuccInt N).
+                             case H6. search. case H9. search.
+                  apply IH_sub to H4 H7 H2 _ LE_abs _.
+                  assert $divR_help_minus ($negSuccInt ($succ N)) ($succ N1)
+                                          ($posInt ($succ N1)) Q R.
+                  apply $divR_help_minus_is_integer to _ _ H10.
+                  apply silver$*$core$*$plus_integer_total to _ H11 with
+                        N1 = $negSuccInt $zero. rename N3 to Q'. exists Q', R.
+                  search.
+           %Subgoal 1.4.1.2:  B' !<= N + 1
+            apply $lesseq_false_less_abs_negSuccInt_left to _ _ H6. search.
+        %Subgoal 1.4.2:  B < 0
+         rename A1 to B'.
+         B'IsNat: apply $is_integer_negSuccInt_$$$$$_to_$$$$$_is_nat to H2.
+         B'+1IsNat: assert $is_nat ($succ B').
+         NIsNat: apply $is_integer_negSuccInt_$$$$$_to_$$$$$_is_nat to H4.
+         N'+2IsNat: assert $is_nat ($succ ($succ N)).
+         LE_or_not: apply $lesseq_nat_yes_or_no to B'+1IsNat N'+2IsNat.
+         case LE_or_not.
+           %Subgoal 1.4.2.1:  B' + 1 <= N + 2
+            SubB'IsNat: case B'IsNat (keep).
+              %Subgoal 1.4.2.1.1:  B' = 0
+               N+1IsNat: assert $is_nat ($succ N).
+               apply $divR_help_divide_by_-1_negSuccInt to N+1IsNat. search.
+              %Subgoal 1.4.2.1.2:  B' > 0
+               LE_abs: assert $lesseq_abs_integer ($posInt B') ($negSuccInt N).
+                          case H6. search. case H7. search.
+               apply IH_sub to H4 B'IsNat _ H3 LE_abs _.
+               assert $divR_help_minus ($negSuccInt ($succ N)) ($succ B')
+                                       ($negSuccInt B') Q R.
+               apply $divR_help_minus_is_integer to _ _ H8.
+               IsOne: assert is_integer ($posInt ($succ $zero)).
+               apply silver$*$core$*$plus_integer_total to IsOne H9.
+               rename N3 to Q'. exists Q', R.
+               assert $lesseq_nat B' ($succ N). case H6. search. case H12. search.
+               search.
+           %Subgoal 1.4.2.2:  B' + 1 !<= N + 2
+            apply $lesseq_false_less_abs_negSuccInt_both to _ _ H6. search.
   %Subgoal 2
-   
+   intros IsIntA IsNatN IsIntB BNotZero LE_abs NNotZero. case IsIntA.
+     %Subgoal 2.1:  A = 0
+      case LE_abs. case H1 (keep). case H2. case H3.
+        %Subgoal 2.1.1:  N1' = 0
+         exists $posInt $zero, $posInt $zero.
+         apply $abs_integer_total to IsIntB.
+         apply $abs_integer_posInt_result to H4.
+         apply $abs_integer_is_integer to _ H4.
+         apply $is_integer_posInt_$$$$$_to_$$$$$_is_nat to H5.
+         assert $less_nat $zero B'.
+            case H6. case H4. apply BNotZero to _. search.
+         assert $less_abs_integer ($posInt $zero) B. search.
+        %Subgoal 2.1.2:  N1' < 0
+         case H4.
+     %Subgoal 2.2:  A > 0
+      case IsNatN.
+        %Subgoal 2.2.1:  N = 0
+         case NNotZero.
+        %Subgoal 2.2.2:  N = N1 + 1
+         case H2 (keep).
+           %Subgoal 2.2.2.1:  Subtract 0
+            apply IH_div to H1 IsIntB BNotZero. search.
+           %Subgoal 2.2.2.2:  Subtract > 0
+            LE_abs': assert $lesseq_abs_integer ($posInt ($succ N3))
+                                                ($posInt N1).
+                        case LE_abs. case H4. case H5. case H6.
+                        search. case H7. search.
+            apply IH_sub to H1 H2 IsIntB BNotZero _ _. search.
+     %Subgoal 2.3:  A = -1
+      case IsNatN.
+        %Subgoal 2.3.1:  N = 0
+         case NNotZero.
+        %Subgoal 2.3.2:  N > 0
+         case LE_abs. case H2. case H3. case H4.
+           %Subgoal 2.3.2.1:  N1 = 0  (N = 1)
+            assert $less_abs_integer ($posInt $zero) B.
+               case IsIntB.
+                  apply BNotZero to _.
+                  search.
+                  search.
+                  search.
+            search.
+           %Subgoal 2.3.2.2:  N1 + 1 < 1
+            case H5. case H6.
+     %Subgoal 2.4:  A < -1
+      case IsNatN.
+        %Subgoal 2.4.1:  N = 0
+         case NNotZero.
+        %Subgoal 2.4.1:  N > 0
+         case H2.
+           %Subgoal 2.4.1.1:  N = 1
+            apply IH_div to H1 IsIntB BNotZero. search.
+           %Subgoal 2.4.1.2:  N > 1
+            assert $lesseq_abs_integer ($posInt ($succ N3)) ($negSuccInt N1).
+               case LE_abs. case H4. case H5. case H6. search. case H7. search.
+            apply IH_sub to H1 _ IsIntB BNotZero _ _ with N = $succ N3. search.
+Split $divR_help_near_total_combined as $divR_help_near_total.
 
 
+Theorem $divR_help_and_minus_unique :
+  (forall N1 N2 Q R Q' R',
+      $divR_help N1 N2 Q R -> $divR_help N1 N2 Q' R' ->
+      Q = Q' /\ R = R') /\
+  (forall N1 N2 N Q R Q' R',
+      $divR_help_minus N1 N N2 Q R -> $divR_help_minus N1 N N2 Q' R' ->
+      Q = Q' /\ R = R').
+induction on 1 1. rename IH to IH_div. rename IH1 to IH_sub. split.
+  %Subgoal 1:  $divR_help
+   intros. case H1.
+     %Subgoal 1.1:  No subtraction 1
+      case H2.
+        %Subgoal 1.1.1:  No subtraction 2
+         search.
+        %Subgoal 1.1.2:  
+         case H3. case H9. case H10.
+         apply $less_nat_lesseq_nat_flip_false to _ _.
+        %Subgoal 1.1.3:  
+         case H3. case H9. case H8.
+         apply $less_nat_lesseq_nat_flip_false to _ _.
+        %Subgoal 1.1.4:  
+         case H3. case H9. case H10.
+         apply $less_nat_lesseq_nat_flip_false to _ _.
+        %Subgoal 1.1.5:  
+         case H3. case H9. case H8. case H10.
+         apply $less_nat_lesseq_nat_flip_false to _ _.
+     %Subgoal 1.2:  posInt / posInt 1
+      case H2.
+        %Subgoal 1.2.1:  No subtraction 2
+         case H7. case H9. case H10.
+         apply $less_nat_lesseq_nat_flip_false to _ _.
+        %Subgoal 1.2.2:  posInt / posInt 2
+         apply IH_sub to H5 H9.
+         apply silver$*$core$*$plus_integer_unique to H6 H10. search.
+     %Subgoal 1.3:  posInt / negSuccInt 1
+      case H2.
+        %Subgoal 1.2.1:  No subtraction 2
+         case H6. case H8. case H9.
+         apply $less_nat_lesseq_nat_flip_false to _ _.
+        %Subgoal 1.2.2:  posInt / negSuccInt 2
+         apply IH_sub to H4 H7.
+         apply silver$*$core$*$plus_integer_unique to H5 H8. search.      
+     %Subgoal 1.4:  negSuccInt / posInt 1
+      case H2.
+        %Subgoal 1.2.1:  No subtraction 2
+         case H7. case H9. case H10.
+         apply $less_nat_lesseq_nat_flip_false to _ _.
+        %Subgoal 1.2.2:  negSuccInt / posInt 2
+         apply IH_sub to H5 H9.
+         apply silver$*$core$*$plus_integer_unique to H6 H10. search.
+     %Subgoal 1.5:  negSuccInt / negSuccInt 1
+      case H2.
+        %Subgoal 1.2.1:  No subtraction 2
+         case H6. case H8. case H9. case H10.
+         apply $less_nat_lesseq_nat_flip_false to _ _.
+        %Subgoal 1.2.2:  negSuccInt / negSuccInt 2
+         apply IH_sub to H4 H7.
+         apply silver$*$core$*$plus_integer_unique to H5 H8. search.
+  %Subgoal 2:  $divR_help_minus
+   intros. case H1.
+     %Subgoal 2.1:  Reduce by 0
+      case H2. apply IH_div to H3 H4. search.
+     %Subgoal 2.2:  Reduce from posInt
+      case H2. apply IH_sub to H3 H4. search.
+     %Subgoal 2.3:  Reduce one from -1
+      case H2. apply IH_sub to H3 H4. search.
+     %Subgoal 2.4:  Reduce from other negSuccInt
+      case H2. apply IH_sub to H3 H4. search.
+Split $divR_help_and_minus_unique as
+      $divR_help_unique, $divR_help_minus_unique.
+
+Theorem $divR_help_to_divR_integer'_all :
+  (forall A B Q R,
+     is_integer A -> is_integer B ->
+     $divR_help A B Q R ->
+     $divR_integer' A B Q R) /\
+  (forall X A B N Q R,
+     $is_nat X -> is_integer ($posInt B) -> $is_nat N ->
+     $divR_help_minus ($posInt X) N ($posInt B) Q R ->
+     $minus_integer ($posInt X) ($posInt N) A ->
+     $divR_integer' A ($posInt B) Q R) /\
+  (forall X A B N Q R,
+     $is_nat X -> is_integer ($negSuccInt B) -> $is_nat N ->
+     $divR_help_minus ($posInt X) ($succ N) ($negSuccInt B) Q R ->
+     $plus_integer ($posInt X) ($negSuccInt N) A ->
+     $divR_integer' A ($negSuccInt B) Q R) /\
+  (forall X A B N Q R,
+     $is_nat X -> is_integer ($posInt B) -> $is_nat N ->
+     $divR_help_minus ($negSuccInt X) N ($posInt B) Q R ->
+     $plus_integer ($negSuccInt X) ($posInt N) A ->
+     $divR_integer' A ($posInt B) Q R) /\
+  (forall X A B N Q R,
+     $is_nat X -> is_integer ($negSuccInt B) -> $is_nat N ->
+     $divR_help_minus ($negSuccInt X) ($succ N) ($negSuccInt B) Q R ->
+     $minus_integer ($negSuccInt X) ($negSuccInt N) A ->
+     $divR_integer' A ($negSuccInt B) Q R).
+induction on 3 4 4 4 4. rename IH to IH_div.
+rename IH1 to IH_sub_pos_pos. rename IH2 to IH_sub_pos_neg.
+rename IH3 to IH_sub_neg_pos. rename IH4 to IH_sub_neg_neg. split.
+  %Subgoal 1:  $divR_help
+   intros AIsInt BIsInt Div. case Div.
+     %Subgoal 1.1:  End recursion
+      search.
+     %Subgoal 1.2:  pos / pos
+      apply $is_integer_posInt_$$$$$_to_$$$$$_is_nat to BIsInt.
+      apply $is_integer_posInt_$$$$$_to_$$$$$_is_nat to AIsInt.
+      apply silver$*$core$*$minus_integer_total to AIsInt BIsInt.
+      apply IH_sub_pos_pos to _ _ _ H3 H7. search.
+     %Subgoal 1.3:  pos / neg
+      apply $is_integer_negSuccInt_$$$$$_to_$$$$$_is_nat to BIsInt.
+      apply $is_integer_posInt_$$$$$_to_$$$$$_is_nat to AIsInt.
+      apply silver$*$core$*$plus_integer_total to AIsInt BIsInt.
+      apply IH_sub_pos_neg to _ _ _ H2 H6. search.
+     %Subgoal 1.4:  neg / pos
+      apply silver$*$core$*$plus_integer_total to AIsInt BIsInt.
+      apply $is_integer_posInt_$$$$$_to_$$$$$_is_nat to BIsInt.
+      apply $is_integer_negSuccInt_$$$$$_to_$$$$$_is_nat to AIsInt.
+      apply IH_sub_neg_pos to _ _ _ H3 H5. search.
+     %Subgoal 1.5:  neg / neg
+      apply silver$*$core$*$minus_integer_total to AIsInt BIsInt.
+      apply $is_integer_negSuccInt_$$$$$_to_$$$$$_is_nat to BIsInt.
+      apply $is_integer_negSuccInt_$$$$$_to_$$$$$_is_nat to AIsInt.
+      apply IH_sub_neg_neg to _ _ _ H2 H4. search.
+  %Subgoal 2:  Minus for pos / pos
+   intros XIsNat BIsInt NIsNat DivMinus Minus. case DivMinus.
+     %Subgoal 2.1:  Subtract 0
+      case Minus.
+      apply $is_nat_$$$$$_to_$$$$$_is_integer_posInt to XIsNat.
+      apply IH_div to _ _ H1. search.
+     %Subgoal 2.2:  Subtract > 0
+      case Minus. case XIsNat. case NIsNat. case H2.
+        %Subgoal 2.2.1:  Subtract 1
+         apply IH_sub_pos_pos to _ _ _ H1 _. search.
+        %Subgoal 2.2.2:  Subtract > 1
+         apply IH_sub_pos_pos to _ _ _ H1 _. search.
+  %Subgoal 3:  Minus for pos / neg
+   intros XIsNat BIsInt NIsNat DivMinus Plus. case DivMinus.
+   case NIsNat.
+     %Subgoal 3.1:  Subtract 1
+      case Plus. case H1.
+      apply $is_nat_$$$$$_to_$$$$$_is_integer_posInt to XIsNat.
+      case H3. apply IH_div to _ _ H2. search.
+     %Subgoal 3.2:  Subtract > 1
+      case Plus. case XIsNat. apply IH_sub_pos_neg to _ _ _ H1 _.
+      search.
+  %Subgoal 4:  Minus for neg / pos
+   intros XIsNat BIsInt NIsNat DivMinus Plus. case DivMinus.
+     %Subgoal 4.1:  Subtract 0
+      case Plus.
+      apply $is_nat_$$$$$_to_$$$$$_is_integer_negSuccInt to XIsNat.
+      apply IH_div to _ _ H1. search.
+     %Subgoal 4.2:  Subtract 1
+      case Plus. case H1. apply IH_div to _ _ H2. search.
+     %Subgoal 4.3:  Subtract > 1
+      case Plus. case XIsNat. case NIsNat.
+      apply IH_sub_neg_pos to _ _ _ H1 _. search.
+  %Subgoal 5:  Minus for neg / neg
+   intros XIsNat BIsInt NIsNat DivMinus Minus. case DivMinus.
+     %Subgoal 5.1:  Subtract 0
+      case Minus. case H2. case H1. apply IH_div to _ _ H3. search.
+     %Subgoal 5.2:  Subtract > 0
+      case Minus. case H2. case XIsNat. case NIsNat.
+        %Subgoal 5.2.1:  N = 0
+         apply $is_nat_$$$$$_to_$$$$$_is_integer_negSuccInt to H4.
+         apply silver$*$core$*$plus_integer_comm to _ _ H3.
+         case H6. case H1. apply IH_div to _ _ H7. search.
+        %Subgoal 5.2.2:  N > 0
+         case H3.
+           %Subgoal 5.2.2.1:  X = 0
+            case H1. case H6. apply IH_div to _ _ H7. search.
+           %Subgoal 5.2.2.2:  X > 0
+            apply IH_sub_neg_neg to _ _ _ H1 _. search.
+Split $divR_help_to_divR_integer'_all as $divR_help_to_divR_integer'.
 
 
-
-% 0 / 4 = (0, 0)
-Theorem a1 : $divR_integer' ($posInt $zero) ($posInt ($succ ($succ ($succ ($succ $zero))))) ($posInt $zero) ($posInt $zero). search.
-% 3 / 4 = (0, 3)
-Theorem a2 : $divR_integer' ($posInt ($succ ($succ ($succ $zero)))) ($posInt ($succ ($succ ($succ ($succ $zero))))) ($posInt $zero) ($posInt ($succ ($succ ($succ $zero)))). search 15.
-% 5 / 4 = (1, 1)
-Theorem a3 : $divR_integer' ($posInt ($succ ($succ ($succ ($succ ($succ $zero)))))) ($posInt ($succ ($succ ($succ ($succ $zero))))) ($posInt ($succ $zero)) ($posInt ($succ $zero)). search 15.
-% 3 / -4 = (0, 3)
-Theorem a4 : $divR_integer' ($posInt ($succ ($succ ($succ $zero)))) ($negSuccInt ($succ ($succ ($succ $zero)))) ($posInt $zero) ($posInt ($succ ($succ ($succ $zero)))). search 15.
-% 5 / -4 = (-1, 1)
-Theorem a5 : $divR_integer' ($posInt ($succ ($succ ($succ ($succ ($succ $zero)))))) ($negSuccInt ($succ ($succ ($succ $zero)))) ($negSuccInt $zero) ($posInt ($succ $zero)). search 15.
-% -3 / 4 = (0, -3)
-Theorem a6 : $divR_integer' ($negSuccInt ($succ ($succ $zero))) ($posInt ($succ ($succ ($succ ($succ $zero))))) ($posInt $zero) ($negSuccInt ($succ ($succ $zero))). search 15.
-% -5 / 4 = (-1, -1)
-Theorem a7 : $divR_integer' ($negSuccInt ($succ ($succ ($succ ($succ $zero))))) ($posInt ($succ ($succ ($succ ($succ $zero))))) ($negSuccInt $zero) ($negSuccInt $zero). search 15.
-% -3 / -4 = (0, -3)
-Theorem a8 : $divR_integer' ($negSuccInt ($succ ($succ $zero))) ($negSuccInt ($succ ($succ ($succ $zero)))) ($posInt $zero) ($negSuccInt ($succ ($succ $zero))). search 15.
-% -5 / -4 = (1, -1)
-Theorem a9 : $divR_integer' ($negSuccInt ($succ ($succ ($succ ($succ $zero))))) ($negSuccInt ($succ ($succ ($succ $zero)))) ($posInt ($succ $zero)) ($negSuccInt $zero). search 15.
-
-Theorem $less_nat_not_reflexive : forall A,
-  $less_nat A A -> false.
-induction on 1. intros. case H1. apply IH to H2.
-
-Theorem $less_nat_not_lesseq_nat_reverse : forall A B,
-  $less_nat A B -> $lesseq_nat B A -> false.
+Theorem $divR_integer'_divisor_not_0 : forall A Q R,
+  $divR_integer' A ($posInt $zero) Q R -> false.
 induction on 1. intros. case H1.
-  %Subgoal 1
-   case H2. case H3.
-  %Subgoal 2
-   case H2.
-     %Subgoal 2.1
-      backchain $less_nat_not_reflexive.
-     %Subgoal 2.2
-      case H4. backchain IH.
+  %Subgoal 1:  End
+   apply H3 to _.
+  %Subgoal 2:  pos / pos
+   apply IH to H4.
+  %Subgoal 3:  neg / pos
+   apply IH to H4.
 
-Theorem $divR_integer_unique : forall N1 N2 Q R Q' R',
-  $divR_integer' N1 N2 Q R -> $divR_integer' N1 N2 Q' R' ->
-  Q = Q' /\ R = R'.
-induction on 1. intros. case H1.
-  %Subgoal 1
-   case H2.
+
+Theorem $less_abs_increase_negSuccInt : forall A B C,
+  $is_nat B ->
+  $plus_integer ($negSuccInt A) ($negSuccInt B) ($negSuccInt C) ->
+  $less_nat B C.
+induction on 2. intros. case H2.
+  %Subgoal 1:  A = 0
+   backchain $less_nat_self+1.
+  %Subgoal 2:  A > 0
+   apply IH to _ H3. backchain $less_nat_step_right.
+
+Theorem $less_abs_increase_posInt : forall A B C,
+  $is_nat B ->
+  $plus_integer ($posInt A) ($posInt B) ($posInt C) ->
+  $lesseq_nat B C.
+induction on 2. intros. case H2.
+  %Subgoal 1:  A = 0
+   search.
+  %Subgoal 2:  A > 0
+   apply IH to _ H3. backchain $lesseq_nat_step_right.
+
+Theorem $divR_integer'_multiply : forall A B C Q R,
+  is_integer A -> is_integer B ->
+  $multiply_integer A B C -> $divR_integer' C B Q R ->
+  Q = A /\ R = $posInt $zero.
+induction on 3. intros AIsInt BIsInt Mult Div. case Mult (keep).
+  %Subgoal 1:
+   case Div.
      %Subgoal 1.1
       search.
      %Subgoal 1.2
-      case H3. case H10. case H11.
-      apply $less_nat_not_lesseq_nat_reverse to H12 H5.
+      case H1.
+        %Subgoal 1.2.1
+         case H2. apply $divR_integer'_divisor_not_0 to H3.
+        %Subgoal 1.2.2
+         case H5.
      %Subgoal 1.3
-      case H3. case H10. case H11.
-      apply $less_nat_not_lesseq_nat_reverse to H12 H5.
-     %Subgoal 1.4
-      case H3. case H10. case H11.
-      apply $less_nat_not_lesseq_nat_reverse to H12 H5.
-     %Subgoal 1.5
-      case H3. case H10. case H11. case H12.
-      apply $less_nat_not_lesseq_nat_reverse to H13 H5.
-  %Subgoal 2
-   case H2.
-     %Subgoal 2.1
-      case H8. case H10. case H11.
-      apply $less_nat_not_lesseq_nat_reverse to H12 H3.
-     %Subgoal 2.2
-      apply $minus_integer_unique to H4 H9. apply IH to H5 H10.
-      apply $plus_integer_unique to H6 H11. search.
-  %Subgoal 3
-   case H2.
-     %Subgoal 3.1
-      case H8. case H10. case H11.
-      apply $less_nat_not_lesseq_nat_reverse to H12 H3.
-     %Subgoal 3.2
-      apply $plus_integer_unique to H4 H9. apply IH to H5 H10.
-      apply $plus_integer_unique to H6 H11. search.
-  %Subgoal 4
-   case H2.
-     %Subgoal 4.1
-      case H8. case H10. case H11.
-      apply $less_nat_not_lesseq_nat_reverse to H12 H3.
-     %Subgoal 4.2
-      apply $plus_integer_unique to H4 H9. apply IH to H5 H10.
-      apply $plus_integer_unique to H6 H11. search.
-  %Subgoal 5
-   case H2.
-     %Subgoal 5.1
-      case H8. case H10. case H11. case H12.
-      apply $less_nat_not_lesseq_nat_reverse to H13 H3.
-     %Subgoal 5.2
-      apply $minus_integer_unique to H4 H9. apply IH to H5 H10.
-      apply $plus_integer_unique to H6 H11. search.
+      case H1. case H5.
+  %Subgoal 2:
+   apply $is_integer_posInt_or_negSuccInt to BIsInt. case H3.
+     %Subgoal 2.1:  B >= 0
+      apply $multiply_integer_posInts to Mult.
+      apply $multiply_integer_posInts to H1. case Div.
+        %Subgoal 2.1.1:  End div
+         case AIsInt.
+         apply silver$*$core$*$multiply_integer_is_integer to _ _ H1.
+         apply $is_integer_posInt_$$$$$_to_$$$$$_is_nat to H7.
+         apply silver$*$core$*$plus_integer_comm to _ _ H2.
+         apply $is_integer_posInt_$$$$$_to_$$$$$_is_nat to BIsInt.
+         apply $less_abs_increase_posInt to _ H9. case H4. case H12.
+         case H13. case H11.
+           %Subgoal 2.1.1.1:  Equal
+            apply $less_nat_not_reflexive to H14.
+           %Subgoal 2.1.1.2:  Less
+            apply $less_nat_not_flip to H14 H15.
+        %Subgoal 2.1.2:  pos / pos
+         case AIsInt.
+         apply silver$*$core$*$multiply_integer_is_integer to _ _ H1.
+         apply silver$*$core$*$plus_integer_comm to _ _ H2.
+         apply $plus_minus_same_integer to _ _ H10.
+         apply silver$*$core$*$minus_integer_unique to H5 H11.
+         apply IH to _ _ H1 H6. case H7. case H12. search.
+     %Subgoal 2.2:  B < 0
+      case AIsInt.
+      apply $multiply_integer_posInt_negSuccInt to _ _ Mult. case Div.
+        %Subgoal 2.2.1:  End div
+         case H4.
+           %Subgoal 2.2.1.1:  N1 = 0
+            case H1. case H2. case H5. case H7. case H8.
+            apply $less_nat_not_reflexive to H9.
+           %Subgoal 2.2.1.2:  N1 > 0
+            apply $multiply_integer_posInt_negSuccInt to _ _ H1.
+            apply silver$*$core$*$multiply_integer_is_integer to _ _ H1.
+            apply silver$*$core$*$plus_integer_comm to _ _ H2.
+            apply $is_integer_negSuccInt_$$$$$_to_$$$$$_is_nat to BIsInt.
+            apply $less_abs_increase_negSuccInt to _ H9. case H5.
+            case H12. case H13. case H14.
+            apply $less_nat_not_flip to H11 H15.
+        %Subgoal 2.2.2:  neg / neg
+         apply silver$*$core$*$multiply_integer_is_integer to _ _ H1.
+         apply silver$*$core$*$plus_integer_comm to _ _ H2.
+         apply $plus_minus_same_integer to _ _ H10.
+         apply silver$*$core$*$minus_integer_unique to H6 H11.
+         apply IH to _ _ H1 H7. case H8. case H12. search.
+  %Subgoal 3:
+   apply $divR_integer'_divisor_not_0 to Div.
+  %Subgoal 4:  -1 * B, B > 0
+   case BIsInt. apply $multiply_integer_negSuccInt_posInt to _ _ Mult.
+   case Div.
+     %Subgoal 4.1:  End div
+      case H2. case H4. case H5. apply $less_nat_not_reflexive to H6.
+     %Subgoal 4.2:  neg / pos
+      apply $is_integer_posInt_$$$$$_to_$$$$$_is_nat to H1.
+      apply $is_nat_$$$$$_to_$$$$$_is_integer_negSuccInt to H6.
+      apply silver$*$core$*$plus_integer_negation to H7 _.
+      apply silver$*$core$*$plus_integer_unique to H3 H8. case H4.
+        %Subgoal 4.2.1
+         case H5. search.
+        %Subgoal 4.2.2
+         case H9. case H13.
+  %Subgoal 5:
+   case Div.
+     %Subgoal 5.1:  End div
+      case H1. case H3. case H4. apply $less_nat_not_reflexive to H5.
+     %Subgoal 5.2:  pos / neg
+      apply $is_integer_negSuccInt_$$$$$_to_$$$$$_is_nat to BIsInt.
+      assert $is_nat ($succ N2).
+      apply $is_nat_$$$$$_to_$$$$$_is_integer_posInt to H6.
+      apply silver$*$core$*$plus_integer_negation to H7 _.
+      apply silver$*$core$*$plus_integer_unique to H8 H2. case H3.
+        %Subgoal 5.2.1
+         case H4. search.
+        %Subgoal 5.2.2
+         case H10. case H9. case H13.
+  %Subgoal 6:  A < -1, B > 0
+   case BIsInt. apply $multiply_integer_negSuccInt_posInt to _ _ Mult.
+   case Div.
+     %Subgoal 6.1:  End div
+      case AIsInt. apply $multiply_integer_negSuccInt_posInt to _ _ H1.
+      case H2.
+        %Subgoal 6.1.1
+         case H4. case H7. case H8.
+         apply $is_integer_posInt_$$$$$_to_$$$$$_is_nat to H3.
+         apply $less_nat_self+1 to H10.
+         assert $less_nat ($succ N2) ($succ ($succ N2)).
+         apply $less_nat_not_flip to H12 H9.
+        %Subgoal 6.1.2
+         case H4. case H8. case H9. case H10.
+         N2IsNat: apply $is_integer_posInt_$$$$$_to_$$$$$_is_nat to H3.
+         apply $less_abs_increase_negSuccInt to _ H7.
+         apply $less_nat_step_right to H12.
+         apply $less_nat_not_flip to _ _.
+     %Subgoal 6.2:  neg / pos 
+      case AIsInt.
+      apply $is_integer_posInt_$$$$$_to_$$$$$_negSuccInt to H3.
+      apply silver$*$core$*$multiply_integer_is_integer to _ _ H1.
+      apply $plus_minus_same_integer to _ _ H2. case H11 (keep).
+      apply silver$*$core$*$plus_integer_unique to H12 H5.
+      apply IH to _ _ H1 H6. case H7. search.
+  %Subgoal 7:
+   apply $multiply_integer_negSuccInts to _ _ Mult. case Div.
+     %Subgoal 7.1:  End Div
+      case AIsInt. apply $multiply_integer_negSuccInts to _ _ H1.
+      apply $is_integer_negSuccInt_$$$$$_to_$$$$$_is_nat to BIsInt.
+      apply $less_abs_increase_posInt to _ H2. case H3. case H8.
+      case H9. case H7.
+        %Subgoal 7.1.1
+         apply $less_nat_not_reflexive to H10.
+        %Subgoal 7.1.2
+         apply $less_nat_not_flip to H10 H11.
+     %Subgoal 7.2:  pos / neg
+      case AIsInt.
+      apply $is_integer_negSuccInt_$$$$$_to_$$$$$_is_nat to BIsInt.
+      apply $is_nat_$$$$$_to_$$$$$_is_integer_posInt to H8.
+      apply silver$*$core$*$multiply_integer_is_integer to _ _ H1.
+      apply $plus_minus_same_integer to _ _ H2. case H11.
+      apply silver$*$core$*$plus_integer_unique to H12 H4.
+      apply IH to _ _ H1 H5. case H6. search.
 
-%Division is NOT total, since we can divide by zero.
-Theorem $divR_integer_near_total : forall A B,
-  $is_integer A -> $is_integer B -> (B = $posInt $zero -> false) ->
-  exists Q R, $divR_integer' A B Q R.
-%We can't prove this with the current definition.
-skip.
+Theorem $divR_help_multiply : forall A B C,
+  is_integer A -> is_integer B -> (B = $posInt $zero -> false) ->
+  $multiply_integer A B C -> $divR_help C B A ($posInt $zero).
+intros AIsInt BIsInt BNotZero Mult.
+CIsInt: apply silver$*$core$*$multiply_integer_is_integer to _ _ Mult.
+DivHelp: apply $divR_help_near_total to CIsInt BIsInt _.
+Div: apply $divR_help_to_divR_integer' to _ _ DivHelp.
+apply $divR_integer'_multiply to AIsInt BIsInt Mult Div. search.
 
-Theorem $divR_integer_is_integer : forall A B Q R,
-  $is_integer A -> $is_integer B ->
-  $divR_integer' A B Q R ->
-  $is_integer Q /\ $is_integer R.
-induction on 3. intros. case H3.
-  %Subgoal 1
-   search.
-  %Subgoal 2
-   apply $minus_integer_is_integer to _ _ H5.
-   apply IH to _ _ H6. apply $plus_integer_is_integer to _  _ H7.
-   search.
-  %Subgoal 3
-   apply $plus_integer_is_integer to _ _ H5.
-   apply IH to _ _ H6. apply $plus_integer_is_integer to _ _ H7.
-   search.
-  %Subgoal 4
-   apply $plus_integer_is_integer to _ _ H5.
-   apply IH to _ _ H6. apply $plus_integer_is_integer to _ _ H7.
-   search.
-  %Subgoal 5
-   apply $minus_integer_is_integer to _ _ H5.
-   apply IH to _ _ H6. apply $plus_integer_is_integer to _ _ H7.
-   search.
-
-Theorem $divR_integer_1_right : forall A,
-  $is_integer A ->
-  $divR_integer' A ($posInt ($succ $zero)) A ($posInt $zero).
-assert (forall X Q R,
-        $is_integer X ->
-        $divR_integer' X ($posInt ($succ $zero)) Q R ->
-        Q = X /\ R = ($posInt $zero)).
-  induction on 2. intros isX. case H1.
-    %Subgoal 1.1
-     case H2. case H5. case H6.
-       %Subgoal 1.1.1
-        case H4. search.
-       %Subgoal 1.1.2
-        case H7.
-    %Subgoal 1.2
-     apply $minus_integer_is_integer to _ _ H3.
-     apply IH to _ H4. case H3. case H8.
-       %Subgoal 1.2.1
-        case H5. search.
-       %Subgoal 1.2.2
-        apply $plus_integer_comm to _ _ H5. case H9. case H10. search.
-    %Subgoal 1.3
-     apply $plus_integer_is_integer to _ _ H3.
-     apply IH to _ H4. case H3.
-       %Subgoal 1.3.1
-        case H5. search.
-       %Subgoal 1.3.2
-        case isX. apply $plus_integer_comm to _ _ H8. case H10.
-        apply $plus_integer_comm to _ _ H5. case H11. search.
-
-% do / by negative
-% do also -1
-
-Theorem $divR_integer_multiply : forall A B C,
-  $multiply_integer A B C -> $divR_integer C B A ($posInt $zero).
-skip.
-
-Theorem $divR_integer_0_right_false : forall A Q R,
-  $divR_integer' A ($posInt $zero) Q R -> false.
+Theorem $divR_help_0_right_false : forall A Q R,
+  is_integer A -> $divR_help A ($posInt $zero) Q R -> false.
+intros AIsInt Div. apply $divR_help_to_divR_integer' to _ _ Div.
+apply $divR_integer'_divisor_not_0 to H1.
 
 
 
@@ -426,27 +912,38 @@ Theorem $divR_integer_0_right_false : forall A Q R,
 %                               DIVIDE                               %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Define $divide_integer : $integer -> $integer -> $integer -> prop by
+Define $divide_integer : integer -> integer -> integer -> prop by
   $divide_integer N1 N2 Q :=
-     exists R, $divR_integer N1 N2 Q R
+     exists R, $divR_help N1 N2 Q R.
 
 
-/*
-  The theorems we are actually going for:
-*/
-
-Theorem $divide_integer_unique : forall A B Q Q',
+Theorem silver$*$core$*$divide_integer_unique : forall A B Q Q',
   $divide_integer A B Q -> $divide_integer A B Q' -> Q = Q'.
-intros. case H1. case H2. apply $divR_integer_unique to H3 H4. search.
+intros. case H1. case H2. apply $divR_help_unique to H3 H4. search.
 
-Theorem $divide_integer_is_integer : forall A B Q,
-  $is_integer A -> $is_integer B -> $divide_integer A B Q ->
-  $is_integer Q.
-intros. case H3. apply $divR_integer_is_integer to H1 H2 H4. search.
+Theorem silver$*$core$*$divide_integer_near_total : forall A B,
+  is_integer A -> is_integer B -> (B = $posInt $zero -> false) ->
+  exists Q, $divide_integer A B Q.
+intros. apply $divR_help_near_total to _ _ _. search.
 
-Theorem $divide_integer_1_right : forall A,
-  $is_integer A -> $divide_integer A ($posInt ($succ $zero)) A.
-intros. apply $divR_integer_1_right to H1. search.
+Theorem silver$*$core$*$$divide_integer_is_integer : forall A B Q,
+  is_integer A -> is_integer B -> $divide_integer A B Q ->
+  is_integer Q.
+intros. case H3. apply $divR_help_is_integer to H1 H2 H4. search.
+
+Theorem silver$*$core$*$divide_integer_1_right : forall A,
+  is_integer A -> $divide_integer A ($posInt ($succ $zero)) A.
+intros. apply $divR_help_divide_by_one to H1. search.
+
+Theorem silver$*$core$*$divide_integer_0_right_false : forall A Q,
+  is_integer A -> $divide_integer A ($posInt $zero) Q -> false.
+intros. case H2. apply $divR_help_0_right_false to _ H3.
+
+Theorem silver$*$core$*$divide_integer_related_multiply :
+  forall A B C,
+    is_integer A -> is_integer B -> (B = $posInt $zero -> false) ->
+    $multiply_integer A B C -> $divide_integer C B A.
+intros. apply $divR_help_multiply to _ _ _ H4. search.
 
 
 
@@ -454,26 +951,37 @@ intros. apply $divR_integer_1_right to H1. search.
 %                              MODULUS                               %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%.
 
-Define $modulus_integer : $integer -> $integer -> $integer -> prop by
+Define $modulus_integer : integer -> integer -> integer -> prop by
   $modulus_integer N1 N2 R :=
-    exists Q, $divR_integer N1 N2 Q R.
+    exists Q, $divR_help N1 N2 Q R.
 
 
-/*
-  The theorems we are actually going for:
-*/
+Theorem silver$*$core$*$modulus_integer_unique : forall A B R R',
+  $modulus_integer A B R -> $modulus_integer A B R' -> R = R'.
+intros. case H1. case H2. apply $divR_help_unique to H3 H4. search.
 
-Theorem $modulus_integer_unique : forall A B C C',
-  $modulus_integer A B C -> $modulus_integer A B C' -> C = C'.
-intros. case H1. case H2. apply $divR_integer_unique to H3 H4. search.
+Theorem silver$*$core$*$modulus_integer_near_total : forall A B,
+  is_integer A -> is_integer B -> (B = $posInt $zero -> false) ->
+  exists R, $modulus_integer A B R.
+intros. apply $divR_help_near_total to _ _ _. search.
 
-Theorem $modulus_integer_is_integer : forall A B Q,
-  $is_integer A -> $is_integer B -> $modulus_integer A B Q ->
-  $is_integer Q.
-intros. case H3. apply $divR_integer_is_integer to H1 H2 H4. search.
+Theorem silver$*$core$*$$modulus_integer_is_integer : forall A B R,
+  is_integer A -> is_integer B -> $modulus_integer A B R ->
+  is_integer R.
+intros. case H3. apply $divR_help_is_integer to H1 H2 H4. search.
 
-Theorem $modulus_integer_1_right : forall A,
-  $is_integer A ->
+Theorem silver$*$core$*$modulus_integer_1_right : forall A,
+  is_integer A ->
   $modulus_integer A ($posInt ($succ $zero)) ($posInt $zero).
-intros. apply $divR_integer_1_right to H1. search.
+intros. apply $divR_help_divide_by_one to H1. search.
+
+Theorem silver$*$core$*$modulus_integer_0_right_false : forall A R,
+  is_integer A -> $modulus_integer A ($posInt $zero) R -> false.
+intros. case H2. apply $divR_help_0_right_false to _ H3.
+
+Theorem silver$*$core$*$modulus_integer_related_multiply :
+  forall A B C,
+    is_integer A -> is_integer B -> (B = $posInt $zero -> false) ->
+    $multiply_integer A B C -> $modulus_integer C B ($posInt $zero).
+intros. apply $divR_help_multiply to _ _ _ H4. search.
 

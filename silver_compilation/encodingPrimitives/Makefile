@@ -1,5 +1,6 @@
 
-all: bools.thc nats.thc integers.thc integer_addition.thc integer_multiplication.thc integer_comparison.thc pairs.thc lists.thc strings.thc attr_val.thc
+all: bools.thc nats.thc integers.thc integer_addition.thc integer_multiplication.thc \
+     integer_division.thc integer_comparison.thc pairs.thc lists.thc strings.thc attr_val.thc
 
 
 # All the *.out files are just the output from Abella as it processes
@@ -21,6 +22,9 @@ integer_addition.thc: integer_addition.thm integers.thc
 
 integer_multiplication.thc: integer_multiplication.thm integer_addition.thc
 	abella integer_multiplication.thm -c integer_multiplication.thc -o integer_multiplication.out
+
+integer_division.thc: integer_division.thm integer_multiplication.thc
+	abella integer_division.thm -c integer_division.thc -o integer_division.out
 
 integer_comparison.thc: integer_comparison.thm integer_multiplication.thc
 	abella integer_comparison.thm -c integer_comparison.thc -o integer_comparison.out

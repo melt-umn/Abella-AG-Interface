@@ -28,3 +28,81 @@ Define $lesseq_nat : nat -> nat -> prop by
   $lesseq_nat N N;
   $lesseq_nat N1 N2 := $less_nat N1 N2.
 
+
+
+%Theorems to support reasoning about further relations
+Theorem $less_nat_is_nat : forall A B,
+  $less_nat A B -> $is_nat A.
+induction on 1. intros. case H1.
+  %Subgoal 1:  A = 0
+   search.
+  %Subgoal 2:  A > 0
+   apply IH to H2. search.
+
+Theorem $less_nat_not_flip : forall A B,
+  $less_nat A B -> $less_nat B A -> false.
+induction on 1. intros. case H1.
+  %Subgoal 1:  A = 0
+   case H2.
+  %Subgoal 2:  A = succ N1, B = succ N2
+   case H2. apply IH to H3 H4.
+
+Theorem $less_nat_not_reflexive : forall A,
+  $less_nat A A -> false.
+induction on 1. intros. case H1. apply IH to H2.
+
+Theorem $less_nat_step_right : forall A B,
+  $less_nat A B -> $less_nat A ($succ B).
+induction on 1. intros. case H1.
+  %Subgoal 1:  A = 0
+   search.
+  %Subgoal 2:  A > 0
+   apply IH to H2. search.
+
+Theorem $less_nat_self+1 : forall N,
+  $is_nat N -> $less_nat N ($succ N).
+induction on 1. intros. case H1.
+  %Subgoal 1:  N = 0
+   search.
+  %Subgoal 2:  N > 0
+   apply IH to H2. search.
+
+Theorem $lesseq_nat_step : forall A B,
+  $lesseq_nat A B -> $lesseq_nat ($succ A) ($succ B).
+intros. case H1.
+  %Subgoal 1:  A = B
+   search.
+  %Subgoal 2:  A < B
+   search.
+
+Theorem $lesseq_nat_step_right : forall A B,
+  $is_nat A -> $lesseq_nat A B -> $lesseq_nat A ($succ B).
+intros. case H2.
+  %Subgoal 1:  A = B
+   apply $less_nat_self+1 to H1. search.
+  %Subgoal 2:  A < B
+   apply $less_nat_step_right to H3. search.
+
+Theorem $lesseq_nat_zero : forall N,
+  $is_nat N -> $lesseq_nat $zero N.
+induction on 1. intros. case H1.
+  %Subgoal 1:  N = 0
+   search.
+  %Subgoal 2:  N > 0
+   apply IH to H2. case H3.
+     %Subgoal 2.1:  0 = 0
+      search.
+     %Subgoal 2.2:  0 < N1
+      search.
+
+Theorem $less_nat_lesseq_nat_flip_false : forall A B,
+  $less_nat A B -> $lesseq_nat B A -> false.
+induction on 1. intros. case H1.
+  %Subgoal 1:  A = 0
+   case H2. case H3.
+  %Subgoal 2:  A = succ N1, B = succ N2
+   case H2.
+     %Subgoal 2.1:  A = B
+      apply $less_nat_not_reflexive to H3.
+     %Subgoal 2.2:  A < B
+      case H4. apply IH to H3 _.
