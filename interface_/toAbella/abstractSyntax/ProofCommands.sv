@@ -427,6 +427,7 @@ top::ProofCommand ::= h::HHint tree::String attr::String
                        singleTermList(nameTerm(tr, _)))), _)
               when tr == tree ->
               just((hyp, new(structure)))
+            | _ -> error("Impossible (local structure in caseLocalAttr)")
             end
           | _ -> nothing()
           end
@@ -637,6 +638,7 @@ top::ProofCommand ::= h::HHint tree::String attr::String
                        singleTermList(nameTerm(tr, _)))), _)
               when tr == associatedTree ->
               just((hyp, new(structure)))
+            | _ -> error("Impossible (local structure in caseAttrAccess)")
             end
           | _ -> nothing()
           end

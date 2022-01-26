@@ -3,7 +3,7 @@ grammar interface_:composed;
 
 --Run through a list of files, checking them for validity
 function run_files
-IOVal<Integer> ::= ioin::IO filenames::[String]
+IOVal<Integer> ::= ioin::IOToken filenames::[String]
 {
   local ran::IOVal<Integer> = run_file(ioin, head(filenames));
   return
@@ -19,11 +19,11 @@ IOVal<Integer> ::= ioin::IO filenames::[String]
 
 --Run through a file to check that all the proofs are done correctly
 function run_file
-IOVal<Integer> ::= ioin::IO filename::String
+IOVal<Integer> ::= ioin::IOToken filename::String
 {
-  local fileExists::IOVal<Boolean> = isFile(filename, ioin);
+  local fileExists::IOVal<Boolean> = isFileT(filename, ioin);
   local fileContents::IOVal<String> =
-        readFile(filename, fileExists.io);
+        readFileT(filename, fileExists.io);
   local fileParsed::ParseResult<FullFile_c> =
         file_parse(fileContents.iovalue, filename);
   local fileAST::(String, ListOfCommands) = fileParsed.parseTree.ast;
@@ -48,17 +48,17 @@ IOVal<Integer> ::= ioin::IO filename::String
 
   return
      if !fileExists.iovalue
-     then ioval(print("Given file " ++ filename ++ " does not exist\n",
-                      fileExists.io), 1)
+     then ioval(printT("Given file " ++ filename ++ " does not exist\n",
+                       fileExists.io), 1)
      else if !fileParsed.parseSuccess
-     then ioval(print("Syntax error:\n" ++ fileParsed.parseErrors ++
-                      "\n", fileContents.io), 1)
+     then ioval(printT("Syntax error:\n" ++ fileParsed.parseErrors ++
+                       "\n", fileContents.io), 1)
      else if !processed.iovalue.isRight
-     then ioval(print("Error:  " ++ processed.iovalue.fromLeft ++
-                      "\n", processed.io), 1)
+     then ioval(printT("Error:  " ++ processed.iovalue.fromLeft ++
+                       "\n", processed.io), 1)
      else if !started.iovalue.isRight
-     then ioval(print("Error:  " ++ started.iovalue.fromLeft ++
-                      "\n", started.io), 1)
+     then ioval(printT("Error:  " ++ started.iovalue.fromLeft ++
+                       "\n", started.io), 1)
      else run_step_file(
              fileAST.2.commandList,
              filename,
@@ -85,7 +85,7 @@ IOVal<Integer> ::=
    filename::String
    silverContext::Decorated SilverContext
    stateList::[(Integer, ProverState)]
-   abella::ProcessHandle ioin::IO
+   abella::ProcessHandle ioin::IOToken
 {
   local currentProverState::ProverState = head(stateList).snd;
   local state::ProofState = currentProverState.state;
@@ -106,7 +106,7 @@ IOVal<Integer> ::=
   local speak_to_abella::Boolean = any_a.sendCommand;
   --Send to abella
   ----------------------------
-  local out_to_abella::IO =
+  local out_to_abella::IOToken =
         if speak_to_abella
         then sendToProcess(abella, any_a.translation, ioin)
         else ioin;
@@ -137,7 +137,7 @@ IOVal<Integer> ::=
   local shouldClean::Boolean =
         full_result.parseSuccess && !full_a.isError && any_a.shouldClean &&
         (currentProverState.clean || any_a.mustClean);
-  local cleaned::(String, Integer, FullDisplay, [[Integer]], IO) =
+  local cleaned::(String, Integer, FullDisplay, [[Integer]], IOToken) =
         if shouldClean
         then cleanState(decorate full_a with
                         {replaceState = head(any_a.stateListOut).snd.state;}.replacedState,
@@ -167,7 +167,7 @@ IOVal<Integer> ::=
   {-
     EXIT
   -}
-  local wait_on_exit::IO = waitForProcess(abella, out_to_abella);
+  local wait_on_exit::IOToken = waitForProcess(abella, out_to_abella);
   --We can't use our normal read function because that looks for a new prompt
   --Guaranteed to get all the output because we waited for the process to exit first
   local exit_message::IOVal<String> =
@@ -186,24 +186,24 @@ IOVal<Integer> ::=
      case inputCommands of
      | [] ->
        if state.inProof
-       then ioval(print("Proof in progress at end of file " ++
-                        filename ++ "\n", ioin), 1)
+       then ioval(printT("Proof in progress at end of file " ++
+                         filename ++ "\n", ioin), 1)
        else if !null(head(stateList).2.remainingObligations)
-       then ioval(print("Not all proof obligations fulfilled in file " ++
-                        filename ++ "\n", ioin), 1)
-       else ioval(print("Successfully processed file " ++
-                        filename ++ "\n", ioin), 0)
+       then ioval(printT("Not all proof obligations fulfilled in file " ++
+                         filename ++ "\n", ioin), 1)
+       else ioval(printT("Successfully processed file " ++
+                         filename ++ "\n", ioin), 0)
      | _::tl ->
        if any_a.isQuit
        then ioval(exit_message.io, 0)
        else if any_a.isError
-       then ioval(print("Could not process full file " ++ filename ++
-                        ":\n" ++ any_a.ownOutput ++ "\n",
-                        back_from_abella.io),
+       then ioval(printT("Could not process full file " ++ filename ++
+                         ":\n" ++ any_a.ownOutput ++ "\n",
+                         back_from_abella.io),
                   1)
        else if full_a.isError
-       then ioval(print("Could not process full file " ++ filename ++
-                        ":\n" ++ full_a.pp, back_from_abella.io), 1)
+       then ioval(printT("Could not process full file " ++ filename ++
+                         ":\n" ++ full_a.pp, back_from_abella.io), 1)
        else again
      end;
 }

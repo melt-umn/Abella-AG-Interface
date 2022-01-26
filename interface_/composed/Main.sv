@@ -10,7 +10,7 @@ import silver:util:cmdargs;
 
 
 function main
-IOVal<Integer> ::= largs::[String] ioin::IO
+IOVal<Integer> ::= largs::[String] ioin::IOToken
 {
   local parsedArgs::Either<String Decorated CmdArgs> =
         parseArgs(largs);
@@ -19,7 +19,7 @@ IOVal<Integer> ::= largs::[String] ioin::IO
                               ioin);
   return
      case parsedArgs of
-     | left(errs) -> ioval(print(errs, ioin), 1)
+     | left(errs) -> ioval(printT(errs, ioin), 1)
      | right(args) ->
        if !generate.iovalue
        then ioval(generate.io, 1)

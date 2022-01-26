@@ -5,7 +5,7 @@ function handleIncomingThms
 IOVal<(Integer, ProverState, String)> ::=
    incomingState::(Integer, ProverState)
    silverContext::Decorated SilverContext
-   abella::ProcessHandle ioin::IO
+   abella::ProcessHandle ioin::IOToken
 {
   local initialState::ProverState = incomingState.2;
   local knownThms::[(String, String, Metaterm)] =
@@ -36,7 +36,7 @@ IOVal<(Integer, ProverState, String)> ::=
                 }.numCommandsSent + rest,
               0, doThms);
   --
-  local send::IO =
+  local send::IOToken =
         if numCommands > 0
         then sendToProcess(abella, translatedString, ioin)
         else ioin;

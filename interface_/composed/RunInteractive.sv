@@ -4,7 +4,7 @@ grammar interface_:composed;
 --Run a REPL for the theorem prover
 --First entry must be a grammar declaration (Grammar na:me.)
 function run_interactive
-IOVal<Integer> ::= ioin::IO
+IOVal<Integer> ::= ioin::IOToken
 {
   local grammarName::IOVal<String> = get_grammar_interactive(ioin);
   local processed::IOVal<Either<String (ListOfCommands, [DefElement],
@@ -28,11 +28,11 @@ IOVal<Integer> ::= ioin::IO
 
   return
      if !processed.iovalue.isRight
-     then ioval(print("Error:  " ++ processed.iovalue.fromLeft ++
-                      "\n", processed.io), 1)
+     then ioval(printT("Error:  " ++ processed.iovalue.fromLeft ++
+                       "\n", processed.io), 1)
      else if !started.iovalue.isRight
-     then ioval(print("Error:  " ++ started.iovalue.fromLeft ++
-                      "\n", started.io), 1)
+     then ioval(printT("Error:  " ++ started.iovalue.fromLeft ++
+                       "\n", started.io), 1)
      else run_step_interactive(
              [(-1, handleIncoming.iovalue.2)],
              build_context.iovalue, started.iovalue.fromRight,
@@ -43,9 +43,9 @@ IOVal<Integer> ::= ioin::IO
 --Continue trying to get a grammar declaration from the user until
 --   they actually give one
 function get_grammar_interactive
-IOVal<String> ::= ioin::IO
+IOVal<String> ::= ioin::IOToken
 {
-  local printed_prompt::IO = print(" < ", ioin);
+  local printed_prompt::IOToken = printT(" < ", ioin);
   local raw_input::IOVal<String> = read_full_input(printed_prompt);
   local input::String = stripExternalWhiteSpace(raw_input.iovalue);
   --
@@ -55,8 +55,8 @@ IOVal<String> ::= ioin::IO
      if result.parseSuccess
      then ioval(raw_input.io, result.parseTree.ast)
      else get_grammar_interactive(
-             print("Error:  First entry must be a grammar\n" ++
-                   result.parseErrors ++ "\n\n", raw_input.io));
+             printT("Error:  First entry must be a grammar\n" ++
+                    result.parseErrors ++ "\n\n", raw_input.io));
 }
 
 
@@ -73,7 +73,7 @@ function run_step_interactive
 IOVal<Integer> ::=
    stateList::[(Integer, ProverState)]
    silverContext::Decorated SilverContext
-   abella::ProcessHandle ioin::IO
+   abella::ProcessHandle ioin::IOToken
 {
   local currentProverState::ProverState = head(stateList).snd;
   local state::ProofState = currentProverState.state;
@@ -85,7 +85,7 @@ IOVal<Integer> ::=
   -}
   --Read command
   ----------------------------
-  local printed_prompt::IO = print(" < ", ioin);
+  local printed_prompt::IOToken = printT(" < ", ioin);
   local raw_input::IOVal<String> = read_full_input(printed_prompt);
   local input::String = stripExternalWhiteSpace(raw_input.iovalue);
   --Translate command
@@ -110,14 +110,14 @@ IOVal<Integer> ::=
         else any_a.ownOutput;
   --Send to abella
   ----------------------------
-  local debug_output::IO =
+  local debug_output::IOToken =
        if debug
-       then print(if speak_to_abella
-                  then "Command sent:  " ++ any_a.translation
-                  else "Nothing to send to Abella",
+       then printT(if speak_to_abella
+                   then "Command sent:  " ++ any_a.translation
+                   else "Nothing to send to Abella",
                   raw_input.io)
        else raw_input.io;
-  local out_to_abella::IO =
+  local out_to_abella::IOToken =
         if speak_to_abella
         then sendToProcess(abella, any_a.translation, debug_output)
         else debug_output;
@@ -148,7 +148,7 @@ IOVal<Integer> ::=
   local shouldClean::Boolean =
         full_result.parseSuccess && !full_a.isError && any_a.shouldClean &&
         (currentProverState.clean || any_a.mustClean);
-  local cleaned::(String, Integer, FullDisplay, [[Integer]], IO) =
+  local cleaned::(String, Integer, FullDisplay, [[Integer]], IOToken) =
         if shouldClean
         then cleanState(decorate full_a with
                         {replaceState = head(any_a.stateListOut).snd.state;}.replacedState,
@@ -156,11 +156,11 @@ IOVal<Integer> ::=
         else ("", 0, decorate full_a with
                      {replaceState = head(any_a.stateListOut).snd.state;}.replacedState,
               [], back_from_abella.io);
-  local outputCleanCommands::IO =
+  local outputCleanCommands::IOToken =
         if debug
-        then print(cleaned.1 ++
-                   "\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n",
-                   cleaned.5)
+        then printT(cleaned.1 ++
+                    "\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n",
+                    cleaned.5)
         else cleaned.5;
   local newStateList::[(Integer, ProverState)] =
         (head(any_a.stateListOut).fst + cleaned.2,
@@ -177,21 +177,21 @@ IOVal<Integer> ::=
                                 abella, outputCleanCommands);
   local completeStateList::[(Integer, ProverState)] =
         (handleIncoming.iovalue.1, handleIncoming.iovalue.2)::tail(newStateList);
-  local outputIncomingThms::IO =
+  local outputIncomingThms::IOToken =
         if debug
-        then print(handleIncoming.iovalue.3 ++
-                   "\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n", handleIncoming.io)
+        then printT(handleIncoming.iovalue.3 ++
+                    "\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n", handleIncoming.io)
         else handleIncoming.io;
   --Show to user
   ----------------------------
-  local debug_back_output::IO =
+  local debug_back_output::IOToken =
         if debug && speak_to_abella
-        then print("***** Read back from Abella: *****\n\n" ++
-                 ( if shouldClean
-                   then cleaned.3.pp
-                   else back_from_abella.iovalue ) ++
-                  "\n\n*****   End Abella output    *****\n\n\n",
-                 outputIncomingThms)
+        then printT("***** Read back from Abella: *****\n\n" ++
+                    ( if shouldClean
+                      then cleaned.3.pp
+                      else back_from_abella.iovalue ) ++
+                     "\n\n*****   End Abella output    *****\n\n\n",
+                    outputIncomingThms)
         else outputIncomingThms;
   local subgoalCompletedNow::Boolean =
         subgoalCompleted(state.currentSubgoal,
@@ -211,9 +211,9 @@ IOVal<Integer> ::=
                         {silverContext = silverContext;}.translation.pp ++ "\n"
              else full_a.translation.pp ++ "\n"
         else our_own_output ++ state.translation.pp ++ "\n";
-  local printed_output::IO =
+  local printed_output::IOToken =
         if full_result.parseSuccess
-        then print(output_output, debug_back_output)
+        then printT(output_output, debug_back_output)
         else error("BUG:  Unable to parse Abella's output:\n\n" ++
                    back_from_abella.iovalue ++ "\n\n" ++ full_result.parseErrors ++
                    "\n\nPlease report this");
@@ -222,12 +222,12 @@ IOVal<Integer> ::=
   {-
     EXIT
   -}
-  local wait_on_exit::IO = waitForProcess(abella, printed_output);
+  local wait_on_exit::IOToken = waitForProcess(abella, printed_output);
   --We can't use our normal read function because that looks for a new prompt
   --Guaranteed to get all the output because we waited for the process to exit first
   local any_last_words::IOVal<String> = readAllFromProcess(abella, wait_on_exit);
-  local output_last::IO = print(any_last_words.iovalue, any_last_words.io);
-  local exit_message::IO = print("Quitting.\n", output_last);
+  local output_last::IOToken = printT(any_last_words.iovalue, any_last_words.io);
+  local exit_message::IOToken = printT("Quitting.\n", output_last);
 
 
   {-
@@ -255,7 +255,7 @@ IOVal<Integer> ::=
   Read the command, which may be several lines, from stdin.
 -}
 function read_full_input
-IOVal<String> ::= ioin::IO
+IOVal<String> ::= ioin::IOToken
 {
   return read_full_input_comments(ioin, 0);
 }
@@ -265,9 +265,9 @@ IOVal<String> ::= ioin::IO
   part of an open comment
 -}
 function read_full_input_comments
-IOVal<String> ::= ioin::IO openComments::Integer
+IOVal<String> ::= ioin::IOToken openComments::Integer
 {
-  local read::IOVal<Maybe<String>> = readLineStdin(ioin);
+  local read::IOVal<Maybe<String>> = readLineStdinT(ioin);
   local newOpenComments::Integer =
         count_comments(read.iovalue.fromJust, openComments);
   local readRest::IOVal<String> =

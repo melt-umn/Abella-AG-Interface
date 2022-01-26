@@ -18,7 +18,7 @@ parser topparse::FullDisplay_c
 
 
 function main
-IOVal<Integer> ::= largs::[String] ioin::IO
+IOVal<Integer> ::= largs::[String] ioin::IOToken
 {
   local attribute args::String;
   args = implode(" ", largs);
@@ -31,13 +31,13 @@ IOVal<Integer> ::= largs::[String] ioin::IO
   local trans::FullDisplay = res.translation;
 
 
-  local attribute print_failure::IO;
-  print_failure = print("Encountered a parse error:\n\n" ++
-                        result.parseErrors ++ "\n\n",
-                        ioin);
+  local attribute print_failure::IOToken;
+  print_failure = printT("Encountered a parse error:\n\n" ++
+                         result.parseErrors ++ "\n\n",
+                         ioin);
 
   return ioval(if result.parseSuccess
-               then print("+++++++++ Parsed:\n" ++ res.pp ++ "\n\n+++++++++Translated:\n" ++ trans.pp ++ "\n", ioin)
+               then printT("+++++++++ Parsed:\n" ++ res.pp ++ "\n\n+++++++++Translated:\n" ++ trans.pp ++ "\n", ioin)
                else print_failure, 0);
 }
 

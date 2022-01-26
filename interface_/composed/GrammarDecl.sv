@@ -6,16 +6,16 @@ grammar interface_:composed;
 function processGrammarDecl
 IOVal<Either<String
              (ListOfCommands, [DefElement], [ThmElement])>> ::=
-   grammarName::String ioin::IO
+   grammarName::String ioin::IOToken
 {
-  local silver_gen::IOVal<String> = envVar("SILVER_GEN", ioin);
+  local silver_gen::IOVal<String> = envVarT("SILVER_GEN", ioin);
   local interface_file::String =
         silver_gen.iovalue ++ substitute(":", "/", grammarName) ++
         "/thm_interface.svthmi";
   local interface_is_file::IOVal<Boolean> =
-        isFile(interface_file, silver_gen.io);
+        isFileT(interface_file, silver_gen.io);
   local interface_file_contents::IOVal<String> =
-        readFile(interface_file, interface_is_file.io);
+        readFileT(interface_file, interface_is_file.io);
   local parsed_interface::ParseResult<Interface_c> =
         interface_parse(interface_file_contents.iovalue,
                         interface_file);
@@ -52,15 +52,15 @@ IOVal<Either<String
 --Should include the current grammar at the end
 function readImports
 IOVal<Either<String ListOfCommands>> ::=
-   grammars::[String] silver_gen::String ioin::IO
+   grammars::[String] silver_gen::String ioin::IOToken
 {
   local this_grammar::String = head(grammars);
   local filename::String =
         silver_gen ++ substitute(":", "/", this_grammar) ++
         "/definitions.thm";
-  local filename_is_file::IOVal<Boolean> = isFile(filename, ioin);
+  local filename_is_file::IOVal<Boolean> = isFileT(filename, ioin);
   local file_contents::IOVal<String> =
-        readFile(filename, filename_is_file.io);
+        readFileT(filename, filename_is_file.io);
   local parsed_file::ParseResult<ListOfCommands_c> =
         import_parse(file_contents.iovalue, filename);
   local subcall::IOVal<Either<String ListOfCommands>> =
@@ -95,13 +95,13 @@ IOVal<Either<String ListOfCommands>> ::=
 function set_up_abella_silver
 IOVal<Decorated SilverContext> ::=
      currentGrammar::String comms::ListOfCommands defs::[DefElement]
-     abella::ProcessHandle ioin::IO
+     abella::ProcessHandle ioin::IOToken
 {
   local sendToAbella::String =
         comms.pp ++ implode("", map((.pp), defs));
   local numComms::Integer =
         comms.numCommandsSent + length(defs);
-  local sent::IO = sendToProcess(abella, sendToAbella, ioin);
+  local sent::IOToken = sendToProcess(abella, sendToAbella, ioin);
   local back::IOVal<String> =
         if numComms > 0
         then read_abella_outputs(numComms, abella, sent)

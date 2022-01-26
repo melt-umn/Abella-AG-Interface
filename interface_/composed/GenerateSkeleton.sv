@@ -2,7 +2,7 @@ grammar interface_:composed;
 
 
 function generateSkeletonFiles
-IOVal<Boolean> ::= gen::[(String, String)] ioin::IO
+IOVal<Boolean> ::= gen::[(String, String)] ioin::IOToken
 {
   local grmmr::String = head(gen).1;
   local filename::String = head(gen).2;
@@ -31,13 +31,13 @@ IOVal<Boolean> ::= gen::[(String, String)] ioin::IO
                outputThms)) ++ "\n\n";
   --
   local fileExists::IOVal<Boolean> =
-        isFile(filename, processGrammar.io);
+        isFileT(filename, processGrammar.io);
   local askReplace::IOVal<String> =
         if fileExists.iovalue
         then let replace::IOVal<Maybe<String>> =
-                 readLineStdin(
-                    print("File " ++ filename ++ " exists; replace? (Y/n) ",
-                          fileExists.io))
+                 readLineStdinT(
+                    printT("File " ++ filename ++ " exists; replace? (Y/n) ",
+                           fileExists.io))
              in
                ioval(replace.io, replace.iovalue.fromJust)
              end
@@ -47,15 +47,15 @@ IOVal<Boolean> ::= gen::[(String, String)] ioin::IO
         askReplace.iovalue == "" ||
         substring(0, 1, askReplace.iovalue) == "Y" ||
         substring(0, 1, askReplace.iovalue) == "y";
-  local message::IO =
+  local message::IOToken =
         if doOutput
-        then print("Writing contents for " ++ grmmr ++ " into " ++
-                   filename ++ "\n", askReplace.io)
-        else print("Skipping grammar " ++ grmmr ++ "\n",
-                   askReplace.io);
-  local output::IO =
+        then printT("Writing contents for " ++ grmmr ++ " into " ++
+                    filename ++ "\n", askReplace.io)
+        else printT("Skipping grammar " ++ grmmr ++ "\n",
+                    askReplace.io);
+  local output::IOToken =
         if doOutput
-        then writeFile(filename, outputString, message)
+        then writeFileT(filename, outputString, message)
         else message;
   --
   local rest::IOVal<Boolean> =
@@ -67,7 +67,7 @@ IOVal<Boolean> ::= gen::[(String, String)] ioin::IO
      | hd::tl ->
        case processGrammar.iovalue of
        | left(err) ->
-         ioval(print("Error:  " ++ err ++ "\n", processGrammar.io),
+         ioval(printT("Error:  " ++ err ++ "\n", processGrammar.io),
                false)
        | right(_) -> rest
        end

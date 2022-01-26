@@ -3,7 +3,7 @@ grammar interface_:composed;
 
 --Run through a list of files, compiling them
 function compile_files
-IOVal<Integer> ::= ioin::IO filenames::[String]
+IOVal<Integer> ::= ioin::IOToken filenames::[String]
 {
   local compiled::IOVal<Integer> =
         compile_file(ioin, head(filenames));
@@ -20,7 +20,7 @@ IOVal<Integer> ::= ioin::IO filenames::[String]
 
 --Run through a list of files, checking and compiling them
 function check_compile_files
-IOVal<Integer> ::= ioin::IO filenames::[String]
+IOVal<Integer> ::= ioin::IOToken filenames::[String]
 {
   local ran::IOVal<Integer> = run_file(ioin, head(filenames));
   local compiled::IOVal<Integer> =
@@ -40,11 +40,11 @@ IOVal<Integer> ::= ioin::IO filenames::[String]
 
 --Compile a file, outputting it into the generated directory
 function compile_file
-IOVal<Integer> ::= ioin::IO filename::String
+IOVal<Integer> ::= ioin::IOToken filename::String
 {
-  local fileExists::IOVal<Boolean> = isFile(filename, ioin);
+  local fileExists::IOVal<Boolean> = isFileT(filename, ioin);
   local fileContents::IOVal<String> =
-        readFile(filename, fileExists.io);
+        readFileT(filename, fileExists.io);
   local fileParsed::ParseResult<FullFile_c> =
         file_parse(fileContents.iovalue, filename);
   local fileAST::(String, ListOfCommands) = fileParsed.parseTree.ast;
@@ -59,31 +59,31 @@ IOVal<Integer> ::= ioin::IO filename::String
   local compiledContents::String =
         buildCompiledOutput(fileAST.1, fileAST.2, ourSilverContext);
   local silverGen::IOVal<String> =
-        envVar("SILVER_GEN", processed.io);
+        envVarT("SILVER_GEN", processed.io);
   local outputFile::String =
         silverGen.iovalue ++ substitute(":", "/", fileAST.1) ++
         "/thm_outerface.svthmi";
-  local written::IO =
-        writeFile(outputFile, compiledContents, silverGen.io);
+  local written::IOToken =
+        writeFileT(outputFile, compiledContents, silverGen.io);
 
   return
      if !fileExists.iovalue
-     then ioval(print("Given file " ++ filename ++ " does not exist\n",
-                      fileExists.io), 1)
+     then ioval(printT("Given file " ++ filename ++ " does not exist\n",
+                       fileExists.io), 1)
      else if !fileParsed.parseSuccess
-     then ioval(print("Syntax error:\n" ++ fileParsed.parseErrors ++
-                      "\n", fileContents.io), 1)
+     then ioval(printT("Syntax error:\n" ++ fileParsed.parseErrors ++
+                       "\n", fileContents.io), 1)
      else if !processed.iovalue.isRight
-     then ioval(print("Error:  " ++ processed.iovalue.fromLeft ++
-                      "\n", processed.io), 1)
+     then ioval(printT("Error:  " ++ processed.iovalue.fromLeft ++
+                       "\n", processed.io), 1)
      else if !null(fileErrors)
-     then ioval(print("Processing errors:\n" ++
-                      implode("\n", map((.pp), fileErrors)) ++ "\n",
-                      processed.io), 1)
+     then ioval(printT("Processing errors:\n" ++
+                       implode("\n", map((.pp), fileErrors)) ++ "\n",
+                       processed.io), 1)
      else if silverGen.iovalue == ""
-     then ioval(print("Silver generated location not set\n",
-                      silverGen.io), 1)
-     else ioval(print("Successfully compiled file " ++ filename ++ "\n",
-                      written), 0);
+     then ioval(printT("Silver generated location not set\n",
+                       silverGen.io), 1)
+     else ioval(printT("Successfully compiled file " ++ filename ++ "\n",
+                       written), 0);
 }
 

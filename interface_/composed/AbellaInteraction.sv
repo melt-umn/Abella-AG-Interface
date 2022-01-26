@@ -3,11 +3,11 @@ grammar interface_:composed;
 
 --Either start Abella or fail with an error message
 function startAbella
-IOVal<Either<String ProcessHandle>> ::= ioin::IO
+IOVal<Either<String ProcessHandle>> ::= ioin::IOToken
 {
   --Find the library location (env variable set by startup script)
   local library_loc::IOVal<String> =
-        envVar("SILVERABELLA_LIBRARY", ioin);
+        envVarT("SILVERABELLA_LIBRARY", ioin);
   local library_string::String =
         "Kind bool   type.\n" ++
         "Import \"" ++ library_loc.iovalue ++ "bools\".\n" ++
@@ -25,7 +25,7 @@ IOVal<Either<String ProcessHandle>> ::= ioin::IO
   local abella::IOVal<ProcessHandle> =
         spawnProcess("abella", [], library_loc.io);
   --Send the library imports to Abella
-  local send_imports::IO =
+  local send_imports::IOToken =
         sendToProcess(abella.iovalue, library_string, abella.io);
   --Read Abella's outputs from the library imports, in addition to the
   --   welcome message
@@ -43,7 +43,7 @@ IOVal<Either<String ProcessHandle>> ::= ioin::IO
 --Read the given number of Abella outputs (prompt-terminated)
 --Returns the text of the last output
 function read_abella_outputs
-IOVal<String> ::= n::Integer abella::ProcessHandle ioin::IO
+IOVal<String> ::= n::Integer abella::ProcessHandle ioin::IOToken
 {
   local read::IOVal<String> = readUntilFromProcess(abella, "< ", ioin);
   return
@@ -111,15 +111,15 @@ function removeInitialSpaces
  -           completed automatically, and the IO token after cleaning
 -}
 function cleanState
-(String, Integer, FullDisplay, [[Integer]], IO) ::=
+(String, Integer, FullDisplay, [[Integer]], IOToken) ::=
          currentDisplay::FullDisplay
          silverContext::Decorated SilverContext
-         abella::ProcessHandle ioin::IO
+         abella::ProcessHandle ioin::IOToken
 {
   local currentState::ProofState = currentDisplay.proof;
   currentState.silverContext = silverContext;
   --Send to Abella
-  local send::IO = sendToProcess(abella, currentState.cleanUpCommands, ioin);
+  local send::IOToken = sendToProcess(abella, currentState.cleanUpCommands, ioin);
   --Read back from Abella
   local back::IOVal<String> =
         read_abella_outputs(currentState.numCleanUpCommands, abella, send);
@@ -146,7 +146,7 @@ function cleanState
         then [currentState.currentSubgoal]
         else [];
   --See if there is more to clean
-  local sub::(String, Integer, FullDisplay, [[Integer]], IO) =
+  local sub::(String, Integer, FullDisplay, [[Integer]], IOToken) =
         cleanState(cleanedDisplay, silverContext, abella, back.io);
 
   return
