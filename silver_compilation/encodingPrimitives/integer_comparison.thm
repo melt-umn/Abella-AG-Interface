@@ -146,7 +146,7 @@ induction on 1. intros. case H1.
    search.
   %Subgoal 3
    assert ($posInt N3 = $posInt N4 -> false).
-      intros. backchain H2.
+      intros. backchain H2. case H4. search.
    apply IH to H3 H4. search.
   %Subgoal 4
    search.
@@ -156,7 +156,7 @@ induction on 1. intros. case H1.
    search.
   %Subgoal 7
    assert ($negSuccInt N3 = $negSuccInt N4 -> false).
-      intros. backchain H2.
+      intros. backchain H2. case H4. search.
    apply IH to H3 H4. search.
 
 
