@@ -1,0 +1,7 @@
+#!/bin/bash
+
+GRAMMAR=new_associated:host
+
+SVJVM_FLAGS="-Xmx8000M -Xss40M" silver $@ --abella-compile -I ../.. $GRAMMAR
+
+
