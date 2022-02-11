@@ -14,6 +14,7 @@ IOVal<Either<String ProcessHandle>> ::= ioin::IOToken
         "Kind nat   type.\n" ++
         "Import \"" ++ library_loc.iovalue ++ "integer_addition\".\n" ++
         "Import \"" ++ library_loc.iovalue ++ "integer_multiplication\".\n" ++
+        "Import \"" ++ library_loc.iovalue ++ "integer_division\".\n" ++
         "Import \"" ++ library_loc.iovalue ++ "integer_comparison\".\n" ++
         "Import \"" ++ library_loc.iovalue ++ "lists\".\n" ++
         "Import \"" ++ library_loc.iovalue ++ "strings\".\n" ++
@@ -30,7 +31,7 @@ IOVal<Either<String ProcessHandle>> ::= ioin::IOToken
   --Read Abella's outputs from the library imports, in addition to the
   --   welcome message
   local abella_initial_string::IOVal<String> =
-        read_abella_outputs(13, abella.iovalue, send_imports);
+        read_abella_outputs(14, abella.iovalue, send_imports);
 
   return
      if library_loc.iovalue == ""
