@@ -1,5 +1,5 @@
 
-Kind $bool   type.
+Kind bool   type.
 Kind nat   type.
 Import "integer_multiplication".
 

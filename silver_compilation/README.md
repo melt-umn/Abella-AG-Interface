@@ -17,6 +17,9 @@ relational systems, primarily Abella:
   of forwards and forwarding.  Our encoding of forwards is similar to
   our encoding of locals, so this assumes the information in that
   file.
+* [BetterInh.md](BetterInh.md):  This file describes a better encoding
+  of inherited attributes for use in a reasoning setting which does
+  not bundle multiple equations together into one relation.
 * [PatternMatching.md](PatternMatching.md):  This file describes
   potential encodings of Silver's pattern matching into relations.
   Nonterminal matching relies on forwarding, so this assumes the
@@ -39,12 +42,6 @@ doing here, which might be relevant to cite in a paper.
 
 There are some things I'm going to want to come back to in these
 documents.  I will keep a list here:
-* In [Forwards.md](Forwards.md), under the heading "A Raw Alternative
-  Formation", I have a raw idea for cleaning up the equations for
-  inherited attributes on the forward.  I need to look into this and
-  see if it really will make things cleaner.  This also affects the
-  copy relations for inherited attributes in
-  [ExtensionAttributes.md](ExtensionAttributes.md).
 * In [PrimitiveTypes.md](PrimitiveTypes.md), we discuss several
   possible implementations of floating-point numbers.  When we are
   ready to start thinking about these, we should look at CompCert to

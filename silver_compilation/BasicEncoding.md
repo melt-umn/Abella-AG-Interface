@@ -628,6 +628,12 @@ form one clause in the component relation, as well as how we have a
 clause with no preconditions for `ctx` with `num` and `name` because
 they do not define `ctx` on any trees.
 
+This implementation of inherited attributes works fine for animating.
+However, for interactive proofs it is less than ideal due to the
+bundling of separate equations together.  The reasons this is
+undesirable in the interactive-proof setting and a better encoding is
+described in [BetterInh.md](BetterInh.md).
+
 
 
 ## Composing Equation Relations
