@@ -292,6 +292,12 @@ String ::= attr::String ty::Type prod::String
 {
   return "$" ++ colonsToEncoded(attr) ++ name_sep ++ colonsToEncoded(ty.pp) ++ name_sep ++ colonsToEncoded(prod);
 }
+function childEqRelHold
+String ::= attr::String ty::Type prod::String index::String
+{
+  return "$" ++ colonsToEncoded(attr) ++ name_sep ++ colonsToEncoded(ty.pp) ++
+         name_sep ++ "to" ++ name_sep ++ colonsToEncoded(prod) ++ name_sep ++ index;
+}
 
 
 --Structure Equality

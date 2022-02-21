@@ -165,8 +165,8 @@ synthesized attribute name::String;
 
 
 --Find the immediate parent of a tree with a given name in a Term
---Gives both the production name and the index which child it is
---e.g. prod_foo (prod_bar A B) C   gives   ("prod_bar, 2)   when looking for B
+--Gives both the production name and the (zero-based) index which child it is
+--e.g. prod_foo (prod_bar A B) C   gives   ("prod_bar", 2)   when looking for B
 inherited attribute findParentOf::String;
 synthesized attribute foundParent::Maybe<(String, Integer)>;
 synthesized attribute isArgHere::Maybe<Integer>;

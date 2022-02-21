@@ -650,6 +650,13 @@ top::ProofCommand ::= h::HHint tree::String attr::String
         | nameTerm(prod, _) -> prod
         | tm -> error("It should be a production (associatedProd):  " ++ tm.pp)
         end;
+  --If inh attr, figure out which child eq relation we need
+  local childIndex::String =
+        "child" ++ toString(
+                      decorate structure.fromJust.2 with {
+                         findParentOf = tree;
+                         silverContext = top.silverContext;
+                      }.foundParent.fromJust.2);
   --Translate to Abella commands
   local makeEqHypThm::Clearable =
         clearable(false, wpdNt_to_AttrEq(rightAttr, treeTy), []);
@@ -713,7 +720,11 @@ top::ProofCommand ::= h::HHint tree::String attr::String
         | nothing() -> treeTy
         end;
   local pcTheorem::Clearable =
-        clearable(false, primaryComponent(rightAttr, treeTy, associatedProd), []);
+        clearable(false,
+           if isInherited
+           then childEqRelHold(rightAttr, treeTy, associatedProd, childIndex)
+           else primaryComponent(rightAttr, treeTy, associatedProd),
+           []);
   top.translation =
       [
        --Get structure assumption of correct form (treename = prod_<name> <children>)
@@ -745,7 +756,10 @@ top::ProofCommand ::= h::HHint tree::String attr::String
                    [hypApplyArg(wpdNtHyp.fromJust.1, [])], []),
        --Go from full equation relation to component equation relation
        applyTactic(nameHint(componentHypName), nothing(), pcTheorem,
-                   [hypApplyArg(equalityName, []), hypApplyArg(eqHypName, [])], []),
+                   if isInherited --inh version of PC has no structure requirement
+                   then [hypApplyArg(eqHypName, [])]
+                   else [hypApplyArg(equalityName, []), hypApplyArg(eqHypName, [])],
+                   []),
        --Actual case analysis on component equation relation
        caseTactic(h, componentHypName, true),
        --Remove our extra assumptions (unnecessary, but nice)
