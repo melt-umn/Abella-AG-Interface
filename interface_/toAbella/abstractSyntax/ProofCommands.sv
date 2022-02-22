@@ -756,10 +756,7 @@ top::ProofCommand ::= h::HHint tree::String attr::String
                    [hypApplyArg(wpdNtHyp.fromJust.1, [])], []),
        --Go from full equation relation to component equation relation
        applyTactic(nameHint(componentHypName), nothing(), pcTheorem,
-                   if isInherited --inh version of PC has no structure requirement
-                   then [hypApplyArg(eqHypName, [])]
-                   else [hypApplyArg(equalityName, []), hypApplyArg(eqHypName, [])],
-                   []),
+          [hypApplyArg(equalityName, []), hypApplyArg(eqHypName, [])], []),
        --Actual case analysis on component equation relation
        caseTactic(h, componentHypName, true),
        --Remove our extra assumptions (unnecessary, but nice)
