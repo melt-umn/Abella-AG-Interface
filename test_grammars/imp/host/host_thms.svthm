@@ -28,11 +28,12 @@ Extensible_Theorem value_unique_A : forall (T1 T2 : imp:host:A) Env V,
 on T1.
  %plus
   intros IH1 IH2 Structure Eq T1Env T2Env T1Val.
-  case_structure T2 in Eq with Structure. case A.env. case A2.env.
+  case_structure T2 in Eq with Structure. AEnv: case A.env.
+  A1Env: case A1.env. A2Env: case A2.env. A3Env: case A3.env.
   Eq1: apply symmetry to H7. Eq2: apply symmetry to H8. clear H7 H8.
-  case T1.value. apply IH1 to Eq1 H14 H17 H19.
-  apply IH2 to Eq2 H12 H15 H20. case T2.value.
-  apply plus_integer_unique to H21 H27. search.
+  case T1.value. apply IH1 to Eq1 AEnv A2Env H13.
+  apply IH2 to Eq2 A1Env A3Env H14. case T2.value.
+  apply plus_integer_unique to H15 H21. search.
  %num
   intros Structure N_Is Eq T1Env T2Env T1Val.
   case_structure T2 in Eq with Structure. case T1.value.
@@ -55,50 +56,54 @@ Extensible_Theorem value_unique_B : forall (T1 T2 : B) Env V,
 on T1.
  %greater
   intros Structure Eq T1Env T2Env T1Val.
-  case_structure T2 in Eq with Structure. case A.env. case A2.env.
+  case_structure T2 in Eq with Structure. AEnv: case A.env.
+  A1Env: case A1.env. A2Env: case A2.env. A3Env: case A3.env.
   Eq1: apply symmetry to H7. Eq2: apply symmetry to H8. clear H7 H8.
-  case T1.value. apply value_unique_A to Eq1 H14 H17 H19.
-  apply imp:host:value_unique_A to Eq2 H12 H15 H20. case T2.value.
-  apply greater_integer_unique to H21 H27. search.
+  case T1.value. apply value_unique_A to Eq1 AEnv A2Env H13.
+  apply imp:host:value_unique_A to Eq2 A1Env A3Env H14. case T2.value.
+  apply greater_integer_unique to H15 H21. search.
  %equal
   intros Structure Eq T1Env T2Env T1Val.
-  case_structure T2 in Eq with Structure. case A.env. case A2.env.
+  case_structure T2 in Eq with Structure. AEnv: case A.env.
+  A1Env: case A1.env. A2Env: case A2.env. A3Env: case A3.env.
   Eq1: apply symmetry to H7. Eq2: apply symmetry to H8. clear H7 H8.
   case T1.value.
     %equal
-     apply value_unique_A to Eq1 H14 H17 H19.
-     apply value_unique_A to Eq2 H12 H15 H20. case T2.value.
+     apply value_unique_A to Eq1 AEnv A2Env H13.
+     apply value_unique_A to Eq2 A1Env A3Env H14. case T2.value.
        %second one equal
         search.
        %second one not equal
-        F: assert false. backchain H26. case F.
+        F: assert false. backchain H20. case F.
     %not equal
-     apply value_unique_A to Eq1 H14 H17 H19.
-     apply value_unique_A to Eq2 H12 H15 H20. case T2.value.
+     apply value_unique_A to Eq1 AEnv A2Env H13.
+     apply value_unique_A to Eq2 A1Env A3Env H14. case T2.value.
        %second one equal
-        F: assert false. backchain H21. case F.
+        F: assert false. backchain H15. case F.
        %second one equal
         search.
  %and
   intros IH1 IH2 Structure Eq T1Env T2Env T1Val.
-  case_structure T2 in Eq with Structure. case B.env. case B2.env.
+  case_structure T2 in Eq with Structure. BEnv: case B.env.
+  B1Env: case B1.env. B2Env: case B2.env. B3Env: case B3.env.
   Eq1: apply symmetry to H7. Eq2: apply symmetry to H8. clear H7 H8.
   case T1.value.
     %B.value = true, T1.value = B1.value
-     apply IH1 to Eq1 H14 H17 H19. apply IH2 to Eq2 H12 H15 H20.
+     apply IH1 to Eq1 BEnv B2Env H13. apply IH2 to Eq2 B1Env B3Env H14.
      case T2.value. search.
     %B.value = false
-     apply IH1 to Eq1 H14 H17 H19. case T2.value. search.
+     apply IH1 to Eq1 BEnv B2Env H13. case T2.value. search.
  %or
   intros IH1 IH2 Structure Eq T1Env T2Env T1Val.
-  case_structure T2 in Eq with Structure. case B.env. case B2.env.
+  case_structure T2 in Eq with Structure. BEnv: case B.env.
+  B1Env: case B1.env. B2Env: case B2.env. B3Env: case B3.env.
   Eq1: apply symmetry to H7. Eq2: apply symmetry to H8. clear H7 H8.
   case T1.value.
     %B.value = false, T1.value = B1.value
-     apply IH1 to Eq1 H14 H17 H19. apply IH2 to Eq2 H12 H15 H20.
+     apply IH1 to Eq1 BEnv B2Env H13. apply IH2 to Eq2 B1Env B3Env H14.
      case T2.value. search.
     %B.value = true
-     apply IH1 to Eq1 H14 H17 H19. case T2.value. search.
+     apply IH1 to Eq1 BEnv B2Env H13. case T2.value. search.
  %bTrue
   intros Structure Eq T1Env T2Env T1Val.
   case_structure T2 in Eq with Structure.
@@ -115,11 +120,11 @@ on T.
  %noop
   intros Structure TEnv. case T.env_out. search.
  %seq
-  intros IH1 IH2 Structure TEnv. case C.env.
+  intros IH1 IH2 Structure TEnv. C1Env: case C1.env.
     %C.env_out does not exist
-     apply IH2 to H5. case T.env_out. search.
+     apply IH2 to C1Env. case T.env_out. search.
     %C.env_out exists
-     apply IH1 to H7.
+     CEnv: case C.env. apply IH1 to CEnv.
  %assign
   intros Structure L_Is TEnv. case T.env_out.
     %A.value does not exist
@@ -127,8 +132,8 @@ on T.
     %T.env does not exist
      search.
  %ifThenElse
-  intros IH1 IH2 Structure TEnv. case C.env. apply IH1 to H8.
-  apply IH2 to H6. case T.env_out.
+  intros IH1 IH2 Structure TEnv. CEnv: case C.env. apply IH1 to CEnv.
+  C1Env: case C1.env. apply IH2 to C1Env. case T.env_out.
     %B.value does not exist
      search.
     %B.value = true, C.env_out does not exist
@@ -136,8 +141,8 @@ on T.
     %B.value = false, C1.env_out does not exist
      search.
  %while
-  intros IH IH_SubWhile Structure TEnv. case C.env. apply IH to H5.
-  case T.env_out.
+  intros IH IH_SubWhile Structure TEnv. CEnv: case C.env.
+  apply IH to CEnv. case T.env_out.
     %B.value = true, SubWhile.env_out does not exist
      search.
     %B.value = true, subWhile does not exist

@@ -506,17 +506,20 @@ top::ProofCommand ::= h::HHint tree::String attr::String
       case possibleAttrs of
       | [] -> [errorMsg("Unknown attribute " ++ attr)]
       | lst ->
-        if length(filteredAttrs) == 1
-        then []
-        else if length(filteredAttrs) == 0
-        then [errorMsg("Attribute " ++ attr ++
-                        " does not occur on " ++ tree)]
-        else 
-             [errorMsg("Undetermined attribute " ++ attr ++
-                 "; options are " ++
-                 implode(", ",
-                    map(\ p::(String, [(Type, Type)]) -> p.1,
-                        filteredAttrs)))]
+        --need to check tree exists before using its type to filter attrs
+        if treeExists
+        then if length(filteredAttrs) == 1
+             then []
+             else if length(filteredAttrs) == 0
+             then [errorMsg("Attribute " ++ attr ++
+                            " does not occur on " ++ tree)]
+             else 
+                  [errorMsg("Undetermined attribute " ++ attr ++
+                      "; options are " ++
+                      implode(", ",
+                         map(\ p::(String, [(Type, Type)]) -> p.1,
+                             filteredAttrs)))]
+        else []
       end;
   top.errors <-
       if treeExists && attrExists

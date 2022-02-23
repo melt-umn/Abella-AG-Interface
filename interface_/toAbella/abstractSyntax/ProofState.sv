@@ -120,8 +120,8 @@ top::ProofState ::=
         | (hyp1, _, prod, attr, ty, _)::(hyp2, _, _, _, _, _)::_ ->
           applyTactic(noHint(), nothing(),
                       clearable(false, localAccessUniqueThm(prod, attr, ty), []),
-                      [hypApplyArg(hyp1, []),
-                       hypApplyArg(hyp2, [])], []).pp
+                      [hypApplyArg(hyp2, []),
+                       hypApplyArg(hyp1, [])], []).pp
         | _ -> error("Impossible after filtration")
         end;
 
