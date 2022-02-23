@@ -36,16 +36,18 @@ top::ProofState ::=
                  p2::(String, String, String, String, Term) ->
                  p1.3 < p2.3 || (p1.3 == p2.3 && p1.2 <= p2.2),
                attrAccessHyps);
+  --group by tree name and attr
   local groupedAttrAccesses::[[(String, String, String, String, Term)]] =
         groupBy(\ p1::(String, String, String, String, Term)
                   p2::(String, String, String, String, Term) ->
                   p1.2 == p2.2 && p1.3 == p2.3,
                 sortedAttrAccessHyps);
+  --remove repeated accesses with same term
   local cleanedAttrAccessGroups::[[(String, String, String, String, Term)]] =
         map(\ l::[(String, String, String, String, Term)] ->
               nubBy(\ p1::(String, String, String, String, Term)
                       p2::(String, String, String, String, Term) ->
-                    p1.5.pp == p2.5.pp, l), groupedAttrAccesses);
+                      p1.5.pp == p2.5.pp, l), groupedAttrAccesses);
   local cleanedAttrAccesses::[[(String, String, String, String, Term)]] =
         filter(\ l::[(String, String, String, String, Term)] ->
                  length(l) > 1, cleanedAttrAccessGroups);
@@ -57,10 +59,20 @@ top::ProofState ::=
         | (hyp1, _, attr, ty, _)::(hyp2, _, _, _, _)::_ ->
           applyTactic(noHint(), nothing(),
                       clearable(false, accessUniqueThm(attr, ty), []),
-                      [hypApplyArg(hyp1, []),
-                       hypApplyArg(hyp2, [])], []).pp
+                      [hypApplyArg(hyp2, []),
+                       hypApplyArg(hyp1, [])], []).pp
         | _ -> error("Impossible after filtration")
         end;
+
+  --Clear repeated accesses with same value, only leaving first one
+  --Assume all accesses of same attribute have been equalized
+  local repeatedAccessHypsToClear::[String] =
+        flatMap(\ l::[(String, String, String, String, Term)] ->
+           map(\ p::(String, String, String, String, Term) -> p.1,
+               tail(l)),
+           groupedAttrAccesses);
+  local clearRepeatedAccessCmd::String =
+        "clear " ++ implode(" ", repeatedAccessHypsToClear) ++ ".";
 
   --Clean up local attribute accesses to be equal
   --(hyp name, tree name, prod name, attr name, type name, value of attr)
@@ -113,6 +125,16 @@ top::ProofState ::=
         | _ -> error("Impossible after filtration")
         end;
 
+  --Clear repeated local accesses with same value, only leaving first one
+  --Assume all local accesses of same attribute have been equalized
+  local repeatedLocalAccessHypsToClear::[String] =
+        flatMap(\ l::[(String, String, String, String, String, Term)] ->
+           map(\ p::(String, String, String, String, String, Term) -> p.1,
+               tail(l)),
+           groupedLocalAccesses);
+  local clearRepeatedLocalAccessCmd::String =
+        "clear " ++ implode(" ", repeatedLocalAccessHypsToClear) ++ ".";
+
   --Clean up cases with impossible tree forms which come from equations
   --   for local attributes
   --We need to hide these cases to hide the encoding of the AG
@@ -154,21 +176,29 @@ top::ProofState ::=
         end;
 
   top.cleanUpCommands =
-      if null(cleanedAttrAccesses)
-      then if null(cleanedLocalAccesses)
-           then if null(impossibleEqHyps)
-                then ""
-                else impossibleEqHypsCmd
-           else localAccessCmd
-      else attrAccessCmd;
+      if !null(cleanedAttrAccesses)
+      then attrAccessCmd
+      else if !null(repeatedAccessHypsToClear)
+      then clearRepeatedAccessCmd
+      else if !null(cleanedLocalAccesses)
+      then localAccessCmd
+      else if !null(repeatedLocalAccessHypsToClear)
+      then clearRepeatedLocalAccessCmd
+      else if !null(impossibleEqHyps)
+      then impossibleEqHypsCmd
+      else "";
   top.numCleanUpCommands =
-      if null(cleanedAttrAccesses)
-      then if null(cleanedLocalAccesses)
-           then if null(impossibleEqHyps)
-                then 0
-                else 3
-           else 1
-      else 1;
+      if !null(cleanedAttrAccesses)
+      then 1
+      else if !null(repeatedAccessHypsToClear)
+      then 1
+      else if !null(cleanedLocalAccesses)
+      then 1
+      else if !null(repeatedLocalAccessHypsToClear)
+      then 1
+      else if !null(impossibleEqHyps)
+      then 3
+      else 0;
 
   top.nextStateOut = top.nextStateIn;
   currGoal.knownDecoratedTrees = top.gatheredDecoratedTrees;

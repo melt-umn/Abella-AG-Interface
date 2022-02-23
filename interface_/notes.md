@@ -48,14 +48,9 @@ the implementation details as described above.
 
 # Todo
 
-- Switch the order of things in cleaning to keep the original name
-  instead of the new name (e.g. it currently turns `Env` into `Env1`).
-  As long as I'm breaking the proofs anyway with my other changes, I
-  can do this and not feel bad about it.
-- In cleaning, when there are two accesses of the same attribute,
-  don't just make them equal.  Remove the second one.  (e.g. if we
-  have `H6 : T.env = Env` and `H13 : T.env = Env1`, don't just make
-  `Env` equal to `Env1`, also clear `H13`)
+- With the inh attr change, there can also be case analysis on inh
+  attrs for locals and forwards.  This needs to be added, with the
+  correct associated tree and all.
 
 
 
