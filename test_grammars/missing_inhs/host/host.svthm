@@ -1,0 +1,18 @@
+Grammar missing_inhs:host.
+
+
+Extensible_Theorem useless : forall (S : Stmt) Env,
+  S.env = Env -> true
+on S.
+%assign
+ intros Structure LIs SEnv. case_local S.noInhs. case NoInhs.env.
+    %it appears to be working fine for locals with types different
+    %   from top, which is good
+ search.
+%seq
+ search.
+%ifThenElse
+ search.
+%fwdng
+ search.
+

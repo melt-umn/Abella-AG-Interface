@@ -48,9 +48,18 @@ the implementation details as described above.
 
 # Todo
 
-- With the inh attr change, there can also be case analysis on inh
-  attrs for locals and forwards.  This needs to be added, with the
-  correct associated tree and all.
+- On line 205 in the `imp:host` theorems, it requires doing case
+  analysis on the local's structure before doing case analysis on its
+  inherited attribute.  There is no reason this should be required.
+  It appears to be a problem with identifying it as a known tree,
+  based on the error message.
+- On line 262 in the calculator theorems, it is displaying
+  `silver:core:append` rather than turning it into a use of `++`
+- If an attr access or structure eq is used wrong, it currently
+  displays an error message with the dollar signs and all.  This
+  should be changed to better error messages.
+- Backchain doesn't have much of anything set up---no apparent error
+  checking, no special theorems.  It should.
 
 
 

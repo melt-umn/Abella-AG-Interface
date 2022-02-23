@@ -526,7 +526,7 @@ top::ProofCommand ::= h::HHint tree::String attr::String
       then case findAttrOccurrences(attr, top.silverContext) of
            | [] -> [] --covered by checking if attr exists, so impossible here
            | [(_, ntstys)] ->
-             if ((isInherited && findParent.isJust) || !isInherited) && wpdNtHyp.isJust
+             if ((isInherited && definingTreeFound) || !isInherited) && wpdNtHyp.isJust
              then if containsBy(tysEqual, errCheckTy, map(fst, ntstys))
                   then []
                   else [errorMsg("Attribute " ++ attr ++ " does not occur on " ++ tree)]
@@ -546,17 +546,16 @@ top::ProofCommand ::= h::HHint tree::String attr::String
   top.errors <-
       if treeExists && attrExists
       then if isInherited
-           then case findParent of
-                | nothing() ->
+           then if !definingTreeFound
+                then
                   [errorMsg("Cannot do case analysis on inherited attribute "++
                             "equation when parent of tree is unknown")]
-                | just(_) -> []
-                end
+                else []
            else []
       else [];
   top.errors <-
       if treeExists && attrExists
-      then if (isInherited && findParent.isJust) || !isInherited
+      then if (isInherited && definingTreeFound) || !isInherited
            then case wpdNtHyp of
                 | nothing() ->
                   [errorMsg("Cannot do case analysis on " ++ tree ++ "." ++ attr ++ " for reasons I can't come up with at the moment; please report this error")]
@@ -566,7 +565,7 @@ top::ProofCommand ::= h::HHint tree::String attr::String
       else [];
   top.errors <-
       if treeExists && attrExists &&
-         ((isInherited && findParent.isJust) || !isInherited)
+         ((isInherited && definingTreeFound) || !isInherited)
       then case structure of
            | just((hyp, tm)) ->
              case decorate tm with
@@ -603,17 +602,23 @@ top::ProofCommand ::= h::HHint tree::String attr::String
                  containsBy(tysEqual, errCheckTy, map(fst, p.2)),
                possibleAttrs);
   local rightAttr::String = head(filteredAttrs).1;
-  --Figure out the tree to actual do the case on, the stated tree or
-  --   its parent, and what the structure is
+  --Figure out the tree to actually do the case on, the stated tree,
+  --   its parent, or the tree defining it, and what the structure is
   local isInherited::Boolean =
         isInheritedAttr(rightAttr, top.silverContext);
   local findParent::Maybe<(String, Term)> =
         find_parent_tree(tree, top.translatedState.hypList, top.silverContext);
+  local findDefTree::Maybe<(String, String)> =
+        find_defining_tree(tree, top.translatedState.hypList, top.silverContext);
+  local definingTreeFound::Boolean =
+        findParent.isJust || findDefTree.isJust;
   local associatedTree::String =
         if isInherited
-        then case findParent of
-             | just((tr, _)) -> tr
-             | nothing() -> error("findParent should not be nothing")
+        then case findParent, findDefTree of
+             | just((tr, _)), _ -> tr
+             | _, just((tr, _)) -> tr
+             | nothing(), nothing() ->
+               error("findParent and findDefTree should not both be nothing")
              end
         else tree;
   local structure::Maybe<(String, Term)> =
@@ -655,11 +660,13 @@ top::ProofCommand ::= h::HHint tree::String attr::String
         end;
   --If inh attr, figure out which child eq relation we need
   local childIndex::String =
-        "child" ++ toString(
-                      decorate structure.fromJust.2 with {
-                         findParentOf = tree;
-                         silverContext = top.silverContext;
-                      }.foundParent.fromJust.2);
+        if findParent.isJust
+        then "child" ++ toString(
+                           decorate structure.fromJust.2 with {
+                              findParentOf = tree;
+                              silverContext = top.silverContext;
+                           }.foundParent.fromJust.2)
+        else findDefTree.fromJust.2;
   --Translate to Abella commands
   local makeEqHypThm::Clearable =
         clearable(false, wpdNt_to_AttrEq(rightAttr, treeTy), []);
@@ -676,8 +683,8 @@ top::ProofCommand ::= h::HHint tree::String attr::String
             end
         in
           case findParent of
-          | just(fp) ->
-            case decorate fp.snd with
+          | just((_, treeTerm)) ->
+            case decorate treeTerm with
                  {findParentOf = tree;
                   silverContext = top.silverContext;}.foundParent of
             | just((prod, index)) ->
@@ -685,9 +692,22 @@ top::ProofCommand ::= h::HHint tree::String attr::String
               | [(_, val)] -> val.resultType
               | _ -> error("Production " ++ prod ++ " must exist")
               end
+            | nothing() ->
+              error("Shouldn't get here (treeTy in caseAttrAccess)")
+            end
+          | nothing() ->
+            case findDefTree of
+            | just((tr, _)) ->
+              case find_WPD_nt_hyp(tr, top.translatedState.hypList,
+                                   top.silverContext) of
+              | just((_, termMetaterm(
+                            applicationTerm(nameTerm(rel, _), _), _))) ->
+                wpdNt_type(rel)
+              | _ ->
+                error("Shouldn't get here (treeTy in caseAttrAccess)")
+              end
             | nothing() -> synCase
             end
-          | nothing() -> synCase
           end
         end;
   --We need this to check that the attribute occurs on the tree we said, not the associated tree

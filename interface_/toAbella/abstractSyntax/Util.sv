@@ -296,3 +296,25 @@ Maybe<(String, Term)> ::= treename::String hyps::[(String, Metaterm)]
      end;
 }
 
+
+--Find the tree which defines the tree as local or forward
+--Returns (defining tree, child eq rel index)
+function find_defining_tree
+Maybe<(String, String)> ::= treename::String hyps::[(String, Metaterm)]
+                            silverContext::Decorated SilverContext
+{
+  return
+     case hyps of
+     | [] -> nothing()
+     | (hyp, mt)::tl ->
+       case decorate mt with {silverContext = silverContext;} of
+       | attrAccessMetaterm(tree, "forward", nameTerm(searchName, _))
+         when searchName == treename -> just((tree, "forward"))
+       | localAttrAccessMetaterm(tree, attr, nameTerm(searchName, _))
+         when searchName == treename ->
+         just((tree, inhChildEquationName_localIndex(attr)))
+       | _ -> find_defining_tree(treename, tl, silverContext)
+       end
+     end;
+}
+

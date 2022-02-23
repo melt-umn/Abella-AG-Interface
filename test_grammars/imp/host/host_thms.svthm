@@ -152,7 +152,8 @@ on T.
     %B.value does not exist
      search.
     %B.value = true, SubWhile.env_out has a value
-     case_local T.subWhile. apply IH_SubWhile to H11 H17.
+     case_local T.subWhile. case SubWhile.env.
+     apply IH_SubWhile to H8 H15.
 
 
 Extensible_Theorem env_out__unique__C : forall (T1 T2 : C) Env V,
@@ -169,16 +170,12 @@ on T1.
   intros IH1 IH2 Structure Eq T1Env T2Env T1EnvOut.
   case_structure T2 in Eq with Structure.
   Eq1: apply symmetry to H7. Eq2: apply symmetry to H8. clear H7 H8.
-  case C.env.
+  CEnv: case C.env. C2Env: case C2.env. case C1.env.
     %C.env_out does not exist
      apply no_env__no_env_out to H12. case T1.env_out.
     %C.env_out does exist
-     case C2.env.
-       %C2.env_out does not exist
-        apply IH1 to Eq1 H14 H18 H13.
-       %C2.env_out does exist
-        apply IH1 to Eq1 H14 H18 H13. case T1.env_out.
-        apply IH2 to Eq2 H12 H16 H22. case T2.env_out. search.
+     apply IH1 to Eq1 CEnv C2Env H13. case C3.env. case T1.env_out.
+     apply IH2 to Eq2 H12 H15 H18. case T2.env_out. search.
  %assign
   intros Structure L_Is Eq T1Env T2Env T1EnvOut. case T1.env_out.
   case_structure T2 in Eq with Structure. apply symmetry to H9.
@@ -188,29 +185,35 @@ on T1.
   intros IH1 IH2 Structure Eq T1Env T2Env T1EnvOut.
   case_structure T2 in Eq with Structure. EqB: apply symmetry to H8.
   Eq1: apply symmetry to H9. Eq2: apply symmetry to H10.
-  clear H8 H9 H10. case B.env. case B1.env. case T1.env_out.
+  clear H8 H9 H10. BEnv: case B.env. B1Env: case B1.env.
+  CEnv: case C.env. C1Env: case C1.env. C2Env: case C2.env.
+  C3Env: case C3.env. case T1.env_out.
     %B.value = true
-     apply value_unique_B to EqB H18 H22 H24.
-     apply IH1 to Eq1 H17 H21 H25. case T2.env_out. search.
+     apply value_unique_B to EqB BEnv B1Env H16.
+     apply IH1 to Eq1 CEnv C2Env H17. case T2.env_out. search.
     %B.value = false
-     apply value_unique_B to EqB H18 H22 H24.
-     apply IH2 to Eq2 H15 H19 H25. case T2.env_out. search.
+     apply value_unique_B to EqB BEnv B1Env H16.
+     apply IH2 to Eq2 C1Env C3Env H17. case T2.env_out. search.
  %while
   intros IH IH_SubWhile Structure Eq T1Env T2Env T1EnvOut.
   case_structure T2 in Eq with Structure.
   EqB: apply symmetry to H7. EqC: apply symmetry to H8. clear H7 H8.
-  case B.env. case B1.env. case T1.env_out.
+  BEnv: case B.env. B1Env: case B1.env. case T1.env_out.
     %B.value = true
-     apply value_unique_B to EqB H14 H17 H19. case_local T1.subWhile.
-       %%SubWhile1.env does not exist
-        apply no_env__no_env_out to H27.
-       %SubWhile1.env does exist
-        apply IH to EqC H12 H15 H28. case_local T2.subWhile.
-        trees_equal H24 H31.
-        apply IH_SubWhile to H23 H36 H27 H34 H21. case T2.env_out.
-        search.
+     apply value_unique_B to EqB BEnv B1Env H13. CEnv: case C.env.
+     C1Env: case C1.env. Set debug on.
+     %There's really no reason I should have to do case_local first
+     case_local T1.subWhile. case SubWhile.env.
+       %SubWhile.env = <no value>, C.env_out = <no value>
+        apply no_env__no_env_out to H22.
+       %SubWhile.env = Env_out1, C.env_out = Env_out1
+        apply IH to EqC _ _ _.
+        case_local T2.subWhile. case SubWhile3.env.
+        trees_equal H18 H26. apply IH_SubWhile to _ H32 _ _ _.
+        case T2.env_out. search.
     %B.value = false
-     apply value_unique_B to EqB H14 H17 H19. case T2.env_out. search.
+     apply value_unique_B to EqB BEnv B1Env H13. case T2.env_out.
+     search.
 
 
 Theorem test_if_this_is_defined : true.

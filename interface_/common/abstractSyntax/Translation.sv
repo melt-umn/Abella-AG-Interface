@@ -298,6 +298,11 @@ String ::= attr::String ty::Type prod::String index::String
   return "$" ++ colonsToEncoded(attr) ++ name_sep ++ colonsToEncoded(ty.pp) ++
          name_sep ++ "to" ++ name_sep ++ colonsToEncoded(prod) ++ name_sep ++ index;
 }
+function inhChildEquationName_localIndex
+String ::= localAttr::String
+{
+  return "local" ++ name_sep ++ localAttr;
+}
 
 
 --Structure Equality
