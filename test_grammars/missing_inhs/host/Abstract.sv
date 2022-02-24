@@ -49,3 +49,11 @@ top::Expr ::= i::Integer
 
 }
 
+
+abstract production noChildrenWithLocalAndInhsOnLocal
+top::Expr ::=
+{
+  local x::Expr = num(5);
+  x.env = top. env;
+}
+
