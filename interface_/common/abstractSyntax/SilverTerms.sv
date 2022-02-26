@@ -153,6 +153,27 @@ top::Metaterm ::= tree::String attr::String val::Term
 
   top.usedNames := [tree];
   top.gatheredTrees <- [tree];
+  top.gatheredTrees <-
+      case val of
+      | pairTerm(
+           addPairContents(nameTerm(treeName, _),
+           singlePairContents(
+              applicationTerm(nameTerm(ntr, _),
+                 consTermList(nameTerm(nodeName, _),
+                 singleTermList(childList))))))
+        when isNodeTreeConstructorName(ntr) ->
+        [treeName]
+      | applicationTerm(nameTerm(pairMaker, _),
+           consTermList(nameTerm(treeName, _),
+           singleTermList(
+              applicationTerm(nameTerm(ntr, _),
+                 consTermList(nameTerm(nodeName, _),
+                 singleTermList(childList))))))
+        when pairMaker == pairConstructorName &&
+             isNodeTreeConstructorName(ntr) ->
+        [treeName]
+      | _ -> []
+      end;
   top.gatheredDecoratedTrees <-
       case val of
       | pairTerm(
@@ -197,6 +218,27 @@ top::Metaterm ::= tree::String attr::String val::Term
 
   top.usedNames := [tree];
   top.gatheredTrees <- [tree];
+  top.gatheredTrees <-
+      case val of
+      | pairTerm(
+           addPairContents(nameTerm(treeName, _),
+           singlePairContents(
+              applicationTerm(nameTerm(ntr, _),
+                 consTermList(nameTerm(nodeName, _),
+                 singleTermList(childList))))))
+        when isNodeTreeConstructorName(ntr) ->
+        [treeName]
+      | applicationTerm(nameTerm(pairMaker, _),
+           consTermList(nameTerm(treeName, _),
+           singleTermList(
+              applicationTerm(nameTerm(ntr, _),
+                 consTermList(nameTerm(nodeName, _),
+                 singleTermList(childList))))))
+        when pairMaker == pairConstructorName &&
+             isNodeTreeConstructorName(ntr) ->
+        [treeName]
+      | _ -> []
+      end;
   top.gatheredDecoratedTrees <-
       case val of
       | pairTerm(

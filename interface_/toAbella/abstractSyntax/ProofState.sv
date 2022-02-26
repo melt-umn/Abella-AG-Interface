@@ -175,6 +175,77 @@ top::ProofState ::=
           "case " ++ name ++ ".  "
         end;
 
+  --As soon as a tree shows up in our context, we want to get the WPD hyp
+  --attr accesses of trees without WPD hyps, where defining tree does have WPD hyp
+  --[(hyp, defining tree name, attr name, defined tree name, tree type name)]
+  local treeAttrAccesses::[(String, String, String, String, String)] =
+        foldr(\ p::(String, String, String, String, Term)
+                rest::[(String, String, String, String, String)] ->
+                case p.5 of
+                | applicationTerm(nameTerm(attrEx, _),
+                     singleTermList(
+                        applicationTerm(nameTerm(pairC, _),
+                           consTermList(nameTerm(treeName, _),
+                           singleTermList(
+                              applicationTerm(nameTerm(nodetreeC, _),
+                                 consTermList(nameTerm(treeNode, _),
+                                 singleTermList(childList))))))))
+                  when attrEx == attributeExistsName &&
+                       pairC == pairConstructorName &&
+                       isNodeTreeConstructorName(nodetreeC) &&
+                       !find_WPD_nt_hyp(treeName, currGoal.hypList,
+                                        top.silverContext).isJust &&
+                       find_WPD_nt_hyp(p.2, currGoal.hypList,
+                                       top.silverContext).isJust ->
+                  (p.1, p.2, p.3, treeName, p.4)::rest
+                | _ -> rest
+                end, [], attrAccessHyps);
+  --
+  local treeAttrAccessWpdCommands::String =
+        implode(" ",
+           map(\ p::(String, String, String, String, String) ->
+                 --hint for hypothesis name to avoid changing any proofs
+                 "$Wpd: apply " ++ accessIsThm(p.3, colonsToEncoded(p.5)) ++
+                          " to _ " ++ p.1 ++ ".",
+               treeAttrAccesses));
+
+  --attr accesses of trees without WPD hyps, where defining tree does have WPD hyp
+  --[(hyp, defining tree name, attr name, defined tree name,
+  --  prod, tree type name)]
+  local treeLocalAttrAccesses::[(String, String, String, String,
+                                 String, String)] =
+        foldr(\ p::(String, String, String, String, String, Term)
+                rest::[(String, String, String, String, String, String)] ->
+                case p.6 of
+                | applicationTerm(nameTerm(attrEx, _),
+                     singleTermList(
+                        applicationTerm(nameTerm(pairC, _),
+                           consTermList(nameTerm(treeName, _),
+                           singleTermList(
+                              applicationTerm(nameTerm(nodetreeC, _),
+                                 consTermList(nameTerm(treeNode, _),
+                                 singleTermList(childList))))))))
+                  when attrEx == attributeExistsName &&
+                       pairC == pairConstructorName &&
+                       isNodeTreeConstructorName(nodetreeC) &&
+                       !find_WPD_nt_hyp(treeName, currGoal.hypList,
+                                        top.silverContext).isJust &&
+                       find_WPD_nt_hyp(p.2, currGoal.hypList,
+                                       top.silverContext).isJust ->
+                  (p.1, p.2, p.4, treeName, p.3, p.5)::rest
+                | _ -> []
+                end, [], localAccessHyps);
+  --
+  local localAttrAccessWpdCommands::String =
+        implode(" ",
+           map(\ p::(String, String, String, String, String, String) ->
+                 --hint for hypothesis name to avoid changing any proofs
+                 "$Wpd: apply " ++ localAccessIsThm(p.3,
+                                   nameToProd(p.5),
+                                   colonsToEncoded(p.6)) ++
+                    " to _ " ++ p.1 ++ ".",
+               treeLocalAttrAccesses));
+
   top.cleanUpCommands =
       if !null(cleanedAttrAccesses)
       then attrAccessCmd
@@ -186,6 +257,10 @@ top::ProofState ::=
       then clearRepeatedLocalAccessCmd
       else if !null(impossibleEqHyps)
       then impossibleEqHypsCmd
+      else if !null(treeAttrAccesses)
+      then treeAttrAccessWpdCommands
+      else if !null(treeLocalAttrAccesses)
+      then localAttrAccessWpdCommands
       else "";
   top.numCleanUpCommands =
       if !null(cleanedAttrAccesses)
@@ -198,6 +273,10 @@ top::ProofState ::=
       then 1
       else if !null(impossibleEqHyps)
       then 3
+      else if !null(treeAttrAccesses)
+      then length(treeAttrAccesses)
+      else if !null(treeLocalAttrAccesses)
+      then length(treeLocalAttrAccesses)
       else 0;
 
   top.nextStateOut = top.nextStateIn;

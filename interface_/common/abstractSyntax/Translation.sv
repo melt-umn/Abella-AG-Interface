@@ -201,6 +201,12 @@ String ::= prod::String attr::String ty::String
   return "$local_access_$_$prod_" ++ colonsToEncoded(prod) ++ "_$_" ++
          attr ++ "_$_" ++ colonsToEncoded(ty) ++ name_sep ++ "unique";
 }
+function localAccessIsThm
+String ::= localAttr::String prod::String ty::String
+{
+  return "$local_access_$_" ++ prod ++ "_$_" ++ localAttr ++ "_$_" ++
+         ty ++ name_sep ++ "is";
+}
 
 
 --WPD Nonterminal

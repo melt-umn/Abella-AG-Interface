@@ -201,15 +201,14 @@ on T1.
   BEnv: case B.env. B1Env: case B1.env. case T1.env_out.
     %B.value = true
      apply value_unique_B to EqB BEnv B1Env H13. CEnv: case C.env.
-     C1Env: case C1.env. Set debug on.
-     %There's really no reason I should have to do case_local first
-     case_local T1.subWhile. case SubWhile.env.
+     C1Env: case C1.env. case SubWhile.env.
        %SubWhile.env = <no value>, C.env_out = <no value>
-        apply no_env__no_env_out to H22.
+        apply no_env__no_env_out to H18.
        %SubWhile.env = Env_out1, C.env_out = Env_out1
         apply IH to EqC _ _ _.
-        case_local T2.subWhile. case SubWhile3.env.
-        trees_equal H18 H26. apply IH_SubWhile to _ H32 _ _ _.
+        case_local T2.subWhile. case SubWhile2.env.
+        case_local T1.subWhile.
+        trees_equal H29 H22. apply IH_SubWhile to H14 H32 _ _ _.
         case T2.env_out. search.
     %B.value = false
      apply value_unique_B to EqB BEnv B1Env H13. case T2.env_out.

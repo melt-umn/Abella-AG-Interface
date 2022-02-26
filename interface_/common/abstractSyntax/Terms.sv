@@ -212,6 +212,25 @@ top::Term ::= f::Term args::TermList
       | nameTerm(wpdNT, _), consTermList(nameTerm(tree, _), _)
         when isWpdTypeName(wpdNT) ->
         [tree]
+      --accessing decorated trees as attributes
+      | nameTerm(access, _),
+        consTermList(onTree,
+           consTermList(onTreeNode,
+           singleTermList(
+              applicationTerm(
+                 nameTerm(attrEx, _),
+                 singleTermList(
+                    applicationTerm(
+                       nameTerm(pairMaker, _),
+                       consTermList(nameTerm(treeName, _),
+                          singleTermList(
+                             applicationTerm(nameTerm(ntr, _),
+                                consTermList(nameTerm(nodeName, _),
+                                singleTermList(childList)))))))))))
+        when attrEx == attributeExistsName &&
+             pairMaker == pairConstructorName &&
+             isNodeTreeConstructorName(ntr) ->
+        [treeName]
       | _, _ -> []
       end;
 
