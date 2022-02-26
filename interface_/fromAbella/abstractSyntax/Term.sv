@@ -211,6 +211,13 @@ top::Term ::= f::Term args::TermList
      | nameTerm(str, _), consTermList(t1, singleTermList(t2))
        when isStructureEqName(str) ->
        right(treeEqMetaterm(t1, t2))
+     --Append
+     | nameTerm(str, _), args
+       when isFun(str) && funToName(str) == "silver:core:append" ->
+       case args.argList of
+       | [l, r, result] -> right(appendMetaterm(l, r, result))
+       | _ -> error("Read-back display must be well-typed")
+       end
      --Function Application
      | nameTerm(str, _), args when isFun(str) ->
        let funName::String = funToName(str)

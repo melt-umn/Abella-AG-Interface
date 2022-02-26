@@ -48,8 +48,6 @@ the implementation details as described above.
 
 # Todo
 
-- On line 262 in the calculator theorems, it is displaying
-  `silver:core:append` rather than turning it into a use of `++`
 - If an attr access or structure eq is used wrong, it currently
   displays an error message with the dollar signs and all.  This
   should be changed to better error messages.
