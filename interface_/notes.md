@@ -48,9 +48,6 @@ the implementation details as described above.
 
 # Todo
 
-- If an attr access or structure eq is used wrong, it currently
-  displays an error message with the dollar signs and all.  This
-  should be changed to better error messages.
 - Backchain doesn't have much of anything set up---no apparent error
   checking, no special theorems.  It should.
 

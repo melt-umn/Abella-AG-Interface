@@ -299,28 +299,58 @@ top::ProcessingErrorMessage ::= argnum::Integer const1::String const2::String
            ":\nUnification failure (constant clash between " ++
            const1 ++ " and " ++ const2 ++ ")";
 
+  local transConsts::(String ::= String) =
+        \ s::String ->
+          if isAccessRelation(s)
+          then "attribute access of " ++ accessRelationToAttr(s)
+          else if isLocalAccessRelation(s)
+          then "local access of " ++ localAccessToAttr(s) ++
+               " on " ++ localAccessToProd(s)
+          else if s == "$attr_no"
+          then "<no value>"
+          else if startsWith(s, "$attr_ex")
+          then "value" --has to be compared to $attr_ex to get this
+          else if isStructureEqName(s)
+          then "structure equality for " ++
+               nonterminalNameToName(structureEqToType(s).pp)
+          else if isProd(s)
+          then prodToName(s)
+          else if isFun(s)
+          then funToName(s)
+          else if s == integerAdditionName
+          then "+ (addition)"
+          else if s == integerSubtractionName
+          then "- (subtraction)"
+          else if s == integerMultiplicationName
+          then "* (multiplication)"
+          else if s == integerDivisionName
+          then "/ (division)"
+          else if s == integerModulusName
+          then "% (modulus)"
+          else if s == integerNegateName
+          then "- (negation)"
+          else if s == integerLessName
+          then "< (less)"
+          else if s == integerLessEqName
+          then "<= (less or equal)"
+          else if s == integerGreaterName
+          then "> (greater)"
+          else if s == integerGreaterEqName
+          then ">= (greater or equal)"
+          else if s == orName
+          then "|| (disjunction)"
+          else if s == andName
+          then "&& (conjunction)"
+          else if s == notName
+          then "! (negation)"
+          else if s == trueName
+          then "true (Boolean)"
+          else if s == falseName
+          then "false (Boolean)"
+          else s;
   top.translation =
-      if isAccessRelation(const1)
-      then if isAccessRelation(const1)
-           then if accessRelationToAttr(const1) == accessRelationToAttr(const2)
-                then matchingUnificationFailureConstants(
-                        argnum,
-                        accessRelationToAttr(const1) ++ " on " ++
-                           accessRelationToType(const1),
-                        accessRelationToAttr(const2) ++ " on " ++
-                           accessRelationToType(const2))
-                else matchingUnificationFailureConstants(
-                        argnum, accessRelationToAttr(const1),
-                        accessRelationToAttr(const2))
-           else matchingUnificationFailureConstants(argnum,
-                   "attribute access", const2)
-      else if isAccessRelation(const2)
-      then matchingUnificationFailureConstants(argnum, const1, "attribute access")
-      else if const1 == "$attr_no"
-      then matchingUnificationFailureConstants(argnum, "<no value>", "value")
-      else if const2 == "$attr_no"
-      then matchingUnificationFailureConstants(argnum, "value", "<no value>")
-      else matchingUnificationFailureConstants(argnum, const1, const2);
+      matchingUnificationFailureConstants(argnum, transConsts(const1),
+         transConsts(const2));
 }
 
 
