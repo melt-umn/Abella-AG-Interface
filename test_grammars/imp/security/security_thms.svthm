@@ -28,7 +28,13 @@ Prove imp:host:value_unique_B.
 
 Prove imp:host:no_env__no_env_out.
 %assignLevel
-intros Structure N_Is L_Is TEnv. case T.env_out. search.
+intros Structure N_Is L_Is TEnv. case T.env_out.
+  %No forward, so no env_out value
+   search.
+  %Forward, but no env_out on forward
+   search.
+  %Forward with env_out from forward
+   skip.
 
 Theorem no_env__no_env_out__should_exist : forall (T : C),
   T.env = <no value> -> T.env_out = <no value>.
@@ -39,7 +45,13 @@ Prove imp:host:env_out__unique__C.
 %assignLevel
 intros Structure N_Is L_Is Eq T1Env T2Env T1EnvOut.
 case_structure T2 in Eq with Structure.
-case T1.env_out. case T2.env_out. search.
+case T1.env_out. case T2.env_out.
+  %No forward, so no env_out value
+   skip.
+  %Forward, but no env_out on it
+   skip.
+  %Forward env_out on the forward
+   skip.
 
 
 Theorem test_is_it_there : true.

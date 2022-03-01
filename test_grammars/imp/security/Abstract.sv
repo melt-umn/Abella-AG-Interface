@@ -93,7 +93,7 @@ top::B ::=
 abstract production assignLevel
 top::C ::= level::Integer name::String
 {
-  top.env_out = top.env;
+  --top.env_out = top.env;
 
   top.isSecure = true;
 

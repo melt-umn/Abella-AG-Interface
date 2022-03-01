@@ -149,6 +149,30 @@ top::Term ::= f::Term args::TermList
      | nameTerm("$not_bool", _),
        consTermList(arg1, singleTermList(arg2)) ->
        right(notBoolMetaterm(arg1, arg2))
+     --Forward Access
+     | nameTerm(str, _),
+       consTermList(nameTerm(treeName, _),
+       consTermList(nameTerm(treeNodeName, _),
+                    singleTermList(applicationTerm(nameTerm("$attr_ex", _),
+                                                   singleTermList(val)))))
+       when isAccessRelation(str) &&
+            accessRelationToAttr(str) == "forward" ->
+       case val of
+       | pairTerm(
+            addPairContents(nameTerm(tree, _),
+            singlePairContents(applicationTerm(nameTerm(ntr, _), _))))
+         when isNodeTreeConstructorName(ntr) ->
+         right(attrAccessMetaterm(treeName,
+                  "forward", nameTerm(tree, nothing())))
+       | _ -> error("Forward had better be a decorated tree")
+       end
+     | nameTerm(str, _),
+       consTermList(nameTerm(treeName, _),
+       consTermList(nameTerm(treeNodeName, _),
+                    singleTermList(nameTerm("$attr_no", _))))
+       when isAccessRelation(str) &&
+            accessRelationToAttr(str) == "forward" ->
+       right(attrAccessEmptyMetaterm(treeName, "forward"))
      --Attribute Access
      | nameTerm(str, _),
        consTermList(nameTerm(treeName, _),
@@ -165,7 +189,16 @@ top::Term ::= f::Term args::TermList
            then short
            else attr
        in
-         right(attrAccessMetaterm(treeName, useName, val))
+         case val of
+         | pairTerm(
+              addPairContents(nameTerm(tree, _),
+              singlePairContents(applicationTerm(nameTerm(ntr, _), _))))
+           when isNodeTreeConstructorName(ntr) ->
+           right(attrAccessMetaterm(treeName,
+                    useName, nameTerm(tree, nothing())))
+         | _ ->
+           right(attrAccessMetaterm(treeName, useName, val))
+         end
        end end end
      | nameTerm(str, _),
        consTermList(nameTerm(treeName, _),
