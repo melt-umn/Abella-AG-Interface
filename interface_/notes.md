@@ -48,9 +48,6 @@ the implementation details as described above.
 
 # Todo
 
-- There needs to be an IH generated for the forward all the time.
-- There needs to be special recognition of the `forward` attribute to
-  allow case analysis on it---currently getting that it is unknown.
 - Backchain doesn't have much of anything set up---no apparent error
   checking, no special theorems.  It should.
 

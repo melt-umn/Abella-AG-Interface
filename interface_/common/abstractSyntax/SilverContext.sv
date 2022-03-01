@@ -187,7 +187,10 @@ function findAttrOccurrences
            | just(ty) -> [(attrName, ty)]
            end
          end end
-    else map(\ p::(String, [(Type, Type)]) -> (p.1 ++ ":" ++ attrName, p.2),
+    else map(\ p::(String, [(Type, Type)]) ->
+               if p.1 == "" --forward, possibly others
+               then (attrName, p.2)
+               else (p.1 ++ ":" ++ attrName, p.2),
              findAllAssociated(attrName, context.knownAttrOccurrences));
 }
 

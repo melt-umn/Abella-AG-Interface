@@ -245,10 +245,11 @@ top::TopCommand ::= names::[String] ty::Type
   top.newAttrOccurrences <-
       --combining occurrence information for same attr happens by monoid join function
       foldr(\ s::String rest::[(String, String, [(Type, Type)])] ->
-              if isAccessRelation(s) &&
-                 accessRelationToAttr(s) != "forward"
+              if isAccessRelation(s)
               then let splitName::(String, String) =
-                       splitQualifiedName(accessRelationToAttr(s))
+                       if accessRelationToAttr(s) == "forward"
+                       then ("", "forward")
+                       else splitQualifiedName(accessRelationToAttr(s))
                    in
                      (splitName.2, splitName.1,
                       [(nameType(accessRelationToType(s)),

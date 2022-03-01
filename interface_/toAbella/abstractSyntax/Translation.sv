@@ -438,29 +438,34 @@ function buildFakeIHs
                                       silverContext = silverContext;}.replaced)::rest
                 else rest,
               [], children);
-  --Hypotheses for the local attributes which occur on the given production
+  --Hypotheses for the local attributes which occur on the given production and forward
+  --[(access relation, name base, attr type
+  local localGenInfo::[(String, String, Type)] =
+        map(\ p::(String, Type) ->
+              (localAccessRelationName(rootTy, p.1, prod),
+               capitalizeString(p.1), p.2),
+            relevantLocalAttrs) ++
+        [(accessRelationName(rootTy, "forward"), "Fwd", rootTy)];
   local localIHs::[Metaterm] =
-        foldr(\ p::(String, Type) rest::[Metaterm] ->
-                if tysEqual(p.2, treeTy)
+        foldr(\ p::(String, String, Type) rest::[Metaterm] ->
+                if tysEqual(p.3, treeTy)
                 then let newName::String =
-                         makeUniqueNameFromBase(capitalizeString(p.1), usedNames) in
+                         makeUniqueNameFromBase(p.2, usedNames) in
                      let newNodeName::String =
-                         makeUniqueNameFromBase(treeToNodeName(newName), usedNames) in
+                         makeUniqueNameFromBase(p.2 ++ "Node", usedNames) in
                      let newCLName::String =
-                         makeUniqueNameFromBase(treeToChildListName(newName), usedNames) in
+                         makeUniqueNameFromBase(p.2 ++ "CL", usedNames) in
                      bindingMetaterm(
                         originalBinder,
                         removedBindings ++
                            [(newName, nothing()),
                             (newNodeName, nothing()),
                             (newCLName, nothing())],
-                        --Add accessing the local with a value as a premise
+                        --Add accessing the tree with a value as a premise
                         impliesMetaterm(
                            termMetaterm(
                               buildApplication(
-                                 nameTerm(
-                                    localAccessRelationName(rootTy, p.1, prod),
-                                    nothing()),
+                                 nameTerm(p.1, nothing()),
                                  [nameTerm(treeName, nothing()),
                                   rootNode,
                                   buildApplication(
@@ -469,7 +474,7 @@ function buildFakeIHs
                                          nameTerm(pairConstructorName, nothing()),
                                          [nameTerm(newName, nothing()),
                                           buildApplication(
-                                             nameTerm(nodeTreeConstructorName(p.2), nothing()),
+                                             nameTerm(nodeTreeConstructorName(p.3), nothing()),
                                              [nameTerm(newNodeName, nothing()),
                                               nameTerm(newCLName, nothing())])
                                          ])
@@ -494,7 +499,7 @@ function buildFakeIHs
                                  silverContext = silverContext;}.replaced))::rest
                      end end end
                 else rest,
-              [], relevantLocalAttrs);
+              [], localGenInfo);
 
   return
      case thms of

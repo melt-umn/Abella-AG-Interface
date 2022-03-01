@@ -28,14 +28,15 @@ Prove imp:host:value_unique_B.
 
 Prove imp:host:no_env__no_env_out.
 %assignLevel
-intros Structure N_Is L_Is TEnv. case T.env_out.
+intros IHFwd Structure N_Is L_Is TEnv. case T.env_out.
   %No forward, so no env_out value
    search.
   %Forward, but no env_out on forward
    search.
   %Forward with env_out from forward
-   skip.
+   case Fwd.env. apply IHFwd to H3 _.
 
+%Check that the previous theorem is actually defined
 Theorem no_env__no_env_out__should_exist : forall (T : C),
   T.env = <no value> -> T.env_out = <no value>.
 intros A. apply imp:host:no_env__no_env_out to A. search.
@@ -43,15 +44,19 @@ intros A. apply imp:host:no_env__no_env_out to A. search.
 
 Prove imp:host:env_out__unique__C.
 %assignLevel
-intros Structure N_Is L_Is Eq T1Env T2Env T1EnvOut.
+intros IHFwd Structure N_Is L_Is Eq T1Env T2Env T1EnvOut.
 case_structure T2 in Eq with Structure.
 case T1.env_out. case T2.env_out.
   %No forward, so no env_out value
-   skip.
+   case T2.forward.
   %Forward, but no env_out on it
-   skip.
+   case T2.forward. case T1.forward. trees_equal H17 H15.
+   case Fwd.env. case Fwd1.env.
+   apply IHFwd to H8 H18 H21 H24 H9.
   %Forward env_out on the forward
-   skip.
+   case T2.forward. case T1.forward. trees_equal H17 H15.
+   case Fwd.env. case Fwd1.env.
+   apply IHFwd to H8 H18 H21 H24 H9. search.
 
 
 Theorem test_is_it_there : true.

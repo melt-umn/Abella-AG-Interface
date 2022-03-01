@@ -27,7 +27,7 @@ Extensible_Theorem value_unique_A : forall (T1 T2 : imp:host:A) Env V,
    T2.value = V
 on T1.
  %plus
-  intros IH1 IH2 Structure Eq T1Env T2Env T1Val.
+  intros IH1 IH2 IHFwd Structure Eq T1Env T2Env T1Val.
   case_structure T2 in Eq with Structure. AEnv: case A.env.
   A1Env: case A1.env. A2Env: case A2.env. A3Env: case A3.env.
   Eq1: apply symmetry to H7. Eq2: apply symmetry to H8. clear H7 H8.
@@ -35,11 +35,11 @@ on T1.
   apply IH2 to Eq2 A1Env A3Env H14. case T2.value.
   apply plus_integer_unique to H15 H21. search.
  %num
-  intros Structure N_Is Eq T1Env T2Env T1Val.
+  intros IHFwd Structure N_Is Eq T1Env T2Env T1Val.
   case_structure T2 in Eq with Structure. case T1.value.
   case T2.value. search.
  %name
-  intros Structure N_Is Eq T1Env T2Env T1Val.
+  intros IHFwd Structure N_Is Eq T1Env T2Env T1Val.
   case_structure T2 in Eq with Structure. case T1.value.
   case T2.value.
     %lookup doesn't return
@@ -55,7 +55,7 @@ Extensible_Theorem value_unique_B : forall (T1 T2 : B) Env V,
    T2.value = V
 on T1.
  %greater
-  intros Structure Eq T1Env T2Env T1Val.
+  intros IHFwd Structure Eq T1Env T2Env T1Val.
   case_structure T2 in Eq with Structure. AEnv: case A.env.
   A1Env: case A1.env. A2Env: case A2.env. A3Env: case A3.env.
   Eq1: apply symmetry to H7. Eq2: apply symmetry to H8. clear H7 H8.
@@ -63,7 +63,7 @@ on T1.
   apply imp:host:value_unique_A to Eq2 A1Env A3Env H14. case T2.value.
   apply greater_integer_unique to H15 H21. search.
  %equal
-  intros Structure Eq T1Env T2Env T1Val.
+  intros IHFwd Structure Eq T1Env T2Env T1Val.
   case_structure T2 in Eq with Structure. AEnv: case A.env.
   A1Env: case A1.env. A2Env: case A2.env. A3Env: case A3.env.
   Eq1: apply symmetry to H7. Eq2: apply symmetry to H8. clear H7 H8.
@@ -83,7 +83,7 @@ on T1.
        %second one equal
         search.
  %and
-  intros IH1 IH2 Structure Eq T1Env T2Env T1Val.
+  intros IH1 IH2 IHFwd Structure Eq T1Env T2Env T1Val.
   case_structure T2 in Eq with Structure. BEnv: case B.env.
   B1Env: case B1.env. B2Env: case B2.env. B3Env: case B3.env.
   Eq1: apply symmetry to H7. Eq2: apply symmetry to H8. clear H7 H8.
@@ -94,7 +94,7 @@ on T1.
     %B.value = false
      apply IH1 to Eq1 BEnv B2Env H13. case T2.value. search.
  %or
-  intros IH1 IH2 Structure Eq T1Env T2Env T1Val.
+  intros IH1 IH2 IHFwd Structure Eq T1Env T2Env T1Val.
   case_structure T2 in Eq with Structure. BEnv: case B.env.
   B1Env: case B1.env. B2Env: case B2.env. B3Env: case B3.env.
   Eq1: apply symmetry to H7. Eq2: apply symmetry to H8. clear H7 H8.
@@ -105,11 +105,11 @@ on T1.
     %B.value = true
      apply IH1 to Eq1 BEnv B2Env H13. case T2.value. search.
  %bTrue
-  intros Structure Eq T1Env T2Env T1Val.
+  intros IHFwd Structure Eq T1Env T2Env T1Val.
   case_structure T2 in Eq with Structure.
   case T1.value. case T2.value. search.
  %bFalse
-  intros Structure Eq T1Env T2Env T1Val.
+  intros IHFwd Structure Eq T1Env T2Env T1Val.
   case_structure T2 in Eq with Structure.
   case T1.value. case T2.value. search.
 
@@ -118,21 +118,22 @@ Extensible_Theorem no_env__no_env_out : forall (T : C),
   T.env = <no value> -> T.env_out = <no value>
 on T.
  %noop
-  intros Structure TEnv. case T.env_out. search.
+  intros IHFwd Structure TEnv. case T.env_out. search.
  %seq
-  intros IH1 IH2 Structure TEnv. C1Env: case C1.env.
+  intros IH1 IH2 IHFwd Structure TEnv. C1Env: case C1.env.
     %C.env_out does not exist
      apply IH2 to C1Env. case T.env_out. search.
     %C.env_out exists
      CEnv: case C.env. apply IH1 to CEnv.
  %assign
-  intros Structure L_Is TEnv. case T.env_out.
+  intros IHFwd Structure L_Is TEnv. case T.env_out.
     %A.value does not exist
      search.
     %T.env does not exist
      search.
  %ifThenElse
-  intros IH1 IH2 Structure TEnv. CEnv: case C.env. apply IH1 to CEnv.
+  intros IH1 IH2 IHFwd Structure TEnv.
+  CEnv: case C.env. apply IH1 to CEnv.
   C1Env: case C1.env. apply IH2 to C1Env. case T.env_out.
     %B.value does not exist
      search.
@@ -141,7 +142,7 @@ on T.
     %B.value = false, C1.env_out does not exist
      search.
  %while
-  intros IH IH_SubWhile Structure TEnv. CEnv: case C.env.
+  intros IH IH_SubWhile IHFwd Structure TEnv. CEnv: case C.env.
   apply IH to CEnv. case T.env_out.
     %B.value = true, SubWhile.env_out does not exist
      search.
@@ -163,11 +164,11 @@ Extensible_Theorem env_out__unique__C : forall (T1 T2 : C) Env V,
    T2.env_out = V
 on T1.
  %noop
-  intros Structure Eq T1Env T2Env T1EnvOut.
+  intros IHFwd Structure Eq T1Env T2Env T1EnvOut.
   case_structure T2 in Eq with Structure. case T1.env_out.
   case T2.env_out. search.
  %seq
-  intros IH1 IH2 Structure Eq T1Env T2Env T1EnvOut.
+  intros IH1 IH2 IHFwd Structure Eq T1Env T2Env T1EnvOut.
   case_structure T2 in Eq with Structure.
   Eq1: apply symmetry to H7. Eq2: apply symmetry to H8. clear H7 H8.
   CEnv: case C.env. C2Env: case C2.env. case C1.env.
@@ -177,12 +178,12 @@ on T1.
      apply IH1 to Eq1 CEnv C2Env H13. case C3.env. case T1.env_out.
      apply IH2 to Eq2 H12 H15 H18. case T2.env_out. search.
  %assign
-  intros Structure L_Is Eq T1Env T2Env T1EnvOut. case T1.env_out.
+  intros IHFwd Structure L_Is Eq T1Env T2Env T1EnvOut. case T1.env_out.
   case_structure T2 in Eq with Structure. apply symmetry to H9.
   case A.env. case A1.env. apply value_unique_A to H13 H14 H16 H6.
   case T2.env_out. search.
  %ifThenElse
-  intros IH1 IH2 Structure Eq T1Env T2Env T1EnvOut.
+  intros IH1 IH2 IHFwd Structure Eq T1Env T2Env T1EnvOut.
   case_structure T2 in Eq with Structure. EqB: apply symmetry to H8.
   Eq1: apply symmetry to H9. Eq2: apply symmetry to H10.
   clear H8 H9 H10. BEnv: case B.env. B1Env: case B1.env.
@@ -195,7 +196,7 @@ on T1.
      apply value_unique_B to EqB BEnv B1Env H16.
      apply IH2 to Eq2 C1Env C3Env H17. case T2.env_out. search.
  %while
-  intros IH IH_SubWhile Structure Eq T1Env T2Env T1EnvOut.
+  intros IH IH_SubWhile IHFwd Structure Eq T1Env T2Env T1EnvOut.
   case_structure T2 in Eq with Structure.
   EqB: apply symmetry to H7. EqC: apply symmetry to H8. clear H7 H8.
   BEnv: case B.env. B1Env: case B1.env. case T1.env_out.

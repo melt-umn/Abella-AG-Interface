@@ -112,10 +112,12 @@ Extensible_Theorem
        T2.value = V on T1.
 %No Environment, No Value
  %intConst
-  intros Structure N_Is Eq T1Env T2Env T1Val. case T1.value.
+  intros IHFwd_NE_NV IHFwd_NE_V IHFwd_NV IHFwd_V
+         Structure N_Is Eq T1Env T2Env T1Val. case T1.value.
  %plus
-  intros IH1_NE_NV IH2_NE_NV IH1_NE_V IH2_NE_V IH1_NV IH2_NV
-         IH1_V IH2_V Structure Eq T1Env T2Env T1Val.
+  intros IH1_NE_NV IH2_NE_NV IHFwd_NE_NV IH1_NE_V IH2_NE_V
+         IHFwd_NE_V IH1_NV IH2_NV IHFwd_NV IH1_V IH2_V IHFwd_V
+         Structure Eq T1Env T2Env T1Val.
   case_structure T2 in Eq with Structure.
   Eq1: apply symmetry to H7. Eq2: apply symmetry to H8. clear H7 H8.
   EEnv: case E.env. E1Env: case E1.env. E2Env: case E2.env.
@@ -125,8 +127,9 @@ Extensible_Theorem
     %E1.value does not exist
      apply IH2_NE_NV to Eq2 _ _ _. case T2.value. search. search.
  %minus
-  intros IH1_NE_NV IH2_NE_NV IH1_NE_V IH2_NE_V IH1_NV IH2_NV
-         IH1_V IH2_V Structure Eq T1Env T2Env T1Val.
+  intros IH1_NE_NV IH2_NE_NV IHFwd_NE_NV IH1_NE_V IH2_NE_V
+         IHFwd_NE_V IH1_NV IH2_NV IHFwd_NV IH1_V IH2_V IHFwd_V
+         Structure Eq T1Env T2Env T1Val.
   case_structure T2 in Eq with Structure.
   Eq1: apply symmetry to H7. Eq2: apply symmetry to H8. clear H7 H8.
   EEnv: case E.env. E1Env: case E1.env. E2Env: case E2.env.
@@ -136,8 +139,9 @@ Extensible_Theorem
     %E1.value does not exist
      apply IH2_NE_NV to Eq2 _ _ _. case T2.value. search. search.
  %mult
-  intros IH1_NE_NV IH2_NE_NV IH1_NE_V IH2_NE_V IH1_NV IH2_NV
-         IH1_V IH2_V Structure Eq T1Env T2Env T1Val.
+  intros IH1_NE_NV IH2_NE_NV IHFwd_NE_NV IH1_NE_V IH2_NE_V
+         IHFwd_NE_V IH1_NV IH2_NV IHFwd_NV IH1_V IH2_V IHFwd_V
+         Structure Eq T1Env T2Env T1Val.
   case_structure T2 in Eq with Structure.
   Eq1: apply symmetry to H7. Eq2: apply symmetry to H8. clear H7 H8.
   case E.env. case E1.env. case E2.env. case E3.env. case T1.value.
@@ -146,8 +150,9 @@ Extensible_Theorem
     %E1.value does not exist
      apply IH2_NE_NV to Eq2 _ _ _. case T2.value. search. search.
  %letBind
-  intros IH1_NE_NV IH2_NE_NV IH1_NE_V IH2_NE_V IH1_NV IH2_NV
-         IH1_V IH2_V Structure L_Is Eq T1Env T2Env T1Val.
+  intros IH1_NE_NV IH2_NE_NV IHFwd_NE_NV IH1_NE_V IH2_NE_V
+         IHFwd_NE_V IH1_NV IH2_NV IHFwd_NV IH1_V IH2_V IHFwd_V
+         Structure L_Is Eq T1Env T2Env T1Val.
   case_structure T2 in Eq with Structure.
   Eq1: apply symmetry to H7. Eq2: apply symmetry to H8. clear H7 H8.
   case E.env. case E2.env. case E1.env.
@@ -162,41 +167,47 @@ Extensible_Theorem
         case T1.value. apply IH2_NE_NV to Eq2 _ _ _. case T2.value.
         search.
  %name
-  intros Structure L_Is Eq T1Env T2Env T1Val.
+  intros IHFwd_NE_NV IHFwd_NE_V IHFwd_NV IHFwd_V
+         Structure L_Is Eq T1Env T2Env T1Val.
   case_structure T2 in Eq with Structure.
   case T2.value. search.
 %No Environment, Value Exists
  %intConst
-  intros Structure N_Is Eq T1Env T2Env T1Val.
+  intros IHFwd_NE_NV IHFwd_NE_V IHFwd_NV IHFwd_V
+  Structure N_Is Eq T1Env T2Env T1Val.
   case_structure T2 in Eq with Structure.
   case T1.value. case T2.value. search.
  %plus
-  intros IH1_NE_NV IH2_NE_NV IH1_NE_V IH2_NE_V IH1_NV IH2_NV
-         IH1_V IH2_V Structure Eq T1Env T2Env T1Val.
+  intros IH1_NE_NV IH2_NE_NV IHFwd_NE_NV IH1_NE_V IH2_NE_V
+         IHFwd_NE_V IH1_NV IH2_NV IHFwd_NV IH1_V IH2_V IHFwd_V
+         Structure Eq T1Env T2Env T1Val.
   case_structure T2 in Eq with Structure.
   Eq1: apply symmetry to H7. Eq2: apply symmetry to H8. clear H7 H8.
   case E.env. case E1.env. case E2.env. case E3.env. case T1.value.
   apply IH1_NE_V to Eq1 _ _ _. apply IH2_NE_V to Eq2 _ _ _.
   case T2.value. apply plus_integer_unique to H23 H29. search.
  %minus
-  intros IH1_NE_NV IH2_NE_NV IH1_NE_V IH2_NE_V IH1_NV IH2_NV
-         IH1_V IH2_V Structure Eq T1Env T2Env T1Val.
+  intros IH1_NE_NV IH2_NE_NV IHFwd_NE_NV IH1_NE_V IH2_NE_V
+         IHFwd_NE_V IH1_NV IH2_NV IHFwd_NV IH1_V IH2_V IHFwd_V
+         Structure Eq T1Env T2Env T1Val.
   case_structure T2 in Eq with Structure.
   Eq1: apply symmetry to H7. Eq2: apply symmetry to H8. clear H7 H8.
   case E.env. case E1.env. case E2.env. case E3.env. case T1.value.
   apply IH1_NE_V to Eq1 _ _ _. apply IH2_NE_V to Eq2 _ _ _.
   case T2.value. apply minus_integer_unique to H23 H29. search.
  %mult
-  intros IH1_NE_NV IH2_NE_NV IH1_NE_V IH2_NE_V IH1_NV IH2_NV
-         IH1_V IH2_V Structure Eq T1Env T2Env T1Val.
+  intros IH1_NE_NV IH2_NE_NV IHFwd_NE_NV IH1_NE_V IH2_NE_V
+         IHFwd_NE_V IH1_NV IH2_NV IHFwd_NV IH1_V IH2_V IHFwd_V
+         Structure Eq T1Env T2Env T1Val.
   case_structure T2 in Eq with Structure.
   Eq1: apply symmetry to H7. Eq2: apply symmetry to H8. clear H7 H8.
   case E.env. case E1.env. case E2.env. case E3.env. case T1.value.
   apply IH1_NE_V to Eq1 _ _ _. apply IH2_NE_V to Eq2 _ _ _.
   case T2.value. apply multiply_integer_unique to H23 H29. search.
  %letBind
-  intros IH1_NE_NV IH2_NE_NV IH1_NE_V IH2_NE_V IH1_NV
-         IH2_NV IH1_V IH2_V Structure L_Is Eq T1Env T2Env T1Val.
+  intros IH1_NE_NV IH2_NE_NV IHFwd_NE_NV IH1_NE_V IH2_NE_V
+         IHFwd_NE_V IH1_NV IH2_NV IHFwd_NV IH1_V IH2_V IHFwd_V
+         Structure L_Is Eq T1Env T2Env T1Val.
   case_structure T2 in Eq with Structure.
   Eq1: apply symmetry to H7. Eq2: apply symmetry to H8. clear H7 H8.
   case E.env. case E2.env. case E1.env.
@@ -211,13 +222,16 @@ Extensible_Theorem
         case T1.value. apply IH2_NE_V to Eq2 _ _ _. case T2.value.
         search.
  %name
-  intros Structure L_Is Eq T1Env T2Env T1Val. case T1.value.
+  intros IHFwd_NE_NV IHFwd_NE_V IHFwd_NV IHFwd_V
+         Structure L_Is Eq T1Env T2Env T1Val. case T1.value.
 %No Value
  %intConst
-  intros Structure N_Is Eq. case T1.value.
+  intros IHFwd_NE_NV IHFwd_NE_V IHFwd_NV IHFwd_V
+         Structure N_Is Eq. case T1.value.
  %plus
-  intros IH1_NE_NV IH2_NE_NV IH1_NE_V IH2_NE_V
-         IH1_NV IH2_NV IH1_V IH2_V Structure Eq.
+  intros IH1_NE_NV IH2_NE_NV IHFwd_NE_NV IH1_NE_V IH2_NE_V
+         IHFwd_NE_V IH1_NV IH2_NV IHFwd_NV IH1_V IH2_V IHFwd_V
+         Structure Eq.
   case_structure T2 in Eq with Structure.
   case T1.value.
     %E.value does not exist
@@ -227,8 +241,9 @@ Extensible_Theorem
      case E1.env. case E3.env. apply symmetry to H11.
      apply IH2_NV to H22 _ _ _. case T2.value. search. search.
  %minus
-  intros IH1_NE_NV IH2_NE_NV IH1_NE_V IH2_NE_V
-         IH1_NV IH2_NV IH1_V IH2_V Structure Eq.
+  intros IH1_NE_NV IH2_NE_NV IHFwd_NE_NV IH1_NE_V IH2_NE_V
+         IHFwd_NE_V IH1_NV IH2_NV IHFwd_NV IH1_V IH2_V IHFwd_V
+         Structure Eq.
   case_structure T2 in Eq with Structure.
   case T1.value.
     %E.value does not exist
@@ -238,8 +253,9 @@ Extensible_Theorem
      case E1.env. case E3.env. apply symmetry to H11.
      apply IH2_NV to H22 _ _ _. case T2.value. search. search.
  %mult
-  intros IH1_NE_NV IH2_NE_NV IH1_NE_V IH2_NE_V
-         IH1_NV IH2_NV IH1_V IH2_V Structure Eq.
+  intros IH1_NE_NV IH2_NE_NV IHFwd_NE_NV IH1_NE_V IH2_NE_V
+         IHFwd_NE_V IH1_NV IH2_NV IHFwd_NV IH1_V IH2_V IHFwd_V
+         Structure Eq.
   case_structure T2 in Eq with Structure.
   case T1.value.
     %E.value does not exist
@@ -249,8 +265,9 @@ Extensible_Theorem
      case E1.env. case E3.env. apply symmetry to H11.
      apply IH2_NV to H22 _ _ _. case T2.value. search. search.
  %letBind
-  intros IH1_NE_NV IH2_NE_NV IH1_NE_V IH2_NE_V
-         IH1_NV IH2_NV IH1_V IH2_V Structure L_Is Eq.
+  intros IH1_NE_NV IH2_NE_NV IHFwd_NE_NV IH1_NE_V IH2_NE_V
+         IHFwd_NE_V IH1_NV IH2_NV IHFwd_NV IH1_V IH2_V IHFwd_V
+         Structure L_Is Eq.
   case_structure T2 in Eq with Structure. clear H13.
   Eq1: apply symmetry to H10. Eq2: apply symmetry to H11. clear H10 H11.
   case E.env. case E2.env. case E1.env.
@@ -265,7 +282,8 @@ Extensible_Theorem
         case H23. case H29. case H28. case H30. case T1.value.
         apply IH2_NV to Eq2 _ _ _. case T2.value. search.
  %name
-  intros Structure L_Is Eq. case_structure T2 in Eq with Structure.
+  intros IHFwd_NE_NV IHFwd_NE_V IHFwd_NV IHFwd_V
+         Structure L_Is Eq. case_structure T2 in Eq with Structure.
   case T1.value. case T2.value.
     %lookup doesn't return for T2
      search.
@@ -273,12 +291,14 @@ Extensible_Theorem
      assert exists Ret, lookup(Env2, L) = Ret. apply H12 to H16.
 %Value Exists
  %intConst
-  intros Structure N_Is Eq T1Env T2Env T1Val T2Val.
+  intros IHFwd_NE_NV IHFwd_NE_V IHFwd_NV IHFwd_V
+         Structure N_Is Eq T1Env T2Env T1Val T2Val.
   case_structure T2 in Eq with Structure.
   case T1.value. case T2.value. search.
  %plus
-  intros IH1_NE_NV IH2_NE_NV IH1_NE_V IH2_NE_V IH1_NV IH2_NV
-         IH1_V IH2_V Structure Eq T1Env T2Env T1Val T2Val.
+  intros IH1_NE_NV IH2_NE_NV IHFwd_NE_NV IH1_NE_V IH2_NE_V
+         IHFwd_NE_V IH1_NV IH2_NV IHFwd_NV IH1_V IH2_V IHFwd_V
+         Structure Eq T1Env T2Env T1Val T2Val.
   case_structure T2 in Eq with Structure.
   case E.env. case E1.env. case E2.env. case E3.env. case T1.value.
   Eq1: apply symmetry to H7. Eq2: apply symmetry to H8.
@@ -286,8 +306,9 @@ Extensible_Theorem
   apply attr_is to H22. apply attr_is to H24. case T2.value.
   apply plus_integer_unique to H23 H31. search.
  %minus
-  intros IH1_NE_NV IH2_NE_NV IH1_NE_V IH2_NE_V IH1_NV IH2_NV
-         IH1_V IH2_V Structure Eq T1Env T2Env T1Val T2Val.
+  intros IH1_NE_NV IH2_NE_NV IHFwd_NE_NV IH1_NE_V IH2_NE_V
+         IHFwd_NE_V IH1_NV IH2_NV IHFwd_NV IH1_V IH2_V IHFwd_V
+         Structure Eq T1Env T2Env T1Val T2Val.
   case_structure T2 in Eq with Structure.
   case E.env. case E1.env. case E2.env. case E3.env. case T1.value.
   Eq1: apply symmetry to H7. Eq2: apply symmetry to H8.
@@ -295,8 +316,9 @@ Extensible_Theorem
   apply attr_is to H22. apply attr_is to H21. case T2.value.
   apply minus_integer_unique to H23 H31. search.
  %mult
-  intros IH1_NE_NV IH2_NE_NV IH1_NE_V IH2_NE_V IH1_NV IH2_NV
-         IH1_V IH2_V Structure Eq T1Env T2Env T1Val T2Val.
+  intros IH1_NE_NV IH2_NE_NV IHFwd_NE_NV IH1_NE_V IH2_NE_V
+         IHFwd_NE_V IH1_NV IH2_NV IHFwd_NV IH1_V IH2_V IHFwd_V
+         Structure Eq T1Env T2Env T1Val T2Val.
   case_structure T2 in Eq with Structure.
   case E.env. case E1.env. case E2.env. case E3.env. case T1.value.
   Eq1: apply symmetry to H7. Eq2: apply symmetry to H8.
@@ -304,8 +326,9 @@ Extensible_Theorem
   apply attr_is to H22. apply attr_is to H21. case T2.value.
   apply multiply_integer_unique to H23 H31. search.
  %letBind
-  intros IH1_NE_NV IH2_NE_NV IH1_NE_V IH2_NE_V IH1_NV IH2_NV
-         IH1_V IH2_V Structure L_Is Eq T1Inv T2Env T1Val.
+  intros IH1_NE_NV IH2_NE_NV IHFwd_NE_NV IH1_NE_V IH2_NE_V
+         IHFwd_NE_V IH1_NV IH2_NV IHFwd_NV IH1_V IH2_V IHFwd_V
+         Structure L_Is Eq T1Inv T2Env T1Val.
   case_structure T2 in Eq with Structure.
   Eq1: apply symmetry to H7. Eq2: apply symmetry to H8. clear H7 H8.
   case E.env. case E2.env. case E1.env.
@@ -320,7 +343,8 @@ Extensible_Theorem
         case H20. case H26. case H25. case H27. case T1.value.
         apply IH2_V to Eq2 _ _ _. case T2.value. search.
  %name
-  intros Structure L_Is Eq T1Env T2Env T1Val T2Val.
+  intros IHFwd_NE_NV IHFwd_NE_V IHFwd_NV IHFwd_V
+         Structure L_Is Eq T1Env T2Env T1Val T2Val.
   case_structure T2 in Eq with Structure.
   case T1.value. case T2.value.
     %lookup does not return for T2
@@ -337,7 +361,7 @@ Extensible_Theorem value_unique__Root :
     V1 = V2
 on R1.
 %root
- intros Structure Eq R1Val R2Val.
+ intros IHFwd Structure Eq R1Val R2Val.
  case_structure R2 in Eq with Structure.
  apply symmetry to H6. case E.env. case E1.env. case R1.value.
  apply value_unique__Expr to H9 _ _ _. case R2.value. search.
@@ -349,7 +373,8 @@ Extensible_Theorem value_unique__no_value__Root :
     R2.value = <no value>
 on R1.
 %root
- intros Structure Eq R1Val. case_structure R2 in Eq with Structure.
+ intros IHFwd Structure Eq R1Val.
+ case_structure R2 in Eq with Structure.
  apply symmetry to H6. case E.env. case E1.env. case R1.value.
  apply value_unique__no_value__Expr to H9 _ _ _. case R2.value.
  search.
@@ -364,21 +389,21 @@ Extensible_Theorem valExists__implies__value__Expr :
       T.valExists = true -> exists V, T.value = V
 on T.
 %intConst
- intros Structure. case T.value. exists N. search.
+ intros IHFwd Structure. case T.value. exists N. search.
 %plus
- intros IH1 IH2 Structure. case E.knownNames. case E.env.
+ intros IH1 IH2 IHFwd Structure. case E.knownNames. case E.env.
  case E1.knownNames. case E1.env. case T.valExists.
  apply IH1 to _ _ _ _. apply IH2 to _ _ _ _. case T.value. search.
 %minus
- intros IH1 IH2 Structure. case E.knownNames. case E.env.
+ intros IH1 IH2 IHFwd Structure. case E.knownNames. case E.env.
  case E1.knownNames. case E1.env. case T.valExists.
  apply IH1 to _ _ _ _. apply IH2 to _ _ _ _. case T.value. search.
 %mult
- intros IH1 IH2 Structure. case E.knownNames. case E.env.
+ intros IH1 IH2 IHFwd Structure. case E.knownNames. case E.env.
  case E1.knownNames. case E1.env. case T.valExists.
  apply IH1 to _ _ _ _. apply IH2 to _ _ _ _. case T.value. search.
 %letBind
- intros IH1 IH2 Structure. case E.knownNames. case E1.knownNames.
+ intros IH1 IH2 IHFwd Structure. case E.knownNames. case E1.knownNames.
  case H14. case H15. case T.valExists. case T.value.
    %T.value = <no value>, E1.value = <no value>
     case E1.env.
@@ -395,7 +420,7 @@ on T.
    %T.value = Value, E1.value = Value
     search.
 %name
- intros Structure. case T.valExists.
+ intros IHFwd Structure. case T.valExists.
  apply calculator:contains__to__member to H10. apply H6 to H11.
  apply attr_is to H5. apply lookup__member to H13 H12.
  case T.value.
@@ -410,7 +435,8 @@ Extensible_Theorem valExists__implies__value__Root :
      R.valExists = true -> exists V, R.value = V
 on R.
 %root
- intros Structure. case R.valExists. case E.knownNames. case E.env.
+ intros IHFwd Structure. case R.valExists. case E.knownNames.
+ case E.env.
  apply calculator:valExists__implies__value__Expr to H7 H8 _ H6.
    %member assumption for Expr theorem
     intros Mem. case Mem.
@@ -428,9 +454,9 @@ Extensible_Theorem knownNames__implies__valExists__Expr :
      exists B, T.valExists = B
 on T.
 %intConst
- intros Structure. case T.valExists. search.
+ intros IHFwd Structure. case T.valExists. search.
 %plus
- intros IH1 IH2 Structure. case E.knownNames. case E1.knownNames.
+ intros IH1 IH2 IHFwd Structure. case E.knownNames. case E1.knownNames.
  case T.valExists.
    %T.valExists = E.valExists = <no value>
     apply IH1 to _.
@@ -441,7 +467,7 @@ on T.
    %T.valExists = false
     exists false. search.
 %minus
- intros IH1 IH2 Structure. case E.knownNames. case E1.knownNames.
+ intros IH1 IH2 IHFwd Structure. case E.knownNames. case E1.knownNames.
  case T.valExists.
    %T.valExists = E.valExists = <no value>
     apply IH1 to _.
@@ -452,7 +478,7 @@ on T.
    %T.valExists = false
     exists false. search.
 %mult
- intros IH1 IH2 Structure. case E.knownNames. case E1.knownNames.
+ intros IH1 IH2 IHFwd Structure. case E.knownNames. case E1.knownNames.
  case T.valExists.
    %T.valExists = E.valExists = <no value>
     apply IH1 to _.
@@ -463,7 +489,7 @@ on T.
    %T.valExists = false
     exists false. search.
 %letBind
- intros IH1 IH2 Structure. case E.knownNames. case E1.knownNames.
+ intros IH1 IH2 IHFwd Structure. case E.knownNames. case E1.knownNames.
  case T.valExists.
    %T.valExists = E.valExists = <no value>
     apply IH1 to _.
@@ -474,7 +500,7 @@ on T.
    %T.valExists = false
     exists false. search.
 %name
- intros Structure. case T.valExists.
+ intros IHFwd Structure. case T.valExists.
    %contains does not return
     apply attr_is to H4. apply contains__total to H8 H3.
     assert (exists B, contains(L, KnownNames1) = B).
@@ -487,7 +513,7 @@ Extensible_Theorem valExists__Root : forall (R : Root),
   exists B, R.valExists = B
 on R.
 %root
- intros Structure. case R.valExists.
+ intros IHFwd Structure. case R.valExists.
    %T.valExists = E.valExists = <no value>
     case E.knownNames.
     apply knownNames__implies__valExists__Expr to H6.
