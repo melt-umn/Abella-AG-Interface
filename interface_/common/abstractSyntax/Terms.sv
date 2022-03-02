@@ -191,6 +191,12 @@ nonterminal Term with
    usedNames,
    silverContext;
 
+--Easy equality check
+attribute compareTo, isEqual occurs on
+   Term, TermList, ParenthesizedArgs, ListContents, PairContents, Type;
+propagate compareTo, isEqual on
+   Term, TermList, ParenthesizedArgs, ListContents, PairContents, Type;
+
 abstract production applicationTerm
 top::Term ::= f::Term args::TermList
 {

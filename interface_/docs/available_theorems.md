@@ -16,7 +16,7 @@ convenience, these are sorted by types.
 
 ## Decorated Trees
 - `attr_unique` :  
-  `forall Ty (T : Ty) A V V', T.A = V -> T.A = V' -> V = V'`  
+  `forall Ty (Tree : Ty) A V V', Tree.A = V -> Tree.A = V' -> V = V'`  
   The `V` and `V'` variables may also be filled in with `<no value>`
   to show that it is impossible both to have a value and no value for
   the same attribute on the same tree.
@@ -249,7 +249,7 @@ convenience, these are sorted by types.
 - `is_list_member` :  
   `forall L E SubRel, is_list SubRel L -> member E L -> SubRel E`
 - `is_list_append` :  
-  `forall L E SubRel, is_list SubRel L -> member E L -> SubRel E`
+  `forall L1 L2 L3 SubRel, is_list SubRel L1 -> is_list SubRel L2 -> L1 ++ L2 = L3 -> is_list SubRel L3`
 - `head_unique` :  
   `forall L H1 H2, head(L) = H1 -> head(L) = H2 -> H1 = H2`
 - `tail_unique` :  

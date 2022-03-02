@@ -9,7 +9,8 @@ induction on 1. intros. case H1.
   %Subgoal 1
    search.
   %Subgoal 2
-   case H2. apply IH to H3 H5. apply is_list_member to H5 H3.
+   case H2. apply IH to H3 H5.
+   assert is_string N. backchain is_list_member.
    apply is_string_eq_or_not to H7 H4. case H8.
      %Subgoal 2.2
       search.
@@ -303,7 +304,9 @@ Extensible_Theorem
   case E.env. case E1.env. case E2.env. case E3.env. case T1.value.
   Eq1: apply symmetry to H7. Eq2: apply symmetry to H8.
   apply IH1_V to Eq1 _ _ _. apply IH2_V to Eq2 _ _ _.
-  apply attr_is to H22. apply attr_is to H24. case T2.value.
+  assert is_integer Value1.
+  backchain attr_is with A = value, Ty = Expr, Tree = E1.
+  apply attr_is to H24. case T2.value.
   apply plus_integer_unique to H23 H31. search.
  %minus
   intros IH1_NE_NV IH2_NE_NV IHFwd_NE_NV IH1_NE_V IH2_NE_V

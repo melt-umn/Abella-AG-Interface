@@ -8,12 +8,13 @@ grammar interface_:toAbella:abstractSyntax;
 -}
 
 
-function theorem__attr_unique
-Either<String String> ::=
+function apply_theorem__attr_unique
+Either<String [ProofCommand]> ::=
+   h::HHint depth::Maybe<Integer>
    args::[ApplyArg] withs::[(String, Term)] hyps::[(String, Metaterm)]
    silverContext::Decorated SilverContext
 {
-  --forall Ty (T : Ty) A V1 V2, T.A = V1 -> T.A = V2 -> V1 = V2
+  --forall Ty (Tree : Ty) A V1 V2, Tree.A = V1 -> Tree.A = V2 -> V1 = V2
 
   local nameH1::String = head(args).name;
   local findH1::Maybe<Metaterm> =
@@ -69,21 +70,108 @@ Either<String String> ::=
                    decorate tm2 with {silverContext = silverContext;} of
               | nameTerm(attr, _), nameTerm(ty, _)
                 when nameIsNonterminal(ty)->
-                right(accessUniqueThm(attr, ty))
+                right([applyTactic(h, depth,
+                          clearable(false, accessUniqueThm(attr, ty), []),
+                          args, filter(\ p::(String, Term) ->
+                                         p.1 != "A" && p.1 != "Ty", withs))])
               | _, _ ->
                 left("Could not find type of tree")
               end
             | _, _ -> left("Could not find type of tree")
             end
           | right((attr, ty)) ->
-            right(accessUniqueThm(attr, ty))
+            right([applyTactic(h, depth,
+                      clearable(false, accessUniqueThm(attr, ty), []),
+                      args, filter(\ p::(String, Term) ->
+                                     p.1 != "A" && p.1 != "Ty", withs))])
           | left(err) -> left(err)
           end;
 }
 
 
-function theorem__attr_is
-Either<String ProofCommand> ::=
+function backchain_theorem__attr_unique
+Either<String [ProofCommand]> ::=
+   depth::Maybe<Integer> withs::[(String, Term)] hyps::[(String, Metaterm)]
+   silverContext::Decorated SilverContext
+{
+  --forall Ty (Tree : Ty) A V1 V2, Tree.A = V1 -> Tree.A = V2 -> V1 = V2
+
+  local ty::Either<String String> =
+        case lookup("Ty", withs) of
+        | just(nameTerm(tyName, _)) ->
+          case findNonterminal(tyName, silverContext) of
+          | [fullTy] -> right(fullTy)
+          | [] -> left("Unknown nonterminal type " ++ tyName)
+          | l ->
+            left("Indeterminate nonterminal type " ++ tyName ++
+                 "; could be [" ++ implode(", ", l) ++ "]")
+          end
+        | _ ->
+          case lookup("T", withs) of
+          | just(nameTerm(tree, _)) ->
+            foldr(\ hyp::(String, Metaterm) rest::Either<String String> ->
+                    case rest, hyp of
+                    | right(_), _ -> rest
+                    | _, (_, termMetaterm(
+                                applicationTerm(nameTerm(rel, _), args), _))
+                      when isAccessRelation(rel) ->
+                      case args.argList of
+                      | nameTerm(t, _)::_ when t == tree ->
+                        right(accessRelationToType(rel))
+                      | _ -> rest
+                      end
+                    | _, (_, termMetaterm(
+                                applicationTerm(nameTerm(rel, _), args), _))
+                      when isWpdTypeName(rel) ->
+                      case args.argList of
+                      | nameTerm(t, _)::_ when t == tree ->
+                        right(wpdToTypeName(rel))
+                      | _ -> rest
+                      end
+                    | _, _ -> rest
+                    end,
+                  left("Could not find instantiation for Ty"), hyps)
+          | _ -> left("Could not find instantiation for Ty")
+          end
+        end;
+  local attr::Either<String String> =
+        case lookup("A", withs), ty of
+        | just(nameTerm(a, _)), right(tyName) ->
+          case findAttrOccurrences(a, silverContext) of
+          | [] -> left("Unknown attribute " ++ a)
+          | l -> 
+            case filter(\ p::(String, [(Type, Type)]) ->
+                          contains(
+                             nameType(nameToColonNonterminalName(tyName)),
+                             map(fst, p.2)),
+                        l) of
+            | [] -> left("Attribute " ++ a ++ " does not occur on type " ++ tyName)
+            | [(fullA, _)] -> right(fullA)
+            | l -> left("Undetirimend attribute " ++ a ++ "; could be [" ++
+                        implode(", ", map(fst, l)) ++ "]")
+            end
+          end
+        | _, _ -> left("Could not find instantiation for attribute")
+        end;
+
+  return
+     case attr, ty of
+     | right(attrName), right(tyName) ->
+       right(
+          [backchainTactic(depth,
+              clearable(false, accessUniqueThm(attrName, tyName), []),
+              filter(\ p::(String, Term) -> p.1 != "A" && p.1 != "Ty",
+                     withs))])
+     | left(s), _ -> left(s)
+     | _, left(s) -> left(s)
+     end;
+}
+
+
+
+
+function apply_theorem__attr_is
+Either<String [ProofCommand]> ::=
    h::HHint depth::Maybe<Integer> args::[ApplyArg]
    withs::[(String, Term)] hyps::[(String, Metaterm)]
    silverContext::Decorated SilverContext
@@ -123,9 +211,9 @@ Either<String ProofCommand> ::=
                    decorate tm2 with {silverContext = silverContext;} of
               | nameTerm(attr, _), nameTerm(ty, _)
                 when nameIsNonterminal(ty)->
-                right(applyTactic(h, depth,
-                       clearable(false, accessIsThm(attr, ty), []),
-                       hypApplyArg("_", [])::args, cleanedWiths))
+                right([applyTactic(h, depth,
+                        clearable(false, accessIsThm(attr, ty), []),
+                        hypApplyArg("_", [])::args, cleanedWiths)])
               | _, _ ->
                 left("Could not find type of tree")
               end
@@ -133,9 +221,90 @@ Either<String ProofCommand> ::=
               left("Could not find type of tree")
             end
           | just((attr, ty)) ->
-            right(applyTactic(h, depth,
-                     clearable(false, accessIsThm(attr, ty), []),
-                     hypApplyArg("_", [])::args, cleanedWiths))
+            right([applyTactic(h, depth,
+                      clearable(false, accessIsThm(attr, ty), []),
+                      hypApplyArg("_", [])::args, cleanedWiths)])
           end;
+}
+
+
+function backchain_theorem__attr_is
+Either<String [ProofCommand]> ::=
+   depth::Maybe<Integer> withs::[(String, Term)]
+   hyps::[(String, Metaterm)] conclusion::Metaterm
+   silverContext::Decorated SilverContext
+{
+  --forall Ty (T : Ty) A V, T.A = V -> is_<Ty> V
+
+  local ty::Either<String String> =
+        case lookup("Ty", withs) of
+        | just(nameTerm(tyName, _)) ->
+          case findNonterminal(tyName, silverContext) of
+          | [fullTy] -> right(fullTy)
+          | [] -> left("Unknown nonterminal type " ++ tyName)
+          | l ->
+            left("Indeterminate nonterminal type " ++ tyName ++
+                 "; could be [" ++ implode(", ", l) ++ "]")
+          end
+        | _ ->
+          case lookup("T", withs) of
+          | just(nameTerm(tree, _)) ->
+            foldr(\ hyp::(String, Metaterm) rest::Either<String String> ->
+                    case rest, hyp of
+                    | right(_), _ -> rest
+                    | _, (_, termMetaterm(
+                                applicationTerm(nameTerm(rel, _), args), _))
+                      when isAccessRelation(rel) ->
+                      case args.argList of
+                      | nameTerm(t, _)::_ when t == tree ->
+                        right(accessRelationToType(rel))
+                      | _ -> rest
+                      end
+                    | _, (_, termMetaterm(
+                                applicationTerm(nameTerm(rel, _), args), _))
+                      when isWpdTypeName(rel) ->
+                      case args.argList of
+                      | nameTerm(t, _)::_ when t == tree ->
+                        right(wpdToTypeName(rel))
+                      | _ -> rest
+                      end
+                    | _, _ -> rest
+                    end,
+                  left("Could not find instantiation for Ty"), hyps)
+          | _ -> left("Could not find instantiation for Ty")
+          end
+        end;
+  local attr::Either<String String> =
+        case lookup("A", withs), ty of
+        | just(nameTerm(a, _)), right(tyName) ->
+          case findAttrOccurrences(a, silverContext) of
+          | [] -> left("Unknown attribute " ++ a)
+          | l -> 
+            case filter(\ p::(String, [(Type, Type)]) ->
+                          contains(
+                             nameType(nameToColonNonterminalName(tyName)),
+                             map(fst, p.2)),
+                        l) of
+            | [] -> left("Attribute " ++ a ++ " does not occur on type " ++ tyName)
+            | [(fullA, _)] -> right(fullA)
+            | l -> left("Undetirimend attribute " ++ a ++ "; could be [" ++
+                        implode(", ", map(fst, l)) ++ "]")
+            end
+          end
+        | _, _ -> left("Could not find instantiation for attribute")
+        end;
+
+  return
+     case attr, ty of
+     | right(attrName), right(tyName) ->
+       right([backchainTactic(depth,
+                 clearable(false,
+                    accessIsThm(attrName,
+                       nameToNonterminalName(tyName)), []),
+                 filter(\ p::(String, Term) ->
+                          p.1 != "A" && p.1 != "Ty", withs))])
+     | left(s), _ -> left(s)
+     | _, left(s) -> left(s)
+     end;
 }
 

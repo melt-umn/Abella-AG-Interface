@@ -48,9 +48,6 @@ the implementation details as described above.
 
 # Todo
 
-- Backchain doesn't have much of anything set up---no apparent error
-  checking, no special theorems.  It should.
-
 
 
 

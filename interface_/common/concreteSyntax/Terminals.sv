@@ -63,8 +63,8 @@ terminal SilverAnd_t  '&&'   lexer classes {TOKEN}, precedence=4, association=le
 terminal SilverNot_t  '!'    lexer classes {TOKEN}, precedence=5;
 terminal Tilde_t      '~'    lexer classes {TOKEN};
 --Attributes not having any value
-terminal No_t         'no'      lexer classes {TOKEN};
-terminal Value_t      'value'   lexer classes {TOKEN};
+terminal No_t         'no';
+terminal Value_t      'value';
 
 
 ignore terminal Whitespace_t /[\ \t\n\r]+/;

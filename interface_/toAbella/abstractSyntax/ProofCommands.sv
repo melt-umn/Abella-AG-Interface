@@ -221,43 +221,27 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> theorem::Clearable
   local err_trans::Either<String [ProofCommand]> =
       case foundTheorem of
       | just(("silver:core:is_list_member", _)) ->
-        case theorem__is_list_member(h, depth, args, withs,
-                top.translatedState.hypList, top.silverContext) of
-        | right(prf) -> right(prf)
-        | left(err) -> left(err)
-        end
+        apply_theorem__is_list_member(h, depth, args, withs,
+           top.translatedState.hypList, top.silverContext)
       | just(("silver:core:is_list_append", _)) ->
-        case theorem__is_list_append(h, depth, args, withs,
-                top.translatedState.hypList, top.silverContext) of
-        | right(prf) -> right(prf)
-        | left(err) -> left(err)
-        end
+        apply_theorem__is_list_append(h, depth, args, withs,
+           top.translatedState.hypList, top.silverContext)
       | just(("silver:core:symmetry", _)) ->
-        case theorem__symmetry(h, depth, args,
-                map(\ p::(String, Term) ->
-                      (p.1, decorate p.2 with
-                            {knownTrees =
-                             top.currentState.state.gatheredTrees;
-                             silverContext = top.silverContext;}.translation),
-                    withs),
-                top.currentState.state.hypList,
-                top.silverContext) of
-        | right(prf) -> right(prf)
-        | left(err) -> left(err)
-        end
+        apply_theorem__symmetry(h, depth, args,
+           map(\ p::(String, Term) ->
+                 (p.1, decorate p.2 with
+                       {knownTrees =
+                        top.currentState.state.gatheredTrees;
+                        silverContext = top.silverContext;}.translation),
+               withs),
+           top.currentState.state.hypList,
+           top.silverContext)
       | just(("silver:core:attr_unique", _)) ->
-        case theorem__attr_unique(args, withs,
-                top.currentState.state.hypList, top.silverContext) of
-        | right(thm) ->
-          right([applyTactic(h, depth, clearable(false, thm, []), args, [])])
-        | left(err) -> left(err)
-        end
+        apply_theorem__attr_unique(h, depth, args, withs,
+           top.currentState.state.hypList, top.silverContext)
       | just(("silver:core:attr_is", _)) ->
-        case theorem__attr_is(h, depth, args, withs,
-                top.currentState.state.hypList, top.silverContext) of
-        | right(thm) -> right([thm])
-        | left(err) -> left(err)
-        end
+        apply_theorem__attr_is(h, depth, args, withs,
+           top.currentState.state.hypList, top.silverContext)
       | just((_, _)) ->
         right([applyTactic(h, depth, theorem.translation, expandedArgs,
                  map(\ p::Pair<String Term> ->
@@ -290,18 +274,66 @@ top::ProofCommand ::= depth::Maybe<Integer> theorem::Clearable withs::[Pair<Stri
   local withsString::String =
      if null(withs)
      then ""
-     else "with " ++ buildWiths(withs);
+     else " with " ++ buildWiths(withs);
   top.pp = "backchain " ++ depthString ++ theorem.pp ++ withsString ++ ".  ";
 
+  top.errors <-
+      case theorem.errors, err_trans of
+      | [], left(err) -> [errorMsg(err)]
+      | _, _ -> []
+      end;
+  top.errors <-
+      if indexOf("$", theorem.name) >= 0
+      then [errorMsg("Identifiers cannot contain \"$\"")]
+      else [];
+
   top.translation =
-      [backchainTactic(depth, theorem.translation,
-          map(\ p::Pair<String Term> ->
-                pair(p.fst,
-                     decorate p.snd with
-                       {knownTrees = top.currentState.state.gatheredTrees;
-                        silverContext = top.silverContext;
-                       }.translation),
-              withs))];
+      case err_trans of
+      | left(err) ->
+        error("Should not access translation with errors (backchainTactic)")
+      | right(prf) -> prf
+      end;
+
+  local foundTheorem::Maybe<(String, Metaterm)> =
+        case findAssociated(theorem.name, top.currentState.state.hypList) of
+        | just(mt) -> just((theorem.name, mt))
+        | nothing() ->
+          case findTheorem(theorem.name, top.currentState) of
+          | [(name, mt)] -> just((name, mt))
+          | _ -> nothing()
+          end
+        end;
+  local transWiths::[(String, Term)] =
+        map(\ p::(String, Term) ->
+              (p.1, decorate p.2 with {
+                       knownTrees =
+                          top.currentState.state.gatheredTrees;
+                       silverContext =
+                          top.silverContext;}.translation),
+            withs);
+  local err_trans::Either<String [ProofCommand]> =
+      case foundTheorem of
+      | just(("silver:core:is_list_member", _)) ->
+        backchain_theorem__is_list_member(depth, transWiths,
+           top.currentState.state.goal.fromJust, top.silverContext)
+      | just(("silver:core:is_list_append", _)) ->
+        backchain_theorem__is_list_append(depth, transWiths,
+           top.currentState.state.goal.fromJust, top.silverContext)
+      | just(("silver:core:symmetry", _)) ->
+        backchain_theorem__symmetry(depth, transWiths,
+           top.currentState.state.goal.fromJust, top.silverContext)
+      | just(("silver:core:attr_unique", _)) ->
+        backchain_theorem__attr_unique(depth, transWiths,
+           top.currentState.state.hypList, top.silverContext)
+      | just(("silver:core:attr_is", _)) ->
+        backchain_theorem__attr_is(depth, transWiths,
+           top.currentState.state.hypList,
+           top.currentState.state.goal.fromJust, top.silverContext)
+      | just((_, _)) ->
+        right([backchainTactic(depth, theorem.translation,
+                               transWiths)])
+      | nothing() -> left("Unknown lemma or hypothesis in application")
+      end;
 
   top.shouldClean = true;
 }

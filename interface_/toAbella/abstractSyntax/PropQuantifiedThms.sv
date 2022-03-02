@@ -10,22 +10,13 @@ grammar interface_:toAbella:abstractSyntax;
 -}
 
 
-function theorem__is_list_member
+function apply_theorem__is_list_member
 Either<String [ProofCommand]> ::=
    h::HHint depth::Maybe<Integer> args::[ApplyArg] withs::[(String, Term)]
    --The hypotheses in the current context
    hyps::[(String, Metaterm)]
    silverContext::Decorated SilverContext
 {
-  --forall L E, is_list subrel L -> member E L -> subrel E
-
-  local name_Assert::String = "$Assert_" ++ toString(genInt());
-  local name_IH::String = "$IH_" ++ toString(genInt());
-  local name_H1::String = "$H1_" ++ toString(genInt());
-  local name_H2::String = "$H2_" ++ toString(genInt());
-  local name_H3::String = "$H3_" ++ toString(genInt());
-  local name_H4::String = "$H4_" ++ toString(genInt());
-
   --The appropriate subrelation is either in the first argument with
   --is_list or as an argument under args
   local subrel::Term =
@@ -49,6 +40,99 @@ Either<String [ProofCommand]> ::=
           end
         | _ -> error("Wrong number of args to is_list_member")
         end;
+
+  local errorMsg::Maybe<String> =
+        case args of
+        | [arg1, _] ->
+          case get_arg_hyp_metaterm(arg1, hyps) of
+          | just(mt) ->
+            case get_is_list_subrel_metaterm(mt, silverContext) of
+            | just(subrel) -> nothing()
+            | nothing() -> 
+              case findAssociated("SubRel", withs) of
+              | just(subrel) -> nothing()
+              | nothing() ->
+                just("Could not find an instantiation for SubRel in is_list_member")
+              end
+            end
+          | nothing() ->
+            if arg1.name == "_"
+            then case findAssociated("SubRel", withs) of
+                 | just(subrel) -> nothing()
+                 | nothing() ->
+                   just("Could not find an instantiation for SubRel in is_list_member")
+                 end
+            else just("Could not find hypothesis or lemma " ++ arg1.name)
+          end
+        | _ -> just("is_list_member expects 2 arguments but has " ++
+                    toString(length(args)))
+        end;
+
+  local prfName::([ProofCommand], String) =
+        theorem__is_list_member(subrel);
+
+  return
+     case errorMsg of
+     | just(str) -> left(str)
+     | nothing() ->
+       right(prfName.1 ++
+             [applyTactic(h, depth, clearable(false, prfName.2, []), args,
+                 --SubRel isn't valid for this assertion
+                 filter(\ p::(String, Term) -> p.fst != "SubRel", withs))])
+     end;
+}
+
+
+function backchain_theorem__is_list_member
+Either<String [ProofCommand]> ::=
+   depth::Maybe<Integer> withs::[(String, Term)] conclusion::Metaterm
+   silverContext::Decorated SilverContext
+{
+  local subrel::Term =
+        case findAssociated("SubRel", withs) of
+        | just(subrel) -> subrel
+        | nothing() ->
+          case conclusion of
+          | termMetaterm(applicationTerm(subrel, _), _) -> subrel
+          | _ -> error("No instance for subrel")
+          end
+        end;
+
+  local errorMsg::Maybe<String> =
+        case conclusion of
+        | termMetaterm(applicationTerm(subrel, _), _) -> nothing()
+        | _ ->
+          just("Unification failure:  Conclusion does not match " ++
+               "theorem conclusion")
+        end;
+
+  local prfName::([ProofCommand], String) =
+        theorem__is_list_member(subrel);
+
+  return
+     case errorMsg of
+     | just(str) -> left(str)
+     | nothing() ->
+       right(prfName.1 ++
+             [backchainTactic(depth, clearable(false, prfName.2, []),
+                 --SubRel isn't valid for this assertion
+                 filter(\ p::(String, Term) -> p.fst != "SubRel", withs))])
+     end;
+}
+
+
+function theorem__is_list_member
+([ProofCommand], String) ::= subrel::Term
+{
+  --forall L E, is_list subrel L -> member E L -> subrel E
+
+  local name_Assert::String = "$Assert_" ++ toString(genInt());
+  local name_IH::String = "$IH_" ++ toString(genInt());
+  local name_H1::String = "$H1_" ++ toString(genInt());
+  local name_H2::String = "$H2_" ++ toString(genInt());
+  local name_H3::String = "$H3_" ++ toString(genInt());
+  local name_H4::String = "$H4_" ++ toString(genInt());
+
   local theoremStmt::Metaterm =
         --forall L E,
         bindingMetaterm(
@@ -84,68 +168,22 @@ Either<String [ProofCommand]> ::=
            --Subgoal 2.1
            searchTactic(),
            --Subgoal 2.2
-           backchainTactic(nothing(), clearable(false, name_IH, []), []),
-             --applyTactic(noHint(), nothing(), clearable(false, name_IH, []),
-             --     [hypApplyArg(name_H1, []), hypApplyArg(name_H4, [])], []),
-             --searchTactic(),
-       --End assertion proof
-       applyTactic(h, depth, clearable(false, name_Assert, []), args,
-                   --SubRel isn't valid for this assertion
-                   filter(\ p::(String, Term) -> p.fst != "SubRel", withs))
+           backchainTactic(nothing(), clearable(false, name_IH, []), [])
      ];
 
-
-  local errorMsg::Maybe<String> =
-        case args of
-        | [arg1, _] ->
-          case get_arg_hyp_metaterm(arg1, hyps) of
-          | just(mt) ->
-            case get_is_list_subrel_metaterm(mt, silverContext) of
-            | just(subrel) -> nothing()
-            | nothing() -> 
-              case findAssociated("SubRel", withs) of
-              | just(subrel) -> nothing()
-              | nothing() ->
-                just("Could not find an instantiation for SubRel in is_list_member")
-              end
-            end
-          | nothing() ->
-            if arg1.name == "_"
-            then case findAssociated("SubRel", withs) of
-                 | just(subrel) -> nothing()
-                 | nothing() ->
-                   just("Could not find an instantiation for SubRel in is_list_member")
-                 end
-            else just("Could not find hypothesis or lemma " ++ arg1.name)
-          end
-        | _ -> just("is_list_member expects 2 arguments but has " ++
-                    toString(length(args)))
-        end;
-
-  return
-     case errorMsg of
-     | just(str) -> left(str)
-     | nothing() -> right(proof)
-     end;
+  return (proof, name_Assert);
 }
 
 
-function theorem__is_list_append
+
+
+function apply_theorem__is_list_append
 Either<String [ProofCommand]> ::=
    h::HHint depth::Maybe<Integer> args::[ApplyArg] withs::[(String, Term)]
    --The hypotheses in the current context
    hyps::[(String, Metaterm)]
    silverContext::Decorated SilverContext
 {
-  --forall L E, is_list subrel L -> member E L -> subrel E
-  
-  local name_Assert::String = "$Assert_" ++ toString(genInt());
-  local name_IH::String = "$IH_" ++ toString(genInt());
-  local name_H1::String = "$H1_" ++ toString(genInt()) ++ "a";
-  local name_H2::String = "$H2_" ++ toString(genInt()) ++ "b";
-  local name_H3::String = "$H3_" ++ toString(genInt()) ++ "c";
-  local name_H4::String = "$H4_" ++ toString(genInt()) ++ "d";
-  local name_H5::String = "$H5_" ++ toString(genInt()) ++ "e";
 
   --The appropriate subrelation is either in the first argument with
   --is_list or as an argument under args
@@ -156,12 +194,108 @@ Either<String [ProofCommand]> ::=
           case get_arg_hyp_metaterm(arg1, hyps), get_arg_hyp_metaterm(arg2, hyps),
                findAssociated("SubRel", withs) of
           | _, _, just(subrel) -> subrel
-          | just(mt), _, _ when get_is_list_subrel_metaterm(mt, silverContext) matches just(subrel) -> subrel
-          | _, just(mt), _ when get_is_list_subrel_metaterm(mt, silverContext) matches just(subrel) -> subrel
+          | just(mt), _, _
+            when get_is_list_subrel_metaterm(mt, silverContext) matches
+                 just(subrel) -> subrel
+          | _, just(mt), _
+            when get_is_list_subrel_metaterm(mt, silverContext) matches
+                 just(subrel) -> subrel
           | _, _, _ -> error("Should not access this")
           end
         | _ -> error("Wrong number of args to is_list_append")
         end;
+
+  local errorMsg::Maybe<String> =
+        case args of
+        | [arg1, arg2, _] ->
+          case get_arg_hyp_metaterm(arg1, hyps), get_arg_hyp_metaterm(arg2, hyps),
+               findAssociated("SubRel", withs) of
+          | _, _, just(subrel) -> nothing()
+          | just(mt), _, _
+            when get_is_list_subrel_metaterm(mt, silverContext) matches
+                 just(subrel) -> nothing()
+          | _, just(mt), _
+            when get_is_list_subrel_metaterm(mt, silverContext) matches
+                 just(subrel) -> nothing()
+          | nothing(), _, _ when arg1.name != "_" ->
+            just("Could not find hypothesis or lemma " ++ arg1.name)
+          | _, nothing(), _ when arg1.name != "_" ->
+            just("Could not find hypothesis or lemma " ++ arg2.name)
+          | _, _, _ ->
+            just("Could not find an instantiation for SubRel in is_list_append")
+          end
+        | _ -> just("is_list_append expects 2 arguments but was given " ++
+                    toString(length(args)))
+        end;
+
+  local prfName::([ProofCommand], String) =
+        theorem__is_list_append(subrel);
+
+  return
+     case errorMsg of
+     | just(str) -> left(str)
+     | nothing() ->
+       right(prfName.1 ++
+             [applyTactic(h, depth, clearable(false, prfName.2, []), args,
+                 --SubRel isn't valid for this assertion
+                 filter(\ p::(String, Term) -> p.fst != "SubRel", withs))])
+     end;
+}
+
+
+function backchain_theorem__is_list_append
+Either<String [ProofCommand]> ::=
+   depth::Maybe<Integer> withs::[(String, Term)] conclusion::Metaterm
+   silverContext::Decorated SilverContext
+{
+  local subrel::Term =
+        case lookup("SubRel", withs) of
+        | just(subrel) -> subrel
+        | nothing() ->
+          case get_is_list_subrel_metaterm(conclusion, silverContext) of
+          | just(subrel) -> subrel
+          | nothing() -> error("Could not find SubRel")
+          end
+        end;
+
+  local errorMsg::Maybe<String> =
+        case lookup("SubRel", withs),
+             get_is_list_subrel_metaterm(conclusion, silverContext) of
+        | just(s1), just(s2) when s1 != s2 ->
+          just("Unification failure for SubRel")
+        | nothing(), nothing() ->
+          just("Could not identify instantiation for SubRel")
+        | _, _ -> nothing()
+        end;
+
+  local prfName::([ProofCommand], String) =
+        theorem__is_list_append(subrel);
+
+  return
+     case errorMsg of
+     | just(str) -> left(str)
+     | nothing() ->
+       right(prfName.1 ++
+             [backchainTactic(depth, clearable(false, prfName.2, []),
+                 filter(\ p::(String, Term) -> p.1 != "SubRel",
+                        withs))])
+     end;
+}
+
+
+function theorem__is_list_append
+([ProofCommand], String) ::= subrel::Term
+{
+  --forall L1 L2 L3, is_list subrel L1 -> is_list subrel L2 -> L1 ++ L2 = L3 -> is_list subrel L3
+  
+  local name_Assert::String = "$Assert_" ++ toString(genInt());
+  local name_IH::String = "$IH_" ++ toString(genInt());
+  local name_H1::String = "$H1_" ++ toString(genInt()) ++ "a";
+  local name_H2::String = "$H2_" ++ toString(genInt()) ++ "b";
+  local name_H3::String = "$H3_" ++ toString(genInt()) ++ "c";
+  local name_H4::String = "$H4_" ++ toString(genInt()) ++ "d";
+  local name_H5::String = "$H5_" ++ toString(genInt()) ++ "e";
+
   local theoremStmt::Metaterm =
         --forall L1 L2 L3,
         bindingMetaterm(
@@ -206,39 +340,13 @@ Either<String [ProofCommand]> ::=
          applyTactic(noHint(), nothing(), clearable(false, name_IH, []),
                      [hypApplyArg(name_H4 ++ "1", []), hypApplyArg(name_H2, []),
                       hypApplyArg(name_H5, [])], []),
-         searchTactic(),
-       --End assertion proof
-       applyTactic(h, depth, clearable(false, name_Assert, []), args,
-                   --SubRel isn't valid for this assertion
-                   filter(\ p::(String, Term) -> p.fst != "SubRel", withs))
+         searchTactic()
      ];
 
-
-  local errorMsg::Maybe<String> =
-        case args of
-        | [arg1, arg2, _] ->
-          case get_arg_hyp_metaterm(arg1, hyps), get_arg_hyp_metaterm(arg2, hyps),
-               findAssociated("SubRel", withs) of
-          | _, _, just(subrel) -> nothing()
-          | just(mt), _, _ when get_is_list_subrel_metaterm(mt, silverContext) matches just(subrel) -> nothing()
-          | _, just(mt), _ when get_is_list_subrel_metaterm(mt, silverContext) matches just(subrel) -> nothing()
-          | nothing(), _, _ when arg1.name != "_" ->
-            just("Could not find hypothesis or lemma " ++ arg1.name)
-          | _, nothing(), _ when arg1.name != "_" ->
-            just("Could not find hypothesis or lemma " ++ arg2.name)
-          | _, _, _ ->
-            just("Could not find an instantiation for SubRel in is_list_append")
-          end
-        | _ -> just("is_list_append expects 2 arguments but was given " ++
-                    toString(length(args)))
-        end;
-
-  return
-     case errorMsg of
-     | just(str) -> left(str)
-     | nothing() -> right(proof)
-     end;
+  return (proof, name_Assert);
 }
+
+
 
 
 --Try to find the subrelation term for is_list in a given metaterm
@@ -265,19 +373,13 @@ Maybe<Term> ::= tm::Metaterm silverContext::Decorated SilverContext
   the user as equality, we need to figure out the correct theorem to
   actually use, which requires this to be a fake theorem.
 -}
-function theorem__symmetry
+function apply_theorem__symmetry
 Either<String [ProofCommand]> ::=
    h::HHint depth::Maybe<Integer> args::[ApplyArg] withs::[(String, Term)]
    --The hypotheses in the current context
    hyps::[(String, Metaterm)]
    silverContext::Decorated SilverContext
 {
-  --Theorem symmetry[A] : forall (A B : A), A = B -> B = A
-
-  local num::String = toString(genInt());
-  local name_Assert::String = "$Assert_" ++ num;
-  local hyp1::String = "$Hyp_" ++ num;
-
   local trms::(Term, Term) =
         case get_arg_hyp_metaterm(head(args), hyps),
              findAssociated("A", withs),
@@ -371,31 +473,6 @@ Either<String [ProofCommand]> ::=
         end
       | _ -> nothing()
       end;
-  local proof::[ProofCommand] =
-        if isNt
-        then [
-              applyTactic(h, depth,
-                 clearable(false, typeToStructureEq_Symm(tyNT.fromJust), []),
-                 args, [("T1", trms.1), ("T2", trms.2)])
-             ]
-        else [
-              assertTactic(
-                 nameHint(name_Assert), nothing(),
-                 bindingMetaterm(
-                    forallBinder(),
-                    [("$A" ++ num, nothing()), ("$B" ++ num, nothing())],
-                    eqMetaterm(
-                       nameTerm("$A" ++ num, nothing()),
-                       nameTerm("$B" ++ num, nothing())))),
-              --prove assertion
-              introsTactic([hyp1]),
-              caseTactic(noHint(), hyp1, false),
-              searchTactic(),
-              --use assertion
-              applyTactic(h, depth,
-                 clearable(false, name_Assert, []), args,
-                 [("$A" ++ num, trms.1), ("$B" ++ num, trms.2)])
-             ];
 
   local errorMsg::Maybe<String> =
         case args of
@@ -461,13 +538,128 @@ Either<String [ProofCommand]> ::=
                     toString(length(args)))
         end;
 
+  local prfNames::([ProofCommand], String, String, String) =
+        theorem__symmetry(isNt, tyNT);
+
   return
      case errorMsg of
      | just(str) -> left(str)
      | nothing() ->
        if (isNt && tyNT.isJust) || !isNt
-       then right(proof)
+       then right(prfNames.1 ++
+                  [applyTactic(h, depth,
+                      clearable(false, prfNames.2, []), args,
+                      map(\ p::(String, Term) ->
+                            if p.1 == "A" then (prfNames.3, p.2)
+                            else if p.1 == "B" then (prfNames.4, p.2)
+                            else p, withs))])
        else left("Could not determine tree type for symmetry")
      end;
+}
+
+
+function backchain_theorem__symmetry
+Either<String [ProofCommand]> ::=
+   depth::Maybe<Integer> withs::[(String, Term)] conclusion::Metaterm
+   silverContext::Decorated SilverContext
+{
+  local trms::(Term, Term) =
+        case conclusion of
+        | eqMetaterm(btm, atm) -> (atm, btm)
+        | termMetaterm(applicationTerm(nameTerm(rel, _), args), _)
+          when isStructureEqName(rel) ->
+          (head(tail(args.argList)), head(args.argList))
+        | _ -> error("Bad conclusion")
+        end;
+
+  local isNT::Boolean =
+        case conclusion of
+        | eqMetaterm(_, _) -> false
+        | _ -> true
+        end;
+
+  local tyNT::Maybe<Type> =
+        case conclusion of
+        | termMetaterm(applicationTerm(nameTerm(rel, _), _), _)
+          when isStructureEqName(rel) ->
+          just(structureEqToType(rel))
+        | _ -> nothing()
+        end;
+
+  local errorMsg::Maybe<String> =
+        case conclusion of
+        | eqMetaterm(btm, atm) ->
+          case lookup("A", withs) of
+          | just(tm) when tm != atm ->
+            just("Unification failure (clash betwen " ++ tm.pp ++
+                 " and " ++ atm.pp ++ ")")
+          | _ -> case lookup("B", withs) of
+                 | just(tm) when tm != btm ->
+                   just("Unification failure (clash betwen " ++
+                        tm.pp ++ " and " ++ btm.pp ++ ")")
+                 | _ -> nothing()
+                 end
+          end
+        | termMetaterm(applicationTerm(nameTerm(rel, _), _), _)
+          when isStructureEqName(rel) ->
+          case lookup("A", withs) of
+          | just(tm) when tm != trms.1 ->
+            just("Unification failure (clash betwen " ++ tm.pp ++
+                 " and " ++ trms.1.pp ++ ")")
+          | _ -> case lookup("B", withs) of
+                 | just(tm) when tm != trms.2 ->
+                   just("Unification failure (clash betwen " ++
+                        tm.pp ++ " and " ++ trms.2.pp ++ ")")
+                 | _ -> nothing()
+                 end
+          end
+        | _ -> just("Unification failure")
+        end;
+
+  local prfNames::([ProofCommand], String, String, String) =
+        theorem__symmetry(isNT, tyNT);
+
+  return
+     case errorMsg of
+     | just(str) -> left(str)
+     | nothing() ->
+       right(prfNames.1 ++
+             [backchainTactic(depth, clearable(false, prfNames.2, []),
+                 map(\ p::(String, Term) ->
+                       if p.1 == "A" then (prfNames.3, p.2)
+                       else if p.1 == "B" then (prfNames.4, p.2)
+                       else p, withs))])
+     end;
+}
+
+
+function theorem__symmetry
+--([proof], thm name, arg1 name (replace A), arg2 name (replace B))
+([ProofCommand], String, String, String) ::=
+   isNt::Boolean tyNT::Maybe<Type>
+{
+  --Theorem symmetry[A] : forall (A B : A), A = B -> B = A
+
+  local num::String = toString(genInt());
+  local name_Assert::String = "$Assert_" ++ num;
+  local hyp1::String = "$Hyp_" ++ num;
+
+  return
+     if isNt
+     then ([], typeToStructureEq_Symm(tyNT.fromJust), "T1", "T2")
+     else ([
+            assertTactic(
+               nameHint(name_Assert), nothing(),
+               bindingMetaterm(
+                  forallBinder(),
+                  [("$A", nothing()), ("$B", nothing())],
+                  eqMetaterm(
+                     nameTerm("$A", nothing()),
+                     nameTerm("$B", nothing())))),
+            --prove assertion
+            introsTactic([hyp1]),
+            caseTactic(noHint(), hyp1, false),
+            searchTactic()
+           ], name_Assert, "$A", "$B");
 }
 
