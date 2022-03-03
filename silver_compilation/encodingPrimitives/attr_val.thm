@@ -24,28 +24,3 @@ Kind $node_tree   type.
 Define $split : (A -> B -> prop) -> ($pair A B) -> prop by
   $split SubRel ($pair_c A B) := SubRel A B.
 
-
-
-
-/*
-  These are temporary, and simply used for building the proof schemas
-  to ensure they are correct.  We will actually build these into the
-  theorem prover, so when a script says to apply one of these
-  theorems, it asserts it and builds the proof there for the
-  appropriate subrelation.
-
-  We want to name all the hypotheses we use, since we are going to
-  replace them with generated names in the assert proofs to avoid
-  conflicts with other hypotheses which exist.
-
-  If these show up in this file in git, it is a mistake.
-*/
-/*
-Type subrel   A -> prop.
-
-%$is_attrVal_element : forall SubRel A, $is_attrVal SubRel ($attr_ex A) -> SubRel A.
-%This one shouldn't ever be needed other than internally.
-Theorem $is_attrVal_element[A] : forall (A : A),
-  $is_attrVal subrel ($attr_ex A) -> subrel A.
-intros $H1. $H2 : case $H1. search.
-*/

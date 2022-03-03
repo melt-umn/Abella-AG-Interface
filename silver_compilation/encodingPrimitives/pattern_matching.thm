@@ -1,0 +1,147 @@
+
+Kind bool   type.
+Import "bools".
+
+Kind nat   type.
+Import "integers".
+
+Kind $pair   type -> type -> type.
+Import "pairs".
+
+Import "lists".
+Import "strings".
+
+
+%Results of pattern matching have this type
+Kind $pattern_match_var_result   type.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                              BOOLEANS                              %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Kind bool_$Pattern   type.
+Type $btrue_$$$$$_bool_$Pattern    bool_$Pattern.
+Type $bfalse_$$$$$_bool_$Pattern   bool_$Pattern.
+Type $mvar_$$$$$_bool_$Pattern     bool_$Pattern.
+
+Type $pmvr_$$$$$_bool   bool -> $pattern_match_var_result.
+
+Define $match_$$$$$_bool : bool -> bool_$Pattern ->
+                           list $pattern_match_var_result -> prop by
+   $match_$$$$$_bool $btrue $btrue_$$$$$_bool_$Pattern nil;
+   $match_$$$$$_bool $bfalse $bfalse_$$$$$_bool_$Pattern nil;
+   $match_$$$$$_bool B $mvar_$$$$$_bool_$Pattern
+                     (($pmvr_$$$$$_bool B)::nil).
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                NATS                                %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Kind nat_$Pattern   type.
+Type $zero_$$$$$_nat_$Pattern    nat_$Pattern.
+Type $succ_$$$$$_nat_$Pattern    nat_$Pattern -> nat_$Pattern.
+Type $mvar_$$$$$_nat_$Pattern    nat_$Pattern.
+
+Type $pmvr_$$$$$_nat   nat -> $pattern_match_var_result.
+
+Define $match_$$$$$_nat : nat -> nat_$Pattern ->
+                          list $pattern_match_var_result -> prop by
+   $match_$$$$$_nat $zero $zero_$$$$$_nat_$Pattern nil;
+   $match_$$$$$_nat ($succ N) ($succ_$$$$$_nat_$Pattern P) L :=
+      $match_$$$$$_nat N P L;
+   $match_$$$$$_nat N $mvar_$$$$$_nat_$Pattern
+                    (($pmvr_$$$$$_nat N)::nil).
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                              INTEGERS                              %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Kind integer_$Pattern   type.
+Type $posInt_$$$$$_integer_$Pattern       nat_$Pattern -> integer_$Pattern.
+Type $negSuccInt_$$$$$_integer_$Pattern   nat_$Pattern -> integer_$Pattern.
+Type $mvar_$$$$$_integer_$Pattern         integer_$Pattern.
+
+Type $pmvr_$$$$$_integer   integer -> $pattern_match_var_result.
+
+Define $match_$$$$$_integer : integer -> integer_$Pattern ->
+                              list $pattern_match_var_result -> prop by
+   $match_$$$$$_integer ($posInt N)
+                        ($posInt_$$$$$_integer_$Pattern P) L :=
+      $match_$$$$$_nat N P L;
+   $match_$$$$$_integer ($negSuccInt N)
+                        ($negSuccInt_$$$$$_integer_$Pattern P) L :=
+      $match_$$$$$_nat N P L;
+   $match_$$$$$_integer I $mvar_$$$$$_integer_$Pattern
+                        (($pmvr_$$$$$_integer I)::nil).
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                               PAIRS                                %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Kind $pair_$Pattern   type -> type -> type.
+Type $pair_c_$$$$$_$pair_$Pattern   A -> B -> $pair_$Pattern A B.
+Type $mvar_$$$$$_$pair_$Pattern     $pair_$Pattern A B.
+
+Type $pmvr_$$$$$_$pair   $pair A B -> $pattern_match_var_result.
+
+Define $match_$$$$$_$pair :
+       (A -> APatt -> list $pattern_match_var_result -> prop) ->
+       (B -> BPatt -> list $pattern_match_var_result -> prop) ->
+       $pair A B -> $pair_$Pattern APatt BPatt ->
+       list $pattern_match_var_result -> prop by
+  $match_$$$$$_$pair ARel BRel ($pair_c A B)
+              ($pair_c_$$$$$_$pair_$Pattern APatt BPatt) ResultList :=
+     exists AList BList,
+        ARel A APatt AList /\
+        BRel B BPatt BList /\
+        $fun_$$$$$_silver$*$core$*$append AList BList ResultList;
+  $match_$$$$$_$pair ARel BRel Pair $mvar_$$$$$_$pair_$Pattern
+                     ($pmvr_$$$$$_$pair Pair::nil).
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                               LISTS                                %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Kind list_$Pattern   type -> type.
+Type nil_$$$$$_list_$Pattern     list_$Pattern A.
+Type cons_$$$$$_list_$Pattern    A -> list_$Pattern A -> list_$Pattern A.
+Type $mvar_$$$$$_list_$Pattern   list_$Pattern A.
+
+Type $pmvr_$$$$$_list   list A -> $pattern_match_var_result.
+
+Define $match_$$$$$_list :
+       (A -> APatt -> list $pattern_match_var_result -> prop) ->
+       list A -> list_$Pattern APatt ->
+       list $pattern_match_var_result -> prop by
+  $match_$$$$$_list ARel nil nil_$$$$$_list_$Pattern nil;
+  $match_$$$$$_list ARel (Hd::Tl) (cons_$$$$$_list_$Pattern HdP TlP)
+                    ResultList :=
+     exists HdList TlList,
+        ARel Hd HdP HdList /\
+        $match_$$$$$_list ARel Tl TlP TlList /\
+        $fun_$$$$$_silver$*$core$*$append HdList TlList ResultList;
+  $match_$$$$$_list ARel List $mvar_$$$$$_list_$Pattern
+                     ($pmvr_$$$$$_list List::nil).
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                              STRINGS                               %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%We'll just use list matching for strings, but we need to define char
+%matching to do that.
+Kind $char_$Pattern   type.
+%I'm not defining all of these separately.  That's ridiculous.
+Type $char_lit_$Pattern          $char -> $char_$Pattern.
+%No var because chars aren't actually a Silver thing, so we can't be
+%matching and expecting to get one
+
+Define $match_$$$$$_$char : $char -> $char_$Pattern ->
+                            list $pattern_match_var_result -> prop by
+  $match_$$$$$_$char C ($char_lit_$Pattern C) nil.
+

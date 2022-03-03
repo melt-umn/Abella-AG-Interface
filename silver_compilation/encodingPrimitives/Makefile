@@ -1,6 +1,7 @@
 
 all: bools.thc nats.thc integers.thc integer_addition.thc integer_multiplication.thc \
-     integer_division.thc integer_comparison.thc pairs.thc lists.thc strings.thc attr_val.thc
+     integer_division.thc integer_comparison.thc pairs.thc lists.thc strings.thc \
+     attr_val.thc pattern_matching.thc
 
 
 # All the *.out files are just the output from Abella as it processes
@@ -40,6 +41,9 @@ strings.thc: strings.thm lists.thc
 
 attr_val.thc: attr_val.thm
 	abella attr_val.thm -c attr_val.thc -o attr_val.out
+
+pattern_matching.thc: pattern_matching.thm bools.thc integers.thc pairs.thc lists.thc strings.thc
+	abella pattern_matching.thm -c pattern_matching.thc -o  pattern_matching.out
 
 
 #remove unnecessary generated files
