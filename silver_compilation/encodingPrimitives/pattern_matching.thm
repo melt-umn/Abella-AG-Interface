@@ -16,6 +16,13 @@ Import "strings".
 Kind $pattern_match_var_result   type.
 
 
+Define $combine_lists : list (list $pattern_match_var_result) ->
+                       list $pattern_match_var_result -> prop by
+   $combine_lists nil nil;
+   $combine_lists (nil::L1) L2 := $combine_lists L1 L2;
+   $combine_lists ((P::L1)::L2) (P::L3) := $combine_lists (L1::L2) L3.
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                              BOOLEANS                              %
@@ -98,7 +105,7 @@ Define $match_$$$$$_$pair :
      exists AList BList,
         ARel A APatt AList /\
         BRel B BPatt BList /\
-        $fun_$$$$$_silver$*$core$*$append AList BList ResultList;
+        $combine_lists (AList::BList::nil) ResultList;
   $match_$$$$$_$pair ARel BRel Pair $mvar_$$$$$_$pair_$Pattern
                      ($pmvr_$$$$$_$pair Pair::nil).
 
@@ -124,7 +131,7 @@ Define $match_$$$$$_list :
      exists HdList TlList,
         ARel Hd HdP HdList /\
         $match_$$$$$_list ARel Tl TlP TlList /\
-        $fun_$$$$$_silver$*$core$*$append HdList TlList ResultList;
+        $combine_lists (HdList::TlList::nil) ResultList;
   $match_$$$$$_list ARel List $mvar_$$$$$_list_$Pattern
                      ($pmvr_$$$$$_list List::nil).
 

@@ -159,6 +159,12 @@ induction on 1. intros. case H1.
       intros. backchain H2. case H4. search.
    apply IH to H3 H4. search.
 
+Theorem $less_integer_negSuccInt_left_step : forall A B,
+  $less_integer ($negSuccInt A) B $btrue ->
+  $less_integer ($negSuccInt ($succ A)) B $btrue.
+induction on 1. intros L. case L (keep). search. search.
+ apply IH to H1. search.
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -305,6 +311,82 @@ induction on 1. intros. case H1.
   %Subgoal 5
    apply IH to H2. search.
 
+Theorem $lesseq_integer_0_posInt : forall N,
+  $lesseq_integer ($posInt $zero) N $btrue ->
+  exists N', N = $posInt N'.
+induction on 1. intros LEq. case LEq (keep). search. search.
+
+Theorem $lesseq_negSuccInt_left_step : forall A B,
+  $lesseq_integer ($negSuccInt A) B $btrue ->
+  $lesseq_integer ($negSuccInt ($succ A)) B $btrue.
+induction on 1. intros L. case L (keep).
+  %Subgoal 1
+   search.
+  %Subgoal 2
+   search.
+  %Subgoal 3
+   search.
+  %Subgoal 4
+   apply IH to H1. search.
+
+Theorem silver$*$core$*$less_integer__add_positive :
+  forall N1 N2 Base Sum,
+    $less_integer Base N1 $btrue ->
+    $lesseq_integer ($posInt $zero) N2 $btrue ->
+    $plus_integer N1 N2 Sum -> $less_integer Base Sum $btrue.
+induction on 1. intros L1 L2 Plus.
+apply $lesseq_integer_0_posInt to L2. case L1 (keep).
+  %Subgoal 1:  0 < N2
+   case Plus. search.
+  %Subgoal 2:  0 < N3 + 1
+   case Plus. apply IH to H1 L2 H2. search.
+  %Subgoal 3:  negSuccInt N3 < posInt N4
+   case Plus. search. search.
+  %Subgoal 4:  negSuccInt (succ N3) < -1
+   case Plus. search. search.
+  %Subgoal 5
+   case Plus. search.
+   LEq: assert $lesseq_integer ($posInt $zero) ($posInt N6) $btrue.
+           case H2. search. search. search.
+   apply IH to H1 LEq H2. backchain $less_integer_negSuccInt_left_step.
+
+Theorem silver$*$core$*$lesseq_integer__add_positive :
+  forall N1 N2 Base Sum,
+    $lesseq_integer Base N1 $btrue ->
+    $lesseq_integer ($posInt $zero) N2 $btrue ->
+    $plus_integer N1 N2 Sum -> $lesseq_integer Base Sum $btrue.
+induction on 1. intros L1 L2 Plus.
+apply $lesseq_integer_0_posInt to L2. case L1 (keep).
+  %Subgoal 1:  B = 0, N1 = 0
+   case Plus. search.
+  %Subgoal 2:  B = 0, N1 = posInt (succ N3)
+   case Plus. search.
+  %Subgoal 3:  B = posInt (succ N3), N1 = posInt (succ N4)
+   case Plus. apply IH to H1 L2 H2. search.
+  %Subgoal 4:  B = negSuccInt N3, N1 = posInt N4
+   Pos: assert exists Sum', Sum = $posInt Sum'.
+     case Plus. search. search.
+   case Pos. search.
+  %Subgoal 5:  B = negSuccInt 0, N1 = negSuccInt 0
+   case L2.
+     %Subgoal 5.1:  N2 = 0
+      case Plus. search.
+     %Subgoal 5.2
+      case Plus. search.
+  %Subgoal 6:  B = negSuccInt (succ N3), N1 = negSuccInt 0
+   case L2.
+     %Subgoal 6.1:  N2 = posInt 0
+      case Plus. search.
+     %Subgoal 6.2:  N2 = posInt (succ N4)
+      case Plus. search.
+  %Subgoal 7:  B = negSuccInt (succ N3), N1 = negSuccInt (succ N4)
+   case Plus (keep).
+     %Subgoal 7.1:  N2 = posInt 0
+      search.
+     %Subgoal 7.2:  N2 = posInt (succ N6)
+      L': assert $lesseq_integer ($posInt $zero) ($posInt N6) $btrue.
+             case L2 (keep). case H2. search. search. search.
+      apply IH to H1 L' H2. backchain $lesseq_negSuccInt_left_step.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -350,6 +432,14 @@ Theorem $greater_false_flip_less_integer : forall N1 N2,
 induction on 1. intros. case H1.
 abort. % apply $less_integer_false_flip to H2. search.
 
+Theorem silver$*$core$*$greater_integer__add_positive :
+  forall N1 N2 Base Sum,
+    $greater_integer N1 Base $btrue ->
+    $lesseq_integer ($posInt $zero) N2 $btrue ->
+    $plus_integer N1 N2 Sum -> $greater_integer Sum Base $btrue.
+intros G L Plus. case G.
+apply silver$*$core$*$less_integer__add_positive to H1 L Plus. search.
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -384,6 +474,14 @@ intros. apply silver$*$core$*$eq_to_lesseq_integer to H1. search.
 Theorem silver$*$core$*$greater_to_greatereq_integer : forall N1 N2,
   $greater_integer N1 N2 $btrue -> $greatereq_integer N1 N2 $btrue.
 intros. case H1. apply silver$*$core$*$less_to_lesseq_integer to H2. search.
+
+Theorem silver$*$core$*$greatereq_integer__add_positive :
+  forall N1 N2 Base Sum,
+    $greatereq_integer N1 Base $btrue ->
+    $greatereq_integer N2 ($posInt $zero) $btrue ->
+    $plus_integer N1 N2 Sum -> $greatereq_integer Sum Base $btrue.
+intros G1 G2 Plus. case G1. case G2.
+apply silver$*$core$*$lesseq_integer__add_positive to H1 H2 Plus. search.
 
 
 %combinations of <, <=, >, >= and addition, subtraction, multiplication, division, whatever
