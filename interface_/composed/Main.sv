@@ -103,25 +103,26 @@ top::CmdArgs ::= grammarInfo::[String] rest::CmdArgs
 function parseArgs
 Either<String  Decorated CmdArgs> ::= args::[String]
 {
-  production attribute flags::[Pair<String Flag>] with ++;
+  production attribute flags::[FlagSpec] with ++;
   flags := [];
-  production attribute flagdescs::[String] with ++;
-  flagdescs := [];
 
   flags <-
-    [pair("--check",   flag(checkFlag)),
-     pair("--compile", flag(compileFlag)),
-     pair("--generate", nOptions(2, generateFlag))
-    ];
-  flagdescs <- 
-    ["   --check : check file for correctness and completion",
-     "   --compile : compile file for importing into other grammars",
-     "   --generate <grammar> <filename> : generate a basic theorem file for the given grammar"
-    ];
+     [flagSpec(name="--check",
+               paramString=nothing(),
+               help="check file for correctness and completion",
+               flagParser=flag(checkFlag)),
+      flagSpec(name="--compile",
+               paramString=nothing(),
+               help="compile file for importing into other grammars",
+               flagParser=flag(compileFlag)),
+      flagSpec(name="--generate",
+               paramString=just("<grammar> <filename>"),
+               help="generate a basic theorem file for the given grammar",
+               flagParser=nOptions(2, generateFlag))];
 
   local usage::String = 
         "Usage: silverabella [options] [filenames]\n\n" ++
-        "Flag options:\n" ++ implode("\n", sort(flagdescs)) ++ "\n";
+        "Flag options:\n" ++ flagSpecsToHelpText(flags) ++ "\n";
 
   -- Parse the command line
   production a::CmdArgs = interpretCmdArgs(flags, args);
