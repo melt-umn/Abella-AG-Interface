@@ -30,14 +30,3 @@ theorem prover.
 This grammar reads theorem interface files, holding the theorems
 defined by grammars which the current grammar imports.
 
-
-## docs
-This directory holds documentation about the interface.
-
-
-## silverabella-PG
-This directory holds the Proof General instance for the interface.  To
-use it, its files need to be copied to a directory named
-`silverabella` in the Proof General directory and the location of the
-jar file needs to be changed to reflect your personal set-up.
-
