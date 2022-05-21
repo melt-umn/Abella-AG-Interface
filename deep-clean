@@ -1,0 +1,9 @@
+#!/bin/bash
+
+#copied from the AbleC deep-clean script
+find . -name "*~" -delete
+find . -name "build.xml" -delete
+find . -name "*.copperdump.html" -delete
+
+rm *.jar
+

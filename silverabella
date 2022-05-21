@@ -20,17 +20,16 @@ export SILVER_GEN=${SILVER_HOME}generated/thm/
 
 
 #Find the SilverAbella home
-SILVERABELLA_LOC=$(dirname $(realpath $0))
-SILVERABELLA_ROOT=${SILVERABELLA_LOC/interface_}
-export SILVERABELLA_LIBRARY=${SILVERABELLA_ROOT}silver_compilation/encodingPrimitives/
+SILVERABELLA_ROOT=$(dirname $(realpath $0))
+export SILVERABELLA_LIBRARY=${SILVERABELLA_ROOT}/silver_compilation/encodingPrimitives/
 
 
 
 #Location where the jar should be
-SILVERABELLA_JAR="$SILVERABELLA_LOC/composed/interface_.composed.jar"
+SILVERABELLA_JAR="$SILVERABELLA_ROOT/silverabella.jar"
 #Check if the jar exists to run
 if [ ! -f "$SILVERABELLA_JAR" ]; then
-    echo "Coludn't find SilverAbella jar to execute, aborting."
+    echo "Couldn't find SilverAbella jar to execute, aborting."
     exit 2
 fi
 #Run the interface

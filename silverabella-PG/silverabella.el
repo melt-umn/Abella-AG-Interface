@@ -29,7 +29,7 @@
  'silverabella "SilverAbella"
  proof-assistant-home-page  "https://github.com/melt-umn/Abella-AG-Interface"
 
- proof-prog-name  "/home/tux/research/Abella-AG-Interface/interface_/silverabella"
+ proof-prog-name  "silverabella"
 
  proof-context-command                proof-no-regexp
  proof-showproof-command              "Show $$current."

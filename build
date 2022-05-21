@@ -1,0 +1,7 @@
+#/bin/bash
+
+GRAMMAR=interface_:composed
+
+SVJVM_FLAGS="-Xmx8000M -Xss40M" silver $@ -o silverabella.jar -I ../.. $GRAMMAR
+
+

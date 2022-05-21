@@ -1,0 +1,18 @@
+#!/bin/bash
+
+#This takes inspiration from Silver's install-silver-bin script, but is much simpler
+
+if [ ! -d ~/bin ]; then
+    echo "~/bin not found. Aborting."
+    echo "You should have already created it when installing Silver."
+    exit 1
+fi
+
+echo "Found ~/bin"
+
+ln -s "$(readlink -f silverabella)" ~/bin/
+
+echo "Created ~/bin/silverabella"
+
+echo "Install finished."
+
