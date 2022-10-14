@@ -146,6 +146,8 @@ top::ListOfCommands ::= a::AnyCommand rest::ListOfCommands
   top.numCommandsSent = 1 + rest.numCommandsSent;
 
   top.commandList = a::rest.commandList;
+
+  propagate silverContext;
 }
 
 
@@ -157,6 +159,8 @@ top::ListOfCommands ::= l1::ListOfCommands l2::ListOfCommands
   top.numCommandsSent = l1.numCommandsSent + l2.numCommandsSent;
 
   top.commandList = l1.commandList ++ l2.commandList;
+
+  propagate silverContext;
 }
 
 

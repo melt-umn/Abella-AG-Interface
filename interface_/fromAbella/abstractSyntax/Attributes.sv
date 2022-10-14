@@ -11,7 +11,7 @@ imports interface_:common:abstractSyntax;
   there is any reason we need to examine it somehow.
 -}
 synthesized attribute translation<a>::a;
-flowtype translation {} on Metaterm;
+flowtype translation {silverContext} on Metaterm;
 
 
 

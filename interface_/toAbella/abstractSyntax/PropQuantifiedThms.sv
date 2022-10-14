@@ -88,6 +88,8 @@ Either<String [ProofCommand]> ::=
    depth::Maybe<Integer> withs::[(String, Term)] conclusion::Metaterm
    silverContext::Decorated SilverContext
 {
+  conclusion.silverContext = silverContext;
+
   local subrel::Term =
         case findAssociated("SubRel", withs) of
         | just(subrel) -> subrel
@@ -563,6 +565,8 @@ Either<String [ProofCommand]> ::=
    depth::Maybe<Integer> withs::[(String, Term)] conclusion::Metaterm
    silverContext::Decorated SilverContext
 {
+  conclusion.silverContext = silverContext;
+
   local trms::(Term, Term) =
         case conclusion of
         | eqMetaterm(btm, atm) -> (atm, btm)

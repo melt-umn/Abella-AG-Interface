@@ -66,6 +66,10 @@ top::Type ::= ty1::Type ty2::Type
   top.resultType = ty2.resultType;
 
   top.isRelation = left("Is relations are not defined for arrow types");
+
+  propagate finalTys, knownDecoratedTrees, knownNames, currentState,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -202,6 +206,10 @@ top::Type ::= functorTy::Type argTy::Type
         | _, left(str) -> left(str)
         end
       end;
+
+  propagate finalTys, knownDecoratedTrees, knownNames, currentState,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -238,6 +246,8 @@ abstract production singleDefs
 top::Defs ::= d::Def
 {
   top.pp = d.pp;
+
+  propagate silverContext;
 }
 
 
@@ -245,6 +255,8 @@ abstract production consDefs
 top::Defs ::= d::Def rest::Defs
 {
   top.pp = d.pp ++ "; " ++ rest.pp;
+
+  propagate silverContext;
 }
 
 
@@ -268,6 +280,8 @@ top::Def ::= clausehead::Metaterm
   clausehead.knownDecoratedTrees = [];
   clausehead.knownNames = [];
   clausehead.knownTyParams = [];
+
+  propagate silverContext;
 }
 
 
@@ -297,5 +311,7 @@ top::Def ::= clausehead::Metaterm body::Metaterm
   body.knownDecoratedTrees = [];
   body.knownNames = [];
   body.knownTyParams = [];
+
+  propagate silverContext;
 }
 

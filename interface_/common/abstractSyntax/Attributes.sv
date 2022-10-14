@@ -28,7 +28,7 @@ propagate gatheredTrees on
    Metaterm, Term, ProofState, Context, Hypothesis, CurrentGoal
    excluding bindingMetaterm, applicationTerm;
 --Names which are known to be trees of any type
-autocopy attribute knownTrees::[String];
+inherited attribute knownTrees::[String];
 
 
 --(Name of tree, name of node, child list)
@@ -53,7 +53,7 @@ propagate usedNames on
 --Anything encoded from the Silver grammars imported
 --Decorated because I think that will end up being more efficient,
 --   since we only really have one SilverContext object while running
-autocopy attribute silverContext::Decorated SilverContext;
+inherited attribute silverContext::Decorated SilverContext;
 
 
 --We often only want to replace the state and leave everything else

@@ -28,6 +28,8 @@ top::FullDisplay ::= msg::ExtraInformation state::ProofState
   top.replacedState = fullDisplay(msg, top.replaceState);
 
   msg.knownTrees = state.gatheredTrees;
+
+  propagate silverContext;
 }
 
 
@@ -46,6 +48,8 @@ top::FullDisplay ::= tl::TheoremList
 
   --Can't really replace the state if we don't have one
   top.replacedState = top;
+
+  propagate silverContext;
 }
 
 
@@ -72,6 +76,8 @@ top::TheoremList ::= name::String body::Metaterm rest::TheoremList
   body.knownTrees = [];
   top.translation =
       theoremListAdd(name, body.translation, rest.translation);
+
+  propagate silverContext;
 }
 
 
@@ -130,6 +136,8 @@ top::ExtraInformation ::= msg::ProcessingErrorMessage
 
   top.isError = true;
   top.isWarning = false;
+
+  propagate silverContext;
 }
 
 
@@ -142,6 +150,8 @@ top::ExtraInformation ::= msg::TypingErrorMessage
 
   top.isError = true;
   top.isWarning = false;
+
+  propagate silverContext;
 }
 
 
@@ -154,6 +164,8 @@ top::ExtraInformation ::= msg::WarningMessage
 
   top.isError = false;
   top.isWarning = true;
+
+  propagate silverContext;
 }
 
 
@@ -178,5 +190,7 @@ top::ExtraInformation ::= moduleName::String msg::ProcessingErrorMessage
 
   top.isError = true;
   top.isWarning = false;
+
+  propagate silverContext;
 }
 

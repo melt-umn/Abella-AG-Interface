@@ -73,6 +73,12 @@ top::AnyCommand ::= c::TopCommand
                c.newKnownTheorems,
                currentState.remainingObligations)
            )::top.stateListIn;
+
+  propagate silverContext;
+
+  propagate finalTys, knownDecoratedTrees, knownNames, currentState,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -128,6 +134,12 @@ top::AnyCommand ::= c::ProofCommand
            then c.stateListOut
            else (top.numCommandsSent,
                  currentState.replacedState)::top.stateListIn;
+
+  propagate silverContext;
+
+  propagate finalTys, knownDecoratedTrees, knownNames,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -159,6 +171,8 @@ top::AnyCommand ::= c::NoOpCommand
       if top.wasError || !null(c.errors)
       then top.stateListIn
       else c.stateListOut;
+
+  propagate silverContext;
 }
 
 

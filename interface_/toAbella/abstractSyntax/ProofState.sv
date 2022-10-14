@@ -181,7 +181,7 @@ top::ProofState ::=
   local treeAttrAccesses::[(String, String, String, String, String)] =
         foldr(\ p::(String, String, String, String, Term)
                 rest::[(String, String, String, String, String)] ->
-                case p.5 of
+                case decorate p.5 with {silverContext = top.silverContext;} of
                 | applicationTerm(nameTerm(attrEx, _),
                      singleTermList(
                         applicationTerm(nameTerm(pairC, _),
@@ -216,7 +216,7 @@ top::ProofState ::=
                                  String, String)] =
         foldr(\ p::(String, String, String, String, String, Term)
                 rest::[(String, String, String, String, String, String)] ->
-                case p.6 of
+                case decorate p.6 with {silverContext = top.silverContext;} of
                 | applicationTerm(nameTerm(attrEx, _),
                      singleTermList(
                         applicationTerm(nameTerm(pairC, _),
@@ -343,7 +343,10 @@ top::ProofState ::=
       if isDone
       then top.nextStateIn
       else extensible_proofInProgress(
-              top.nextStateIn, originalTheorems, numProds);}
+              top.nextStateIn, originalTheorems, numProds);
+
+  propagate silverContext;
+}
 
 
 abstract production obligation_proofInProgress

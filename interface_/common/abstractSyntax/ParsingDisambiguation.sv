@@ -21,6 +21,8 @@ top::Metaterm ::= leftSide::Term rightSide::Term
   top.pp = leftSide.pp ++ " = " ++ rightSide.pp;
   top.isAtomic = true;
 
+  propagate silverContext;
+
   --function name, function arguments
   production leftFun::Maybe<(String, ParenthesizedArgs)> =
         case leftSide of
@@ -121,6 +123,8 @@ top::Term ::= f::Term args::TermList
 {
   top.pp = f.pp ++ " " ++ args.pp;
   top.isAtomic = false; --might get some extra parentheses
+
+  propagate silverContext;
 
   local fwd::Term =
         case f, args of

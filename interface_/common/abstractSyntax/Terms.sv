@@ -15,6 +15,8 @@ top::Metaterm ::= t::Term r::Restriction
   top.pp = t.pp ++ r.pp;
   top.isAtomic = true;
   top.shouldHide = t.shouldHide;
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production trueMetaterm
@@ -23,6 +25,8 @@ top::Metaterm ::=
   top.pp = "true";
   top.isAtomic = true;
   top.shouldHide = false;
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production falseMetaterm
@@ -31,6 +35,8 @@ top::Metaterm ::=
   top.pp = "false";
   top.isAtomic = true;
   top.shouldHide = false;
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production eqMetaterm
@@ -39,6 +45,8 @@ top::Metaterm ::= t1::Term t2::Term
   top.pp = t1.pp ++ " = " ++ t2.pp;
   top.isAtomic = true;
   top.shouldHide = false;
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production impliesMetaterm
@@ -49,6 +57,8 @@ top::Metaterm ::= t1::Metaterm t2::Metaterm
             else "(" ++ t1.pp ++ ")") ++ " -> " ++ t2.pp;
   top.isAtomic = false;
   top.shouldHide = false;
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production orMetaterm
@@ -63,6 +73,8 @@ top::Metaterm ::= t1::Metaterm t2::Metaterm
       else "(" ++ t2.pp ++ ")" );
   top.isAtomic = false;
   top.shouldHide = false;
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production andMetaterm
@@ -77,6 +89,8 @@ top::Metaterm ::= t1::Metaterm t2::Metaterm
       else "(" ++ t2.pp ++ ")" );
   top.isAtomic = false;
   top.shouldHide = false;
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production bindingMetaterm
@@ -122,6 +136,8 @@ top::Metaterm ::= b::Binder nameBindings::[Pair<String Maybe<Type>>] body::Metat
                then rest
                else s::rest,
              [],  top.knownTrees);
+
+  propagate silverContext;
 }
 
 
@@ -273,6 +289,8 @@ top::Term ::= f::Term args::TermList
         [(treeName, nodeName, new(childList))]
       | _, _ -> []
       end;
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production nameTerm
@@ -287,6 +305,8 @@ top::Term ::= name::String ty::Maybe<Type>
   top.shouldHide = false;
 
   top.usedNames := [name];
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production consTerm
@@ -301,6 +321,8 @@ top::Term ::= t1::Term t2::Term
       else "(" ++ t2.pp ++ ")" );
   top.isAtomic = false;
   top.shouldHide = false;
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production nilTerm
@@ -309,6 +331,8 @@ top::Term ::=
   top.pp = "nil";
   top.isAtomic = true;
   top.shouldHide = false;
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production underscoreTerm
@@ -322,6 +346,8 @@ top::Term ::= ty::Maybe<Type>
 
   top.isAtomic = true;
   top.shouldHide = false;
+
+  propagate silverContext, knownTrees;
 }
 
 
@@ -339,6 +365,8 @@ top::TermList ::= t::Term
   top.pp = if t.isAtomic then t.pp else "(" ++ t.pp ++ ")";
 
   top.argList = [t];
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production consTermList
@@ -347,6 +375,8 @@ top::TermList ::= t::Term rest::TermList
   top.pp = (if t.isAtomic then t.pp else "(" ++ t.pp ++ ")") ++ " " ++ rest.pp;
 
   top.argList = t::rest.argList;
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production emptyTermList
@@ -355,5 +385,7 @@ top::TermList ::=
   top.pp = "";
 
   top.argList = [];
+
+  propagate silverContext, knownTrees;
 }
 

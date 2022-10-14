@@ -98,6 +98,8 @@ top::ProcessingErrorMessage ::= formula::Metaterm
            "\nCannot use size restrictions (*, @, #, or +)";
 
   top.translation = invalidFormula(formula.translation);
+
+  propagate silverContext;
 }
 
 
@@ -153,6 +155,8 @@ top::ProcessingErrorMessage ::= formula::Metaterm
   top.pp = "Invalid head in definition: " ++ formula.pp;
 
   top.translation = invalidHead(formula.translation);
+
+  propagate silverContext;
 }
 
 
@@ -162,6 +166,8 @@ top::ProcessingErrorMessage ::= formula::Metaterm
   top.pp = "Definitional clause head not atomic:\n" ++ formula.pp;
 
   top.translation = nonatomicHead(formula.translation);
+
+  propagate silverContext;
 }
 
 

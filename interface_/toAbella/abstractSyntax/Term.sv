@@ -56,6 +56,10 @@ top::Metaterm ::= t::Term r::Restriction
         else []
       | _ -> []
       end;
+
+  propagate finalTys, knownDecoratedTrees, knownNames, currentState,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -123,6 +127,10 @@ top::Metaterm ::= t1::Term t2::Term
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
   top.removedWPD = top;
+
+  propagate finalTys, knownDecoratedTrees, knownNames, currentState,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -148,6 +156,10 @@ top::Metaterm ::= t1::Metaterm t2::Metaterm
   top.implicationPremises = [t1] ++ t2.implicationPremises;
 
   top.conjunctionSplit = map(impliesMetaterm(t1, _), t2.conjunctionSplit);
+
+  propagate finalTys, knownDecoratedTrees, knownNames, currentState,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -163,6 +175,10 @@ top::Metaterm ::= t1::Metaterm t2::Metaterm
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
   top.removedWPD = top;
+
+  propagate finalTys, knownDecoratedTrees, knownNames, currentState,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -180,6 +196,10 @@ top::Metaterm ::= t1::Metaterm t2::Metaterm
   top.removedWPD = top;
 
   top.conjunctionSplit = t1.conjunctionSplit ++ t2.conjunctionSplit;
+
+  propagate finalTys, knownDecoratedTrees, knownNames, currentState,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -356,6 +376,10 @@ top::Metaterm ::= b::Binder bindings::[(String, Maybe<Type>)] body::Metaterm
       bindingMetaterm(b,
          colonFullNamesBindings,
          body.colonFullNames);
+
+  propagate knownNames, currentState,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -443,6 +467,10 @@ top::Metaterm ::= tree::String attr::String val::Term
 
   top.colonFullNames =
       attrAccessMetaterm(tree, finalAttr, val.colonFullNames);
+
+  propagate finalTys, knownDecoratedTrees, knownNames, currentState,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -542,6 +570,10 @@ top::Metaterm ::= tree::String attr::String val::Term
   top.boundVarsOut = val.boundVarsOut;
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
+
+  propagate finalTys, knownDecoratedTrees, knownNames, currentState,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -650,6 +682,10 @@ top::Metaterm ::= tree1::Term tree2::Term
   top.boundVarsOut = tree2.boundVarsOut;
 
   top.foundNameType = left("Did not find name " ++ top.findNameType);
+
+  propagate finalTys, knownDecoratedTrees, knownNames, currentState,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -671,6 +707,10 @@ top::Metaterm ::= t1::Term t2::Term result::Term
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
   top.removedWPD = top;
+
+  propagate finalTys, knownDecoratedTrees, knownNames, currentState,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -692,6 +732,10 @@ top::Metaterm ::= t1::Term t2::Term result::Term
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
   top.removedWPD = top;
+
+  propagate finalTys, knownDecoratedTrees, knownNames, currentState,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -713,6 +757,10 @@ top::Metaterm ::= t1::Term t2::Term result::Term
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
   top.removedWPD = top;
+
+  propagate finalTys, knownDecoratedTrees, knownNames, currentState,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -734,6 +782,10 @@ top::Metaterm ::= t1::Term t2::Term result::Term
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
   top.removedWPD = top;
+
+  propagate finalTys, knownDecoratedTrees, knownNames, currentState,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -755,6 +807,10 @@ top::Metaterm ::= t1::Term t2::Term result::Term
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
   top.removedWPD = top;
+
+  propagate finalTys, knownDecoratedTrees, knownNames, currentState,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -774,6 +830,10 @@ top::Metaterm ::= t::Term result::Term
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
   top.removedWPD = top;
+
+  propagate finalTys, knownDecoratedTrees, knownNames, currentState,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -795,6 +855,10 @@ top::Metaterm ::= t1::Term t2::Term result::Term
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
   top.removedWPD = top;
+
+  propagate finalTys, knownDecoratedTrees, knownNames, currentState,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -816,6 +880,10 @@ top::Metaterm ::= t1::Term t2::Term result::Term
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
   top.removedWPD = top;
+
+  propagate finalTys, knownDecoratedTrees, knownNames, currentState,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -837,6 +905,10 @@ top::Metaterm ::= t1::Term t2::Term result::Term
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
   top.removedWPD = top;
+
+  propagate finalTys, knownDecoratedTrees, knownNames, currentState,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -858,6 +930,10 @@ top::Metaterm ::= t1::Term t2::Term result::Term
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
   top.removedWPD = top;
+
+  propagate finalTys, knownDecoratedTrees, knownNames, currentState,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -879,6 +955,10 @@ top::Metaterm ::= t1::Term t2::Term result::Term
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
   top.removedWPD = top;
+
+  propagate finalTys, knownDecoratedTrees, knownNames, currentState,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -900,6 +980,10 @@ top::Metaterm ::= t1::Term t2::Term result::Term
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
   top.removedWPD = top;
+
+  propagate finalTys, knownDecoratedTrees, knownNames, currentState,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -921,6 +1005,10 @@ top::Metaterm ::= t1::Term t2::Term result::Term
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
   top.removedWPD = top;
+
+  propagate finalTys, knownDecoratedTrees, knownNames, currentState,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -940,6 +1028,10 @@ top::Metaterm ::= t::Term result::Term
   top.foundNameType = left("Did not find name " ++ top.findNameType);
 
   top.removedWPD = top;
+
+  propagate finalTys, knownDecoratedTrees, knownNames, currentState,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -985,6 +1077,10 @@ top::Metaterm ::= funName::String args::ParenthesizedArgs result::Term r::Restri
   top.colonFullNames =
       funMetaterm(head(foundFuns).1, args.colonFullNames,
                   result.colonFullNames, r);
+
+  propagate finalTys, knownDecoratedTrees, knownNames, currentState,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -1037,6 +1133,10 @@ top::Term ::= f::Term args::TermList
       | nameTerm(prod, _) -> isProd(prod)
       | _ -> false
       end;
+
+  propagate finalTys, knownDecoratedTrees, knownNames, currentState,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -1111,6 +1211,10 @@ top::Term ::= t1::Term t2::Term
   top.foundParent = nothing();
 
   top.isProdStructure = false;
+
+  propagate finalTys, knownDecoratedTrees, knownNames, currentState,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -1284,6 +1388,10 @@ top::Term ::= prodName::String args::ParenthesizedArgs
   top.isProdStructure = true;
 
   top.colonFullNames = prodTerm(prodName, args.colonFullNames);
+
+  propagate finalTys, knownDecoratedTrees, knownNames, currentState,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -1306,6 +1414,10 @@ top::Term ::= contents::PairContents
   top.foundParent = nothing();
 
   top.isProdStructure = false;
+
+  propagate finalTys, knownDecoratedTrees, knownNames, currentState,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -1328,6 +1440,10 @@ top::Term ::= contents::ListContents
   top.foundParent = nothing();
 
   top.isProdStructure = false;
+
+  propagate finalTys, knownDecoratedTrees, knownNames,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -1377,6 +1493,10 @@ top::ListContents ::= hd::Term tl::ListContents
                           silverContext = top.silverContext;}.isEq
       | _ -> false
       end;
+
+  propagate finalTys, knownDecoratedTrees, knownNames,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -1408,6 +1528,10 @@ top::PairContents ::= t::Term
                          silverContext = top.silverContext;}.isEq
       | _ -> false
       end;
+
+  propagate finalTys, knownDecoratedTrees, knownNames,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -1431,6 +1555,10 @@ top::PairContents ::= t::Term rest::PairContents
                             silverContext = top.silverContext;}.isEq
       | _ -> false
       end;
+
+  propagate finalTys, knownDecoratedTrees, knownNames,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -1502,6 +1630,10 @@ top::ParenthesizedArgs ::= hd::Term tl::ParenthesizedArgs
         just(0) --0-based indexing
       | _ -> bind(tl.isArgHere, \x::Integer -> just(x + 1))
       end;
+
+  propagate finalTys, knownDecoratedTrees, knownNames,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -1543,6 +1675,10 @@ top::TermList ::= t::Term
         just(0) --0-based indexing
       | _ -> nothing()
       end;
+
+  propagate finalTys, knownDecoratedTrees,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -1578,6 +1714,10 @@ top::TermList ::= t::Term rest::TermList
         just(0) --0-based indexing
       | _ -> bind(rest.isArgHere, \x::Integer -> just(x + 1))
       end;
+
+  propagate finalTys, knownDecoratedTrees,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 

@@ -88,14 +88,14 @@ inherited attribute boundVars::[[(String, Maybe<[Type]>)]];
 synthesized attribute boundVarsOut::[[(String, Maybe<[Type]>)]];
 --A final list of known types for variables
 --This is mostly so we know the correct types of trees in structure equality
-autocopy attribute finalTys::[[(String, Maybe<Type>)]];
+inherited attribute finalTys::[[(String, Maybe<Type>)]];
 
 
 --(Name of tree, name of node, child list)
-autocopy attribute knownDecoratedTrees::[(String, String, Term)];
+inherited attribute knownDecoratedTrees::[(String, String, Term)];
 
 --Names used somewhere
-autocopy attribute knownNames::[String];
+inherited attribute knownNames::[String];
 
 
 --Find the types of all the trees
@@ -107,13 +107,13 @@ propagate treeTys on
 
 --The current prover state and the translation of the proof state
 --We give both because it can be useful to have one or the other at different times
-autocopy attribute currentState::ProverState;
-autocopy attribute translatedState::ProofState;
+inherited attribute currentState::ProverState;
+inherited attribute translatedState::ProofState;
 
 
 --Replace a given name with a given term
-autocopy attribute replaceName::String;
-autocopy attribute replaceTerm::Term;
+inherited attribute replaceName::String;
+inherited attribute replaceTerm::Term;
 functor attribute replaced;
 propagate replaced on Metaterm, Term, TermList, PairContents,
                       ListContents, ParenthesizedArgs
@@ -121,7 +121,7 @@ propagate replaced on Metaterm, Term, TermList, PairContents,
 
 
 --Remove the WPD nonterminal relation for the given tree
-autocopy attribute removeWPDTree::String;
+inherited attribute removeWPDTree::String;
 synthesized attribute removedWPD::Metaterm;
 
 
@@ -211,7 +211,7 @@ synthesized attribute encodedType::Type;
 
 
 --Type parameters for determining correct type translation
-autocopy attribute knownTyParams::[String];
+inherited attribute knownTyParams::[String];
 
 
 

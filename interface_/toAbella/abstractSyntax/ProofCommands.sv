@@ -253,6 +253,10 @@ top::ProofCommand ::= h::HHint depth::Maybe<Integer> theorem::Clearable
       end;
 
   top.shouldClean = true;
+
+  propagate finalTys, knownDecoratedTrees, knownNames, currentState,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -336,6 +340,10 @@ top::ProofCommand ::= depth::Maybe<Integer> theorem::Clearable withs::[Pair<Stri
       end;
 
   top.shouldClean = true;
+
+  propagate finalTys, knownDecoratedTrees, knownNames, currentState,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -380,6 +388,10 @@ top::ProofCommand ::= h::HHint hyp::String keep::Boolean
       end;
 
   top.shouldClean = true;
+
+  propagate finalTys, knownDecoratedTrees, knownNames, currentState,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -521,6 +533,10 @@ top::ProofCommand ::= h::HHint tree::String attr::String
       ];
 
   top.shouldClean = true;
+
+  propagate finalTys, knownDecoratedTrees, knownNames, currentState,
+            translatedState, replaceName, replaceTerm, removeWPDTree,
+            knownTyParams;
 }
 
 
@@ -732,9 +748,12 @@ top::ProofCommand ::= h::HHint tree::String attr::String
             | just((tr, _)) ->
               case find_WPD_nt_hyp(tr, top.translatedState.hypList,
                                    top.silverContext) of
-              | just((_, termMetaterm(
-                            applicationTerm(nameTerm(rel, _), _), _))) ->
-                wpdNt_type(rel)
+              | just((_, x)) ->
+                case decorate x with {silverContext = top.silverContext;} of
+                | termMetaterm(applicationTerm(nameTerm(rel, _), _), _) ->
+                  wpdNt_type(rel)
+                | _ -> error ("Shouldn't get here (treeTy in caseAttrAccess)")
+                end
               | _ ->
                 error("Shouldn't get here (treeTy in caseAttrAccess)")
               end
@@ -1888,6 +1907,8 @@ top::EWitness ::= t::Term
   top.translation = termEWitness(t.translation);
 
   t.knownTyParams = [];
+
+  propagate silverContext;
 }
 
 
@@ -1904,6 +1925,8 @@ top::EWitness ::= name::String t::Term
       else [];
 
   t.knownTyParams = [];
+
+  propagate silverContext;
 }
 
 

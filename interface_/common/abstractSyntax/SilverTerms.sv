@@ -19,6 +19,8 @@ top::Metaterm ::= t1::Term t2::Term result::Term
   top.pp = t1.pp ++ " + " ++ t2.pp ++ " = " ++ result.pp;
   top.isAtomic = true;
   top.shouldHide = false;
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production minusMetaterm
@@ -27,6 +29,8 @@ top::Metaterm ::= t1::Term t2::Term result::Term
   top.pp = t1.pp ++ " - " ++ t2.pp ++ " = " ++ result.pp;
   top.isAtomic = true;
   top.shouldHide = false;
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production multiplyMetaterm
@@ -35,6 +39,8 @@ top::Metaterm ::= t1::Term t2::Term result::Term
   top.pp = t1.pp ++ " * " ++ t2.pp ++ " = " ++ result.pp;
   top.isAtomic = true;
   top.shouldHide = false;
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production divideMetaterm
@@ -43,6 +49,8 @@ top::Metaterm ::= t1::Term t2::Term result::Term
   top.pp = t1.pp ++ " / " ++ t2.pp ++ " = " ++ result.pp;
   top.isAtomic = true;
   top.shouldHide = false;
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production modulusMetaterm
@@ -51,6 +59,8 @@ top::Metaterm ::= t1::Term t2::Term result::Term
   top.pp = t1.pp ++ " mod " ++ t2.pp ++ " = " ++ result.pp;
   top.isAtomic = true;
   top.shouldHide = false;
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production negateMetaterm
@@ -59,6 +69,8 @@ top::Metaterm ::= t::Term result::Term
   top.pp = "- " ++ t.pp ++ " = " ++ result.pp;
   top.isAtomic = true;
   top.shouldHide = false;
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production lessMetaterm
@@ -67,6 +79,8 @@ top::Metaterm ::= t1::Term t2::Term result::Term
   top.pp = t1.pp ++ " < " ++ t2.pp ++ " = " ++ result.pp;
   top.isAtomic = true;
   top.shouldHide = false;
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production lessEqMetaterm
@@ -75,6 +89,8 @@ top::Metaterm ::= t1::Term t2::Term result::Term
   top.pp = t1.pp ++ " <= " ++ t2.pp ++ " = " ++ result.pp;
   top.isAtomic = true;
   top.shouldHide = false;
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production greaterMetaterm
@@ -83,6 +99,8 @@ top::Metaterm ::= t1::Term t2::Term result::Term
   top.pp = t1.pp ++ " > " ++ t2.pp ++ " = " ++ result.pp;
   top.isAtomic = true;
   top.shouldHide = false;
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production greaterEqMetaterm
@@ -91,6 +109,8 @@ top::Metaterm ::= t1::Term t2::Term result::Term
   top.pp = t1.pp ++ " >= " ++ t2.pp ++ " = " ++ result.pp;
   top.isAtomic = true;
   top.shouldHide = false;
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production appendMetaterm
@@ -99,6 +119,8 @@ top::Metaterm ::= t1::Term t2::Term result::Term
   top.pp = t1.pp ++ " ++ " ++ t2.pp ++ " = " ++ result.pp;
   top.isAtomic = true;
   top.shouldHide = false;
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production orBoolMetaterm
@@ -107,6 +129,8 @@ top::Metaterm ::= t1::Term t2::Term result::Term
   top.pp = t1.pp ++ " || " ++ t2.pp ++ " = " ++ result.pp;
   top.isAtomic = true;
   top.shouldHide = false;
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production andBoolMetaterm
@@ -115,6 +139,8 @@ top::Metaterm ::= t1::Term t2::Term result::Term
   top.pp = t1.pp ++ " && " ++ t2.pp ++ " = " ++ result.pp;
   top.isAtomic = true;
   top.shouldHide = false;
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production notBoolMetaterm
@@ -123,6 +149,8 @@ top::Metaterm ::= t::Term result::Term
   top.pp = "! " ++ t.pp ++ " = " ++ result.pp;
   top.isAtomic = true;
   top.shouldHide = false;
+
+  propagate silverContext, knownTrees;
 }
 
 --We need a restriction because we can do induction on functions
@@ -132,6 +160,8 @@ top::Metaterm ::= funName::String args::ParenthesizedArgs result::Term r::Restri
   top.pp = funName ++ "(" ++ args.pp ++ ") = " ++ result.pp ++ r.pp;
   top.isAtomic = true;
   top.shouldHide = false;
+
+  propagate silverContext, knownTrees;
 }
 
 {-
@@ -195,6 +225,8 @@ top::Metaterm ::= tree::String attr::String val::Term
         [(treeName, nodeName, new(childList))]
       | _ -> []
       end;
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production attrAccessEmptyMetaterm
@@ -206,6 +238,8 @@ top::Metaterm ::= tree::String attr::String
 
   top.usedNames := [tree];
   top.gatheredTrees <- [tree];
+
+  propagate silverContext, knownTrees;
 }
 
 
@@ -260,6 +294,8 @@ top::Metaterm ::= tree::String attr::String val::Term
         [(treeName, nodeName, new(childList))]
       | _ -> []
       end;
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production localAttrAccessEmptyMetaterm
@@ -271,6 +307,8 @@ top::Metaterm ::= tree::String attr::String
 
   top.usedNames := [tree];
   top.gatheredTrees <- [tree];
+
+  propagate silverContext, knownTrees;
 }
 
 {-
@@ -296,6 +334,8 @@ top::Metaterm ::= tree1::Term tree2::Term
       | nameTerm(t2, _) -> [t2]
       | _ -> []
       end;
+
+  propagate silverContext, knownTrees;
 }
 
 
@@ -307,6 +347,8 @@ top::Term ::= i::Integer
   top.pp = toString(i);
   top.isAtomic = true;
   top.shouldHide = false;
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production stringTerm
@@ -315,6 +357,8 @@ top::Term ::= contents::String
   top.pp = "\"" ++ contents ++ "\"";
   top.isAtomic = true;
   top.shouldHide = false;
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production trueTerm
@@ -323,6 +367,8 @@ top::Term ::=
   top.pp = "true";
   top.isAtomic = true;
   top.shouldHide = false;
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production falseTerm
@@ -331,6 +377,8 @@ top::Term ::=
   top.pp = "false";
   top.isAtomic = true;
   top.shouldHide = false;
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production listTerm
@@ -339,6 +387,8 @@ top::Term ::= contents::ListContents
   top.pp = "[" ++ contents.pp ++ "]";
   top.isAtomic = true;
   top.shouldHide = false;
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production pairTerm
@@ -347,6 +397,8 @@ top::Term ::= contents::PairContents
   top.pp = "(" ++ contents.pp ++ ")";
   top.isAtomic = true;
   top.shouldHide = false;
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production charTerm
@@ -355,6 +407,8 @@ top::Term ::= char::String
   top.pp = "\"" ++ char ++ "\"";
   top.isAtomic = true;
   top.shouldHide = false;
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production prodTerm
@@ -363,6 +417,8 @@ top::Term ::= prodName::String args::ParenthesizedArgs
   top.pp = prodName ++ "(" ++ args.pp ++ ")";
   top.isAtomic = true;
   top.shouldHide = false;
+
+  propagate silverContext, knownTrees;
 }
 
 
@@ -376,6 +432,8 @@ top::ParenthesizedArgs ::=
 {
   top.pp = "";
   top.argList = [];
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production addParenthesizedArgs
@@ -383,6 +441,8 @@ top::ParenthesizedArgs ::= t::Term rest::ParenthesizedArgs
 {
   top.pp = t.pp ++ (if rest.pp == "" then "" else ", " ++ rest.pp);
   top.argList = t::rest.argList;
+
+  propagate silverContext, knownTrees;
 }
 
 
@@ -396,6 +456,8 @@ top::ListContents ::=
 {
   top.pp = "";
   top.argList = [];
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production addListContents
@@ -403,6 +465,8 @@ top::ListContents ::= t::Term rest::ListContents
 {
   top.pp = t.pp ++ (if rest.pp == "" then "" else ", " ++ rest.pp);
   top.argList = t::rest.argList;
+
+  propagate silverContext, knownTrees;
 }
 
 
@@ -416,6 +480,8 @@ top::PairContents ::= t::Term
 {
   top.pp = t.pp;
   top.argList = [t];
+
+  propagate silverContext, knownTrees;
 }
 
 abstract production addPairContents
@@ -423,5 +489,7 @@ top::PairContents ::= t::Term rest::PairContents
 {
   top.pp = t.pp ++ ", " ++ rest.pp;
   top.argList = t::rest.argList;
+
+  propagate silverContext, knownTrees;
 }
 

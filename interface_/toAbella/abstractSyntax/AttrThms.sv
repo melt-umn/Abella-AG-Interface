@@ -98,58 +98,78 @@ Either<String [ProofCommand]> ::=
 
   local ty::Either<String String> =
         case lookup("Ty", withs) of
-        | just(nameTerm(tyName, _)) ->
-          case findNonterminal(tyName, silverContext) of
-          | [fullTy] -> right(fullTy)
-          | [] -> left("Unknown nonterminal type " ++ tyName)
-          | l ->
-            left("Indeterminate nonterminal type " ++ tyName ++
-                 "; could be [" ++ implode(", ", l) ++ "]")
+        | just(typ) ->
+          case decorate typ with {silverContext = silverContext;} of
+          | nameTerm(tyName, _) ->
+            case findNonterminal(tyName, silverContext) of
+            | [fullTy] -> right(fullTy)
+            | [] -> left("Unknown nonterminal type " ++ tyName)
+            | l ->
+              left("Indeterminate nonterminal type " ++ tyName ++
+                   "; could be [" ++ implode(", ", l) ++ "]")
+            end
+          | _ -> left("Could not find instantiation for Ty")
           end
         | _ ->
           case lookup("T", withs) of
-          | just(nameTerm(tree, _)) ->
-            foldr(\ hyp::(String, Metaterm) rest::Either<String String> ->
-                    case rest, hyp of
-                    | right(_), _ -> rest
-                    | _, (_, termMetaterm(
-                                applicationTerm(nameTerm(rel, _), args), _))
-                      when isAccessRelation(rel) ->
-                      case args.argList of
-                      | nameTerm(t, _)::_ when t == tree ->
-                        right(accessRelationToType(rel))
-                      | _ -> rest
-                      end
-                    | _, (_, termMetaterm(
-                                applicationTerm(nameTerm(rel, _), args), _))
-                      when isWpdTypeName(rel) ->
-                      case args.argList of
-                      | nameTerm(t, _)::_ when t == tree ->
-                        right(wpdToTypeName(rel))
-                      | _ -> rest
-                      end
-                    | _, _ -> rest
-                    end,
-                  left("Could not find instantiation for Ty"), hyps)
+          | just(tm) ->
+            case decorate tm with {silverContext = silverContext;} of
+            | nameTerm(tree, _) ->
+              foldr(\ hyp::(String, Metaterm) rest::Either<String String> ->
+                      case rest, decorate hyp.2 with {silverContext = silverContext;} of
+                      | right(_), _ -> rest
+                      | _, termMetaterm(
+                              applicationTerm(nameTerm(rel, _), args), _)
+                        when isAccessRelation(rel) ->
+                        case args.argList of
+                        | tm::_ ->
+                          case decorate tm with {silverContext = silverContext;} of
+                          | nameTerm(t, _) when t == tree ->
+                            right(accessRelationToType(rel))
+                          | _ -> rest
+                          end
+                        | _ -> rest
+                        end
+                      | _, termMetaterm(
+                              applicationTerm(nameTerm(rel, _), args), _)
+                        when isWpdTypeName(rel) ->
+                        case args.argList of
+                        | tm::_ ->
+                          case decorate tm with {silverContext = silverContext;} of
+                          | nameTerm(t, _) when t == tree ->
+                            right(wpdToTypeName(rel))
+                          | _ -> rest
+                          end
+                        | _ -> rest
+                        end
+                      | _, _ -> rest
+                      end,
+                    left("Could not find instantiation for Ty"), hyps)
+            | _ -> left("Could not find instantiation for Ty")
+            end
           | _ -> left("Could not find instantiation for Ty")
           end
         end;
   local attr::Either<String String> =
         case lookup("A", withs), ty of
-        | just(nameTerm(a, _)), right(tyName) ->
-          case findAttrOccurrences(a, silverContext) of
-          | [] -> left("Unknown attribute " ++ a)
-          | l -> 
-            case filter(\ p::(String, [(Type, Type)]) ->
-                          contains(
-                             nameType(nameToColonNonterminalName(tyName)),
-                             map(fst, p.2)),
-                        l) of
-            | [] -> left("Attribute " ++ a ++ " does not occur on type " ++ tyName)
-            | [(fullA, _)] -> right(fullA)
-            | l -> left("Undetirimend attribute " ++ a ++ "; could be [" ++
-                        implode(", ", map(fst, l)) ++ "]")
+        | just(t), right(tyName) ->
+          case decorate t with {silverContext = silverContext;} of
+          | nameTerm(a, _) ->
+            case findAttrOccurrences(a, silverContext) of
+            | [] -> left("Unknown attribute " ++ a)
+            | l -> 
+              case filter(\ p::(String, [(Type, Type)]) ->
+                            contains(
+                               nameType(nameToColonNonterminalName(tyName)),
+                               map(fst, p.2)),
+                          l) of
+              | [] -> left("Attribute " ++ a ++ " does not occur on type " ++ tyName)
+              | [(fullA, _)] -> right(fullA)
+              | l -> left("Undetirimend attribute " ++ a ++ "; could be [" ++
+                          implode(", ", map(fst, l)) ++ "]")
+              end
             end
+          | _ -> left("Could not find instantiation for attribute")
           end
         | _, _ -> left("Could not find instantiation for attribute")
         end;
@@ -238,58 +258,78 @@ Either<String [ProofCommand]> ::=
 
   local ty::Either<String String> =
         case lookup("Ty", withs) of
-        | just(nameTerm(tyName, _)) ->
-          case findNonterminal(tyName, silverContext) of
-          | [fullTy] -> right(fullTy)
-          | [] -> left("Unknown nonterminal type " ++ tyName)
-          | l ->
-            left("Indeterminate nonterminal type " ++ tyName ++
-                 "; could be [" ++ implode(", ", l) ++ "]")
+        | just(typ) ->
+          case decorate typ with {silverContext = silverContext;} of
+          | nameTerm(tyName, _) ->
+            case findNonterminal(tyName, silverContext) of
+            | [fullTy] -> right(fullTy)
+            | [] -> left("Unknown nonterminal type " ++ tyName)
+            | l ->
+              left("Indeterminate nonterminal type " ++ tyName ++
+                   "; could be [" ++ implode(", ", l) ++ "]")
+            end
+          | _ -> left("Could not find instantiation for Ty")
           end
         | _ ->
           case lookup("T", withs) of
-          | just(nameTerm(tree, _)) ->
-            foldr(\ hyp::(String, Metaterm) rest::Either<String String> ->
-                    case rest, hyp of
-                    | right(_), _ -> rest
-                    | _, (_, termMetaterm(
-                                applicationTerm(nameTerm(rel, _), args), _))
-                      when isAccessRelation(rel) ->
-                      case args.argList of
-                      | nameTerm(t, _)::_ when t == tree ->
-                        right(accessRelationToType(rel))
-                      | _ -> rest
-                      end
-                    | _, (_, termMetaterm(
-                                applicationTerm(nameTerm(rel, _), args), _))
-                      when isWpdTypeName(rel) ->
-                      case args.argList of
-                      | nameTerm(t, _)::_ when t == tree ->
-                        right(wpdToTypeName(rel))
-                      | _ -> rest
-                      end
-                    | _, _ -> rest
-                    end,
-                  left("Could not find instantiation for Ty"), hyps)
+          | just(tm) ->
+            case decorate tm with {silverContext = silverContext;} of
+            | nameTerm(tree, _) ->
+              foldr(\ hyp::(String, Metaterm) rest::Either<String String> ->
+                      case rest, decorate hyp.2 with {silverContext = silverContext;} of
+                      | right(_), _ -> rest
+                      | _, termMetaterm(
+                              applicationTerm(nameTerm(rel, _), args), _)
+                        when isAccessRelation(rel) ->
+                        case args.argList of
+                        | tm::_ ->
+                          case decorate tm with {silverContext = silverContext;} of
+                          | nameTerm(t, _) when t == tree ->
+                            right(accessRelationToType(rel))
+                          | _ -> rest
+                          end
+                        | _ -> rest
+                        end
+                      | _, termMetaterm(
+                              applicationTerm(nameTerm(rel, _), args), _)
+                        when isWpdTypeName(rel) ->
+                        case args.argList of
+                        | tm::_ ->
+                          case decorate tm with {silverContext = silverContext;} of
+                          | nameTerm(t, _) when t == tree ->
+                            right(wpdToTypeName(rel))
+                          | _ -> rest
+                          end
+                        | _ -> rest
+                        end
+                      | _, _ -> rest
+                      end,
+                    left("Could not find instantiation for Ty"), hyps)
+            | _ -> left("Could not find instantiation for Ty")
+            end
           | _ -> left("Could not find instantiation for Ty")
           end
         end;
   local attr::Either<String String> =
         case lookup("A", withs), ty of
-        | just(nameTerm(a, _)), right(tyName) ->
-          case findAttrOccurrences(a, silverContext) of
-          | [] -> left("Unknown attribute " ++ a)
-          | l -> 
-            case filter(\ p::(String, [(Type, Type)]) ->
-                          contains(
-                             nameType(nameToColonNonterminalName(tyName)),
-                             map(fst, p.2)),
-                        l) of
-            | [] -> left("Attribute " ++ a ++ " does not occur on type " ++ tyName)
-            | [(fullA, _)] -> right(fullA)
-            | l -> left("Undetirimend attribute " ++ a ++ "; could be [" ++
-                        implode(", ", map(fst, l)) ++ "]")
+        | just(t), right(tyName) ->
+          case decorate t with {silverContext = silverContext;} of
+          | nameTerm(a, _) ->
+            case findAttrOccurrences(a, silverContext) of
+            | [] -> left("Unknown attribute " ++ a)
+            | l -> 
+              case filter(\ p::(String, [(Type, Type)]) ->
+                            contains(
+                               nameType(nameToColonNonterminalName(tyName)),
+                               map(fst, p.2)),
+                          l) of
+              | [] -> left("Attribute " ++ a ++ " does not occur on type " ++ tyName)
+              | [(fullA, _)] -> right(fullA)
+              | l -> left("Undetirimend attribute " ++ a ++ "; could be [" ++
+                          implode(", ", map(fst, l)) ++ "]")
+              end
             end
+          | _ -> left("Could not find instantiation for attribute")
           end
         | _, _ -> left("Could not find instantiation for attribute")
         end;

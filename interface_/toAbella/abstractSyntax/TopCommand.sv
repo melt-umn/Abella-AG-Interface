@@ -134,6 +134,8 @@ top::TopCommand ::= depth::Integer thms::[(String, Metaterm, String)]
       map(\ p::(String, Metaterm, String) ->
             (p.1, top.silverContext.currentGrammar, p.2),
           translated);
+
+  propagate silverContext;
 }
 
 --Simply translate the metaterms in the thms argument
@@ -311,6 +313,8 @@ top::TopCommand ::= names::[String]
               (split.2, split.1, p.2)
             end,
           translated);
+
+  propagate silverContext;
 }
 
 
@@ -352,6 +356,8 @@ top::TopCommand ::= name::String params::[String] body::Metaterm
 
   top.provingTheorems =
       [(name, top.silverContext.currentGrammar, body.translation)];
+
+  propagate silverContext;
 }
 
 
@@ -374,6 +380,8 @@ top::TopCommand ::= preds::[(String, Type)] defs::Defs
   top.pp = "Define " ++ predsString ++ " by " ++ defs.pp ++ ".";
 
   top.translation = error("Translation not done in definitionDeclaration yet");
+
+  propagate silverContext;
 }
 
 
@@ -396,6 +404,8 @@ top::TopCommand ::= preds::[(String, Type)] defs::Defs
   top.pp = "CoDefine " ++ predsString ++ " by " ++ defs.pp ++ ".";
 
   top.translation = error("Translation not done in codefinitionDeclaration yet");
+
+  propagate silverContext;
 }
 
 
@@ -411,6 +421,8 @@ top::TopCommand ::= m::Metaterm
   m.knownTrees = m.gatheredTrees;
 
   top.translation = error("Translation not done in queryCommand yet");
+
+  propagate silverContext;
 }
 
 
@@ -477,6 +489,8 @@ top::TopCommand ::= theoremName::String newTheoremNames::[String]
       zipWith(\ a::(String, String) b::Metaterm -> (a.1, a.2, b),
               expandedNewNames, splitThm) ++
       top.currentState.knownTheorems;
+
+  propagate silverContext;
 }
 
 
@@ -500,6 +514,8 @@ top::TopCommand ::= names::[String] k::Kind
 
   top.translation = --error("Translation not done in kindDeclaration yet");
       kindDeclaration(names, k);
+
+  propagate silverContext;
 }
 
 
@@ -523,6 +539,8 @@ top::TopCommand ::= names::[String] ty::Type
   ty.knownTyParams = [];
 
   top.translation = error("Translation not done in typeDeclaration yet");
+
+  propagate silverContext;
 }
 
 
@@ -544,6 +562,8 @@ top::TopCommand ::= tys::[Type]
   top.pp = "Close " ++ typesString ++ ".\n";
 
   top.translation = error("Translation not done in closeCommand yet");
+
+  propagate silverContext;
 }
 
 
@@ -589,5 +609,7 @@ top::TopCommand ::= name::String params::[String] body::Metaterm prf::[ProofComm
 
   top.provingTheorems =
       error("Should never be access provingTheorems on theoremAndProof");
+
+  propagate silverContext;
 }
 

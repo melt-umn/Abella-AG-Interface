@@ -35,6 +35,8 @@ top::ProofState ::= subgoalNum::[Integer] currGoal::CurrentGoal futureGoals::[Su
   top.goal = currGoal.goal;
 
   currGoal.knownTrees = top.gatheredTrees;
+
+  propagate silverContext;
 }
 
 
@@ -125,6 +127,8 @@ top::CurrentGoal ::= vars::[String] ctx::Context goal::Metaterm
   top.hypList = ctx.hypList;
 
   top.goal = just(new(goal));
+
+  propagate silverContext, knownTrees;
 }
 
 
@@ -142,6 +146,8 @@ top::Context ::=
   top.pp = "";
 
   top.hypList = [];
+
+  propagate silverContext, knownTrees;
 }
 
 
@@ -152,6 +158,8 @@ top::Context ::= h::Hypothesis
   top.pp = if h.pp == "" then "" else h.pp ++ "\n";
 
   top.hypList = h.hypList;
+
+  propagate silverContext, knownTrees;
 }
 
 
@@ -161,6 +169,8 @@ top::Context ::= c1::Context c2::Context
   top.pp = c1.pp ++ c2.pp;
 
   top.hypList = c1.hypList ++ c2.hypList;
+
+  propagate silverContext, knownTrees;
 }
 
 
@@ -180,6 +190,8 @@ top::Hypothesis ::= name::String body::Metaterm
   top.hypList = [(name, new(body))];
 
   top.shouldHide = body.shouldHide;
+
+  propagate silverContext, knownTrees;
 }
 
 
@@ -191,6 +203,8 @@ abstract production subgoal
 top::Subgoal ::= num::[Integer] goal::Metaterm
 {
   top.pp = "Subgoal " ++ subgoalNumToString(num) ++ " is:\n " ++ goal.pp;
+
+  propagate silverContext;
 }
 
 
