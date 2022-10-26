@@ -208,10 +208,13 @@ nonterminal Term with
    silverContext;
 
 --Easy equality check
-attribute compareTo, isEqual occurs on
-   Term, TermList, ParenthesizedArgs, ListContents, PairContents, Type;
-propagate compareTo, isEqual on
-   Term, TermList, ParenthesizedArgs, ListContents, PairContents, Type;
+attribute compareTo, isEqual occurs on Type;
+propagate compareTo, isEqual on Type;
+--Everything is put in the pp, so checking that is sufficient
+--See Silver's strategy attributes extension for a precedent for this
+instance Eq Term {
+  eq = \ t1::Term t2::Term -> t1.pp == t2.pp;
+}
 
 abstract production applicationTerm
 top::Term ::= f::Term args::TermList
