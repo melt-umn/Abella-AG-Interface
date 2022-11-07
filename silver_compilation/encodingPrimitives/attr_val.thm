@@ -24,3 +24,6 @@ Kind $node_tree   type.
 Define $split : (A -> B -> prop) -> ($pair A B) -> prop by
   $split SubRel ($pair_c A B) := SubRel A B.
 
+Define $is_anything : A -> prop by
+  $is_anything A.
+
