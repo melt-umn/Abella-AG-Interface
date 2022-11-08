@@ -216,6 +216,7 @@ on T1.
      search.
 
 
+%To check if the last theorems from imports get added
 Theorem test_if_this_is_defined : true.
 search.
 

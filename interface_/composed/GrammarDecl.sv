@@ -97,15 +97,10 @@ IOVal<Decorated SilverContext> ::=
      currentGrammar::String comms::ListOfCommands defs::[DefElement]
      abella::ProcessHandle ioin::IOToken
 {
-  local sendToAbella::String =
-        comms.pp ++ implode("", map((.pp), defs));
-  local numComms::Integer =
-        comms.numCommandsSent + length(defs);
-  local sent::IOToken = sendToProcess(abella, sendToAbella, ioin);
+  local sendToAbella::[String] = 
+        map((.pp), comms.commandList) ++ map((.pp), defs);
   local back::IOVal<String> =
-        if numComms > 0
-        then read_abella_outputs(numComms, abella, sent)
-        else ioval(sent, "");
+        sendCmdsToAbella(sendToAbella, abella, ioin);
   local parsedOutput::ParseResult<FullDisplay_c> =
         from_parse(back.iovalue, "<<output>>");
   --
@@ -113,7 +108,7 @@ IOVal<Decorated SilverContext> ::=
         buildSilverContext(currentGrammar, comms);
 
   return
-     if numComms > 0 && !parsedOutput.parseSuccess
+     if !parsedOutput.parseSuccess
      then error("Could not parse Abella output:\n\n" ++ back.iovalue)
      else if parsedOutput.parseTree.ast.isError
      then error("Error passing grammar specifications to Abella")

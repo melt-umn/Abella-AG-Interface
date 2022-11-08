@@ -9,7 +9,7 @@ grammar interface_:toAbella:abstractSyntax;
 
 nonterminal AnyCommand with
    pp,
-   translation<String>, currentState, translatedState, inProof, silverContext,
+   translation<[AnyCommand]>, currentState, translatedState, inProof, silverContext,
    isQuit, isUndo, shouldClean, mustClean,
    sendCommand, ownOutput, numCommandsSent, isError,
    stateListIn, stateListOut, newProofState, wasError;
@@ -20,7 +20,7 @@ top::AnyCommand ::= c::TopCommand
 {
   top.pp = c.pp;
 
-  top.translation = c.translation.pp;
+  top.translation = c.translation;
 
   top.isQuit = false;
   top.isUndo = false;
@@ -97,9 +97,7 @@ top::AnyCommand ::= c::ProofCommand
       | _ -> false
       end;
 
-  top.translation =
-      foldr(\ p::ProofCommand rest::String -> p.pp ++ rest,
-            "", c.translation);
+  top.translation = map(anyProofCommand, c.translation);
 
   top.sendCommand =
       if top.inProof
@@ -148,7 +146,7 @@ top::AnyCommand ::= c::NoOpCommand
 {
   top.pp = c.pp;
 
-  top.translation = c.translation.pp;
+  top.translation = [anyNoOpCommand(c.translation)];
 
   top.isQuit = c.isQuit;
   top.isUndo = c.isUndo;

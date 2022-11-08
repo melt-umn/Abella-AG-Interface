@@ -59,5 +59,6 @@ case T1.env_out. case T2.env_out.
    apply IHFwd to H8 H18 H21 H24 H9. search.
 
 
+%Check that the last theorems from imports get added
 Theorem test_is_it_there : true.
 apply test_if_this_is_defined. search.

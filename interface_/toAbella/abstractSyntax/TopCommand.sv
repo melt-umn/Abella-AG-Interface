@@ -6,8 +6,8 @@ import interface_:thmInterfaceFile:abstractSyntax;
 
 nonterminal TopCommand with
    --pp should always end with a newline
-   pp,
-   translation<TopCommand>, numCommandsSent, currentState, silverContext,
+   pp,       --[AnyCommand] because we might need theorem decl + proof
+   translation<[AnyCommand]>, numCommandsSent, currentState, silverContext,
    newKnownTheorems, provingTheorems,
    errors, sendCommand, ownOutput,
    translatedTheorems, numRelevantProds;
@@ -112,8 +112,11 @@ top::TopCommand ::= depth::Integer thms::[(String, Metaterm, String)]
         end;
   top.translation =
       if numBodies > 1
-      then theoremAndProof(combinedName, [], expandedBody, [splitTactic()])
-      else theoremDeclaration(combinedName, [], expandedBody);
+      then [anyTopCommand(theoremDeclaration(combinedName, [],
+                                             expandedBody)),
+            anyProofCommand(splitTactic())]
+      else [anyTopCommand(theoremDeclaration(combinedName, [],
+                                             expandedBody))];
   top.numCommandsSent =
       if numBodies > 1
       then 2
@@ -286,11 +289,16 @@ top::TopCommand ::= names::[String]
 
   top.translation =
       if numBodies > 1
-      then theoremAndProof(combinedName, [], expandedBody, [splitTactic()])
+      then [anyTopCommand(theoremDeclaration(combinedName, [],
+                                             expandedBody)),
+            anyProofCommand(splitTactic())]
       else if numBodies == 0
       then --if no new prods, nothing to prove---just make it enter the thms
-           theoremAndProof(combinedName, [], trueMetaterm(), [skipTactic()])
-      else theoremDeclaration(combinedName, [], expandedBody); --one production
+           [anyTopCommand(theoremDeclaration(combinedName, [],
+                                             trueMetaterm())),
+            anyProofCommand(skipTactic())]
+      else [anyTopCommand(theoremDeclaration(combinedName, [],
+                                             expandedBody))]; --one production
   top.numCommandsSent =
       if numBodies == 1
       then 1
@@ -350,9 +358,10 @@ top::TopCommand ::= name::String params::[String] body::Metaterm
   body.knownDecoratedTrees = body.gatheredDecoratedTrees;
   body.knownTyParams = params;
   top.translation =
-      theoremDeclaration(
-         colonsToEncoded(top.silverContext.currentGrammar ++ ":" ++ name),
-         params, body.translation);
+      [anyTopCommand(
+          theoremDeclaration(
+             colonsToEncoded(top.silverContext.currentGrammar ++ ":" ++ name),
+             params, body.translation))];
 
   top.provingTheorems =
       [(name, top.silverContext.currentGrammar, body.translation)];
@@ -444,10 +453,11 @@ top::TopCommand ::= theoremName::String newTheoremNames::[String]
   top.pp = "Split " ++ theoremName ++ namesString ++ ".\n";
 
   top.translation =
-      splitTheorem(head(foundThm).1,
-                   map(\ p::(String, String) ->
-                         colonsToEncoded(p.2 ++ ":" ++ p.1),
-                       expandedNewNames));
+      [anyTopCommand(
+          splitTheorem(head(foundThm).1,
+                       map(\ p::(String, String) ->
+                             colonsToEncoded(p.2 ++ ":" ++ p.1),
+                           expandedNewNames)))];
 
   top.errors <-
       if indexOf("$", theoremName) >= 0
@@ -513,7 +523,7 @@ top::TopCommand ::= names::[String] k::Kind
   top.pp = "Kind " ++ namesString ++ "   " ++ k.pp ++ ".\n";
 
   top.translation = --error("Translation not done in kindDeclaration yet");
-      kindDeclaration(names, k);
+      [anyTopCommand(kindDeclaration(names, k))];
 
   propagate silverContext;
 }
@@ -562,53 +572,6 @@ top::TopCommand ::= tys::[Type]
   top.pp = "Close " ++ typesString ++ ".\n";
 
   top.translation = error("Translation not done in closeCommand yet");
-
-  propagate silverContext;
-}
-
-
-
-{-
-  The purpose of this production is to allow us to declare a theorem
-  *AND* do some number of steps of the proof as well.  I don't know
-  that we will ever want to do more than one step of the proof, but
-  this allows it if we do want to do so.
--}
-abstract production theoremAndProof
-top::TopCommand ::= name::String params::[String] body::Metaterm prf::[ProofCommand]
-{
-  local buildParams::(String ::= [String]) =
-     \ p::[String] ->
-       case p of
-       | [] ->
-         error("Should not reach here; theoremDeclaration production")
-       | [a] -> a
-       | a::rest ->
-         a ++ ", " ++ buildParams(rest)
-       end;
-  local paramsString::String =
-     if null(params)
-     then ""
-     else " [" ++ buildParams(params) ++ "] ";
-  top.pp =
-      "Theorem " ++ name ++ " " ++ paramsString ++
-      " : " ++ body.pp ++ ".\n" ++
-      implode("", map((.pp), prf));
-  --Assume the proof is fine
-  top.translation =
-      theoremAndProof(colonsToEncoded(name), params,
-                      body.translation, prf);
-  top.numCommandsSent = 1 + length(prf);
-
-  body.knownTyParams = params;
-  body.boundVars = [];
-  body.finalTys = [];
-  body.knownTrees = body.gatheredTrees;
-  body.knownNames = [];
-  body.knownDecoratedTrees = [];
-
-  top.provingTheorems =
-      error("Should never be access provingTheorems on theoremAndProof");
 
   propagate silverContext;
 }

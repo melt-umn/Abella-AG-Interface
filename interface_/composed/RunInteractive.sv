@@ -113,14 +113,11 @@ IOVal<Integer> ::=
   local debug_output::IOToken =
        if debug
        then printT(if speak_to_abella
-                   then "Command sent:  " ++ any_a.translation
+                   then "Command sent:  " ++
+                        implode(" ", (map((.pp), any_a.translation)))
                    else "Nothing to send to Abella",
                   raw_input.io)
        else raw_input.io;
-  local out_to_abella::IOToken =
-        if speak_to_abella
-        then sendToProcess(abella, any_a.translation, debug_output)
-        else debug_output;
 
 
   {-
@@ -130,8 +127,9 @@ IOVal<Integer> ::=
   ----------------------------
   local back_from_abella::IOVal<String> =
         if speak_to_abella
-        then read_abella_outputs(any_a.numCommandsSent, abella, out_to_abella)
-        else ioval(out_to_abella, "");
+        then sendCmdsToAbella(map((.pp), any_a.translation), abella,
+                              debug_output)
+        else ioval(debug_output, "");
   --Translate output
   ----------------------------
   local full_result::ParseResult<FullDisplay_c> =
@@ -222,8 +220,10 @@ IOVal<Integer> ::=
   {-
     EXIT
   -}
-  local wait_on_exit::IOToken = waitForProcess(abella, printed_output);
-  --We can't use our normal read function because that looks for a new prompt
+  --We can't use our normal send/read function because that looks for a new prompt
+  local exit_out_to_abella::IOToken =
+        sendToProcess(abella, implode("\n", map((.pp), any_a.translation)), debug_output);
+  local wait_on_exit::IOToken = waitForProcess(abella, exit_out_to_abella);
   --Guaranteed to get all the output because we waited for the process to exit first
   local any_last_words::IOVal<String> = readAllFromProcess(abella, wait_on_exit);
   local output_last::IOToken = printT(any_last_words.iovalue, any_last_words.io);

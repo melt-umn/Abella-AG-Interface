@@ -19,44 +19,36 @@ IOVal<(Integer, ProverState, String)> ::=
   --
   local doThms::[ThmElement] =
         takeWhile((.is_nonextensible), obligations);
-  local translated::[TopCommand] =
-        map(\ t::ThmElement ->
-              decorate t.encode with {
-                 silverContext = silverContext;
-                 currentState = initialState;
-              }.translation,
-            doThms);
+  local translated::[AnyCommand] =
+        flatMap(\ t::ThmElement ->
+                  flatMap(\ x::AnyCommand ->
+                            decorate x with {
+                               silverContext = silverContext;
+                               currentState = initialState;
+                            }.translation,
+                          t.encode),
+                doThms);
   local translatedString::String =
         implode(", ", map((.pp), translated));
-  local numCommands::Integer =
-        foldr(\ t::ThmElement rest::Integer ->
-                decorate t.encode with {
-                   silverContext = silverContext;
-                   currentState = initialState;
-                }.numCommandsSent + rest,
-              0, doThms);
+  local numCommands::Integer = length(translated);
   --
-  local send::IOToken =
-        if numCommands > 0
-        then sendToProcess(abella, translatedString, ioin)
-        else ioin;
   local readBack::IOVal<String> =
         if numCommands > 0
-        then read_abella_outputs(numCommands, abella, send)
-        else ioval(send, "");
+        then sendCmdsToAbella(map((.pp), translated), abella, ioin)
+        else ioval(ioin, "");
   --
   local outObligations::[ThmElement] =
         dropWhile((.is_nonextensible), obligations);
   local outThms::[(String, String, Metaterm)] =
-        foldl(\ rest::[(String, String, Metaterm)] t::TopCommand ->
+        foldl(\ rest::[(String, String, Metaterm)] t::AnyCommand ->
                 case t of
-                | theoremAndProof(name, _, stmt, _) ->
+                | anyTopCommand(theoremDeclaration(name, _, stmt)) ->
                   let split::(String, String) =
                       splitQualifiedName(encodedToColons(name))
                   in
                     (split.2, split.1, new(stmt))::rest
                   end
-                | splitTheorem(toSplit, newNames) ->
+                | anyTopCommand(splitTheorem(toSplit, newNames)) ->
                   let split::(String, String) =
                       splitQualifiedName(encodedToColons(toSplit))
                   in
@@ -75,6 +67,7 @@ IOVal<(Integer, ProverState, String)> ::=
                               end,
                             newNames, splitThm) ++ rest
                   end end end
+                | anyProofCommand(_) -> rest
                 | _ -> error("Should not have anything else")
                 end,
               initialState.knownTheorems, translated);

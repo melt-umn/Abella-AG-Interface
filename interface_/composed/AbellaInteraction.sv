@@ -8,51 +8,73 @@ IOVal<Either<String ProcessHandle>> ::= ioin::IOToken
   --Find the library location (env variable set by startup script)
   local library_loc::IOVal<String> =
         envVarT("SILVERABELLA_LIBRARY", ioin);
-  local library_string::String =
-        "Kind bool   type.\n" ++
-        "Import \"" ++ library_loc.iovalue ++ "bools\".\n" ++
-        "Kind nat   type.\n" ++
-        "Import \"" ++ library_loc.iovalue ++ "integer_addition\".\n" ++
-        "Import \"" ++ library_loc.iovalue ++ "integer_multiplication\".\n" ++
-        "Import \"" ++ library_loc.iovalue ++ "integer_division\".\n" ++
-        "Import \"" ++ library_loc.iovalue ++ "integer_comparison\".\n" ++
-        "Import \"" ++ library_loc.iovalue ++ "lists\".\n" ++
-        "Import \"" ++ library_loc.iovalue ++ "strings\".\n" ++
-        "Kind $pair   type -> type -> type.\n" ++
-        "Import \"" ++ library_loc.iovalue ++ "pairs\".\n" ++
-        "Kind $attrVal   type -> type.\n" ++
-        "Import \"" ++ library_loc.iovalue ++ "attr_val\".\n\n";
+  local library_cmds::[String] =
+       ["Kind bool   type.",
+        "Import \"" ++ library_loc.iovalue ++ "bools\".",
+        "Kind nat   type.",
+        "Import \"" ++ library_loc.iovalue ++ "integer_addition\".",
+        "Import \"" ++ library_loc.iovalue ++ "integer_multiplication\".",
+        "Import \"" ++ library_loc.iovalue ++ "integer_division\".",
+        "Import \"" ++ library_loc.iovalue ++ "integer_comparison\".",
+        "Import \"" ++ library_loc.iovalue ++ "lists\".",
+        "Import \"" ++ library_loc.iovalue ++ "strings\".",
+        "Kind $pair   type -> type -> type.",
+        "Import \"" ++ library_loc.iovalue ++ "pairs\".",
+        "Kind $attrVal   type -> type.",
+        "Import \"" ++ library_loc.iovalue ++ "attr_val\"."];
 
   local abella::IOVal<ProcessHandle> =
         spawnProcess("abella", [], library_loc.io);
-  --Send the library imports to Abella
-  local send_imports::IOToken =
-        sendToProcess(abella.iovalue, library_string, abella.io);
   --Read Abella's outputs from the library imports, in addition to the
   --   welcome message
   local abella_initial_string::IOVal<String> =
-        read_abella_outputs(14, abella.iovalue, send_imports);
+        read_abella_output(abella.iovalue, abella.io);
+  --Send the library imports to Abella
+  local send_imports::IOVal<String> =
+        sendCmdsToAbella(library_cmds, abella.iovalue,
+                         abella_initial_string.io);
 
   return
      if library_loc.iovalue == ""
      then ioval(library_loc.io,
-                left("Interface library location not set"))
-     else ioval(abella_initial_string.io, right(abella.iovalue));
+                left("Interface library location not set; " ++
+                     "must run through given script"))
+     else ioval(send_imports.io, right(abella.iovalue));
 }
 
 
---Read the given number of Abella outputs (prompt-terminated)
---Returns the text of the last output
-function read_abella_outputs
-IOVal<String> ::= n::Integer abella::ProcessHandle ioin::IOToken
+
+--Send each of the given Abella commands to Abella in order
+--Returns the output text of the last one
+function sendCmdsToAbella
+IOVal<String> ::= cmds::[String] abella::ProcessHandle ioin::IOToken
+{
+  return
+     case cmds of
+     | [] -> ioval(ioin, "")
+     | [c] -> sendCmdToAbella(c, abella, ioin)
+     | c::tl ->
+       sendCmdsToAbella(tl, abella,
+                        sendCmdToAbella(c, abella, ioin).io)
+     end;
+}
+
+--Send a single command to Abella and get its output text back
+function sendCmdToAbella
+IOVal<String> ::= cmd::String abella::ProcessHandle ioin::IOToken
+{
+  local sent::IOToken = sendToProcess(abella, cmd, ioin);
+  return read_abella_output(abella, sent);
+}
+
+
+--Read the full Abella output (prompt-terminated) for one command
+--Returns the text of the output
+function read_abella_output
+IOVal<String> ::= abella::ProcessHandle ioin::IOToken
 {
   local read::IOVal<String> = readUntilFromProcess(abella, "< ", ioin);
-  return
-     case n of
-     | x when x <= 0 -> error("Should not call read_abella_outputs with n <= 0 (n = " ++ toString(x) ++ ")")
-     | 1 -> ioval(read.io, removeLastWord(read.iovalue))
-     | x -> read_abella_outputs(x - 1, abella, read.io)
-     end;
+  return ioval(read.io, removeLastWord(read.iovalue));
 }
 
 --Remove the last word in a string
@@ -119,18 +141,16 @@ function cleanState
 {
   local currentState::ProofState = currentDisplay.proof;
   currentState.silverContext = silverContext;
-  --Send to Abella
-  local send::IOToken = sendToProcess(abella, currentState.cleanUpCommands, ioin);
-  --Read back from Abella
+  --Send to and read back from Abella
   local back::IOVal<String> =
-        read_abella_outputs(currentState.numCleanUpCommands, abella, send);
+        sendCmdsToAbella(currentState.cleanUpCommands, abella, ioin);
   local parsed::ParseResult<FullDisplay_c> =
         from_parse(back.iovalue, "<<output>>");
   currentState.nextStateIn =
      if parsed.parseSuccess
      then if parsed.parseTree.ast.isError
           then error("BUG:  Cleaning command \"" ++
-                     currentState.cleanUpCommands ++
+                     implode("\n", currentState.cleanUpCommands) ++
                      "\" resulted in an error:\n\n" ++
                      parsed.parseTree.ast.pp)
           else parsed.parseTree.ast.proof
@@ -153,7 +173,7 @@ function cleanState
   return
      if currentState.numCleanUpCommands == 0
      then ("", 0, currentDisplay, [], ioin)
-     else (currentState.cleanUpCommands ++ sub.1,
+     else (implode("\n", currentState.cleanUpCommands) ++ sub.1,
            currentState.numCleanUpCommands + sub.2,
            sub.3, subgoalCompletedNow ++ sub.4, sub.5);
 }

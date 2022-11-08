@@ -7,7 +7,8 @@ import interface_:toAbella:abstractSyntax;
 
 nonterminal ThmElement with pp, encode, is_nonextensible;
 
-synthesized attribute encode::TopCommand;
+--allows having a theorem declaration and its proof
+synthesized attribute encode::[AnyCommand];
 synthesized attribute is_nonextensible::Boolean;
 
 
@@ -33,7 +34,9 @@ top::ThmElement ::= name::String stmt::Metaterm
 {
   top.pp = name ++ "&" ++ stmt.pp ++ ". ";
 
-  top.encode = theoremAndProof(name, [], stmt, [skipTactic()]);
+  top.encode =
+      [anyTopCommand(theoremDeclaration(name, [], stmt)),
+       anyProofCommand(skipTactic())];
   top.is_nonextensible = true;
 }
 
@@ -44,7 +47,7 @@ top::ThmElement ::= toSplit::String newNames::[String]
   top.pp =
       "$Spl " ++ toSplit ++ " " ++ implode(",", newNames) ++ ". ";
 
-  top.encode = splitTheorem(toSplit, newNames);
+  top.encode = [anyTopCommand(splitTheorem(toSplit, newNames))];
   top.is_nonextensible = true;
 }
 
@@ -81,6 +84,6 @@ top::DefElement ::= defines::[(String, Type)]
                  | (m, just(b)) -> ruleDef(m, b)
                  end,
                clauses));
-  top.encode = definitionDeclaration(defines, defs);
+  top.encode = [anyTopCommand(definitionDeclaration(defines, defs))];
 }
 

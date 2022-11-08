@@ -221,7 +221,7 @@ inherited attribute knownTyParams::[String];
 --Commands to clean up a proof state
 --Point is to do the behind-the-scenes things not immediately part of
 --   the command issued by the user
-synthesized attribute cleanUpCommands::String;
+synthesized attribute cleanUpCommands::[String];
 synthesized attribute numCleanUpCommands::Integer;
 --Let state decide how to handle making the next state
 inherited attribute nextStateIn::ProofState;

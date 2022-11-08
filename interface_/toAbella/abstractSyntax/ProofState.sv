@@ -167,12 +167,12 @@ top::ProofState ::=
                 | _, _ -> rest
                 end,
               [], currGoal.hypList);
-  local impossibleEqHypsCmd::String =
+  local impossibleEqHypsCmd::[String] =
         let name::String = "$F_" ++ toString(genInt())
         in
-          name ++ ": assert false.  " ++
-          "backchain " ++ head(impossibleEqHyps) ++ ".  " ++
-          "case " ++ name ++ ".  "
+          [name ++ ": assert false.",
+          "backchain " ++ head(impossibleEqHyps) ++ ".",
+          "case " ++ name ++ "."]
         end;
 
   --As soon as a tree shows up in our context, we want to get the WPD hyp
@@ -201,13 +201,12 @@ top::ProofState ::=
                 | _ -> rest
                 end, [], attrAccessHyps);
   --
-  local treeAttrAccessWpdCommands::String =
-        implode(" ",
-           map(\ p::(String, String, String, String, String) ->
-                 --hint for hypothesis name to avoid changing any proofs
-                 "$Wpd: apply " ++ accessIsThm(p.3, colonsToEncoded(p.5)) ++
-                          " to _ " ++ p.1 ++ ".",
-               treeAttrAccesses));
+  local treeAttrAccessWpdCommands::[String] =
+        map(\ p::(String, String, String, String, String) ->
+              --hint for hypothesis name to avoid changing any proofs
+              "$Wpd: apply " ++ accessIsThm(p.3, colonsToEncoded(p.5)) ++
+                       " to _ " ++ p.1 ++ ".",
+            treeAttrAccesses);
 
   --attr accesses of trees without WPD hyps, where defining tree does have WPD hyp
   --[(hyp, defining tree name, attr name, defined tree name,
@@ -236,48 +235,32 @@ top::ProofState ::=
                 | _ -> []
                 end, [], localAccessHyps);
   --
-  local localAttrAccessWpdCommands::String =
-        implode(" ",
-           map(\ p::(String, String, String, String, String, String) ->
-                 --hint for hypothesis name to avoid changing any proofs
-                 "$Wpd: apply " ++ localAccessIsThm(p.3,
-                                   nameToProd(p.5),
-                                   colonsToEncoded(p.6)) ++
-                    " to _ " ++ p.1 ++ ".",
-               treeLocalAttrAccesses));
+  local localAttrAccessWpdCommands::[String] =
+        map(\ p::(String, String, String, String, String, String) ->
+              --hint for hypothesis name to avoid changing any proofs
+              "$Wpd: apply " ++ localAccessIsThm(p.3,
+                                nameToProd(p.5),
+                                colonsToEncoded(p.6)) ++
+                 " to _ " ++ p.1 ++ ".",
+            treeLocalAttrAccesses);
 
   top.cleanUpCommands =
       if !null(cleanedAttrAccesses)
-      then attrAccessCmd
+      then [attrAccessCmd]
       else if !null(repeatedAccessHypsToClear)
-      then clearRepeatedAccessCmd
+      then [clearRepeatedAccessCmd]
       else if !null(cleanedLocalAccesses)
-      then localAccessCmd
+      then [localAccessCmd]
       else if !null(repeatedLocalAccessHypsToClear)
-      then clearRepeatedLocalAccessCmd
+      then [clearRepeatedLocalAccessCmd]
       else if !null(impossibleEqHyps)
       then impossibleEqHypsCmd
       else if !null(treeAttrAccesses)
       then treeAttrAccessWpdCommands
       else if !null(treeLocalAttrAccesses)
       then localAttrAccessWpdCommands
-      else "";
-  top.numCleanUpCommands =
-      if !null(cleanedAttrAccesses)
-      then 1
-      else if !null(repeatedAccessHypsToClear)
-      then 1
-      else if !null(cleanedLocalAccesses)
-      then 1
-      else if !null(repeatedLocalAccessHypsToClear)
-      then 1
-      else if !null(impossibleEqHyps)
-      then 3
-      else if !null(treeAttrAccesses)
-      then length(treeAttrAccesses)
-      else if !null(treeLocalAttrAccesses)
-      then length(treeLocalAttrAccesses)
-      else 0;
+      else [];
+  top.numCleanUpCommands = length(top.cleanUpCommands);
 
   top.nextStateOut = top.nextStateIn;
   currGoal.knownDecoratedTrees = top.gatheredDecoratedTrees;
@@ -287,7 +270,7 @@ top::ProofState ::=
 aspect production noProof
 top::ProofState ::=
 {
-  top.cleanUpCommands = "";
+  top.cleanUpCommands = [];
   top.numCleanUpCommands = 0;
 
   top.nextStateOut = top.nextStateIn;
@@ -325,19 +308,16 @@ top::ProofState ::=
   top.cleanUpCommands =
       if isDone && shouldDeclare
       then --split, declare, and skip.
-           splitTheorem(
+          [splitTheorem(
               extensible_theorem_name(colonsToEncoded(head(originalTheorems).1),
                  top.silverContext.currentGrammar),
-              newThmNames).pp ++
-           foldr(\ p::(String, Metaterm) rest::String ->
-                   theoremDeclaration(colonsToEncoded(p.1), [], p.2).pp ++ "  " ++
-                   skipTactic().pp ++ "\n" ++ rest,
-                 "", originalTheorems)
+              newThmNames).pp] ++
+           foldr(\ p::(String, Metaterm) rest::[String] ->
+                   theoremDeclaration(colonsToEncoded(p.1), [], p.2).pp::
+                   skipTactic().pp::rest,
+                 [], originalTheorems)
       else currentProofState.cleanUpCommands;
-  top.numCleanUpCommands =
-      if isDone && shouldDeclare
-      then 1 + 2 * length(originalTheorems)
-      else currentProofState.numCleanUpCommands;
+  top.numCleanUpCommands = length(top.cleanUpCommands);
 
   top.nextStateOut =
       if isDone

@@ -141,6 +141,11 @@ Either<String  Decorated CmdArgs> ::= args::[String]
            "when giving filename(s)"]
      else [];
 
+  errors <-
+     if !null(a.generateFiles) && !null(a.filenames)
+     then ["Can give generate XOR filenames, not both"]
+     else [];
+
   return if !null(errors)
          then left(implode("\n", errors) ++ "\n\n" ++ usage)
          else right(a);
