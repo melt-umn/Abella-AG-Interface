@@ -114,7 +114,7 @@ IOVal<Integer> ::=
        if debug
        then printT(if speak_to_abella
                    then "Command sent:  " ++
-                        implode(" ", (map((.pp), any_a.translation)))
+                        implode("\n", (map((.pp), any_a.translation)))
                    else "Nothing to send to Abella",
                   raw_input.io)
        else raw_input.io;

@@ -6,7 +6,7 @@ grammar interface_:toAbella:abstractSyntax;
 nonterminal NoOpCommand with
    --pp should always end with a newline
    pp,
-   translation<NoOpCommand>,
+   translation<[NoOpCommand]>,
    errors, sendCommand, ownOutput, numCommandsSent,
    isQuit, isUndo,
    stateListIn, stateListOut;
@@ -19,7 +19,7 @@ top::NoOpCommand ::= opt::String val::String
 {
   top.pp = "Set " ++ opt ++ " " ++ val ++ ".\n";
 
-  top.translation = setCommand(opt, val);
+  top.translation = [setCommand(opt, val)];
 
   top.isQuit = false;
   top.isUndo = false;
@@ -63,7 +63,7 @@ top::NoOpCommand ::= theoremName::String
 {
   top.pp = "Show " ++ theoremName ++ ".\n";
 
-  top.translation = showCommand(theoremName);
+  top.translation = [showCommand(theoremName)];
 
   top.errors <-
       if indexOf("$", theoremName) >= 0
@@ -86,7 +86,7 @@ top::NoOpCommand ::=
 {
   top.pp = "Quit.\n";
 
-  top.translation = quitCommand();
+  top.translation = [quitCommand()];
 
   top.isQuit = true;
   top.isUndo = false;
@@ -108,7 +108,7 @@ top::NoOpCommand ::= n::Integer
   local trans_n::Integer =
         foldr(\ p::(Integer, ProverState) i::Integer -> i + p.1,
               0, take(n, top.stateListIn));
-  top.translation = backCommand(trans_n);
+  top.translation = repeat(backCommand(1), trans_n);
 
   top.errors <-
       if length(top.stateListIn) < n
@@ -153,7 +153,7 @@ top::NoOpCommand ::=
 {
   top.pp = "Show $$current.\n";
 
-  top.translation = showCurrentCommand();
+  top.translation = [showCurrentCommand()];
 
   top.isQuit = false;
   top.isUndo = false;

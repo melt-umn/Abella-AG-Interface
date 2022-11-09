@@ -162,6 +162,7 @@ top::Expr ::= contents::RecFieldExprs
 {
   top.vars = contents.vars;
 
+  contents.tyCtx = top.tyCtx;
   top.ty = recTy(contents.tyCtx_out);
 
   contents.evalCtx = top.evalCtx;

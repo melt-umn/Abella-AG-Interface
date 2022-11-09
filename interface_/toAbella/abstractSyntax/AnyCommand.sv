@@ -146,7 +146,7 @@ top::AnyCommand ::= c::NoOpCommand
 {
   top.pp = c.pp;
 
-  top.translation = [anyNoOpCommand(c.translation)];
+  top.translation = map(anyNoOpCommand, c.translation);
 
   top.isQuit = c.isQuit;
   top.isUndo = c.isUndo;
