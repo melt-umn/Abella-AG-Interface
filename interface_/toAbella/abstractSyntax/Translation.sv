@@ -256,7 +256,7 @@ Metaterm ::= prods::[String] original::Metaterm
                   then [(p.2, just(p.1.encodedType)),
                         (p.3, nothing()),
                         (p.4, nothing())]
-                  else [(p.2, just(p.1))], children) ++
+                  else [(p.2, just(p.1.encodedType))], children) ++
           removeBy(\ p1::(String, Maybe<Type>) p2::(String, Maybe<Type>) ->
                      p1.1 == p2.1,
                    (treeCL, nothing()), originalBindings);

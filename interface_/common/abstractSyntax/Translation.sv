@@ -42,6 +42,7 @@ global stringType::Type =
 
 global appendName::String = "$append";
 
+global pairTypeName::String = "$pair";
 global pairConstructorName::String = "$pair_c";
 
 global orName::String = "$or_bool";
@@ -49,6 +50,8 @@ global andName::String = "$and_bool";
 global notName::String = "$not_bool";
 global trueName::String = "$btrue";
 global falseName::String = "$bfalse";
+
+global isAnythingName::String = "$is_anything";
 
 
 

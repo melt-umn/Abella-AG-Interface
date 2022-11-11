@@ -239,7 +239,9 @@ top::TopCommand ::= names::[String] ty::Type
       foldr(\ s::String rest::[(String, String)] ->
               if isAccessRelation(s)
               then let splitName::(String, String) =
-                       splitQualifiedName(accessRelationToAttr(s))
+                       if accessRelationToAttr(s) == "forward"
+                       then ("", "forward")
+                       else splitQualifiedName(accessRelationToAttr(s))
                    in
                      (splitName.2, splitName.1)::rest
                    end

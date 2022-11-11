@@ -152,8 +152,10 @@ top::Type ::= name::String
       | "string" -> right(nameTerm("is_string", nothing()))
       | "list" -> right(nameTerm("is_list", nothing()))
       | "pair" -> right(nameTerm("is_pair", nothing()))
+      | x when x == pairTypeName -> right(nameTerm("is_pair", nothing()))
       | "integer" -> right(nameTerm("is_integer", nothing()))
       | "bool" -> right(nameTerm("is_bool", nothing()))
+      | x when nameIsNonterminal(x) -> right(nameTerm(isAnythingName, nothing()))
       | _ -> left("Cannot generate is relation for type " ++ name)
       end;
 }
