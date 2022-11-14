@@ -64,7 +64,11 @@ function sendCmdToAbella
 IOVal<String> ::= cmd::String abella::ProcessHandle ioin::IOToken
 {
   local sent::IOToken = sendToProcess(abella, cmd, ioin);
-  return read_abella_output(abella, sent);
+  local dumped::IOToken =
+        if DUMP_ABELLA
+        then appendFileT(DUMP_FILE, cmd ++ "\n", sent)
+        else sent;
+  return read_abella_output(abella, dumped);
 }
 
 

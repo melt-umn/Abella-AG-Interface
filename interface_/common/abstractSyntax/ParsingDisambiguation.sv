@@ -131,15 +131,18 @@ top::Term ::= f::Term args::TermList
         | nameTerm(prod, _),
           singleTermList(pairTerm(contents))
           when findAssociated(prod,
-                  top.silverContext.knownProductions).isJust ->
-          prodTerm(prod,
+                  top.silverContext.knownProductions)
+               matches just((grmmr, _)) ->
+          prodTerm(grmmr ++ ":" ++ prod, --full name of prod
                    foldr(addParenthesizedArgs(_, _),
                          emptyParenthesizedArgs(),
                          args.argList))
         | nameTerm(prod, _), emptyTermList()
           when findAssociated(prod,
-                  top.silverContext.knownProductions).isJust ->
-          prodTerm(prod, emptyParenthesizedArgs())
+                  top.silverContext.knownProductions)
+               matches just((grmmr, _)) ->
+          prodTerm(grmmr ++ ":" ++ prod, --full name of prod
+                   emptyParenthesizedArgs())
         | _, _ -> applicationTerm(f, args)
         end;
   forwards to fwd;

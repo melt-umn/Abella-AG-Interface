@@ -25,6 +25,8 @@ IOVal<(Integer, ProverState, String)> ::=
                             decorate x with {
                                silverContext = silverContext;
                                currentState = initialState;
+                               translatedState = error("translatedState not actually needed");
+                               stateListIn = error("stateListIn not actually needed");
                             }.translation,
                           t.encode),
                 doThms);

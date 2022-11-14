@@ -9,6 +9,11 @@ imports silver:util:subprocess;
 import silver:util:cmdargs;
 
 
+--To enable us to dump Abella information for debugging purposes
+global DUMP_ABELLA::Boolean = false;
+global DUMP_FILE::String = "abella_dump.thm";
+
+
 function main
 IOVal<Integer> ::= largs::[String] ioin::IOToken
 {
@@ -23,7 +28,7 @@ IOVal<Integer> ::= largs::[String] ioin::IOToken
      | right(args) ->
        if !generate.iovalue
        then ioval(generate.io, 1)
-       else if args.compileFile && args.checkFile
+       else if (args.compileFile && args.checkFile)
        then check_compile_files(generate.io, args.filenames)
        else if args.compileFile
        then compile_files(generate.io, args.filenames)
@@ -132,7 +137,7 @@ Either<String  Decorated CmdArgs> ::= args::[String]
 
   errors <-
      if (a.checkFile || a.compileFile) && null(a.filenames)
-     then ["Must give filename(s) with --check and --compile flags"]
+     then ["Must give filename(s) with --check ande --compile flags"]
      else [];
 
   errors <-
