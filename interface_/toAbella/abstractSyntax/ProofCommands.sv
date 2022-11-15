@@ -364,7 +364,7 @@ top::ProofCommand ::= h::HHint hyp::String keep::Boolean
         --Hidden hypotheses should be left alone
         | mt when mt.shouldHide ->
           [errorMsg("Unknown hypothesis " ++ hyp)]
-        --Disallow case analysis on structure-showing "$<tree>_Tm = <structure>"
+        --Disallow case analysis on structure-showing "$<tree>_Tm ~ <structure>"
         | eqMetaterm(nameTerm(str, _), structure)
           when contains(str, decorate top.currentState.state with
                              {silverContext = top.silverContext;}.gatheredTrees) ->
@@ -382,6 +382,14 @@ top::ProofCommand ::= h::HHint hyp::String keep::Boolean
           [errorMsg("Cannot do case analysis on this hypothesis; to do case " ++
                     "analysis on equation for " ++ tree ++ "." ++ attr ++
                     ", use \"case " ++ tree ++ "." ++ attr ++ "\"")]
+        | localAttrAccessMetaterm(tree, attr, _) ->
+          [errorMsg("Cannot do case analysis on this hypothesis; to do case " ++
+                    "analysis on equation for local " ++ tree ++ "." ++ attr ++
+                    ", use \"case_local " ++ tree ++ "." ++ attr ++ "\"")]
+        | localAttrAccessEmptyMetaterm(tree, attr) ->
+          [errorMsg("Cannot do case analysis on this hypothesis; to do case " ++
+                    "analysis on equation for local " ++ tree ++ "." ++ attr ++
+                    ", use \"case_local " ++ tree ++ "." ++ attr ++ "\"")]
         --Anything else is fine
         | _ -> []
         end

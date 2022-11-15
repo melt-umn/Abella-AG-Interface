@@ -307,11 +307,7 @@ top::ProofState ::=
         end;
   top.cleanUpCommands =
       if isDone && shouldDeclare
-      then --split, declare, and skip.
-          [splitTheorem(
-              extensible_theorem_name(colonsToEncoded(head(originalTheorems).1),
-                 top.silverContext.currentGrammar),
-              newThmNames).pp] ++
+      then --declare and skip.
            foldr(\ p::(String, Metaterm) rest::[String] ->
                    theoremDeclaration(colonsToEncoded(p.1), [], p.2).pp::
                    skipTactic().pp::rest,

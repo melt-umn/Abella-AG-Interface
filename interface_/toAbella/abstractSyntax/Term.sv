@@ -602,7 +602,7 @@ top::Metaterm ::= tree1::Term tree2::Term
         | just(just(ty)) ->
           termMetaterm(
              buildApplication(nameTerm(typeToStructureEqName(ty), nothing()),
-                              unsafeTracePrint([tree1.translation, tree2.translation], "Tree 2:  " ++ tree2.pp ++ ";   Translation:  " ++ tree2.translation.pp ++ "\n\n")),
+                              [tree1.translation, tree2.translation]),
              emptyRestriction())
         | _ -> error("Could not find type for tree " ++ t1n)
         end

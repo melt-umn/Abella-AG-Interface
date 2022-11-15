@@ -143,6 +143,11 @@ top::Term ::= f::Term args::TermList
                matches just((grmmr, _)) ->
           prodTerm(grmmr ++ ":" ++ prod, --full name of prod
                    emptyParenthesizedArgs())
+        | nameTerm(prod, _), singleTermList(a) --single arg
+          when findAssociated(prod, top.silverContext.knownProductions)
+               matches just((grmmr, _))->
+          prodTerm(grmmr ++ ":" ++ prod, --full name of prod
+                   addParenthesizedArgs(a, emptyParenthesizedArgs()))
         | _, _ -> applicationTerm(f, args)
         end;
   forwards to fwd;
