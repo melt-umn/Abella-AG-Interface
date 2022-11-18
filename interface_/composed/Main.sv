@@ -6,7 +6,7 @@ imports interface_:common;
 imports interface_:thmInterfaceFile;
 
 imports silver:util:subprocess;
-import silver:util:cmdargs;
+imports silver:util:cmdargs;
 
 
 --To enable us to dump Abella information for debugging purposes
@@ -29,13 +29,13 @@ IOVal<Integer> ::= largs::[String] ioin::IOToken
        if !generate.iovalue
        then ioval(generate.io, 1)
        else if (args.compileFile && args.checkFile)
-       then check_compile_files(generate.io, args.filenames)
+       then check_compile_files(generate.io, args.filenames, args)
        else if args.compileFile
        then compile_files(generate.io, args.filenames)
        else if args.checkFile
-       then run_files(generate.io, args.filenames)
+       then run_files(generate.io, args.filenames, args)
        else if null(args.generateFiles)
-       then run_interactive(ioin)
+       then run_interactive(ioin, args)
        else --don't run interactive if generating for some grammar(s)
             ioval(generate.io, 0)
      end;
@@ -50,6 +50,11 @@ synthesized attribute filenames::[String] occurs on CmdArgs;
 --grammar and filename to generate skeletons for and into
 synthesized attribute generateFiles::[(String, String)] occurs on CmdArgs;
 
+--whether we are running a file or interactive
+synthesized attribute runningFile::Boolean occurs on CmdArgs;
+--whether the user should see output
+synthesized attribute showUser::Boolean occurs on CmdArgs;
+
 
 aspect production endCmdArgs
 top::CmdArgs ::= l::[String]
@@ -58,6 +63,9 @@ top::CmdArgs ::= l::[String]
   top.compileFile = false;
   top.filenames = l;
   top.generateFiles = [];
+
+  top.runningFile = !null(l);
+  top.showUser = null(l);
 }
 
 
@@ -69,6 +77,10 @@ top::CmdArgs ::= rest::CmdArgs
   top.compileFile = rest.compileFile;
   top.filenames = rest.filenames;
   top.generateFiles = rest.generateFiles;
+
+  top.runningFile = true;
+  top.showUser = rest.showUser;
+
   forwards to rest;
 }
 
@@ -82,6 +94,10 @@ top::CmdArgs ::= rest::CmdArgs
   top.compileFile = true;
   top.filenames = rest.filenames;
   top.generateFiles = rest.generateFiles;
+
+  top.runningFile = rest.runningFile;
+  top.showUser = rest.showUser;
+
   forwards to rest;
 }
 
@@ -100,6 +116,10 @@ top::CmdArgs ::= grammarInfo::[String] rest::CmdArgs
       | _ -> --should be checked by silver:util:cmdargs
         rest.generateFiles
       end;
+
+  top.runningFile = rest.runningFile;
+  top.showUser = rest.showUser;
+
   forwards to rest;
 }
 

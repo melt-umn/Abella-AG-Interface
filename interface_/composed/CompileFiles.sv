@@ -20,9 +20,9 @@ IOVal<Integer> ::= ioin::IOToken filenames::[String]
 
 --Run through a list of files, checking and compiling them
 function check_compile_files
-IOVal<Integer> ::= ioin::IOToken filenames::[String]
+IOVal<Integer> ::= ioin::IOToken filenames::[String] config::Decorated CmdArgs
 {
-  local ran::IOVal<Integer> = run_file(ioin, head(filenames));
+  local ran::IOVal<Integer> = run_file(ioin, head(filenames), config);
   local compiled::IOVal<Integer> =
         compile_file(ran.io, head(filenames));
   return
@@ -33,7 +33,7 @@ IOVal<Integer> ::= ioin::IOToken filenames::[String]
        then ran --error in checking that file, so quit
        else if compiled.iovalue != 0
        then compiled --error in compiling that file, so quit
-       else compile_files(compiled.io, tl)
+       else check_compile_files(compiled.io, tl, config)
      end;
 }
 
