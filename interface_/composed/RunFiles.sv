@@ -32,19 +32,19 @@ IOVal<Integer> ::= ioin::IOToken filename::String config::Decorated CmdArgs
         processGrammarDecl(fileAST.1, fileContents.io);
   --
   local started::IOVal<Either<String ProcessHandle>> =
-        startAbella(processed.io);
+        startAbella(processed.io, config);
   --
   local ourSilverContext::IOVal<Decorated SilverContext> =
         set_up_abella_silver(
            fileAST.1, processed.iovalue.fromRight.1,
            processed.iovalue.fromRight.2, started.iovalue.fromRight,
-           started.io);
+           started.io, config);
   --
   local handleIncoming::IOVal<(Integer, ProverState, String)> =
         handleIncomingThms(
            (0, defaultProverState(processed.iovalue.fromRight.3)),
            ourSilverContext.iovalue, started.iovalue.fromRight,
-           ourSilverContext.io);
+           ourSilverContext.io, config);
 
   return
      if !fileExists.iovalue

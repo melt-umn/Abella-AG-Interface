@@ -12,19 +12,19 @@ IOVal<Integer> ::= ioin::IOToken config::Decorated CmdArgs
         processGrammarDecl(grammarName.iovalue, grammarName.io);
   --
   local started::IOVal<Either<String ProcessHandle>> =
-        startAbella(grammarName.io);
+        startAbella(grammarName.io, config);
   --
   local build_context::IOVal<Decorated SilverContext> =
         set_up_abella_silver(grammarName.iovalue,
            processed.iovalue.fromRight.1,
            processed.iovalue.fromRight.2,
-           started.iovalue.fromRight, started.io);
+           started.iovalue.fromRight, started.io, config);
   --
   local handleIncoming::IOVal<(Integer, ProverState, String)> =
         handleIncomingThms(
            (0, defaultProverState(processed.iovalue.fromRight.3)),
            build_context.iovalue, started.iovalue.fromRight,
-           build_context.io);
+           build_context.io, config);
 
   return
      if !processed.iovalue.isRight

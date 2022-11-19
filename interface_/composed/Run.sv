@@ -63,7 +63,7 @@ IOVal<Integer> ::=
   local back_from_abella::IOVal<String> =
         if speak_to_abella
         then sendCmdsToAbella(map((.pp), any_a.translation), abella,
-                              debug_output)
+                              debug_output, config)
         else ioval(debug_output, "");
   --Translate output
   ----------------------------
@@ -83,9 +83,10 @@ IOVal<Integer> ::=
         (currentProverState.clean || any_a.mustClean);
   local cleaned::(String, Integer, FullDisplay, [[Integer]], IOToken) =
         if shouldClean
-        then cleanState(decorate full_a with
-                        {replaceState = head(any_a.stateListOut).snd.state;}.replacedState,
-                        silverContext, abella, back_from_abella.io)
+        then cleanState(decorate full_a with {
+                           replaceState = head(any_a.stateListOut).snd.state;
+                        }.replacedState,
+                        silverContext, abella, back_from_abella.io, config)
         else ("", 0, decorate full_a with
                      {replaceState = head(any_a.stateListOut).snd.state;}.replacedState,
               [], back_from_abella.io);
@@ -109,7 +110,7 @@ IOVal<Integer> ::=
         then ioval(outputCleanCommands,
                    (head(newStateList).1, head(newStateList).2, ""))
         else handleIncomingThms(head(newStateList), silverContext,
-                                abella, outputCleanCommands);
+                                abella, outputCleanCommands, config);
   local completeStateList::[(Integer, ProverState)] =
         (handleIncoming.iovalue.1, handleIncoming.iovalue.2)::tail(newStateList);
   local outputIncomingThms::IOToken =

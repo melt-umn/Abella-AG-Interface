@@ -9,11 +9,6 @@ imports silver:util:subprocess;
 imports silver:util:cmdargs;
 
 
---To enable us to dump Abella information for debugging purposes
-global DUMP_ABELLA::Boolean = false;
-global DUMP_FILE::String = "abella_dump.thm";
-
-
 function main
 IOVal<Integer> ::= largs::[String] ioin::IOToken
 {
@@ -31,7 +26,7 @@ IOVal<Integer> ::= largs::[String] ioin::IOToken
        else if (args.compileFile && args.checkFile)
        then check_compile_files(generate.io, args.filenames, args)
        else if args.compileFile
-       then compile_files(generate.io, args.filenames)
+       then compile_files(generate.io, args.filenames, args)
        else if args.checkFile
        then run_files(generate.io, args.filenames, args)
        else if null(args.generateFiles)
@@ -55,6 +50,11 @@ synthesized attribute runningFile::Boolean occurs on CmdArgs;
 --whether the user should see output
 synthesized attribute showUser::Boolean occurs on CmdArgs;
 
+--whether the Abella commands should be placed in the given file
+--   Useful for debugging when the translation is wrong
+synthesized attribute dumpAbella::Boolean occurs on CmdArgs;
+synthesized attribute dumpAbellaFile::String occurs on CmdArgs;
+
 
 aspect production endCmdArgs
 top::CmdArgs ::= l::[String]
@@ -66,6 +66,10 @@ top::CmdArgs ::= l::[String]
 
   top.runningFile = !null(l);
   top.showUser = null(l);
+
+  top.dumpAbella = false;
+  top.dumpAbellaFile =
+      error("Shouldn't access dumpAbellaFile if dumpAbella = false");
 }
 
 
@@ -80,6 +84,9 @@ top::CmdArgs ::= rest::CmdArgs
 
   top.runningFile = true;
   top.showUser = rest.showUser;
+
+  top.dumpAbella = rest.dumpAbella;
+  top.dumpAbellaFile = rest.dumpAbellaFile;
 
   forwards to rest;
 }
@@ -97,6 +104,9 @@ top::CmdArgs ::= rest::CmdArgs
 
   top.runningFile = rest.runningFile;
   top.showUser = rest.showUser;
+
+  top.dumpAbella = rest.dumpAbella;
+  top.dumpAbellaFile = rest.dumpAbellaFile;
 
   forwards to rest;
 }
@@ -120,6 +130,28 @@ top::CmdArgs ::= grammarInfo::[String] rest::CmdArgs
   top.runningFile = rest.runningFile;
   top.showUser = rest.showUser;
 
+  top.dumpAbella = rest.dumpAbella;
+  top.dumpAbellaFile = rest.dumpAbellaFile;
+
+  forwards to rest;
+}
+
+
+--Dump translated commands to a file
+abstract production dumpAbellaFlag
+top::CmdArgs ::= rest::CmdArgs
+{
+  top.checkFile = rest.checkFile;
+  top.compileFile = rest.compileFile;
+  top.filenames = rest.filenames;
+  top.generateFiles = rest.generateFiles;
+
+  top.runningFile = rest.runningFile;
+  top.showUser = rest.showUser;
+
+  top.dumpAbella = true;
+  top.dumpAbellaFile = "abella_dump.thm";
+
   forwards to rest;
 }
 
@@ -130,7 +162,6 @@ Either<String  Decorated CmdArgs> ::= args::[String]
 {
   production attribute flags::[FlagSpec] with ++;
   flags := [];
-
   flags <-
      [flagSpec(name="--check",
                paramString=nothing(),
@@ -145,12 +176,22 @@ Either<String  Decorated CmdArgs> ::= args::[String]
                help="generate a basic theorem file for the given grammar",
                flagParser=nOptions(2, generateFlag))];
 
+  production attribute debugFlags::[FlagSpec] with ++;
+  debugFlags := [];
+  debugFlags <-
+     [flagSpec(name="--dump-Abella",
+               paramString=nothing(),
+               help="dump translated Abella commands to a file",
+               flagParser=flag(dumpAbellaFlag))];
+
   local usage::String = 
         "Usage: silverabella [options] [filenames]\n\n" ++
-        "Flag options:\n" ++ flagSpecsToHelpText(flags) ++ "\n";
+        "Flag options:\n" ++ flagSpecsToHelpText(flags) ++ "\n" ++
+        "Debug flag options:\n" ++ flagSpecsToHelpText(debugFlags) ++
+        "\n";
 
   -- Parse the command line
-  production a::CmdArgs = interpretCmdArgs(flags, args);
+  production a::CmdArgs = interpretCmdArgs(flags ++ debugFlags, args);
 
   production attribute errors::[String] with ++;
   errors := if a.cmdError.isJust then [a.cmdError.fromJust] else [];

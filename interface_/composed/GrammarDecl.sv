@@ -95,12 +95,12 @@ IOVal<Either<String ListOfCommands>> ::=
 function set_up_abella_silver
 IOVal<Decorated SilverContext> ::=
      currentGrammar::String comms::ListOfCommands defs::[DefElement]
-     abella::ProcessHandle ioin::IOToken
+     abella::ProcessHandle ioin::IOToken config::Decorated CmdArgs
 {
   local sendToAbella::[String] = 
         map((.pp), comms.commandList) ++ map((.pp), defs);
   local back::IOVal<String> =
-        sendCmdsToAbella(sendToAbella, abella, ioin);
+        sendCmdsToAbella(sendToAbella, abella, ioin, config);
   local parsedOutput::ParseResult<FullDisplay_c> =
         from_parse(back.iovalue, "<<output>>");
   --

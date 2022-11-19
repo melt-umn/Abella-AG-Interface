@@ -3,7 +3,7 @@ grammar interface_:composed;
 
 --Either start Abella or fail with an error message
 function startAbella
-IOVal<Either<String ProcessHandle>> ::= ioin::IOToken
+IOVal<Either<String ProcessHandle>> ::= ioin::IOToken config::Decorated CmdArgs
 {
   --Find the library location (env variable set by startup script)
   local library_loc::IOVal<String> =
@@ -32,7 +32,7 @@ IOVal<Either<String ProcessHandle>> ::= ioin::IOToken
   --Send the library imports to Abella
   local send_imports::IOVal<String> =
         sendCmdsToAbella(library_cmds, abella.iovalue,
-                         abella_initial_string.io);
+                         abella_initial_string.io, config);
 
   return
      if library_loc.iovalue == ""
@@ -48,25 +48,28 @@ IOVal<Either<String ProcessHandle>> ::= ioin::IOToken
 --Returns the output text of the last one
 function sendCmdsToAbella
 IOVal<String> ::= cmds::[String] abella::ProcessHandle ioin::IOToken
+                  config::Decorated CmdArgs
 {
   return
      case cmds of
      | [] -> ioval(ioin, "")
-     | [c] -> sendCmdToAbella(c, abella, ioin)
+     | [c] -> sendCmdToAbella(c, abella, ioin, config)
      | c::tl ->
        sendCmdsToAbella(tl, abella,
-                        sendCmdToAbella(c, abella, ioin).io)
+                        sendCmdToAbella(c, abella, ioin, config).io,
+                        config)
      end;
 }
 
 --Send a single command to Abella and get its output text back
 function sendCmdToAbella
 IOVal<String> ::= cmd::String abella::ProcessHandle ioin::IOToken
+                  config::Decorated CmdArgs
 {
   local sent::IOToken = sendToProcess(abella, cmd, ioin);
   local dumped::IOToken =
-        if DUMP_ABELLA
-        then appendFileT(DUMP_FILE, cmd ++ "\n", sent)
+        if config.dumpAbella
+        then appendFileT(config.dumpAbellaFile, cmd ++ "\n", sent)
         else sent;
   return read_abella_output(abella, dumped);
 }
@@ -132,6 +135,7 @@ function removeInitialSpaces
  - @param currentState   Current state of the proof
  - @param abella   Process in which Abella is running
  - @param ioin   IO token
+ - @param config   Prover configuration information
  - @return   A tuple of a string of the commands sent, the number of
  -           commands sent, the final FullDisplay including the proof
  -           state which has been cleaned, the list of subgoals
@@ -141,13 +145,14 @@ function cleanState
 (String, Integer, FullDisplay, [[Integer]], IOToken) ::=
          currentDisplay::FullDisplay
          silverContext::Decorated SilverContext
-         abella::ProcessHandle ioin::IOToken
+         abella::ProcessHandle ioin::IOToken config::Decorated CmdArgs
 {
   local currentState::ProofState = currentDisplay.proof;
   currentState.silverContext = silverContext;
   --Send to and read back from Abella
   local back::IOVal<String> =
-        sendCmdsToAbella(currentState.cleanUpCommands, abella, ioin);
+        sendCmdsToAbella(currentState.cleanUpCommands, abella, ioin,
+                         config);
   local parsed::ParseResult<FullDisplay_c> =
         from_parse(back.iovalue, "<<output>>");
   currentState.nextStateIn =
@@ -172,7 +177,8 @@ function cleanState
         else [];
   --See if there is more to clean
   local sub::(String, Integer, FullDisplay, [[Integer]], IOToken) =
-        cleanState(cleanedDisplay, silverContext, abella, back.io);
+        cleanState(cleanedDisplay, silverContext, abella, back.io,
+                   config);
 
   return
      if currentState.numCleanUpCommands == 0

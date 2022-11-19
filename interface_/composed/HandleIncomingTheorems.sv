@@ -6,6 +6,7 @@ IOVal<(Integer, ProverState, String)> ::=
    incomingState::(Integer, ProverState)
    silverContext::Decorated SilverContext
    abella::ProcessHandle ioin::IOToken
+   config::Decorated CmdArgs
 {
   local initialState::ProverState = incomingState.2;
   local knownThms::[(String, String, Metaterm)] =
@@ -36,7 +37,8 @@ IOVal<(Integer, ProverState, String)> ::=
   --
   local readBack::IOVal<String> =
         if numCommands > 0
-        then sendCmdsToAbella(map((.pp), translated), abella, ioin)
+        then sendCmdsToAbella(map((.pp), translated), abella, ioin,
+                              config)
         else ioval(ioin, "");
   --
   local outObligations::[ThmElement] =

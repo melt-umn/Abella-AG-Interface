@@ -4,6 +4,7 @@ grammar interface_:composed;
 --Run through a list of files, compiling them
 function compile_files
 IOVal<Integer> ::= ioin::IOToken filenames::[String]
+                   config::Decorated CmdArgs
 {
   local compiled::IOVal<Integer> =
         compile_file(ioin, head(filenames));
@@ -13,7 +14,7 @@ IOVal<Integer> ::= ioin::IOToken filenames::[String]
      | hd::tl ->
        if compiled.iovalue != 0
        then compiled --error in compiling that file, so quit
-       else compile_files(compiled.io, tl)
+       else compile_files(compiled.io, tl, config)
      end;
 }
 
