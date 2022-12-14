@@ -2,6 +2,5 @@
 
 GRAMMAR=expanded_sec:host
 
-SVJVM_FLAGS="-Xmx8000M -Xss40M" silver $@ --abella-compile -I ../.. $GRAMMAR
-
-
+#SVJVM_FLAGS="-Xmx8000M -Xss40M" silver $@ --abella-compile -I ../.. $GRAMMAR
+SVJVM_FLAGS="-Xmx8000M -Xss40M" silver $@ -I ../.. $GRAMMAR

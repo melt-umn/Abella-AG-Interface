@@ -59,3 +59,28 @@ Value ::= v::String vals::[(String, Value)]
               then head(vals).2
               else lookupVal(v, tail(vals));
 }
+
+
+function lookupFunEval
+(String, [String], C) ::= funName::String
+                          funEvalCtx::[(String, String, [String], C)]
+{
+  local hd::(String, String, [String], C) = head(funEvalCtx);
+  return if null(funEvalCtx)
+         then error("Not found")
+         else if hd.1 == funName
+              then (hd.2, hd.3, hd.4)
+              else lookupFunEval(funName, tail(funEvalCtx));
+}
+
+
+
+
+function buildEvalCtx
+[(String, Value)] ::= names::[String] vals::[Value]
+{
+  return if null(names) && null(vals)
+         then []
+         else (head(names), head(vals))::
+              buildEvalCtx(tail(names), tail(vals));
+}

@@ -75,6 +75,20 @@ Boolean ::= ty1::Type ty2::Type
   return ty1.isTyEqual;
 }
 
+function compareTys
+Boolean ::= tys1::[Type] tys2::[Type]
+{
+  return if null(tys1)
+         then if null(tys2)
+              then true
+              else false
+         else if null(tys2)
+              then false
+              else if tysEq(head(tys1), head(tys2))
+                   then compareTys(tail(tys1), tail(tys2))
+                   else false;
+}
+
 function member
 Boolean ::= v::String ctx::[(String, Type)]
 {
@@ -94,4 +108,15 @@ Type ::= v::String tys::[(String, Type)]
          else if head(tys).1 == v
               then head(tys).2
               else lookupTy(v, tail(tys));
+}
+
+
+function lookupFunTy
+(Type, Params) ::= funName::String funTyCtx::[(String, Type, Params)]
+{
+  return if null(funTyCtx)
+         then error("Not found")
+         else if head(funTyCtx).1 == funName
+              then (head(funTyCtx).2, head(funTyCtx).3)
+              else lookupFunTy(funName, tail(funTyCtx));
 }
