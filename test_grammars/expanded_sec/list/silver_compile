@@ -1,0 +1,6 @@
+#!/bin/bash
+
+GRAMMAR=expanded_sec:list
+
+#SVJVM_FLAGS="-Xmx8000M -Xss40M" silver $@ --abella-compile -I ../.. $GRAMMAR
+SVJVM_FLAGS="-Xmx8000M -Xss40M" silver $@ -I ../.. $GRAMMAR
