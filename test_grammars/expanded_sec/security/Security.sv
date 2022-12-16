@@ -31,6 +31,24 @@ SecurityLevel ::= s1::SecurityLevel s2::SecurityLevel
          else private();
 }
 
+function seclesseq
+SecurityLevel ::= s1::SecurityLevel s2::SecurityLevel
+{
+  return s1.isPublic || (s1.isPrivate && s2.isPrivate);
+}
+
+--Check args are valid to give
+--Public can go into private but private can't go into public
+function secureArgCombination
+Boolean ::= given::[SecurityLevel] expected::[SecurityLevel]
+{
+  return if null(given)
+         then true
+         else if seclesseq(head(given), head(expected))
+              then secureArgCombination(tail(given), tail(expected))
+              else false;
+}
+
 
 
 function lookupSec
@@ -39,4 +57,14 @@ SecurityLevel ::= name::String ctx::[(String, SecurityLevel)]
   return if head(ctx).1 == name
          then head(ctx).2
          else lookupSec(name, tail(ctx));
+}
+
+function lookupFunSec
+(SecurityLevel, SecurityLevel, [SecurityLevel]) ::=
+   name::String
+   ctx::[(String, SecurityLevel, SecurityLevel, [SecurityLevel])]
+{
+  return if head(ctx).1 == name
+         then (head(ctx).2, head(ctx).3, head(ctx).4)
+         else lookupFunSec(name, tail(ctx));
 }
