@@ -10,3 +10,4 @@ inherited attribute secCtx::[(String, SecurityLevel)];
 inherited attribute pc::SecurityLevel;
 --[(fun name, starting security level, return security level, param security levels)]
 inherited attribute funSecCtx::[(String, SecurityLevel, SecurityLevel, [SecurityLevel])];
+synthesized attribute funSecCtx_out::[(String, SecurityLevel, SecurityLevel, [SecurityLevel])];

@@ -32,7 +32,7 @@ SecurityLevel ::= s1::SecurityLevel s2::SecurityLevel
 }
 
 function seclesseq
-SecurityLevel ::= s1::SecurityLevel s2::SecurityLevel
+Boolean ::= s1::SecurityLevel s2::SecurityLevel
 {
   return s1.isPublic || (s1.isPrivate && s2.isPrivate);
 }

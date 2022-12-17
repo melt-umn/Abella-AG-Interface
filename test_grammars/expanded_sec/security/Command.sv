@@ -1,6 +1,6 @@
 grammar expanded_sec:security;
 
-attribute secCtx, pc, funSecCtx, secCtx_out, isSecure;
+attribute secCtx, pc, funSecCtx, secCtx_out, isSecure occurs on C;
 
 aspect production noop
 top::C ::=
@@ -43,6 +43,19 @@ top::C ::= v::String ty::Type e::Expr
 abstract production declareSec
 top::C ::= v::String ty::Type s::SecurityLevel e::Expr
 {
+  e.tyCtx = top.tyCtx;
+  ty.compareTy = e.ty;
+  top.tyCtx_out = pair(v, ty)::top.tyCtx;
+
+  top.wellTyped = ty.isTyEqual;
+
+  e.funTyCtx = top.funTyCtx;
+  --
+  e.evalCtx = top.evalCtx;
+  e.funEvalCtx = top.funEvalCtx;
+  top.evalCtx_out = (v, e.value)::top.evalCtx;
+  top.printedOutput = e.printedOutput;
+  --
   e.pc = top.pc;
   e.secCtx = top.secCtx;
   e.funSecCtx = top.funSecCtx;
@@ -90,21 +103,43 @@ top::C ::= cond::Expr th::C el::C
 aspect production while
 top::C ::= cond::Expr body::C
 {
+  cond.secCtx = top.secCtx;
+  body.secCtx = top.secCtx;
 
+  cond.funSecCtx = top.funSecCtx;
+  body.funSecCtx = top.funSecCtx;
+
+  cond.pc = top.pc;
+  body.pc = secmax(cond.level, top.pc);
+
+  top.secCtx_out = top.secCtx;
+  top.isSecure = body.isSecure;
 }
 
 
 aspect production recUpdate
 top::C ::= rec::String fields::RecFields e::Expr
 {
+  e.secCtx = top.secCtx;
+  e.funSecCtx = top.funSecCtx;
+  e.pc = top.pc;
 
+  top.secCtx_out = top.secCtx;
+  local recsec::SecurityLevel = lookupSec(rec, top.secCtx);
+  top.isSecure = seclesseq(e.level, recsec);
 }
 
 
 aspect production printVal
 top::C ::= e::Expr
 {
+  e.secCtx = top.secCtx;
+  e.funSecCtx = top.funSecCtx;
+  e.pc = top.pc;
 
+  top.secCtx_out = top.secCtx;
+  local el::SecurityLevel = e.level;
+  top.isSecure = el.isPublic;
 }
 
 
